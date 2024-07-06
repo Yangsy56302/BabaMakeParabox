@@ -10,11 +10,13 @@ Download These Things:
 - **Python *(latest)***: [Link](https://www.python.org/downloads/)
 - **PIP**: Should install with Python
 - **Pygame**: Run `pip install -U pygame` in Terminal or something similar to Terminal
-- **PyInstaller *(optional, if you need to make .exe)***: Run `pip install -U pyinstaller` in Terminal too
+- **PyInstaller *(optional, if you need .exe)***: Run `pip install -U pyinstaller` in Terminal too
 
 Then run **test.bat** to start a official game test.
 
-## Controls
+If you need to make an .exe file, run **make.bat**.
+
+## How to control
 
 - WSAD: You move.
 - Space: You wait for something.
@@ -22,6 +24,17 @@ Then run **test.bat** to start a official game test.
 - R: Restart.
 - Minus: Camera moves to previous level.
 - Equals: Camera moves to next level.
+
+## How to win
+
+Simply put something that is **YOU** to something that is **WIN**.
+
+And remember:
+
+1. Sometimes the rules itself can be changed;
+2. Sometimes some of the rules can not be changed;
+3. Sometimes you need to get inside of the sublevel;
+4. Sometimes you need to create a paradox.
 
 ## How to code a custom world
 
@@ -58,6 +71,7 @@ Now you can test and play your custom world!
 | 1.0    | 2024.07.05 | Initialized. |
 | 1.1    | 2024.07.06 | Keke is Move; Undo and Restart; Baba Make Levels |
 | 1.11   | 2024.07.06 | Level is Previous and Next |
+| 1.2    | 2024.07.06 | Flag is Win; Game is EXE |
 
 ## Bug Reports and Advices
 
