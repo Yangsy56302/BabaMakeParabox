@@ -5,19 +5,20 @@ import uuid
 import baba_make_parabox.spaces as spaces
 import baba_make_parabox.objects as objects
 import baba_make_parabox.rules as rules
+import baba_make_parabox.displays as displays
 
 def match_pos(obj: objects.Object, pos: spaces.Coord) -> bool:
     return (obj.x, obj.y) == tuple(pos)
 
 class level(object):
     class_name: str = "level"
-    def __init__(self, name: str, inf_tier: int, size: tuple[int, int], color: Optional[pygame.Color] = None, *args: Any, **kwds: Any) -> None:
-        super().__init__(*args, **kwds)
+    def __init__(self, name: str, size: tuple[int, int], inf_tier: int = 0, color: Optional[pygame.Color] = None) -> None:
         self.uuid: uuid.UUID = uuid.uuid4()
         self.name: str = name
         self.inf_tier: int = inf_tier
         self.width: int = size[0]
         self.height: int = size[1]
+        self.color: pygame.Color = color if color is not None else displays.random_hue()
         self.objects: list[objects.Object] = []
         self.rules: list[rules.Rule] = []
     def __eq__(self, level: "level") -> bool:
@@ -58,9 +59,9 @@ class level(object):
         self.objects = list(new_objects)
         new_length = len(self.objects)
         return old_length - new_length > 0
-    def del_objs_from_type(self, obj_type: type) -> bool:
+    def del_objs_from_type(self, obj_type: type[objects.Object]) -> bool:
         old_length = len(self.objects)
-        new_objects = filter(lambda o: isinstance(o, obj_type), self.objects)
+        new_objects = filter(lambda o: not isinstance(o, obj_type), self.objects)
         self.objects = list(new_objects)
         new_length = len(self.objects)
         return old_length - new_length > 0
@@ -116,3 +117,27 @@ class level(object):
                 return (self.width // 2, self.height)
             case "D":
                 return (self.width, self.height // 2)
+    def winned(self, you_types: list[type[objects.Object]], win_types: list[type[objects.Object]]) -> bool:
+        you_types = you_types[:]
+        you_rules = self.find_rules(None, objects.IS, objects.YOU)
+        for you_type in [t[0] for t in you_rules]:
+            you_types.append(rules.nouns_objs_dicts.get_obj(you_type))
+        you_objs: list[objects.Object] = []
+        for you_type in you_types:
+            you_objs.extend(self.get_objs_from_type(you_type))
+        if len(you_objs) == 0:
+            return False
+        win_types = win_types[:]
+        win_rules = self.find_rules(None, objects.IS, objects.WIN)
+        for win_type in [t[0] for t in win_rules]:
+            win_types.append(rules.nouns_objs_dicts.get_obj(win_type))
+        win_objs: list[objects.Object] = []
+        for win_type in win_types:
+            win_objs.extend(self.get_objs_from_type(win_type))
+        if len(win_objs) == 0:
+            return False
+        for you_obj in you_objs:
+            for win_obj in win_objs:
+                if (you_obj.x, you_obj.y) == (win_obj.x, win_obj.y):
+                    return True
+        return False

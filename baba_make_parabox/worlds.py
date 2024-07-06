@@ -15,7 +15,7 @@ class world(object):
     rule_list: list[rules.Rule]
     def __init__(self, *level_list: levels.level, rule_list: Optional[list[rules.Rule]] = None, **kwds: Any) -> None:
         self.level_list = list(level_list)
-        self.rule_list = rule_list if rule_list is not None else []
+        self.rule_list = rule_list if rule_list is not None else rules.default_rule_list
     def __str__(self) -> str:
         return self.class_name
     def __repr__(self) -> str:
@@ -164,12 +164,24 @@ class world(object):
                     move_list.extend(self.get_move_list(level, you_obj, (you_obj.x, you_obj.y), facing))
         move_list = basics.remove_same_elements(move_list)
         self.move_objs_from_move_list(move_list)
-    def round(self, op: spaces.PlayerOperation) -> None:
+    def round(self, op: spaces.PlayerOperation) -> bool:
         for level in self.level_list:
             level.update_rules()
         if op != "_":
             self.you(op)
         self.move()
+        you_rules = self.find_rules(None, objects.IS, objects.YOU)
+        you_types = []
+        for you_type in [t[0] for t in you_rules]:
+            you_types.append(rules.nouns_objs_dicts.get_obj(you_type))
+        win_rules = self.find_rules(None, objects.IS, objects.WIN)
+        win_types = []
+        for win_type in [t[0] for t in win_rules]:
+            win_types.append(rules.nouns_objs_dicts.get_obj(win_type))
+        for level in self.level_list:
+            if level.winned(you_types, win_types):
+                return True
+        return False
     def show_level(self, level: levels.level, layer: int) -> pygame.Surface:
         if layer <= 0:
             return basics.game_data.sprites["text_level"].copy()

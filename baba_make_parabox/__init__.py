@@ -31,6 +31,7 @@ def main(world: worlds.world) -> None:
     current_level = 0
     window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level], 2), (720, 720)), (0, 0))
     pygame.display.flip()
+    winned = False
     game_running = True
     while game_running:
         for event in pygame.event.get():
@@ -40,27 +41,27 @@ def main(world: worlds.world) -> None:
         refresh = False
         if keys[keybinds["W"]] and cooldowns[keybinds["W"]] == 0:
             history.append(copy.deepcopy(world))
-            world.round("W")
+            winned = world.round("W")
             cooldowns[keybinds["W"]] = default_cooldown
             refresh = True
         elif keys[keybinds["S"]] and cooldowns[keybinds["S"]] == 0:
             history.append(copy.deepcopy(world))
-            world.round("S")
+            winned = world.round("S")
             cooldowns[keybinds["S"]] = default_cooldown
             refresh = True
         elif keys[keybinds["A"]] and cooldowns[keybinds["A"]] == 0:
             history.append(copy.deepcopy(world))
-            world.round("A")
+            winned = world.round("A")
             cooldowns[keybinds["A"]] = default_cooldown
             refresh = True
         elif keys[keybinds["D"]] and cooldowns[keybinds["D"]] == 0:
             history.append(copy.deepcopy(world))
-            world.round("D")
+            winned = world.round("D")
             cooldowns[keybinds["D"]] = default_cooldown
             refresh = True
         elif keys[keybinds["_"]] and cooldowns[keybinds["_"]] == 0:
             history.append(copy.deepcopy(world))
-            world.round("_")
+            winned = world.round("_")
             cooldowns[keybinds["_"]] = default_cooldown
             refresh = True
         elif keys[keybinds["Z"]] and cooldowns[keybinds["Z"]] == 0:
@@ -92,33 +93,90 @@ def main(world: worlds.world) -> None:
                 cooldowns[key] -= 1
         if len(history) > 100:
             history = history[1:]
+        if winned:
+            print("Congratulations!")
+            print("You Win!")
+            game_running = False
         clock.tick(15)
     pygame.quit()
 
 def test() -> None:
-    level_0 = levels.level("0", 0, (7, 7))
-    level_0.new_obj(objects.Baba((1, 1), "W"))
-    level_0.new_obj(objects.Wall((1, 3), "W"))
-    level_0.new_obj(objects.Wall((3, 1), "W"))
-    level_0.new_obj(objects.Level((3, 3), "W", name="0", inf_tier=0))
-    level_0.new_obj(objects.Clone((3, 5), "W", name="0", inf_tier=0))
-    level_0.new_obj(objects.WALL((5, 1), "W"))
-    level_0.new_obj(objects.IS((5, 2), "W"))
-    level_0.new_obj(objects.STOP((5, 3), "W"))
-    level_0_pos_1 = levels.level("0", 1, (3, 3))
-    level_0_neg_1 = levels.level("0", -1, (3, 3))
-    level_1 = levels.level("test", -1, (7, 7))
-    level_1.new_obj(objects.Level((1, 3), "W", name="0", inf_tier=-1))
-    level_1.new_obj(objects.Level((5, 3), "W", name="0", inf_tier=1))
-    world = worlds.world(level_0, level_0_pos_1, level_0_neg_1, level_1,
-                         rule_list=[(objects.BABA, objects.IS, objects.YOU),
-                                    (objects.TEXT, objects.IS, objects.PUSH),
-                                    (objects.LEVEL, objects.IS, objects.PUSH),
-                                    (objects.CLONE, objects.IS, objects.PUSH)])
+    # Superlevel
+    level_0 = levels.level("main", (9, 9))
+    # Rules
+    level_0.new_obj(objects.BABA((0, 1)))
+    level_0.new_obj(objects.IS((1, 1)))
+    level_0.new_obj(objects.YOU((2, 1)))
+    level_0.new_obj(objects.WALL((8, 1)))
+    level_0.new_obj(objects.IS((8, 2)))
+    level_0.new_obj(objects.STOP((8, 3)))
+    level_0.new_obj(objects.ROCK((8, 5)))
+    level_0.new_obj(objects.IS((8, 6)))
+    level_0.new_obj(objects.PUSH((8, 7)))
+    level_0.new_obj(objects.FLAG((4, 1)))
+    level_0.new_obj(objects.IS((5, 1)))
+    # Things
+    level_0.new_obj(objects.Level((3, 3), name="sub"))
+    level_0.new_obj(objects.WIN((2, 4)))
+    level_0.new_obj(objects.Flag((4, 6)))
+    level_0.new_obj(objects.Baba((1, 7)))
+    # Empty spaces
+    level_0.new_obj(objects.Keke((6, 1)))
+    level_0.new_obj(objects.Keke((6, 2)))
+    level_0.new_obj(objects.Keke((1, 3)))
+    level_0.new_obj(objects.Keke((2, 3)))
+    level_0.new_obj(objects.Keke((4, 3)))
+    level_0.new_obj(objects.Keke((5, 3)))
+    level_0.new_obj(objects.Keke((6, 3)))
+    level_0.new_obj(objects.Keke((1, 4)))
+    level_0.new_obj(objects.Keke((6, 4)))
+    level_0.new_obj(objects.Keke((2, 5)))
+    level_0.new_obj(objects.Keke((6, 5)))
+    level_0.new_obj(objects.Keke((1, 6)))
+    level_0.new_obj(objects.Keke((2, 6)))
+    level_0.new_obj(objects.Keke((5, 6)))
+    level_0.new_obj(objects.Keke((6, 6)))
+    level_0.new_obj(objects.Keke((2, 7)))
+    # Walls
+    for x in range(9):
+        for y in range(9):
+            if len(level_0.get_objs_from_pos((x, y))) == 0:
+                level_0.new_obj(objects.Wall((x, y)))
+    level_0.del_objs_from_type(objects.Keke)
+    # Sublevel
+    level_1 = levels.level("sub", (7, 7))
+    # Rules
+    level_1.new_obj(objects.BABA((6, 0)))
+    level_1.new_obj(objects.IS((6, 1)))
+    level_1.new_obj(objects.YOU((6, 2)))
+    level_1.new_obj(objects.WALL((6, 4)))
+    level_1.new_obj(objects.IS((6, 5)))
+    level_1.new_obj(objects.STOP((6, 6)))
+    level_1.new_obj(objects.ROCK((2, 6)))
+    level_1.new_obj(objects.IS((3, 6)))
+    level_1.new_obj(objects.PUSH((4, 6)))
+    # Empty spaces
+    level_1.new_obj(objects.Keke((3, 0)))
+    level_1.new_obj(objects.Keke((3, 1)))
+    level_1.new_obj(objects.Keke((3, 2)))
+    level_1.new_obj(objects.Keke((0, 3)))
+    level_1.new_obj(objects.Keke((1, 3)))
+    level_1.new_obj(objects.Keke((2, 3)))
+    level_1.new_obj(objects.Keke((3, 3)))
+    level_1.new_obj(objects.Keke((2, 4)))
+    level_1.new_obj(objects.Keke((3, 4)))
+    # Walls
+    for x in range(9):
+        for y in range(9):
+            if len(level_1.get_objs_from_pos((x, y))) == 0:
+                level_1.new_obj(objects.Wall((x, y)))
+    level_1.del_objs_from_type(objects.Keke)
+    # World
+    world = worlds.world(level_0, level_1)
     main(world)
 
-if __name__ == "__main__" or "--debug" in sys.argv or "-d" in sys.argv:
+print("Thank you for playing Baba Make Parabox!")
+if __name__ == "__main__" or "--test" in sys.argv or "-t" in sys.argv:
     test()
-    print("Thank you for playing Baba Make Parabox!")
 
 __all__ = ["basics", "spaces", "objects", "rules", "levels", "displays", "worlds"]

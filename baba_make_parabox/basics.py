@@ -15,7 +15,6 @@ class GameData(object):
     class_name: str = "GameData"
     sprites: dict[str, pygame.Surface]
     def __init__(self) -> None:
-        os.chdir(os.path.dirname(os.path.realpath(__file__)))
         self.sprites = {}
         path = os.path.abspath(".")
         sprites_path = os.path.join(path, "sprites")

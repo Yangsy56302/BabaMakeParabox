@@ -1,1 +1,1 @@
-python main.py --debug
+python main.py
