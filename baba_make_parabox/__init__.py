@@ -14,7 +14,7 @@ import pygame
 
 def main(world: worlds.world) -> None:
     history = [copy.deepcopy(world)]
-    window = pygame.display.set_mode((1080, 720))
+    window = pygame.display.set_mode((720, 720))
     clock = pygame.time.Clock()
     keybinds = {"W": pygame.K_w,
                 "A": pygame.K_a,
@@ -22,12 +22,14 @@ def main(world: worlds.world) -> None:
                 "D": pygame.K_d,
                 "Z": pygame.K_z,
                 "R": pygame.K_r,
+                "-": pygame.K_MINUS,
+                "+": pygame.K_EQUALS,
                 "_": pygame.K_SPACE}
     cooldowns = {value: 0 for value in keybinds.values()}
-    default_cooldown = 0
+    default_cooldown = 3
     window.fill("#112244")
-    for i, level in enumerate(world.level_list):
-        window.blit(pygame.transform.scale(world.show_level(level, 2), (360, 360)), (360 * (i % 3), 360 * (i // 3)))
+    current_level = 0
+    window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level], 2), (720, 720)), (0, 0))
     pygame.display.flip()
     game_running = True
     while game_running:
@@ -72,10 +74,18 @@ def main(world: worlds.world) -> None:
             world = copy.deepcopy(history[0])
             cooldowns[keybinds["R"]] = default_cooldown
             refresh = True
+        elif keys[keybinds["-"]] and cooldowns[keybinds["-"]] == 0:
+            current_level -= 1
+            cooldowns[keybinds["-"]] = default_cooldown
+            refresh = True
+        elif keys[keybinds["+"]] and cooldowns[keybinds["+"]] == 0:
+            current_level += 1
+            cooldowns[keybinds["+"]] = default_cooldown
+            refresh = True
+        current_level = current_level % len(world.level_list) if current_level >= 0 else len(world.level_list) - 1
         if refresh:
             window.fill("#112244")
-            for i, level in enumerate(world.level_list):
-                window.blit(pygame.transform.scale(world.show_level(level, 2), (360, 360)), (360 * (i % 3), 360 * (i // 3)))
+            window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level], 2), (720, 720)), (0, 0))
             pygame.display.flip()
         for key in cooldowns:
             if cooldowns[key] > 0:
@@ -98,9 +108,9 @@ def test() -> None:
     level_0_pos_1 = levels.level("0", 1, (3, 3))
     level_0_neg_1 = levels.level("0", -1, (3, 3))
     level_1 = levels.level("test", -1, (7, 7))
-    level_1.new_obj(objects.Level((1, 1), "W", name="0", inf_tier=-1))
-    level_1.new_obj(objects.Level((3, 1), "W", name="0", inf_tier=0))
-    level_1.new_obj(objects.Level((5, 1), "W", name="0", inf_tier=1))
+    level_1.new_obj(objects.Level((1, 3), "W", name="0", inf_tier=-1))
+    level_1.new_obj(objects.Level((3, 3), "W", name="0", inf_tier=0))
+    level_1.new_obj(objects.Level((5, 3), "W", name="0", inf_tier=1))
     world = worlds.world(level_0, level_0_pos_1, level_0_neg_1, level_1,
                          rule_list=[(objects.BABA, objects.IS, objects.YOU),
                                     (objects.TEXT, objects.IS, objects.PUSH),

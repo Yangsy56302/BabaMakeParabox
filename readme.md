@@ -19,6 +19,8 @@ Then run **test.bat** to start a official game test.
 - Space: You wait for something.
 - Z: Undo, max 100 times.
 - R: Restart.
+- Minus: Camera moves to previous level.
+- Equals: Camera moves to next level.
 
 ## How to code a custom world
 
@@ -54,7 +56,8 @@ Now you can test and play your custom world!
 | Number |    Time    | Informations |
 |--------|------------|--------------|
 | 1.0    | 2024.07.05 | Initialized. |
-| 1.1    | 2024.07.05 | Keke is Move; Undo and Restart; Baba Make Levels |
+| 1.1    | 2024.07.06 | Keke is Move; Undo and Restart; Baba Make Levels |
+| 1.11   | 2024.07.06 | Level is Previous and Next |
 
 ## Bug Reports and Advices
 
