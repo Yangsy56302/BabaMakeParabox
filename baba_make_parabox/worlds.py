@@ -42,7 +42,7 @@ class world(object):
                 if name == obj.name and inf_tier == obj.inf_tier:
                     return (super_level, obj)
         return None
-    def get_move_list(self, level: levels.level, obj: objects.Object, pos: spaces.Coord, facing: spaces.Direction, passed: Optional[list[levels.level]] = None) -> list[tuple[objects.Object, levels.level, spaces.Coord]]:
+    def get_move_list(self, level: levels.level, obj: objects.Object, pos: spaces.Coord, facing: spaces.Orient, passed: Optional[list[levels.level]] = None) -> list[tuple[objects.Object, levels.level, spaces.Coord, spaces.Orient]]:
         passed = passed[:] if passed is not None else []
         move_list = []
         new_pos = spaces.pos_facing(pos, facing)
@@ -80,19 +80,19 @@ class world(object):
             if push_level:
                 for level_like_object in level_like_objects:
                     move_list.extend(self.get_move_list(level, level_like_object, new_pos, facing, passed))
-                move_list.append((obj, level, new_pos))
+                move_list.append((obj, level, new_pos, facing))
             else:
                 for level_like_object in level_like_objects:
                     sub_level = self.get_level(level_like_object.name, level_like_object.inf_tier)
                     # inf in
                     if sub_level in passed:
                         sub_sub_level = self.get_level(sub_level.name, sub_level.inf_tier - 1)
-                        input_pos = sub_sub_level.default_input_position(spaces.swap_direction(facing))
+                        input_pos = sub_sub_level.default_input_position(spaces.swap_orientation(facing))
                         passed.append(level)
                         new_move_list = self.get_move_list(sub_sub_level, obj, input_pos, facing, passed)
                     # push in
                     else:
-                        input_pos = sub_level.default_input_position(spaces.swap_direction(facing))
+                        input_pos = sub_level.default_input_position(spaces.swap_orientation(facing))
                         passed.append(level)
                         new_move_list = self.get_move_list(sub_level, obj, input_pos, facing, passed)
                     if len(new_move_list) == 0:
@@ -112,7 +112,7 @@ class world(object):
                     if len(new_move_list) == 0:
                         return []
                     move_list.extend(new_move_list)
-                move_list.append((obj, level, new_pos))
+                move_list.append((obj, level, new_pos, facing))
                 move_list = basics.remove_same_elements(move_list)
                 return move_list
         # wall stop
@@ -123,32 +123,53 @@ class world(object):
                 stop_objects.extend(level.get_objs_from_pos_and_type(new_pos, rules.nouns_objs_dicts.get_obj(stop_type)))
             if len(stop_objects) != 0:
                 return []
-        return [(obj, level, new_pos)]
-    def move(self, move_list: list[tuple[objects.Object, levels.level, spaces.Coord]]) -> None:
+        return [(obj, level, new_pos, facing)]
+    def move_objs_from_move_list(self, move_list: list[tuple[objects.Object, levels.level, spaces.Coord, spaces.Orient]]) -> None:
         move_list = basics.remove_same_elements(move_list)
-        for move_obj, new_level, new_pos in move_list:
+        for move_obj, new_level, new_pos, new_facing in move_list:
             for level in self.level_list:
                 if level.get_obj(move_obj.uuid) is not None:
                     old_level = level
             if old_level == new_level:
                 move_obj.x, move_obj.y = new_pos
+                move_obj.facing = new_facing
             else:
                 old_level.del_obj(move_obj.uuid)
                 move_obj.x, move_obj.y = new_pos
+                move_obj.facing = new_facing
                 new_level.new_obj(move_obj)
-    def you(self, facing: spaces.Direction) -> None:
+    def move(self) -> None:
+        move_list = []
+        for level in self.level_list:
+            move_rules = level.find_rules(None, objects.IS, objects.MOVE) + self.find_rules(None, objects.IS, objects.MOVE)
+            for move_type in [t[0] for t in move_rules]:
+                for move_obj in level.get_objs_from_type(rules.nouns_objs_dicts.get_obj(move_type)):
+                    new_move_list = self.get_move_list(level, move_obj, (move_obj.x, move_obj.y), move_obj.facing)
+                    if len(new_move_list) != 0:
+                        move_list.extend(new_move_list)
+                    else:
+                        new_move_list = self.get_move_list(level, move_obj, (move_obj.x, move_obj.y), spaces.swap_orientation(move_obj.facing))
+                        if len(new_move_list) != 0:
+                            move_list.extend(new_move_list)
+                        else:
+                            move_list.append((move_obj, level, (move_obj.x, move_obj.y), spaces.swap_orientation(move_obj.facing)))
+        move_list = basics.remove_same_elements(move_list)
+        self.move_objs_from_move_list(move_list)
+    def you(self, facing: spaces.Orient) -> None:
         move_list = []
         for level in self.level_list:
             you_rules = level.find_rules(None, objects.IS, objects.YOU) + self.find_rules(None, objects.IS, objects.YOU)
             for you_type in [t[0] for t in you_rules]:
                 for you_obj in level.get_objs_from_type(rules.nouns_objs_dicts.get_obj(you_type)):
                     move_list.extend(self.get_move_list(level, you_obj, (you_obj.x, you_obj.y), facing))
-        self.move(move_list)
+        move_list = basics.remove_same_elements(move_list)
+        self.move_objs_from_move_list(move_list)
     def round(self, op: spaces.PlayerOperation) -> None:
         for level in self.level_list:
             level.update_rules()
         if op != "_":
             self.you(op)
+        self.move()
     def show_level(self, level: levels.level, layer: int) -> pygame.Surface:
         if layer <= 0:
             return basics.game_data.sprites["text_level"].copy()

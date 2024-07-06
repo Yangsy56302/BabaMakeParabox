@@ -6,12 +6,11 @@ import baba_make_parabox.spaces as spaces
 class Object(object):
     class_name: str = "Object"
     sprite_name: str
-    def __init__(self, pos: spaces.Coord, facing: spaces.Direction, *args: Any, **kwds: Any) -> None:
-        super().__init__(*args, **kwds)
+    def __init__(self, pos: spaces.Coord, facing: spaces.Orient) -> None:
         self.uuid: uuid.UUID = uuid.uuid4()
         self.x: int = pos[0]
         self.y: int = pos[1]
-        self.facing: spaces.Direction = facing
+        self.facing: spaces.Orient = facing
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
     def __str__(self) -> str:
@@ -42,6 +41,12 @@ class Property(Text):
 class Baba(Object):
     class_name: str = "Baba"
     sprite_name: str = "baba"
+    def __init__(self, *args: Any, **kwds: Any) -> None:
+        super().__init__(*args, **kwds)
+
+class Keke(Object):
+    class_name: str = "Keke"
+    sprite_name: str = "keke"
     def __init__(self, *args: Any, **kwds: Any) -> None:
         super().__init__(*args, **kwds)
 
@@ -102,6 +107,12 @@ class EMPTY(Noun):
 class BABA(Noun):
     class_name: str = "BABA"
     sprite_name: str = "text_baba"
+    def __init__(self, *args: Any, **kwds: Any) -> None:
+        super().__init__(*args, **kwds)
+
+class KEKE(Noun):
+    class_name: str = "KEKE"
+    sprite_name: str = "text_keke"
     def __init__(self, *args: Any, **kwds: Any) -> None:
         super().__init__(*args, **kwds)
 
@@ -168,6 +179,12 @@ class STOP(Property):
 class PUSH(Property):
     class_name: str = "PUSH"
     sprite_name: str = "text_push"
+    def __init__(self, *args: Any, **kwds: Any) -> None:
+        super().__init__(*args, **kwds)
+
+class MOVE(Property):
+    class_name: str = "MOVE"
+    sprite_name: str = "text_move"
     def __init__(self, *args: Any, **kwds: Any) -> None:
         super().__init__(*args, **kwds)
 

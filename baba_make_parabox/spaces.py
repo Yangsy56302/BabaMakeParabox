@@ -1,10 +1,10 @@
 from typing import Literal
 
 Coord = tuple[int, int]
-Direction = Literal["W", "A", "S", "D"]
-PlayerOperation = Direction | Literal["_"]
+Orient = Literal["W", "A", "S", "D"]
+PlayerOperation = Orient | Literal["_"]
 
-def swap_direction(direction: Direction) -> Direction:
+def swap_orientation(direction: Orient) -> Orient:
     match direction:
         case "W":
             return "S"
@@ -15,7 +15,7 @@ def swap_direction(direction: Direction) -> Direction:
         case "D":
             return "A"
 
-def pos_facing(pos: Coord, facing: Direction) -> Coord:
+def pos_facing(pos: Coord, facing: Orient) -> Coord:
     match facing:
         case "W":
             return (pos[0], pos[1] - 1)

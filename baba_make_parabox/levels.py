@@ -106,7 +106,7 @@ class level(object):
                 continue
             found_rules.append(rule)
         return found_rules
-    def default_input_position(self, side: spaces.Direction) -> spaces.Coord:
+    def default_input_position(self, side: spaces.Orient) -> spaces.Coord:
         match side:
             case "W":
                 return (self.width // 2, -1)
