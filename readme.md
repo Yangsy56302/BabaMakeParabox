@@ -2,7 +2,7 @@
 
 **Baba Make Parabox** is a fan-made sokoban-like metagame by **Yangsy56302**.
 The original games are **Baba Is You** and **Patrick's Parabox**,
-separately made my **Arvi Hempuli** and **Patrick Traynor**.
+separately made by **Arvi Hempuli** and **Patrick Traynor**.
 
 ## How to run
 
