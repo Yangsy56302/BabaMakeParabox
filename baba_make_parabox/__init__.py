@@ -102,14 +102,13 @@ def test() -> None:
     level_0.new_obj(objects.Wall((3, 1), "W"))
     level_0.new_obj(objects.Level((3, 3), "W", name="0", inf_tier=0))
     level_0.new_obj(objects.Clone((3, 5), "W", name="0", inf_tier=0))
-    level_0.new_obj(objects.WALL((5, 2), "W"))
-    level_0.new_obj(objects.IS((5, 3), "W"))
-    level_0.new_obj(objects.STOP((5, 4), "W"))
+    level_0.new_obj(objects.WALL((5, 1), "W"))
+    level_0.new_obj(objects.IS((5, 2), "W"))
+    level_0.new_obj(objects.STOP((5, 3), "W"))
     level_0_pos_1 = levels.level("0", 1, (3, 3))
     level_0_neg_1 = levels.level("0", -1, (3, 3))
     level_1 = levels.level("test", -1, (7, 7))
     level_1.new_obj(objects.Level((1, 3), "W", name="0", inf_tier=-1))
-    level_1.new_obj(objects.Level((3, 3), "W", name="0", inf_tier=0))
     level_1.new_obj(objects.Level((5, 3), "W", name="0", inf_tier=1))
     world = worlds.world(level_0, level_0_pos_1, level_0_neg_1, level_1,
                          rule_list=[(objects.BABA, objects.IS, objects.YOU),
