@@ -54,6 +54,7 @@ Now you can test and play your custom world!
 | Number |    Time    | Informations |
 |--------|------------|--------------|
 | 1.0    | 2024.07.05 | Initialized. |
+| 1.1    | 2024.07.05 | Keke is Move; Undo and Restart; Baba Make Levels |
 
 ## Bug Reports and Advices
 
