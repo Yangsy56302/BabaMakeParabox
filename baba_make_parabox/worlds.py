@@ -185,7 +185,8 @@ class world(object):
     def show_level(self, level: levels.level, layer: int) -> pygame.Surface:
         if layer <= 0:
             return basics.game_data.sprites["text_level"].copy()
-        level_surface_size = (level.width * displays.sprite_size, level.height * displays.sprite_size)
+        pixel_sprite_size = displays.sprite_size * displays.pixel_size
+        level_surface_size = (level.width * pixel_sprite_size, level.height * pixel_sprite_size)
         level_surface = pygame.Surface(level_surface_size, pygame.SRCALPHA)
         for i in range(len(level.objects)):
             obj = level.objects[i]
@@ -209,6 +210,6 @@ class world(object):
                 obj_surface = obj_background
             else:
                 obj_surface = basics.game_data.sprites[obj.sprite_name].copy()
-            pos = (obj.x * displays.sprite_size, obj.y * displays.sprite_size)
-            level_surface.blit(pygame.transform.scale(obj_surface, (displays.sprite_size, displays.sprite_size)), pos)
+            pos = (obj.x * pixel_sprite_size, obj.y * pixel_sprite_size)
+            level_surface.blit(pygame.transform.scale(obj_surface, (pixel_sprite_size, pixel_sprite_size)), pos)
         return level_surface

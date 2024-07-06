@@ -2,27 +2,30 @@ import pygame
 import random
 
 def set_color_dark(surface: pygame.Surface, color: pygame.Color) -> pygame.Surface:
-    color = pygame.Color(color)
-    new_surface = surface.copy()
-    for x in range(surface.get_width()):
-        for y in range(surface.get_height()):
-            pixel_color = pygame.Color(surface.get_at((x, y)))
-            pixel_color.r = int(pixel_color.r * color.r / 255)
-            pixel_color.g = int(pixel_color.g * color.g / 255)
-            pixel_color.b = int(pixel_color.b * color.b / 255)
-            new_surface.set_at((x, y), pixel_color)
+    new_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+    new_surface.fill(pygame.Color(color.r, color.g, color.b, 255))
+    new_surface.blit(surface, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+    return new_surface
+
+def set_color_light_(surface: pygame.Surface, color: pygame.Color) -> pygame.Surface:
+    new_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+    new_surface.fill(pygame.Color(color.r, color.g, color.b, 255))
+    temp_surface = surface.copy()
+    temp_surface.fill("#FFFFFF00", special_flags=pygame.BLEND_RGBA_SUB)
+    new_surface.blit(temp_surface, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+    new_surface.fill("#FFFFFF00", special_flags=pygame.BLEND_RGBA_SUB)
     return new_surface
 
 def set_color_light(surface: pygame.Surface, color: pygame.Color) -> pygame.Surface:
-    color = pygame.Color(color)
-    new_surface = surface.copy()
-    for x in range(surface.get_width()):
-        for y in range(surface.get_height()):
-            pixel_color = pygame.Color(surface.get_at((x, y)))
-            pixel_color.r = 255 - int((255 - pixel_color.r) * color.r / 255)
-            pixel_color.g = 255 - int((255 - pixel_color.g) * color.b / 255)
-            pixel_color.b = 255 - int((255 - pixel_color.g) * color.b / 255)
-            new_surface.set_at((x, y), pixel_color)
+    clr_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+    clr_surface.fill(pygame.Color(255 - color.r, 255 - color.g, 255 - color.b, 255))
+    neg_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+    neg_surface.fill("#FFFFFFFF")
+    neg_surface.blit(surface, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
+    clr_surface.blit(neg_surface, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+    new_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+    new_surface.fill("#FFFFFFFF")
+    new_surface.blit(clr_surface, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
     return new_surface
 
 def random_hue() -> pygame.Color:
@@ -53,5 +56,5 @@ def random_hue() -> pygame.Color:
         b = 255 * ((n - 5 / 6) * 6)
     return pygame.Color(int(r), int(g), int(b))
 
-default_surface_size = 24
+pixel_size = 6
 sprite_size = 24
