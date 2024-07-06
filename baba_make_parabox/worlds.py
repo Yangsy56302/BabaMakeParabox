@@ -10,12 +10,10 @@ import baba_make_parabox.displays as displays
 
 class world(object):
     class_name: str = "World"
-    name: str
-    level_list: list[levels.level]
-    rule_list: list[rules.Rule]
-    def __init__(self, *level_list: levels.level, rule_list: Optional[list[rules.Rule]] = None, **kwds: Any) -> None:
-        self.level_list = list(level_list)
-        self.rule_list = rule_list if rule_list is not None else rules.default_rule_list
+    def __init__(self, name: str, level_list: list[levels.level], rule_list: Optional[list[rules.Rule]] = None) -> None:
+        self.name: str = name
+        self.level_list: list[levels.level] = list(level_list)
+        self.rule_list: list[rules.Rule] = rule_list if rule_list is not None else rules.default_rule_list
     def __str__(self) -> str:
         return self.class_name
     def __repr__(self) -> str:
@@ -27,9 +25,11 @@ class world(object):
                 continue
             not_match = False
             for i in range(len(rule)):
-                if rule[i] != match_rule[i] and match_rule[i] is not None:
-                    not_match = True
-                    break
+                text_type = match_rule[i]
+                if text_type is not None:
+                    if not issubclass(rule[i], text_type):
+                        not_match = True
+                        break
             if not_match:
                 continue
             found_rules.append(rule)
@@ -164,12 +164,23 @@ class world(object):
                     move_list.extend(self.get_move_list(level, you_obj, (you_obj.x, you_obj.y), facing))
         move_list = basics.remove_same_elements(move_list)
         self.move_objs_from_move_list(move_list)
-    def round(self, op: spaces.PlayerOperation) -> bool:
+    def transform(self) -> None:
+        global_transform_rules = self.find_rules(objects.Noun, objects.IS, objects.Noun)
         for level in self.level_list:
-            level.update_rules()
+            transform_rules = level.find_rules(objects.Noun, objects.IS, objects.Noun)
+            transform_rules.extend(global_transform_rules)
+            for rule in transform_rules:
+                for old_obj in level.get_objs_from_type(rules.nouns_objs_dicts.get_obj(rule[0])):
+                    new_obj = rules.nouns_objs_dicts.get_obj(rule[2])((old_obj.x, old_obj.y), old_obj.facing) # type: ignore
+                    level.del_obj(old_obj.uuid)
+                    level.new_obj(new_obj)
+    def round(self, op: spaces.PlayerOperation) -> bool:
         if op != "_":
             self.you(op)
         self.move()
+        for level in self.level_list:
+            level.update_rules()
+        self.transform()
         you_rules = self.find_rules(None, objects.IS, objects.YOU)
         you_types = []
         for you_type in [t[0] for t in you_rules]:
@@ -188,8 +199,8 @@ class world(object):
         pixel_sprite_size = displays.sprite_size * displays.pixel_size
         level_surface_size = (level.width * pixel_sprite_size, level.height * pixel_sprite_size)
         level_surface = pygame.Surface(level_surface_size, pygame.SRCALPHA)
-        for i in range(len(level.objects)):
-            obj = level.objects[i]
+        for i in range(len(level.object_list)):
+            obj = level.object_list[i]
             if isinstance(obj, objects.Level):
                 obj_level = self.get_level(obj.name, obj.inf_tier)
                 obj_surface = self.show_level(obj_level, layer - 1)
@@ -213,3 +224,25 @@ class world(object):
             pos = (obj.x * pixel_sprite_size, obj.y * pixel_sprite_size)
             level_surface.blit(pygame.transform.scale(obj_surface, (pixel_sprite_size, pixel_sprite_size)), pos)
         return level_surface
+    def to_json(self) -> basics.JsonObject:
+        json_object = {"name": self.name, "level_list": [], "rule_list": []}
+        for level in self.level_list:
+            json_object["level_list"].append(level.to_json())
+        for rule in self.rule_list:
+            json_object["rule_list"].append([])
+            for obj in rule:
+                json_object["rule_list"][-1].append({v: k for k, v in objects.object_name.items()}[obj])
+        return json_object
+
+def json_to_world(json_object: basics.JsonObject) -> world: # oh hell no * 3
+    level_list = []
+    for level in json_object["level_list"]: # type: ignore
+        level_list.append(levels.json_to_level(level))
+    rule_list = []
+    for rule in json_object["rule_list"]: # type: ignore
+        rule_list.append([])
+        for obj_type in rule:
+            rule_list[-1].append(objects.object_name[obj_type])
+    return world(name=json_object["name"], # type: ignore
+                 level_list=level_list, # type: ignore
+                 rule_list=rule_list) # type: ignore

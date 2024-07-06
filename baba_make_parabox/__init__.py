@@ -1,6 +1,8 @@
 import os
 import sys
 import copy
+import argparse
+import json
 
 import baba_make_parabox.basics as basics
 import baba_make_parabox.spaces as spaces
@@ -12,7 +14,21 @@ import baba_make_parabox.worlds as worlds
 
 import pygame
 
-def main(world: worlds.world) -> None:
+parser = argparse.ArgumentParser(description="The information of running a fan-made sokoban-like metagame by Yangsy56302 in terminal")
+parser.add_argument("-v", "--versions", action="store_true", help="show the game's version")
+parser.add_argument("-t", "--test", action="store_true", help="play the test world")
+parser.add_argument("-i", "--input", type=str, default="None", help="input world from json file at ./worlds")
+parser.add_argument("-o", "--output", type=str, default="None", help="output world to json file at ./worlds")
+parser.add_argument("bypass_pyinstaller_1", type=str, default="808", help="bypass pyinstaller, do not use")
+parser.add_argument("bypass_pyinstaller_2", type=str, default="388", help="bypass pyinstaller, do not use")
+args = parser.parse_args()
+
+def play(world: worlds.world) -> None:
+    if args.output != "None":
+        with open(os.path.join("worlds", args.output[1:] + ".json"), "w", encoding="ascii") as file:
+            json.dump(world.to_json(), file, indent=4)
+    for level in world.level_list:
+        level.update_rules()
     history = [copy.deepcopy(world)]
     window = pygame.display.set_mode((720, 720))
     clock = pygame.time.Clock()
@@ -110,7 +126,7 @@ def test() -> None:
     level_0.new_obj(objects.WALL((8, 1)))
     level_0.new_obj(objects.IS((8, 2)))
     level_0.new_obj(objects.STOP((8, 3)))
-    level_0.new_obj(objects.ROCK((8, 5)))
+    level_0.new_obj(objects.TEXT((8, 5)))
     level_0.new_obj(objects.IS((8, 6)))
     level_0.new_obj(objects.PUSH((8, 7)))
     level_0.new_obj(objects.FLAG((4, 1)))
@@ -152,7 +168,7 @@ def test() -> None:
     level_1.new_obj(objects.WALL((6, 4)))
     level_1.new_obj(objects.IS((6, 5)))
     level_1.new_obj(objects.STOP((6, 6)))
-    level_1.new_obj(objects.ROCK((2, 6)))
+    level_1.new_obj(objects.TEXT((2, 6)))
     level_1.new_obj(objects.IS((3, 6)))
     level_1.new_obj(objects.PUSH((4, 6)))
     # Empty spaces
@@ -172,11 +188,17 @@ def test() -> None:
                 level_1.new_obj(objects.Wall((x, y)))
     level_1.del_objs_from_type(objects.Keke)
     # World
-    world = worlds.world(level_0, level_1)
-    main(world)
+    world = worlds.world("My World", [level_0, level_1])
+    play(world)
 
 print("Thank you for playing Baba Make Parabox!")
-if __name__ == "__main__" or "--test" in sys.argv or "-t" in sys.argv:
-    test()
 
-__all__ = ["basics", "spaces", "objects", "rules", "levels", "displays", "worlds"]
+if args.versions:
+    print("Baba Make Parabox Version: 1.3")
+if args.test:
+    test()
+elif args.input != "None":
+    with open(os.path.join("worlds", args.input[1:] + ".json"), "r", encoding="ascii") as file:
+        play(worlds.json_to_world(json.load(file)))
+
+__all__ = ["basics", "spaces", "objects", "rules", "levels", "displays", "worlds", "test", "play"]

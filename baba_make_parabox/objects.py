@@ -1,6 +1,7 @@
 from typing import Any
 import uuid
 
+import baba_make_parabox.basics as basics
 import baba_make_parabox.spaces as spaces
 
 class Object(object):
@@ -17,6 +18,8 @@ class Object(object):
         return self.class_name
     def __repr__(self) -> str:
         return self.class_name
+    def to_json(self) -> dict[str, basics.JsonObject]:
+        return {"type": self.class_name, "position": [self.x, self.y], "orientation": self.facing}
 
 class Text(Object):
     class_name: str = "Text"
@@ -65,6 +68,10 @@ class Level(Object):
         return " ".join([self.class_name, self.name, str(self.inf_tier)])
     def __repr__(self) -> str:
         return " ".join([self.class_name, self.name, str(self.inf_tier)])
+    def to_json(self) -> basics.JsonObject:
+        json_object = super().to_json()
+        json_object.update({"level": {"name": self.name, "infinite_tier": self.inf_tier}})
+        return json_object
         
 class Clone(Object):
     class_name: str = "Clone"
@@ -77,10 +84,10 @@ class Clone(Object):
         return " ".join([self.class_name, self.name, str(self.inf_tier)])
     def __repr__(self) -> str:
         return " ".join([self.class_name, self.name, str(self.inf_tier)])
-
-class EMPTY(Noun):
-    class_name: str = "EMPTY"
-    sprite_name: str = "text_empty"
+    def to_json(self) -> basics.JsonObject:
+        json_object = super().to_json()
+        json_object.update({"level": {"name": self.name, "infinite_tier": self.inf_tier}})
+        return json_object
 
 class BABA(Noun):
     class_name: str = "BABA"
@@ -105,6 +112,10 @@ class ROCK(Noun):
 class FLAG(Noun):
     class_name: str = "FLAG"
     sprite_name: str = "text_flag"
+
+class EMPTY(Noun):
+    class_name: str = "EMPTY"
+    sprite_name: str = "text_empty"
 
 class TEXT(Noun):
     class_name: str = "TEXT"
@@ -141,3 +152,42 @@ class MOVE(Property):
 class WIN(Property):
     class_name: str = "WIN"
     sprite_name: str = "text_win"
+
+object_name: dict[str, type[Object]] = {
+    "Baba": Baba,
+    "Keke": Keke,
+    "Wall": Wall,
+    "Box": Box,
+    "Rock": Rock,
+    "Flag": Flag,
+    "Level": Level,
+    "Clone": Clone,
+    "BABA": BABA,
+    "KEKE": KEKE,
+    "WALL": WALL,
+    "BOX": BOX,
+    "ROCK": ROCK,
+    "FLAG": FLAG,
+    "EMPTY": EMPTY,
+    "TEXT": TEXT,
+    "LEVEL": LEVEL,
+    "CLONE": CLONE,
+    "IS": IS,
+    "YOU": YOU,
+    "STOP": STOP,
+    "PUSH": PUSH,
+    "MOVE": MOVE,
+    "WIN": WIN
+}
+
+def json_to_object(json_object: basics.JsonObject) -> Object: # oh hell no
+    type_name: str = json_object["type"] # type: ignore
+    object_type: type[Object] = object_name[type_name]
+    if object_type in [Level, Clone]:
+        return object_type(pos=tuple(json_object["position"]), # type: ignore
+                           name=json_object["level"]["name"], # type: ignore
+                           inf_tier=json_object["level"]["infinite_tier"], # type: ignore
+                           facing=json_object["orientation"]) # type: ignore
+    else:
+        return object_type(pos=tuple(json_object["position"]), # type: ignore
+                           facing=json_object["orientation"]) # type: ignore

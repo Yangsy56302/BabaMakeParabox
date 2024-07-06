@@ -2,6 +2,7 @@ from typing import Any, Optional
 import pygame
 import uuid
 
+import baba_make_parabox.basics as basics
 import baba_make_parabox.spaces as spaces
 import baba_make_parabox.objects as objects
 import baba_make_parabox.rules as rules
@@ -19,8 +20,8 @@ class level(object):
         self.width: int = size[0]
         self.height: int = size[1]
         self.color: pygame.Color = color if color is not None else displays.random_hue()
-        self.objects: list[objects.Object] = []
-        self.rules: list[rules.Rule] = []
+        self.object_list: list[objects.Object] = []
+        self.rule_list: list[rules.Rule] = []
     def __eq__(self, level: "level") -> bool:
         return self.uuid == level.uuid
     def __str__(self) -> str:
@@ -30,51 +31,51 @@ class level(object):
     def out_of_range(self, coord: spaces.Coord) -> bool:
         return coord[0] < 0 or coord[1] < 0 or coord[0] >= self.width or coord[1] >= self.height
     def new_obj(self, obj: objects.Object) -> bool:
-        self.objects.append(obj)
+        self.object_list.append(obj)
         return True
     def get_obj(self, uid: uuid.UUID) -> Optional[objects.Object]:
-        res = [o for o in self.objects if uid == o.uuid]
+        res = [o for o in self.object_list if uid == o.uuid]
         return res[0] if len(res) != 0 else None
     def get_objs_from_pos_and_type[T: objects.Object](self, pos: spaces.Coord, obj_type: type[T]) -> list[T]:
-        return [o for o in self.objects if isinstance(o, obj_type) and match_pos(o, pos)]
+        return [o for o in self.object_list if isinstance(o, obj_type) and match_pos(o, pos)]
     def get_objs_from_pos(self, pos: spaces.Coord) -> list[objects.Object]:
-        return [o for o in self.objects if match_pos(o, pos)]
+        return [o for o in self.object_list if match_pos(o, pos)]
     def get_objs_from_type[T: objects.Object](self, obj_type: type[T]) -> list[T]:
-        return [o for o in self.objects if isinstance(o, obj_type)]
+        return [o for o in self.object_list if isinstance(o, obj_type)]
     def del_obj(self, uid: uuid.UUID) -> bool:
-        for i in range(len(self.objects)):
-            if uid == self.objects[i].uuid:
-                self.objects.pop(i)
+        for i in range(len(self.object_list)):
+            if uid == self.object_list[i].uuid:
+                self.object_list.pop(i)
                 return True
         return False
     def del_obj_from_pos_and_type(self, pos: spaces.Coord, obj_type: type) -> bool:
-        for i in range(len(self.objects)):
-            if match_pos(self.objects[i], pos) and isinstance(self.objects[i], obj_type):
-                self.objects.pop(i)
+        for i in range(len(self.object_list)):
+            if match_pos(self.object_list[i], pos) and isinstance(self.object_list[i], obj_type):
+                self.object_list.pop(i)
                 return True
         return False
     def del_objs_from_pos_and_type(self, pos: spaces.Coord, obj_type: type) -> bool:
-        old_length = len(self.objects)
-        new_objects = filter(lambda o: not match_pos(o, pos) and isinstance(o, obj_type), self.objects)
-        self.objects = list(new_objects)
-        new_length = len(self.objects)
+        old_length = len(self.object_list)
+        new_objects = filter(lambda o: not match_pos(o, pos) and isinstance(o, obj_type), self.object_list)
+        self.object_list = list(new_objects)
+        new_length = len(self.object_list)
         return old_length - new_length > 0
     def del_objs_from_type(self, obj_type: type[objects.Object]) -> bool:
-        old_length = len(self.objects)
-        new_objects = filter(lambda o: not isinstance(o, obj_type), self.objects)
-        self.objects = list(new_objects)
-        new_length = len(self.objects)
+        old_length = len(self.object_list)
+        new_objects = filter(lambda o: not isinstance(o, obj_type), self.object_list)
+        self.object_list = list(new_objects)
+        new_length = len(self.object_list)
         return old_length - new_length > 0
     def get_levels(self) -> list[objects.Level]:
-        return [o for o in self.objects if isinstance(o, objects.Level)]
+        return [o for o in self.object_list if isinstance(o, objects.Level)]
     def get_levels_from_pos(self, pos: spaces.Coord) -> list[objects.Level]:
-        return [o for o in self.objects if isinstance(o, objects.Level) and match_pos(o, pos)]
+        return [o for o in self.object_list if isinstance(o, objects.Level) and match_pos(o, pos)]
     def get_clones(self) -> list[objects.Clone]:
-        return [o for o in self.objects if isinstance(o, objects.Clone)]
+        return [o for o in self.object_list if isinstance(o, objects.Clone)]
     def get_clones_from_pos(self, pos: spaces.Coord) -> list[objects.Clone]:
-        return [o for o in self.objects if isinstance(o, objects.Clone) and match_pos(o, pos)]
+        return [o for o in self.object_list if isinstance(o, objects.Clone) and match_pos(o, pos)]
     def update_rules(self) -> None:
-        self.rules = []
+        self.rule_list = []
         text_objs = self.get_objs_from_type(objects.Text)
         noun_objs = [o for o in text_objs if isinstance(o, objects.Noun)]
         oper_objs = [o for o in text_objs if isinstance(o, objects.Operator)]
@@ -88,21 +89,23 @@ class level(object):
                 for prop_obj in prop_objs:
                     if not spaces.on_line((noun_obj.x, noun_obj.y), (oper_obj.x, oper_obj.y), (prop_obj.x, prop_obj.y)):
                         continue
-                    self.rules.append((type(noun_obj), type(oper_obj), type(prop_obj)))
+                    self.rule_list.append((type(noun_obj), type(oper_obj), type(prop_obj)))
                 for noun_obj_2 in noun_objs:
                     if not spaces.on_line((noun_obj.x, noun_obj.y), (oper_obj.x, oper_obj.y), (noun_obj_2.x, noun_obj_2.y)):
                         continue
-                    self.rules.append((type(noun_obj), type(oper_obj), type(noun_obj_2)))
+                    self.rule_list.append((type(noun_obj), type(oper_obj), type(noun_obj_2)))
     def find_rules(self, *match_rule: Optional[type[objects.Text]]) -> list[rules.Rule]:
         found_rules = []
-        for rule in self.rules:
+        for rule in self.rule_list:
             if len(rule) != len(match_rule):
                 continue
             not_match = False
             for i in range(len(rule)):
-                if rule[i] != match_rule[i] and match_rule[i] is not None:
-                    not_match = True
-                    break
+                text_type = match_rule[i]
+                if text_type is not None:
+                    if not issubclass(rule[i], text_type):
+                        not_match = True
+                        break
             if not_match:
                 continue
             found_rules.append(rule)
@@ -141,3 +144,18 @@ class level(object):
                 if (you_obj.x, you_obj.y) == (win_obj.x, win_obj.y):
                     return True
         return False
+    def to_json(self) -> basics.JsonObject:
+        json_object = {"name": self.name, "infinite_tier": self.inf_tier, "size": [self.width, self.height],
+                       "color": [self.color.r, self.color.g, self.color.b], "object_list": []}
+        for obj in self.object_list:
+            json_object["object_list"].append(obj.to_json())
+        return json_object
+
+def json_to_level(json_object: basics.JsonObject) -> level: # oh hell no * 2
+    new_level = level(name=json_object["name"], # type: ignore
+                      inf_tier=json_object["infinite_tier"], # type: ignore
+                      size=json_object["size"], # type: ignore
+                      color=json_object["color"]) # type: ignore
+    for obj in json_object["object_list"]: # type: ignore
+        new_level.new_obj(objects.json_to_object(obj))
+    return new_level

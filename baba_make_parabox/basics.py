@@ -1,6 +1,8 @@
 import pygame
 import os
 
+JsonObject = None | int | float | str | list["JsonObject"] | dict["str", "JsonObject"]
+
 def remove_same_elements(a_list: list) -> list:
     e_list = list(enumerate(a_list))
     r_list = []
