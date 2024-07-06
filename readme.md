@@ -25,9 +25,9 @@ Then run **test.bat** to start a official game test.
 1. `from baba_make_parabox import *`, then `import baba_make_parabox.main`.
     - Or `import baba_make_parabox as bmp` if you are afraid of duplicated name.
 2. Define some **level**s (`levels.level`):
-    - The first argument is the name (also id) of this level, its type is `str`;
-    - The second argument is the infinity tier of this level, its type is `int`;
-    - The third (and also the last) argument is the size of this level, its type is `spaces.Coord` (`tuple[int, int]`).
+    - The first argument (`name`) is the name (also id) of this level, its type is `str`;
+    - The second argument (`inf_tier`) is the infinity tier of this level, its type is `int`;
+    - The third (and also the last) argument (`size`) is the size of this level, its type is `spaces.Coord` (`tuple[int, int]`).
 3. Put **objects** (`objects.Object` and its subclass) in the level:
     - The first argument is the position of this object, its type is `spaces.Coord`;
     - The second (and commonly the last) argument is the orientation of this object, its type is `spaces.Orient`;
