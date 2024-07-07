@@ -1,1 +1,2 @@
-python main.py -h
+python BabaMakeParabox.py -h
+pause

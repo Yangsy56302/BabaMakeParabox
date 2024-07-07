@@ -14,3 +14,4 @@ level.new_obj(objects.Baba((2, 1)))
 world = worlds.world("transform", [level])
 
 play(world)
+stop()

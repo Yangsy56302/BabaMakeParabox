@@ -3,6 +3,9 @@ import sys
 import copy
 import argparse
 import json
+from typing import NoReturn
+
+os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "TRUE"
 
 import baba_make_parabox.basics as basics
 import baba_make_parabox.spaces as spaces
@@ -14,19 +17,53 @@ import baba_make_parabox.worlds as worlds
 
 import pygame
 
-parser = argparse.ArgumentParser(description="The information of running a fan-made sokoban-like metagame by Yangsy56302 in terminal")
-parser.add_argument("-v", "--versions", action="store_true", help="show the game's version")
-parser.add_argument("-t", "--test", action="store_true", help="play the test world")
-parser.add_argument("-i", "--input", type=str, default="None", help="input world from json file at ./worlds")
-parser.add_argument("-o", "--output", type=str, default="None", help="output world to json file at ./worlds")
-parser.add_argument("bypass_pyinstaller_1", type=str, default="808", help="bypass pyinstaller, do not use")
-parser.add_argument("bypass_pyinstaller_2", type=str, default="388", help="bypass pyinstaller, do not use")
-args = parser.parse_args()
+__all__ = ["basics", "spaces", "objects", "rules", "levels", "displays", "worlds", "play", "test", "stop"]
+
+print("Baba Make Parabox")
+versions = "1.31"
+
+class ArgumentParser(argparse.ArgumentParser):
+    def error(self, message):
+        raise argparse.ArgumentError(argument=None, message="Oops")
+
+parser = ArgumentParser(exit_on_error=False,
+                        prog="BabaMakeParabox",
+                        description="The information of running a fan-made sokoban-like metagame by Yangsy56302 in terminal",
+                        epilog="Thanks argparse")
+parser.add_argument("-v", "--versions", dest="versions", action="store_true", help="show the game's version")
+input_group = parser.add_mutually_exclusive_group()
+input_group.add_argument("-i", "--input", dest="input", action="append", type=str, metavar="filename", help="input worlds from json file at ./worlds")
+input_group.add_argument("-t", "--test", dest="test", action="store_true", default=False, help="play the test world")
+input_group.add_argument("-c", "--code", dest="code", action="store_true", default=False, help="play the world that you write in code")
+parser.add_argument("-o", "--output", dest="output", type=str, metavar="filename", help="output the last world to json file at ./worlds")
+parser.add_argument("bp_1", type=str, default="808", help="bypass pyinstaller, do not use * 1")
+parser.add_argument("bp_2", type=str, default="388", help="bypass pyinstaller, do not use * 2")
+argv = sys.argv[1:]
+argv.extend(["808", "388"])
+arg_error = False
+try:
+    args = parser.parse_args(argv)
+except Exception:
+    arg_error = True
+
+def stop() -> NoReturn:
+    pygame.quit()
+    print("Thank you for playing Baba Make Parabox!")
+    exit(0)
 
 def play(world: worlds.world) -> None:
-    if args.output != "None":
-        with open(os.path.join("worlds", args.output[1:] + ".json"), "w", encoding="ascii") as file:
-            json.dump(world.to_json(), file, indent=4)
+    if not arg_error:
+        if args.output is not None:
+            filename: str = args.output
+            filename = filename.lstrip()
+            with open(os.path.join("worlds", filename + ".json"), "w", encoding="ascii") as file:
+                json.dump(world.to_json(), file, indent=4)
+    print("Global Rule List:")
+    for rule in world.rule_list:
+        str_list = []
+        for obj_type in rule:
+            str_list.append(obj_type.class_name)
+        print(" ".join(str_list))
     for level in world.level_list:
         level.update_rules()
     history = [copy.deepcopy(world)]
@@ -114,11 +151,10 @@ def play(world: worlds.world) -> None:
             print("You Win!")
             game_running = False
         clock.tick(15)
-    pygame.quit()
 
 def test() -> None:
     # Superlevel
-    level_0 = levels.level("main", (9, 9))
+    level_0 = levels.level("main", (9, 9), color=pygame.Color("#888888"))
     # Rules
     level_0.new_obj(objects.BABA((0, 1)))
     level_0.new_obj(objects.IS((1, 1)))
@@ -160,7 +196,7 @@ def test() -> None:
                 level_0.new_obj(objects.Wall((x, y)))
     level_0.del_objs_from_type(objects.Keke)
     # Sublevel
-    level_1 = levels.level("sub", (7, 7))
+    level_1 = levels.level("sub", (7, 7), color=pygame.Color("#004488"))
     # Rules
     level_1.new_obj(objects.BABA((6, 0)))
     level_1.new_obj(objects.IS((6, 1)))
@@ -188,17 +224,28 @@ def test() -> None:
                 level_1.new_obj(objects.Wall((x, y)))
     level_1.del_objs_from_type(objects.Keke)
     # World
-    world = worlds.world("My World", [level_0, level_1])
+    world = worlds.world("Intro 4", [level_0, level_1])
     play(world)
 
-print("Thank you for playing Baba Make Parabox!")
+os.makedirs("worlds", exist_ok=True)
 
-if args.versions:
-    print("Baba Make Parabox Version: 1.3")
-if args.test:
+if not arg_error:
+    if args.versions:
+        print(f"Version: {versions}")
+    if args.test:
+        test()
+        stop()
+    elif args.code:
+        pass
+    elif args.input != "None":
+        for filename in args.input:
+            filename: str
+            filename = filename.lstrip()
+            with open(os.path.join("worlds", filename + ".json"), "r", encoding="ascii") as file:
+                play(worlds.json_to_world(json.load(file)))
+        stop()
+else:
+    print("Oops, looks like you enter the wrong argument.")
+    print("Now the game will set a test world instead.")
     test()
-elif args.input != "None":
-    with open(os.path.join("worlds", args.input[1:] + ".json"), "r", encoding="ascii") as file:
-        play(worlds.json_to_world(json.load(file)))
-
-__all__ = ["basics", "spaces", "objects", "rules", "levels", "displays", "worlds", "test", "play"]
+    stop()

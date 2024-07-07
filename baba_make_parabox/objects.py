@@ -23,39 +23,79 @@ class Object(object):
 
 class Text(Object):
     class_name: str = "Text"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class Noun(Text):
     class_name: str = "Noun"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class Operator(Text):
     class_name: str = "Operator"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class Property(Text):
     class_name: str = "Property"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class Baba(Object):
     class_name: str = "Baba"
     sprite_name: str = "baba"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class Keke(Object):
     class_name: str = "Keke"
     sprite_name: str = "keke"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class Wall(Object):
     class_name: str = "Wall"
     sprite_name: str = "wall"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class Box(Object):
     class_name: str = "Box"
     sprite_name: str = "box"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class Rock(Object):
     class_name: str = "Rock"
     sprite_name: str = "rock"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class Flag(Object):
     class_name: str = "Flag"
     sprite_name: str = "flag"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class Level(Object):
     class_name: str = "Level"
@@ -92,66 +132,130 @@ class Clone(Object):
 class BABA(Noun):
     class_name: str = "BABA"
     sprite_name: str = "text_baba"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class KEKE(Noun):
     class_name: str = "KEKE"
     sprite_name: str = "text_keke"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class WALL(Noun):
     class_name: str = "WALL"
     sprite_name: str = "text_wall"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class BOX(Noun):
     class_name: str = "BOX"
     sprite_name: str = "text_box"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class ROCK(Noun):
     class_name: str = "ROCK"
     sprite_name: str = "text_rock"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class FLAG(Noun):
     class_name: str = "FLAG"
     sprite_name: str = "text_flag"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class EMPTY(Noun):
     class_name: str = "EMPTY"
     sprite_name: str = "text_empty"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class TEXT(Noun):
     class_name: str = "TEXT"
     sprite_name: str = "text_text"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class LEVEL(Noun):
     class_name: str = "LEVEL"
     sprite_name: str = "text_level"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class CLONE(Noun):
-    class_name: str = "LEVEL"
+    class_name: str = "CLONE"
     sprite_name: str = "text_level"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class IS(Operator):
     class_name: str = "IS"
     sprite_name: str = "text_is"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class YOU(Property):
     class_name: str = "YOU"
     sprite_name: str = "text_you"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class STOP(Property):
     class_name: str = "STOP"
     sprite_name: str = "text_stop"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class PUSH(Property):
     class_name: str = "PUSH"
     sprite_name: str = "text_push"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class MOVE(Property):
     class_name: str = "MOVE"
     sprite_name: str = "text_move"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class WIN(Property):
     class_name: str = "WIN"
     sprite_name: str = "text_win"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 object_name: dict[str, type[Object]] = {
     "Baba": Baba,

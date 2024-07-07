@@ -205,24 +205,18 @@ class world(object):
                 obj_level = self.get_level(obj.name, obj.inf_tier)
                 obj_surface = self.show_level(obj_level, layer - 1)
                 obj_surface = displays.set_color_dark(obj_surface, pygame.Color("#CCCCCC"))
-                obj_background = pygame.Surface(obj_surface.get_size(), pygame.SRCALPHA)
-                obj_background.fill("#00000044")
-                obj_background = displays.set_color_dark(obj_background, pygame.Color("#CCCCCC"))
-                obj_background.blit(obj_surface, (0, 0))
-                obj_surface = obj_background
             elif isinstance(obj, objects.Clone):
                 obj_level = self.get_level(obj.name, obj.inf_tier)
                 obj_surface = self.show_level(obj_level, layer - 1)
                 obj_surface = displays.set_color_light(obj_surface, pygame.Color("#444444"))
-                obj_background = pygame.Surface(obj_surface.get_size(), pygame.SRCALPHA)
-                obj_background.fill("#FFFFFF44")
-                obj_background = displays.set_color_light(obj_background, pygame.Color("#444444"))
-                obj_background.blit(obj_surface, (0, 0))
-                obj_surface = obj_background
             else:
                 obj_surface = basics.game_data.sprites[obj.sprite_name].copy()
             pos = (obj.x * pixel_sprite_size, obj.y * pixel_sprite_size)
             level_surface.blit(pygame.transform.scale(obj_surface, (pixel_sprite_size, pixel_sprite_size)), pos)
+        level_background = pygame.Surface(level_surface.get_size(), pygame.SRCALPHA)
+        level_background.fill(pygame.Color(level.color))
+        level_background.blit(level_surface, (0, 0))
+        level_surface = level_background
         return level_surface
     def to_json(self) -> basics.JsonObject:
         json_object = {"name": self.name, "level_list": [], "rule_list": []}

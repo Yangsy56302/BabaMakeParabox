@@ -14,7 +14,11 @@ Download These Things:
 
 Then run **test.bat** to start a official game test.
 
+Run **input.bat** to play a world from json file in the **worlds** folder.
+
 If you need to make an .exe file, run **make.bat**.
+
+You can run **help.bat** for more information with how to run the game in terminal.
 
 ## How to control
 
@@ -38,9 +42,9 @@ And remember:
 
 ## How to code a custom world
 
-1. `from baba_make_parabox import *`, then `import baba_make_parabox.main`.
+1. `from baba_make_parabox import *`.
     - Or `import baba_make_parabox as bmp` if you are afraid of duplicated name.
-2. Define some **level**s (`levels.level`):
+2. Define some **levels** (`levels.level`):
     - The first argument (`name`) is the name (also id) of this level, its type is `str`;
     - The second argument (`size`) is the size of this level, its type is `spaces.Coord` (`tuple[int, int]`);
     - The third (and also the last) argument (`inf_tier`) is the infinity tier of this level, its type is `int`, and its default value is `0`.
@@ -61,9 +65,10 @@ And remember:
     - The first argument is the name of this world, its type is `str`;
     - The second argument is a `list` of the levels in this world;
     - The third argument is a `list` of the global rules of this world, its type is `rules.Rule` (like `tuple[type[objects.Noun], type[objects.IS], type[objects.Property]]` or something similar).
-5. Run `baba_make_parabox.main`, its only argument is your custom world.
+5. Run `baba_make_parabox.play`, its only argument is your custom world.
+    - Run `baba_make_parabox.stop` to stop the game if you want to.
 
-Now you can test and play your custom world!
+Now you can test and play your custom world with `-c` terminal argument!
 
 ## List of Versions
 
@@ -74,6 +79,7 @@ Now you can test and play your custom world!
 | 1.11   | 2024.07.06 | Level is Previous and Next |
 | 1.2    | 2024.07.06 | Flag is Win; Game is EXE |
 | 1.3    | 2024.07.06 | Baba is Keke; World is Input and Output |
+| 1.31   | 2024.07.06 | Terminal is More; Text is not Hide; Level is Red |
 
 ## Bug Reports and Advices
 
