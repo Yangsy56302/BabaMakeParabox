@@ -3,7 +3,6 @@ import sys
 import copy
 import argparse
 import json
-from typing import NoReturn
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "TRUE"
 
@@ -46,10 +45,9 @@ try:
 except Exception:
     arg_error = True
 
-def stop() -> NoReturn:
+def stop() -> None:
     pygame.quit()
     print("Thank you for playing Baba Make Parabox!")
-    exit(0)
 
 def play(world: worlds.world) -> None:
     if not arg_error:
