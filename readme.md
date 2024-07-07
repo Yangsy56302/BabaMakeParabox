@@ -16,20 +16,21 @@ Then run **test.bat** to start a official game test.
 
 Run **input.bat** to play a world from json file in the **worlds** folder.
 
-If you need to make an .exe file, run **make.bat**.
+Run **edit.bat** to edit and save a world from json file in the **worlds** folder, or create one.
 
 You can run **help.bat** for more information with how to run the game in terminal.
 
-## How to control
+If you need to make an .exe file, run **make.bat**.
+
+### How to control
 
 - WSAD: You move.
 - Space: You wait for something.
 - Z: Undo, max 100 times.
 - R: Restart.
-- Minus: Camera moves to previous level.
-- Equals: Camera moves to next level.
+- Minus / Equals: Select level for camera to focus.
 
-## How to win
+### How to win
 
 Simply put something that is **YOU** to something that is **WIN**.
 
@@ -40,7 +41,29 @@ And remember:
 3. Sometimes you need to get inside of the sublevel;
 4. Sometimes you need to create a paradox.
 
-## How to code a custom world
+## How to make a custom world (recommend)
+
+Don't you remember what I said? just run **edit.bat**.
+
+### How to control
+
+- WSAD: Move cursor.
+- IKJL: Change orientation.
+- Q / E: Select object.
+- Tab: Switch object / noun.
+- Enter: Place object on cursor.
+- Backspace: Destroy all objects on cursor.
+- Minus / Equals: Select level.
+- Lshift + Enter: Place level object (direct to current level).
+- Rshift + Enter: Place clone object (direct to current level).
+- P: New level (information from terminal inputs).
+- Z: Undo, max 100 times.
+- X: Cut all objects on cursor.
+- C: Copy all objects on cursor.
+- V: Paste all objects on cursor.
+- Close Window: Save and quit.
+
+## How to code a custom world (not recommend)
 
 1. `from baba_make_parabox import *`.
     - Or `import baba_make_parabox as bmp` if you are afraid of duplicated name.
@@ -75,11 +98,12 @@ Now you can test and play your custom world with `-c` terminal argument!
 | Number |    Time    | Informations |
 |--------|------------|--------------|
 | 1.0    | 2024.07.05 | Initialized. |
-| 1.1    | 2024.07.06 | Keke is Move; Undo and Restart; Baba Make Levels |
+| 1.1    | 2024.07.06 | Keke is Move; Undo and Restart; Baba make Levels |
 | 1.11   | 2024.07.06 | Level is Previous and Next |
 | 1.2    | 2024.07.06 | Flag is Win; Game is EXE |
 | 1.3    | 2024.07.06 | Baba is Keke; World is Input and Output |
 | 1.31   | 2024.07.06 | Terminal is More; Text is not Hide; Level is Red |
+| 1.4    | 2024.07.06 | Baba make Worlds |
 
 ## Bug Reports and Advices
 

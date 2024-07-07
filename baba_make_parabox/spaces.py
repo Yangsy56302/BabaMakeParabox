@@ -2,7 +2,7 @@ from typing import Literal
 
 Coord = tuple[int, int]
 Orient = Literal["W", "A", "S", "D"]
-PlayerOperation = Orient | Literal["_"]
+PlayerOperation = Orient | Literal[" "]
 
 def swap_orientation(direction: Orient) -> Orient:
     match direction:

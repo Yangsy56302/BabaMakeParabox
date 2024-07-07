@@ -60,6 +60,12 @@ class level(object):
         self.object_list = list(new_objects)
         new_length = len(self.object_list)
         return old_length - new_length > 0
+    def del_objs_from_pos(self, pos: spaces.Coord) -> bool:
+        old_length = len(self.object_list)
+        new_objects = filter(lambda o: not match_pos(o, pos), self.object_list)
+        self.object_list = list(new_objects)
+        new_length = len(self.object_list)
+        return old_length - new_length > 0
     def del_objs_from_type(self, obj_type: type[objects.Object]) -> bool:
         old_length = len(self.object_list)
         new_objects = filter(lambda o: not isinstance(o, obj_type), self.object_list)
@@ -124,7 +130,7 @@ class level(object):
         you_types = you_types[:]
         you_rules = self.find_rules(None, objects.IS, objects.YOU)
         for you_type in [t[0] for t in you_rules]:
-            you_types.append(rules.nouns_objs_dicts.get_obj(you_type))
+            you_types.append(rules.nouns_objs_dicts.get_obj(you_type)) # type: ignore
         you_objs: list[objects.Object] = []
         for you_type in you_types:
             you_objs.extend(self.get_objs_from_type(you_type))
@@ -133,7 +139,7 @@ class level(object):
         win_types = win_types[:]
         win_rules = self.find_rules(None, objects.IS, objects.WIN)
         for win_type in [t[0] for t in win_rules]:
-            win_types.append(rules.nouns_objs_dicts.get_obj(win_type))
+            win_types.append(rules.nouns_objs_dicts.get_obj(win_type)) # type: ignore
         win_objs: list[objects.Object] = []
         for win_type in win_types:
             win_objs.extend(self.get_objs_from_type(win_type))
@@ -153,9 +159,9 @@ class level(object):
 
 def json_to_level(json_object: basics.JsonObject) -> level: # oh hell no * 2
     new_level = level(name=json_object["name"], # type: ignore
-                      inf_tier=json_object["infinite_tier"], # type: ignore
-                      size=json_object["size"], # type: ignore
-                      color=json_object["color"]) # type: ignore
+                      inf_tier=int(json_object["infinite_tier"]), # type: ignore
+                      size=tuple(json_object["size"]), # type: ignore
+                      color=pygame.Color(json_object["color"])) # type: ignore
     for obj in json_object["object_list"]: # type: ignore
         new_level.new_obj(objects.json_to_object(obj))
     return new_level

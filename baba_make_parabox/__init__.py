@@ -13,13 +13,14 @@ import baba_make_parabox.rules as rules
 import baba_make_parabox.levels as levels
 import baba_make_parabox.displays as displays
 import baba_make_parabox.worlds as worlds
+import baba_make_parabox.edits as edits
 
 import pygame
 
 __all__ = ["basics", "spaces", "objects", "rules", "levels", "displays", "worlds", "play", "test", "stop"]
 
 print("Baba Make Parabox")
-versions = "1.31"
+versions = "1.4"
 
 class ArgumentParser(argparse.ArgumentParser):
     def error(self, message):
@@ -30,11 +31,14 @@ parser = ArgumentParser(exit_on_error=False,
                         description="The information of running a fan-made sokoban-like metagame by Yangsy56302 in terminal",
                         epilog="Thanks argparse")
 parser.add_argument("-v", "--versions", dest="versions", action="store_true", help="show the game's version")
-input_group = parser.add_mutually_exclusive_group()
+play_or_edit_group = parser.add_mutually_exclusive_group()
+play_group = parser.add_argument_group()
+input_group = play_group.add_mutually_exclusive_group()
 input_group.add_argument("-i", "--input", dest="input", action="append", type=str, metavar="filename", help="input worlds from json file at ./worlds")
 input_group.add_argument("-t", "--test", dest="test", action="store_true", default=False, help="play the test world")
 input_group.add_argument("-c", "--code", dest="code", action="store_true", default=False, help="play the world that you write in code")
-parser.add_argument("-o", "--output", dest="output", type=str, metavar="filename", help="output the last world to json file at ./worlds")
+play_group.add_argument("-o", "--output", dest="output", type=str, metavar="filename", help="output the last world to json file at ./worlds")
+play_or_edit_group.add_argument("-e", "--edit", dest="edit", type=str, metavar="filename", help="open, edit and save the world from json file if exists, otherwise create new, edit and save")
 parser.add_argument("bp_1", type=str, default="808", help="bypass pyinstaller, do not use * 1")
 parser.add_argument("bp_2", type=str, default="388", help="bypass pyinstaller, do not use * 2")
 argv = sys.argv[1:]
@@ -75,12 +79,12 @@ def play(world: worlds.world) -> None:
                 "R": pygame.K_r,
                 "-": pygame.K_MINUS,
                 "+": pygame.K_EQUALS,
-                "_": pygame.K_SPACE}
+                " ": pygame.K_SPACE}
     cooldowns = {value: 0 for value in keybinds.values()}
     default_cooldown = 3
-    window.fill("#112244")
-    current_level = 0
-    window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level], 2), (720, 720)), (0, 0))
+    window.fill("#000000")
+    current_level_index = 0
+    window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], 2), (720, 720)), (0, 0))
     pygame.display.flip()
     winned = False
     game_running = True
@@ -110,10 +114,10 @@ def play(world: worlds.world) -> None:
             winned = world.round("D")
             cooldowns[keybinds["D"]] = default_cooldown
             refresh = True
-        elif keys[keybinds["_"]] and cooldowns[keybinds["_"]] == 0:
+        elif keys[keybinds[" "]] and cooldowns[keybinds[" "]] == 0:
             history.append(copy.deepcopy(world))
-            winned = world.round("_")
-            cooldowns[keybinds["_"]] = default_cooldown
+            winned = world.round(" ")
+            cooldowns[keybinds[" "]] = default_cooldown
             refresh = True
         elif keys[keybinds["Z"]] and cooldowns[keybinds["Z"]] == 0:
             if len(history) > 1:
@@ -127,17 +131,17 @@ def play(world: worlds.world) -> None:
             cooldowns[keybinds["R"]] = default_cooldown
             refresh = True
         elif keys[keybinds["-"]] and cooldowns[keybinds["-"]] == 0:
-            current_level -= 1
+            current_level_index -= 1
             cooldowns[keybinds["-"]] = default_cooldown
             refresh = True
         elif keys[keybinds["+"]] and cooldowns[keybinds["+"]] == 0:
-            current_level += 1
+            current_level_index += 1
             cooldowns[keybinds["+"]] = default_cooldown
             refresh = True
-        current_level = current_level % len(world.level_list) if current_level >= 0 else len(world.level_list) - 1
+        current_level_index = current_level_index % len(world.level_list) if current_level_index >= 0 else len(world.level_list) - 1
         if refresh:
-            window.fill("#112244")
-            window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level], 2), (720, 720)), (0, 0))
+            window.fill("#000000")
+            window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], 2), (720, 720)), (0, 0))
             pygame.display.flip()
         for key in cooldowns:
             if cooldowns[key] > 0:
@@ -227,7 +231,7 @@ def test() -> None:
 
 os.makedirs("worlds", exist_ok=True)
 
-if os.environ["PYINSTALLER"] == "TRUE":
+if os.environ.get("PYINSTALLER") == "TRUE":
     pass
 elif not arg_error:
     if args.versions:
@@ -237,12 +241,24 @@ elif not arg_error:
         stop()
     elif args.code:
         pass
-    elif args.input != "None":
+    elif args.input is not None:
         for filename in args.input:
             filename: str
             filename = filename.lstrip()
             with open(os.path.join("worlds", filename + ".json"), "r", encoding="ascii") as file:
                 play(worlds.json_to_world(json.load(file)))
+        stop()
+    elif args.edit is not None:
+        filename: str = args.edit.lstrip()
+        if os.path.isfile(os.path.join("worlds", filename + ".json")):
+            with open(os.path.join("worlds", filename + ".json"), "r", encoding="ascii") as file:
+                world = worlds.json_to_world(json.load(file))
+        else:
+            level = levels.level("main", (16, 16), color=pygame.Color("#000000"))
+            world = worlds.world(filename, [level])
+        world = edits.level_editor(world)
+        with open(os.path.join("worlds", filename + ".json"), "w", encoding="ascii") as file:
+            json.dump(world.to_json(), file, indent=4)
         stop()
 else:
     print("Oops, looks like you enter the wrong argument.")

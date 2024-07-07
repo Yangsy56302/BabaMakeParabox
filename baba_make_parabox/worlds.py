@@ -34,8 +34,9 @@ class world(object):
                 continue
             found_rules.append(rule)
         return found_rules
-    def get_level(self, name: str, inf_tier: int) -> levels.level:
-        return list(filter(lambda l: l.name == name and l.inf_tier == inf_tier, self.level_list))[0]
+    def get_level(self, name: str, inf_tier: int) -> Optional[levels.level]:
+        level = list(filter(lambda l: l.name == name and l.inf_tier == inf_tier, self.level_list))
+        return level[0] if len(level) != 0 else None
     def find_super_level(self, name: str, inf_tier: int) -> Optional[tuple[levels.level, objects.Object]]:
         for super_level in self.level_list:
             for obj in super_level.get_levels():
@@ -83,10 +84,10 @@ class world(object):
                 move_list.append((obj, level, new_pos, facing))
             else:
                 for level_like_object in level_like_objects:
-                    sub_level = self.get_level(level_like_object.name, level_like_object.inf_tier)
+                    sub_level: levels.level = self.get_level(level_like_object.name, level_like_object.inf_tier) # type: ignore
                     # inf in
                     if sub_level in passed:
-                        sub_sub_level = self.get_level(sub_level.name, sub_level.inf_tier - 1)
+                        sub_sub_level: levels.level = self.get_level(sub_level.name, sub_level.inf_tier - 1) # type: ignore
                         input_pos = sub_sub_level.default_input_position(spaces.swap_orientation(facing))
                         passed.append(level)
                         new_move_list = self.get_move_list(sub_sub_level, obj, input_pos, facing, passed)
@@ -105,7 +106,7 @@ class world(object):
         if len(push_rules) != 0:
             push_objects = []
             for push_type in [t[0] for t in push_rules]:
-                push_objects.extend(level.get_objs_from_pos_and_type(new_pos, rules.nouns_objs_dicts.get_obj(push_type)))
+                push_objects.extend(level.get_objs_from_pos_and_type(new_pos, rules.nouns_objs_dicts.get_obj(push_type))) # type: ignore
             if len(push_objects) != 0:
                 for push_object in push_objects:
                     new_move_list = self.get_move_list(level, push_object, (push_object.x, push_object.y), facing)
@@ -120,7 +121,7 @@ class world(object):
         if len(stop_rules) != 0:
             stop_objects = []
             for stop_type in [t[0] for t in stop_rules]:
-                stop_objects.extend(level.get_objs_from_pos_and_type(new_pos, rules.nouns_objs_dicts.get_obj(stop_type)))
+                stop_objects.extend(level.get_objs_from_pos_and_type(new_pos, rules.nouns_objs_dicts.get_obj(stop_type))) # type: ignore
             if len(stop_objects) != 0:
                 return []
         return [(obj, level, new_pos, facing)]
@@ -143,7 +144,7 @@ class world(object):
         for level in self.level_list:
             move_rules = level.find_rules(None, objects.IS, objects.MOVE) + self.find_rules(None, objects.IS, objects.MOVE)
             for move_type in [t[0] for t in move_rules]:
-                for move_obj in level.get_objs_from_type(rules.nouns_objs_dicts.get_obj(move_type)):
+                for move_obj in level.get_objs_from_type(rules.nouns_objs_dicts.get_obj(move_type)): # type: ignore
                     new_move_list = self.get_move_list(level, move_obj, (move_obj.x, move_obj.y), move_obj.facing)
                     if len(new_move_list) != 0:
                         move_list.extend(new_move_list)
@@ -160,7 +161,7 @@ class world(object):
         for level in self.level_list:
             you_rules = level.find_rules(None, objects.IS, objects.YOU) + self.find_rules(None, objects.IS, objects.YOU)
             for you_type in [t[0] for t in you_rules]:
-                for you_obj in level.get_objs_from_type(rules.nouns_objs_dicts.get_obj(you_type)):
+                for you_obj in level.get_objs_from_type(rules.nouns_objs_dicts.get_obj(you_type)): # type: ignore
                     move_list.extend(self.get_move_list(level, you_obj, (you_obj.x, you_obj.y), facing))
         move_list = basics.remove_same_elements(move_list)
         self.move_objs_from_move_list(move_list)
@@ -170,12 +171,21 @@ class world(object):
             transform_rules = level.find_rules(objects.Noun, objects.IS, objects.Noun)
             transform_rules.extend(global_transform_rules)
             for rule in transform_rules:
-                for old_obj in level.get_objs_from_type(rules.nouns_objs_dicts.get_obj(rule[0])):
-                    new_obj = rules.nouns_objs_dicts.get_obj(rule[2])((old_obj.x, old_obj.y), old_obj.facing) # type: ignore
-                    level.del_obj(old_obj.uuid)
-                    level.new_obj(new_obj)
+                for old_obj in level.get_objs_from_type(rules.nouns_objs_dicts.get_obj(rule[0])): # type: ignore
+                    new_type = rules.nouns_objs_dicts.get_obj(rule[2]) # type: ignore
+                    if new_type in (objects.Level, objects.Clone):
+                        new_level = levels.level(old_obj.uuid.hex, (1, 1), 0, pygame.Color("#000000"))
+                        self.level_list.append(new_level)
+                        new_level.new_obj(type(old_obj)((0, 0)))
+                        new_obj = new_type((old_obj.x, old_obj.y), old_obj.uuid.hex, 0, old_obj.facing)
+                        level.del_obj(old_obj.uuid)
+                        level.new_obj(new_obj)
+                    else:
+                        new_obj = new_type((old_obj.x, old_obj.y), old_obj.facing) # type: ignore
+                        level.del_obj(old_obj.uuid)
+                        level.new_obj(new_obj)
     def round(self, op: spaces.PlayerOperation) -> bool:
-        if op != "_":
+        if op != " ":
             self.you(op)
         self.move()
         for level in self.level_list:
@@ -193,7 +203,7 @@ class world(object):
             if level.winned(you_types, win_types):
                 return True
         return False
-    def show_level(self, level: levels.level, layer: int) -> pygame.Surface:
+    def show_level(self, level: levels.level, layer: int, cursor: Optional[spaces.Coord] = None) -> pygame.Surface:
         if layer <= 0:
             return basics.game_data.sprites["text_level"].copy()
         pixel_sprite_size = displays.sprite_size * displays.pixel_size
@@ -203,15 +213,25 @@ class world(object):
             obj = level.object_list[i]
             if isinstance(obj, objects.Level):
                 obj_level = self.get_level(obj.name, obj.inf_tier)
-                obj_surface = self.show_level(obj_level, layer - 1)
-                obj_surface = displays.set_color_dark(obj_surface, pygame.Color("#CCCCCC"))
+                if obj_level is not None:
+                    obj_surface = self.show_level(obj_level, layer - 1)
+                    obj_surface = displays.set_color_dark(obj_surface, pygame.Color("#CCCCCC"))
+                else:
+                    obj_surface = basics.game_data.sprites["level"].copy()
             elif isinstance(obj, objects.Clone):
                 obj_level = self.get_level(obj.name, obj.inf_tier)
-                obj_surface = self.show_level(obj_level, layer - 1)
-                obj_surface = displays.set_color_light(obj_surface, pygame.Color("#444444"))
+                if obj_level is not None:
+                    obj_surface = self.show_level(obj_level, layer - 1)
+                    obj_surface = displays.set_color_light(obj_surface, pygame.Color("#444444"))
+                else:
+                    obj_surface = basics.game_data.sprites["clone"].copy()
             else:
                 obj_surface = basics.game_data.sprites[obj.sprite_name].copy()
             pos = (obj.x * pixel_sprite_size, obj.y * pixel_sprite_size)
+            level_surface.blit(pygame.transform.scale(obj_surface, (pixel_sprite_size, pixel_sprite_size)), pos)
+        if cursor is not None:
+            obj_surface = basics.game_data.sprites["cursor"].copy()
+            pos = (cursor[0] * pixel_sprite_size, cursor[1] * pixel_sprite_size)
             level_surface.blit(pygame.transform.scale(obj_surface, (pixel_sprite_size, pixel_sprite_size)), pos)
         level_background = pygame.Surface(level_surface.get_size(), pygame.SRCALPHA)
         level_background.fill(pygame.Color(level.color))

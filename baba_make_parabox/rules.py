@@ -1,3 +1,5 @@
+from typing import Optional
+
 import baba_make_parabox.objects as objects
 
 class NounsObjsDicts(object):
@@ -6,10 +8,10 @@ class NounsObjsDicts(object):
         self.pairs = {}
     def new_pair(self, noun: type[objects.Noun], obj: type[objects.Object]) -> None:
         self.pairs[noun] = obj
-    def get_obj(self, noun: type[objects.Noun]) -> type[objects.Object]:
-        return self.pairs[noun]
-    def get_noun(self, obj: type[objects.Object]) -> type[objects.Noun]:
-        return {v: k for k, v in self.pairs.items()}[obj]
+    def get_obj(self, noun: type[objects.Noun]) -> Optional[type[objects.Object]]:
+        return self.pairs.get(noun)
+    def get_noun(self, obj: type[objects.Object]) -> Optional[type[objects.Noun]]:
+        return {v: k for k, v in self.pairs.items()}.get(obj, None)
 
 nouns_objs_dicts = NounsObjsDicts()
 
