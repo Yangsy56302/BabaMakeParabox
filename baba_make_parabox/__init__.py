@@ -227,7 +227,9 @@ def test() -> None:
 
 os.makedirs("worlds", exist_ok=True)
 
-if not arg_error:
+if os.environ["PYINSTALLER"] == "TRUE":
+    pass
+elif not arg_error:
     if args.versions:
         print(f"Version: {versions}")
     if args.test:
