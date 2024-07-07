@@ -6,8 +6,8 @@ separately made by **Arvi Hempuli** and **Patrick Traynor**.
 
 ## How to run
 
-Note: batch files with **py_** prefix only works with python files,
-and batch files with **exe_** prefix only works with execution files.
+Note: batch files with **py** prefix only works with python files,
+and batch files with **exe** prefix only works with execution files.
 
 If you want to run the source code, download These Things:
 - **Python *(latest)***: [Link](https://www.python.org/downloads/)
