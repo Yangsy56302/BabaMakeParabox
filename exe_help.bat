@@ -1,0 +1,2 @@
+BabaMakeParabox.exe -h
+pause

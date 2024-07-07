@@ -6,21 +6,24 @@ separately made by **Arvi Hempuli** and **Patrick Traynor**.
 
 ## How to run
 
-Download These Things:
+Note: batch files with **py_** prefix only works with python files,
+and batch files with **exe_** prefix only works with execution files.
+
+If you want to run the source code, download These Things:
 - **Python *(latest)***: [Link](https://www.python.org/downloads/)
 - **PIP**: Should install with Python
 - **Pygame**: Run `pip install -U pygame` in Terminal or something similar to Terminal
 - **PyInstaller *(optional, if you need .exe)***: Run `pip install -U pyinstaller` in Terminal too
 
-Then run **test.bat** to start a official game test.
+Run **prefix_test.bat** to start a official game test.
 
-Run **input.bat** to play a world from json file in the **worlds** folder.
+Run **prefix_input.bat** to play a world from json file in the **worlds** folder.
 
-Run **edit.bat** to edit and save a world from json file in the **worlds** folder, or create one.
+Run **prefix_edit.bat** to edit and save a world from json file in the **worlds** folder, or create one.
 
-You can run **help.bat** for more information with how to run the game in terminal.
+You can run **prefix_help.bat** for more information with how to run the game in terminal.
 
-If you need to make an .exe file, run **make.bat**.
+If you need to make an .exe file, run **py_to_exe.bat**.
 
 ### How to control
 
@@ -43,7 +46,7 @@ And remember:
 
 ## How to make a custom world (recommend)
 
-Don't you remember what I said? just run **edit.bat**.
+Don't you remember what I said? just run **prefix_edit.bat**.
 
 ### How to control
 
