@@ -99,7 +99,7 @@ class Flag(Object):
 
 class Level(Object):
     class_name: str = "Level"
-    sprite_name: str = "text_level"
+    sprite_name: str = "level"
     def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = "W") -> None:
         super().__init__(pos, facing)
         self.name: str = name
@@ -115,7 +115,7 @@ class Level(Object):
         
 class Clone(Object):
     class_name: str = "Clone"
-    sprite_name: str = "text_clone"
+    sprite_name: str = "clone"
     def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = "W") -> None:
         super().__init__(pos, facing)
         self.name: str = name
@@ -195,7 +195,7 @@ class TEXT(Noun):
 
 class LEVEL(Noun):
     class_name: str = "LEVEL"
-    sprite_name: str = "level"
+    sprite_name: str = "text_level"
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -203,7 +203,7 @@ class LEVEL(Noun):
 
 class CLONE(Noun):
     class_name: str = "CLONE"
-    sprite_name: str = "clone"
+    sprite_name: str = "text_clone"
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:

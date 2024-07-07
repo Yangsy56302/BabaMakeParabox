@@ -33,9 +33,7 @@ def level_editor(world: worlds.world) -> worlds.world:
                 "+": pygame.K_EQUALS,
                 "\n": pygame.K_RETURN,
                 "\b": pygame.K_BACKSPACE,
-                "\t": pygame.K_TAB,
-                "LSHIFT": pygame.K_LSHIFT,
-                "RSHIFT": pygame.K_RSHIFT}
+                "\t": pygame.K_TAB}
     keys = {v: False for k, v in keybinds.items()}
     cooldowns = {value: 0 for value in keybinds.values()}
     default_cooldown = 3
@@ -120,10 +118,9 @@ def level_editor(world: worlds.world) -> worlds.world:
             refresh = True
         elif keys[keybinds["\n"]] and cooldowns[keybinds["\n"]] == 0:
             history.append(copy.deepcopy(world))
-            print(keys[keybinds["LSHIFT"]], keys[keybinds["RSHIFT"]])
-            if keys[keybinds["LSHIFT"]]:
+            if current_object_type == objects.Level:
                 current_level.new_obj(objects.Level(current_cursor_pos, current_level.name, current_level.inf_tier, current_facing))
-            elif keys[keybinds["RSHIFT"]]:
+            elif current_object_type == objects.Clone:
                 current_level.new_obj(objects.Clone(current_cursor_pos, current_level.name, current_level.inf_tier, current_facing))
             else:
                 current_level.new_obj(current_object_type(current_cursor_pos, current_facing))
@@ -142,7 +139,7 @@ def level_editor(world: worlds.world) -> worlds.world:
         elif keys[keybinds["O"]] and cooldowns[keybinds["O"]] == 0:
             if input("Are you sure you want to delete this level? [y/N]: ") in ["y", "Y", "yes", "Yes", "YES"]:
                 world.level_list.pop(current_level_index)
-            current_level_index -= 1
+                current_level_index -= 1
             cooldowns[keybinds["O"]] = default_cooldown
             refresh = True
         elif keys[keybinds["\b"]] and cooldowns[keybinds["\b"]] == 0:

@@ -20,7 +20,7 @@ import pygame
 __all__ = ["basics", "spaces", "objects", "rules", "levels", "displays", "worlds", "play", "test", "stop"]
 
 print("Baba Make Parabox")
-versions = "1.4"
+versions = "1.41"
 
 class ArgumentParser(argparse.ArgumentParser):
     def error(self, message):
@@ -84,7 +84,7 @@ def play(world: worlds.world) -> None:
     default_cooldown = 3
     window.fill("#000000")
     current_level_index = 0
-    window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], 2), (720, 720)), (0, 0))
+    window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], 3), (720, 720)), (0, 0))
     pygame.display.flip()
     winned = False
     game_running = True
@@ -141,7 +141,7 @@ def play(world: worlds.world) -> None:
         current_level_index = current_level_index % len(world.level_list) if current_level_index >= 0 else len(world.level_list) - 1
         if refresh:
             window.fill("#000000")
-            window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], 2), (720, 720)), (0, 0))
+            window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], 3), (720, 720)), (0, 0))
             pygame.display.flip()
         for key in cooldowns:
             if cooldowns[key] > 0:
