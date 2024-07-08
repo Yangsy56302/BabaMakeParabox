@@ -25,6 +25,7 @@ def play(world: worlds.world) -> None:
     for level in world.level_list:
         level.update_rules()
     history = [copy.deepcopy(world)]
+    start = copy.deepcopy(world)
     window = pygame.display.set_mode((720, 720))
     clock = pygame.time.Clock()
     keybinds = {"W": pygame.K_w,
@@ -36,8 +37,8 @@ def play(world: worlds.world) -> None:
                 "-": pygame.K_MINUS,
                 "=": pygame.K_EQUALS,
                 " ": pygame.K_SPACE}
+    keys = {v: False for v in keybinds.values()}
     cooldowns = {v: 0 for v in keybinds.values()}
-    default_cooldown = 3
     window.fill("#000000")
     current_level_index = 0
     window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], basics.options["level_display_recursion_depth"]), (720, 720)), (0, 0))
@@ -48,52 +49,49 @@ def play(world: worlds.world) -> None:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game_running = False
-        keys = pygame.key.get_pressed()
+            if event.type == pygame.KEYDOWN and event.key in keybinds.values():
+                keys[event.key] = True
+            elif event.type == pygame.KEYUP and event.key in keybinds.values():
+                keys[event.key] = False
         refresh = False
         if keys[keybinds["W"]] and cooldowns[keybinds["W"]] == 0:
             history.append(copy.deepcopy(world))
             winned = world.round("W")
-            cooldowns[keybinds["W"]] = default_cooldown
             refresh = True
         elif keys[keybinds["S"]] and cooldowns[keybinds["S"]] == 0:
             history.append(copy.deepcopy(world))
             winned = world.round("S")
-            cooldowns[keybinds["S"]] = default_cooldown
             refresh = True
         elif keys[keybinds["A"]] and cooldowns[keybinds["A"]] == 0:
             history.append(copy.deepcopy(world))
             winned = world.round("A")
-            cooldowns[keybinds["A"]] = default_cooldown
             refresh = True
         elif keys[keybinds["D"]] and cooldowns[keybinds["D"]] == 0:
             history.append(copy.deepcopy(world))
             winned = world.round("D")
-            cooldowns[keybinds["D"]] = default_cooldown
             refresh = True
         elif keys[keybinds[" "]] and cooldowns[keybinds[" "]] == 0:
             history.append(copy.deepcopy(world))
             winned = world.round(" ")
-            cooldowns[keybinds[" "]] = default_cooldown
             refresh = True
         elif keys[keybinds["Z"]] and cooldowns[keybinds["Z"]] == 0:
             if len(history) > 1:
                 world = copy.deepcopy(history.pop())
             else:
                 world = copy.deepcopy(history[0])
-            cooldowns[keybinds["Z"]] = default_cooldown
             refresh = True
         elif keys[keybinds["R"]] and cooldowns[keybinds["R"]] == 0:
-            world = copy.deepcopy(history[0])
-            cooldowns[keybinds["R"]] = default_cooldown
+            world = copy.deepcopy(start)
             refresh = True
         elif keys[keybinds["-"]] and cooldowns[keybinds["-"]] == 0:
             current_level_index -= 1
-            cooldowns[keybinds["-"]] = default_cooldown
             refresh = True
         elif keys[keybinds["="]] and cooldowns[keybinds["="]] == 0:
             current_level_index += 1
-            cooldowns[keybinds["="]] = default_cooldown
             refresh = True
+        for key, value in keys.items():
+            if value and cooldowns[key] == 0:
+                cooldowns[key] = basics.options["input_cooldown"]
         current_level_index = current_level_index % len(world.level_list) if current_level_index >= 0 else len(world.level_list) - 1
         if refresh:
             window.fill("#000000")
@@ -108,7 +106,7 @@ def play(world: worlds.world) -> None:
             print("Congratulations!")
             print("You Win!")
             game_running = False
-        clock.tick(15)
+        clock.tick(basics.options["fps"])
 
 def test() -> None:
     # Superlevel

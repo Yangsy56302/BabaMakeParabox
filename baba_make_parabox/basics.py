@@ -6,14 +6,23 @@ import argparse
 
 JsonObject = None | int | float | str | list["JsonObject"] | dict["str", "JsonObject"]
 
-options_filename = "options.json"
 os.makedirs("worlds", exist_ok=True)
-with open(options_filename, "w+", encoding="ascii") as file:
-    try:
-        options = json.load(file)
-    except json.JSONDecodeError:
-        options = {"level_display_recursion_depth": 2}
-        json.dump(options, file)
+options_filename = "options.json"
+try:
+    file = open(options_filename, "r", encoding="ascii")
+    options = json.load(file)
+    file.close()
+except OSError as e:
+    file = open(options_filename, "w", encoding="ascii")
+    options = {"fps": 15, "input_cooldown": 3, "level_display_recursion_depth": 2}
+    json.dump(options, file, indent=4)
+    file.close()
+except json.JSONDecodeError as e:
+    file.close()
+    file = open(options_filename, "w", encoding="ascii")
+    options = {"fps": 15, "input_cooldown": 3, "level_display_recursion_depth": 2}
+    json.dump(options, file, indent=4)
+    file.close()
 
 def remove_same_elements(a_list: list) -> list:
     e_list = list(enumerate(a_list))

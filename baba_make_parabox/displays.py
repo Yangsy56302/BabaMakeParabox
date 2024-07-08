@@ -7,15 +7,6 @@ def set_color_dark(surface: pygame.Surface, color: pygame.Color) -> pygame.Surfa
     new_surface.blit(surface, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
     return new_surface
 
-def set_color_light_(surface: pygame.Surface, color: pygame.Color) -> pygame.Surface:
-    new_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
-    new_surface.fill(pygame.Color(color.r, color.g, color.b, 255))
-    temp_surface = surface.copy()
-    temp_surface.fill("#FFFFFF00", special_flags=pygame.BLEND_RGBA_SUB)
-    new_surface.blit(temp_surface, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
-    new_surface.fill("#FFFFFF00", special_flags=pygame.BLEND_RGBA_SUB)
-    return new_surface
-
 def set_color_light(surface: pygame.Surface, color: pygame.Color) -> pygame.Surface:
     clr_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
     clr_surface.fill(pygame.Color(255 - color.r, 255 - color.g, 255 - color.b, 255))
@@ -55,6 +46,11 @@ def random_hue() -> pygame.Color:
         g = 0
         b = 255 * ((n - 5 / 6) * 6)
     return pygame.Color(int(r), int(g), int(b))
+
+def random_level_color() -> pygame.Color:
+    color = random_hue()
+    color = pygame.Color(color.r // 4, color.g // 4, color.b // 4)
+    return color
 
 pixel_size = 6
 sprite_size = 24

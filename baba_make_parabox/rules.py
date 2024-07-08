@@ -27,7 +27,7 @@ nouns_objs_dicts.new_pair(objects.TEXT, objects.Text)
 
 NounIsProperty = tuple[type[objects.Noun], type[objects.IS], type[objects.Property]]
 NounIsNoun = tuple[type[objects.Noun], type[objects.IS], type[objects.Noun]]
-Rule = NounIsProperty | NounIsNoun
+Rule = NounIsProperty | NounIsNoun | tuple[type[objects.Object], ...] | list[type[objects.Object]]
 
 default_rule_list = []
 default_rule_list.append((objects.TEXT, objects.IS, objects.PUSH))
