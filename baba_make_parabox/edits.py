@@ -164,9 +164,18 @@ def level_editor(world: worlds.world) -> worlds.world:
             current_level.del_objs_from_pos(current_cursor_pos)
             refresh = True
         elif keys[keybinds["\t"]] and cooldowns[keybinds["\t"]] == 0:
-            obj_to_noun = objects.nouns_objs_dicts.get_noun(current_object_type)
-            if issubclass(current_object_type, objects.Noun):
-                noun_to_obj = objects.nouns_objs_dicts.get_obj(current_object_type)
+            try:
+                obj_to_noun = None
+                if not issubclass(current_object_type, objects.Noun):
+                    obj_to_noun = objects.nouns_objs_dicts.get_noun(current_object_type)
+            except KeyError:
+                pass
+            try:
+                noun_to_obj = None
+                if issubclass(current_object_type, objects.Noun):
+                    noun_to_obj = objects.nouns_objs_dicts.get_obj(current_object_type)
+            except KeyError:
+                pass
             new_object_type = obj_to_noun if obj_to_noun is not None else (noun_to_obj if noun_to_obj is not None else None)
             if new_object_type is not None:
                 try:

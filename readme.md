@@ -85,6 +85,7 @@ P.s. Time might be incorrect, please check git info.
 | 1.41   | 2024.07.07 | Level is Best and Swap |
 | 1.42   | 2024.07.08 | Code is Better |
 | 1.5    | 2024.07.08 | Baba is Float; Me is Sink; Rock is Defeat |
+| 1.6    | 2024.07.08 | Door is Shut; Key is Open |
 
 ## Bug Reports and Advices
 

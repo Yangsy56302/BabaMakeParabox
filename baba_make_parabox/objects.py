@@ -99,6 +99,22 @@ class Wall(Object):
     def __repr__(self) -> str:
         return repr(super())
 
+class Door(Object):
+    class_name: str = "Door"
+    sprite_name: str = "door"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class Key(Object):
+    class_name: str = "Key"
+    sprite_name: str = "key"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 class Box(Object):
     class_name: str = "Box"
     sprite_name: str = "box"
@@ -187,6 +203,22 @@ class WALL(Noun):
     def __repr__(self) -> str:
         return repr(super())
 
+class DOOR(Noun):
+    class_name: str = "DOOR"
+    sprite_name: str = "text_door"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class KEY(Noun):
+    class_name: str = "KEY"
+    sprite_name: str = "text_key"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 class BOX(Noun):
     class_name: str = "BOX"
     sprite_name: str = "text_box"
@@ -206,14 +238,6 @@ class ROCK(Noun):
 class FLAG(Noun):
     class_name: str = "FLAG"
     sprite_name: str = "text_flag"
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
-
-class EMPTY(Noun):
-    class_name: str = "EMPTY"
-    sprite_name: str = "text_empty"
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -291,6 +315,22 @@ class FLOAT(Property):
     def __repr__(self) -> str:
         return repr(super())
 
+class SHUT(Property):
+    class_name: str = "SHUT"
+    sprite_name: str = "text_shut"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class OPEN(Property):
+    class_name: str = "OPEN"
+    sprite_name: str = "text_open"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 class MOVE(Property):
     class_name: str = "MOVE"
     sprite_name: str = "text_move"
@@ -344,7 +384,6 @@ object_name: dict[str, type[Object]] = {
     "BOX": BOX,
     "ROCK": ROCK,
     "FLAG": FLAG,
-    "EMPTY": EMPTY,
     "TEXT": TEXT,
     "LEVEL": LEVEL,
     "CLONE": CLONE,
@@ -354,12 +393,14 @@ object_name: dict[str, type[Object]] = {
     "PUSH": PUSH,
     "SINK": SINK,
     "FLOAT": FLOAT,
+    "SHUT": SHUT,
+    "OPEN": OPEN,
     "MOVE": MOVE,
     "DEFEAT": DEFEAT,
     "WIN": WIN
 }
 
-properties = [YOU, STOP, PUSH, SINK, FLOAT, MOVE, DEFEAT, WIN]
+properties = [YOU, STOP, PUSH, SINK, FLOAT, SHUT, OPEN, MOVE, DEFEAT, WIN]
 
 class NounsObjsDicts(object):
     pairs: dict[type[Noun], type[Object]]
@@ -378,6 +419,8 @@ nouns_objs_dicts.new_pair(BABA, Baba)
 nouns_objs_dicts.new_pair(KEKE, Keke)
 nouns_objs_dicts.new_pair(ME, Me)
 nouns_objs_dicts.new_pair(WALL, Wall)
+nouns_objs_dicts.new_pair(DOOR, Door)
+nouns_objs_dicts.new_pair(KEY, Key)
 nouns_objs_dicts.new_pair(BOX, Box)
 nouns_objs_dicts.new_pair(ROCK, Rock)
 nouns_objs_dicts.new_pair(FLAG, Flag)

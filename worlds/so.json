@@ -1,0 +1,177 @@
+{
+    "name": "so",
+    "level_list": [
+        {
+            "name": "main",
+            "infinite_tier": 0,
+            "size": [
+                16,
+                16
+            ],
+            "color": [
+                0,
+                0,
+                0
+            ],
+            "object_list": [
+                {
+                    "type": "BABA",
+                    "position": [
+                        1,
+                        1
+                    ],
+                    "orientation": "W"
+                },
+                {
+                    "type": "IS",
+                    "position": [
+                        2,
+                        1
+                    ],
+                    "orientation": "W"
+                },
+                {
+                    "type": "YOU",
+                    "position": [
+                        3,
+                        1
+                    ],
+                    "orientation": "W"
+                },
+                {
+                    "type": "WALL",
+                    "position": [
+                        5,
+                        1
+                    ],
+                    "orientation": "W"
+                },
+                {
+                    "type": "IS",
+                    "position": [
+                        6,
+                        1
+                    ],
+                    "orientation": "W"
+                },
+                {
+                    "type": "STOP",
+                    "position": [
+                        7,
+                        1
+                    ],
+                    "orientation": "W"
+                },
+                {
+                    "type": "IS",
+                    "position": [
+                        10,
+                        1
+                    ],
+                    "orientation": "W"
+                },
+                {
+                    "type": "ROCK",
+                    "position": [
+                        9,
+                        1
+                    ],
+                    "orientation": "W"
+                },
+                {
+                    "type": "PUSH",
+                    "position": [
+                        11,
+                        1
+                    ],
+                    "orientation": "W"
+                },
+                {
+                    "type": "IS",
+                    "position": [
+                        5,
+                        2
+                    ],
+                    "orientation": "W"
+                },
+                {
+                    "type": "IS",
+                    "position": [
+                        9,
+                        2
+                    ],
+                    "orientation": "W"
+                },
+                {
+                    "type": "SHUT",
+                    "position": [
+                        5,
+                        3
+                    ],
+                    "orientation": "W"
+                },
+                {
+                    "type": "OPEN",
+                    "position": [
+                        9,
+                        3
+                    ],
+                    "orientation": "W"
+                },
+                {
+                    "type": "Baba",
+                    "position": [
+                        1,
+                        3
+                    ],
+                    "orientation": "W"
+                },
+                {
+                    "type": "Rock",
+                    "position": [
+                        3,
+                        5
+                    ],
+                    "orientation": "W"
+                },
+                {
+                    "type": "Level",
+                    "position": [
+                        1,
+                        5
+                    ],
+                    "orientation": "W",
+                    "level": {
+                        "name": "main",
+                        "infinite_tier": 0
+                    }
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        3,
+                        3
+                    ],
+                    "orientation": "W"
+                }
+            ]
+        }
+    ],
+    "rule_list": [
+        [
+            "TEXT",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "LEVEL",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "CLONE",
+            "IS",
+            "PUSH"
+        ]
+    ]
+}
