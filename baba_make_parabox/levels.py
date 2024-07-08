@@ -126,30 +126,6 @@ class level(object):
                 return (self.width // 2, self.height)
             case "D":
                 return (self.width, self.height // 2)
-    def winned(self, you_types: list[type[objects.Object]], win_types: list[type[objects.Object]]) -> bool:
-        you_types = you_types[:]
-        you_rules = self.find_rules(None, objects.IS, objects.YOU)
-        for you_type in [t[0] for t in you_rules]:
-            you_types.append(rules.nouns_objs_dicts.get_obj(you_type)) # type: ignore
-        you_objs: list[objects.Object] = []
-        for you_type in you_types:
-            you_objs.extend(self.get_objs_from_type(you_type))
-        if len(you_objs) == 0:
-            return False
-        win_types = win_types[:]
-        win_rules = self.find_rules(None, objects.IS, objects.WIN)
-        for win_type in [t[0] for t in win_rules]:
-            win_types.append(rules.nouns_objs_dicts.get_obj(win_type)) # type: ignore
-        win_objs: list[objects.Object] = []
-        for win_type in win_types:
-            win_objs.extend(self.get_objs_from_type(win_type))
-        if len(win_objs) == 0:
-            return False
-        for you_obj in you_objs:
-            for win_obj in win_objs:
-                if (you_obj.x, you_obj.y) == (win_obj.x, win_obj.y):
-                    return True
-        return False
     def to_json(self) -> basics.JsonObject:
         json_object = {"name": self.name, "infinite_tier": self.inf_tier, "size": [self.width, self.height],
                        "color": [self.color.r, self.color.g, self.color.b], "object_list": []}

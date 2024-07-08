@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Optional
 import uuid
 
 import baba_make_parabox.basics as basics
@@ -12,12 +12,30 @@ class Object(object):
         self.x: int = pos[0]
         self.y: int = pos[1]
         self.facing: spaces.Orient = facing
+        self.properties: list[type["Property"]] = []
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
     def __str__(self) -> str:
         return self.class_name
     def __repr__(self) -> str:
         return self.class_name
+    def new_prop(self, prop: type["Property"]) -> None:
+        if prop not in self.properties:
+            self.properties.append(prop)
+    def del_prop(self, prop: type["Property"]) -> None:
+        if prop in self.properties:
+            self.properties.remove(prop)
+    def has_prop(self, prop: type["Property"]) -> bool:
+        if prop in self.properties:
+            return True
+        return False
+    def has_props(self, props: list[type["Property"]]) -> bool:
+        for prop in props:
+            if prop not in self.properties:
+                return False
+        return True
+    def clear_prop(self) -> None:
+        self.properties = []
     def to_json(self) -> dict[str, basics.JsonObject]:
         return {"type": self.class_name, "position": [self.x, self.y], "orientation": self.facing}
 
@@ -60,6 +78,14 @@ class Baba(Object):
 class Keke(Object):
     class_name: str = "Keke"
     sprite_name: str = "keke"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class Me(Object):
+    class_name: str = "Me"
+    sprite_name: str = "me"
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -140,6 +166,14 @@ class BABA(Noun):
 class KEKE(Noun):
     class_name: str = "KEKE"
     sprite_name: str = "text_keke"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class ME(Noun):
+    class_name: str = "ME"
+    sprite_name: str = "text_me"
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -241,9 +275,33 @@ class PUSH(Property):
     def __repr__(self) -> str:
         return repr(super())
 
+class SINK(Property):
+    class_name: str = "SINK"
+    sprite_name: str = "text_sink"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class FLOAT(Property):
+    class_name: str = "FLOAT"
+    sprite_name: str = "text_float"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 class MOVE(Property):
     class_name: str = "MOVE"
     sprite_name: str = "text_move"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class DEFEAT(Property):
+    class_name: str = "DEFEAT"
+    sprite_name: str = "text_defeat"
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -257,9 +315,22 @@ class WIN(Property):
     def __repr__(self) -> str:
         return repr(super())
 
+def json_to_object(json_object: basics.JsonObject) -> Object: # oh hell no
+    type_name: str = json_object["type"] # type: ignore
+    object_type: type[Object] = object_name[type_name]
+    if object_type in [Level, Clone]:
+        return object_type(pos=tuple(json_object["position"]), # type: ignore
+                           name=json_object["level"]["name"], # type: ignore
+                           inf_tier=json_object["level"]["infinite_tier"], # type: ignore
+                           facing=json_object["orientation"]) # type: ignore
+    else:
+        return object_type(pos=tuple(json_object["position"]), # type: ignore
+                           facing=json_object["orientation"]) # type: ignore
+
 object_name: dict[str, type[Object]] = {
     "Baba": Baba,
     "Keke": Keke,
+    "Me": Me,
     "Wall": Wall,
     "Box": Box,
     "Rock": Rock,
@@ -268,6 +339,7 @@ object_name: dict[str, type[Object]] = {
     "Clone": Clone,
     "BABA": BABA,
     "KEKE": KEKE,
+    "ME": ME,
     "WALL": WALL,
     "BOX": BOX,
     "ROCK": ROCK,
@@ -280,18 +352,35 @@ object_name: dict[str, type[Object]] = {
     "YOU": YOU,
     "STOP": STOP,
     "PUSH": PUSH,
+    "SINK": SINK,
+    "FLOAT": FLOAT,
     "MOVE": MOVE,
+    "DEFEAT": DEFEAT,
     "WIN": WIN
 }
 
-def json_to_object(json_object: basics.JsonObject) -> Object: # oh hell no
-    type_name: str = json_object["type"] # type: ignore
-    object_type: type[Object] = object_name[type_name]
-    if object_type in [Level, Clone]:
-        return object_type(pos=tuple(json_object["position"]), # type: ignore
-                           name=json_object["level"]["name"], # type: ignore
-                           inf_tier=json_object["level"]["infinite_tier"], # type: ignore
-                           facing=json_object["orientation"]) # type: ignore
-    else:
-        return object_type(pos=tuple(json_object["position"]), # type: ignore
-                           facing=json_object["orientation"]) # type: ignore
+properties = [YOU, STOP, PUSH, SINK, FLOAT, MOVE, DEFEAT, WIN]
+
+class NounsObjsDicts(object):
+    pairs: dict[type[Noun], type[Object]]
+    def __init__(self) -> None:
+        self.pairs = {}
+    def new_pair(self, noun: type[Noun], obj: type[Object]) -> None:
+        self.pairs[noun] = obj
+    def get_obj(self, noun: type[Noun]) -> type[Object]:
+        return self.pairs[noun]
+    def get_noun(self, obj: type[Object]) -> type[Noun]:
+        return {v: k for k, v in self.pairs.items()}[obj]
+
+nouns_objs_dicts = NounsObjsDicts()
+
+nouns_objs_dicts.new_pair(BABA, Baba)
+nouns_objs_dicts.new_pair(KEKE, Keke)
+nouns_objs_dicts.new_pair(ME, Me)
+nouns_objs_dicts.new_pair(WALL, Wall)
+nouns_objs_dicts.new_pair(BOX, Box)
+nouns_objs_dicts.new_pair(ROCK, Rock)
+nouns_objs_dicts.new_pair(FLAG, Flag)
+nouns_objs_dicts.new_pair(LEVEL, Level)
+nouns_objs_dicts.new_pair(CLONE, Clone)
+nouns_objs_dicts.new_pair(TEXT, Text)

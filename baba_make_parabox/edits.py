@@ -10,6 +10,12 @@ import copy
 import pygame
 
 def level_editor(world: worlds.world) -> worlds.world:
+    print("Global Rule List:")
+    for rule in world.rule_list:
+        str_list = []
+        for obj_type in rule:
+            str_list.append(obj_type.class_name)
+        print(" ".join(str_list))
     history = [copy.deepcopy(world)]
     window = pygame.display.set_mode((1280, 720))
     clock = pygame.time.Clock()
@@ -122,31 +128,46 @@ def level_editor(world: worlds.world) -> worlds.world:
                 current_level_index -= 1
                 refresh = True
         elif keys[keybinds["R"]] and cooldowns[keybinds["R"]] == 0:
-            text_rule = input("New Global Rule: ").upper().split()
-            type_rule: list[type[objects.Object]] = []
+            text_rule = input("Global Rule: ").upper().split()
+            type_rule: list[type[objects.Text]] = []
             valid_input = True
             for text in text_rule:
                 obj_type = objects.object_name.get(text)
                 if obj_type is not None:
-                    type_rule.append(obj_type)
+                    if issubclass(obj_type, objects.Text):
+                        type_rule.append(obj_type)
+                    else:
+                        valid_input = False
+                        break
                 else:
                     valid_input = False
                     break
             if valid_input:
-                world.rule_list.append(tuple(type_rule))
+                if type_rule not in world.rule_list:
+                    world.rule_list.append(tuple(type_rule))
+                else:
+                    world.rule_list.remove(tuple(type_rule))
+            print("Global Rule List:")
+            for rule in world.rule_list:
+                str_list = []
+                for obj_type in rule:
+                    str_list.append(obj_type.class_name)
+                print(" ".join(str_list))
         elif keys[keybinds["\b"]] and cooldowns[keybinds["\b"]] == 0:
             history.append(copy.deepcopy(world))
             current_level.del_objs_from_pos(current_cursor_pos)
             refresh = True
         elif keys[keybinds["\t"]] and cooldowns[keybinds["\t"]] == 0:
-            obj_to_noun = rules.nouns_objs_dicts.get_noun(current_object_type) # type: ignore
-            noun_to_obj = rules.nouns_objs_dicts.get_obj(current_object_type) # type: ignore
+            obj_to_noun = objects.nouns_objs_dicts.get_noun(current_object_type)
+            if issubclass(current_object_type, objects.Noun):
+                noun_to_obj = objects.nouns_objs_dicts.get_obj(current_object_type)
             new_object_type = obj_to_noun if obj_to_noun is not None else (noun_to_obj if noun_to_obj is not None else None)
-            try:
-                new_object_index = object_list.index(new_object_type) # type: ignore
-                current_object_index = new_object_index
-            except ValueError:
-                pass
+            if new_object_type is not None:
+                try:
+                    new_object_index = object_list.index(new_object_type)
+                    current_object_index = new_object_index
+                except ValueError:
+                    pass
             refresh = True
         elif keys[keybinds["Z"]] and cooldowns[keybinds["Z"]] == 0:
             if len(history) > 1:

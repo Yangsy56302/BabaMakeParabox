@@ -62,6 +62,7 @@ Don't you remember what I said? just run **prefix_edit.bat**.
 - Minus / Equals: Select level.
 - P: New level (information from terminal inputs).
 - O: Delete current level (confirm in terminal).
+- R: Change global rules (information from terminal inputs).
 - Z: Undo, max 100 times.
 - X: Cut all objects on cursor.
 - C: Copy all objects on cursor.
@@ -81,6 +82,7 @@ Don't you remember what I said? just run **prefix_edit.bat**.
 | 1.4    | 2024.07.06 | Baba make Worlds |
 | 1.41   | 2024.07.06 | Level is Best and Swap |
 | 1.42   | 2024.07.06 | Code is Better |
+| 1.5    | 2024.07.08 | Baba is Float; Me is Sink; Rock is Defeat |
 
 ## Bug Reports and Advices
 
