@@ -71,6 +71,8 @@ Don't you remember what I said? just run **prefix_edit.bat**.
 
 ## List of Versions
 
+P.s. Time might be incorrect, please check git info.
+
 | Number |    Time    | Informations |
 |--------|------------|--------------|
 | 1.0    | 2024.07.05 | Initialized. |
@@ -78,9 +80,9 @@ Don't you remember what I said? just run **prefix_edit.bat**.
 | 1.11   | 2024.07.06 | Level is Previous and Next |
 | 1.2    | 2024.07.06 | Flag is Win; Game is EXE |
 | 1.3    | 2024.07.06 | Baba is Keke; World is Input and Output |
-| 1.31   | 2024.07.06 | Terminal is More; Text is not Hide; Level is Red |
-| 1.4    | 2024.07.06 | Baba make Worlds |
-| 1.41   | 2024.07.06 | Level is Best and Swap |
+| 1.31   | 2024.07.07 | Terminal is More; Text is not Hide; Level is Red |
+| 1.4    | 2024.07.07 | Baba make Worlds |
+| 1.41   | 2024.07.07 | Level is Best and Swap |
 | 1.42   | 2024.07.08 | Code is Better |
 | 1.5    | 2024.07.08 | Baba is Float; Me is Sink; Rock is Defeat |
 

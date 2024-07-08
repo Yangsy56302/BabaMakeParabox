@@ -69,18 +69,20 @@
 - V：从剪切板粘贴光标上的物体
 - 关闭窗口：保存并退出
 
-## 版本列表（信息暂不翻译）
+## 版本列表（版本详细信息暂不翻译）
 
-| Number |    Time    | Informations |
+注意：制作完成时间可能不准确，具体以Git记录为准。
+
+| 版本号 |    时间    | 版本详细信息 |
 |--------|------------|--------------|
 | 1.0    | 2024.07.05 | Initialized. |
 | 1.1    | 2024.07.06 | Keke is Move; Undo and Restart; Baba make Levels |
 | 1.11   | 2024.07.06 | Level is Previous and Next |
 | 1.2    | 2024.07.06 | Flag is Win; Game is EXE |
 | 1.3    | 2024.07.06 | Baba is Keke; World is Input and Output |
-| 1.31   | 2024.07.06 | Terminal is More; Text is not Hide; Level is Red |
-| 1.4    | 2024.07.06 | Baba make Worlds |
-| 1.41   | 2024.07.06 | Level is Best and Swap |
+| 1.31   | 2024.07.07 | Terminal is More; Text is not Hide; Level is Red |
+| 1.4    | 2024.07.07 | Baba make Worlds |
+| 1.41   | 2024.07.07 | Level is Best and Swap |
 | 1.42   | 2024.07.08 | Code is Better |
 | 1.5    | 2024.07.08 | Baba is Float; Me is Sink; Rock is Defeat |
 
