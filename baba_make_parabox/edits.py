@@ -34,8 +34,8 @@ def level_editor(world: worlds.world) -> worlds.world:
                 "\n": pygame.K_RETURN,
                 "\b": pygame.K_BACKSPACE,
                 "\t": pygame.K_TAB}
-    keys = {v: False for k, v in keybinds.items()}
-    cooldowns = {value: 0 for value in keybinds.values()}
+    keys = {v: False for v in keybinds.values()}
+    cooldowns = {v: 0 for v in keybinds.values()}
     default_cooldown = 3
     window.fill("#000000")
     current_level_index = 0

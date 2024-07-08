@@ -1,1 +1,3 @@
-from baba_make_parabox import *
+import baba_make_parabox as bmp
+
+bmp.main()
