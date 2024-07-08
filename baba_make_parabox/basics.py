@@ -1,7 +1,17 @@
 import pygame
 import os
+import json
 
 JsonObject = None | int | float | str | list["JsonObject"] | dict["str", "JsonObject"]
+
+options_filename = "options.json"
+os.makedirs("worlds", exist_ok=True)
+with open(options_filename, "w+", encoding="ascii") as file:
+    try:
+        options = json.load(file)
+    except json.JSONDecodeError:
+        options = {"level_display_recursion_depth": 2}
+        json.dump(options, file)
 
 def remove_same_elements(a_list: list) -> list:
     e_list = list(enumerate(a_list))

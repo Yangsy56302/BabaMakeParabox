@@ -78,13 +78,13 @@ def play(world: worlds.world) -> None:
                 "Z": pygame.K_z,
                 "R": pygame.K_r,
                 "-": pygame.K_MINUS,
-                "+": pygame.K_EQUALS,
+                "=": pygame.K_EQUALS,
                 " ": pygame.K_SPACE}
     cooldowns = {value: 0 for value in keybinds.values()}
     default_cooldown = 3
     window.fill("#000000")
     current_level_index = 0
-    window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], 3), (720, 720)), (0, 0))
+    window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], basics.options["level_display_recursion_depth"]), (720, 720)), (0, 0))
     pygame.display.flip()
     winned = False
     game_running = True
@@ -134,14 +134,14 @@ def play(world: worlds.world) -> None:
             current_level_index -= 1
             cooldowns[keybinds["-"]] = default_cooldown
             refresh = True
-        elif keys[keybinds["+"]] and cooldowns[keybinds["+"]] == 0:
+        elif keys[keybinds["="]] and cooldowns[keybinds["="]] == 0:
             current_level_index += 1
-            cooldowns[keybinds["+"]] = default_cooldown
+            cooldowns[keybinds["="]] = default_cooldown
             refresh = True
         current_level_index = current_level_index % len(world.level_list) if current_level_index >= 0 else len(world.level_list) - 1
         if refresh:
             window.fill("#000000")
-            window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], 3), (720, 720)), (0, 0))
+            window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], basics.options["level_display_recursion_depth"]), (720, 720)), (0, 0))
             pygame.display.flip()
         for key in cooldowns:
             if cooldowns[key] > 0:
@@ -229,10 +229,8 @@ def test() -> None:
     world = worlds.world("Intro 4", [level_0, level_1])
     play(world)
 
-os.makedirs("worlds", exist_ok=True)
-
 if os.environ.get("PYINSTALLER") == "TRUE":
-    pass
+    pass # just do nothing
 elif not arg_error:
     if args.versions:
         print(f"Version: {versions}")
