@@ -143,10 +143,16 @@ def level_editor(world: worlds.world) -> worlds.world:
                     valid_input = False
                     break
             if valid_input:
-                if type_rule not in world.rule_list:
-                    world.rule_list.append(tuple(type_rule))
+                dupe_list = []
+                for rule in world.rule_list:
+                    duplicated = False
+                    if len(type_rule) == len(rule):
+                        duplicated = all(map(lambda x, y: x == y, type_rule, rule))
+                    dupe_list.append(duplicated)
+                if any(dupe_list):
+                    world.rule_list.pop(dupe_list.index(True))
                 else:
-                    world.rule_list.remove(tuple(type_rule))
+                    world.rule_list.append(list(type_rule))
             print("Global Rule List:")
             for rule in world.rule_list:
                 str_list = []
