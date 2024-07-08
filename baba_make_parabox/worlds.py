@@ -43,7 +43,10 @@ class world(object):
                 if name == obj.name and inf_tier == obj.inf_tier:
                     return (super_level, obj)
         return None
-    def get_move_list(self, level: levels.level, obj: objects.Object, pos: spaces.Coord, facing: spaces.Orient, passed: Optional[list[levels.level]] = None) -> list[tuple[objects.Object, levels.level, spaces.Coord, spaces.Orient]]:
+    def get_move_list(self, level: levels.level, obj: objects.Object, pos: spaces.Coord, facing: spaces.Orient, passed: Optional[list[levels.level]] = None, depth: int = 1) -> list[tuple[objects.Object, levels.level, spaces.Coord, spaces.Orient]]:
+        if depth > 127:
+            return []
+        depth += 1
         passed = passed[:] if passed is not None else []
         move_list = []
         new_pos = spaces.pos_facing(pos, facing)
@@ -55,14 +58,14 @@ class world(object):
                 if ret is None:
                     return []
                 super_level, level_obj = ret
-                move_list.extend(self.get_move_list(super_level, obj, (level_obj.x, level_obj.y), facing, passed))
+                move_list.extend(self.get_move_list(super_level, obj, (level_obj.x, level_obj.y), facing, passed, depth))
             else:
                 ret = self.find_super_level(level.name, level.inf_tier)
                 if ret is None:
                     return []
                 super_level, level_obj = ret
                 passed.append(level)
-                move_list.extend(self.get_move_list(super_level, obj, (level_obj.x, level_obj.y), facing, passed))
+                move_list.extend(self.get_move_list(super_level, obj, (level_obj.x, level_obj.y), facing, passed, depth))
             move_list = basics.remove_same_elements(move_list)
             return move_list
         level_objects = level.get_levels_from_pos(new_pos)
@@ -72,7 +75,7 @@ class world(object):
         if len(level_like_objects) != 0:
             push_level = True
             for level_like_object in level_like_objects:
-                if len(self.get_move_list(level, level_like_object, new_pos, facing, passed)) == 0:
+                if len(self.get_move_list(level, level_like_object, new_pos, facing, passed, depth)) == 0:
                     push_level = False
                 if len(level.find_rules(rules.nouns_objs_dicts.get_noun(type(level_like_object)), objects.IS, objects.PUSH)) == 0:
                     if len(self.find_rules(rules.nouns_objs_dicts.get_noun(type(level_like_object)), objects.IS, objects.PUSH)) == 0:
@@ -80,7 +83,7 @@ class world(object):
             # level push
             if push_level:
                 for level_like_object in level_like_objects:
-                    move_list.extend(self.get_move_list(level, level_like_object, new_pos, facing, passed))
+                    move_list.extend(self.get_move_list(level, level_like_object, new_pos, facing, passed, depth))
                 move_list.append((obj, level, new_pos, facing))
             else:
                 for level_like_object in level_like_objects:
@@ -90,12 +93,12 @@ class world(object):
                         sub_sub_level: levels.level = self.get_level(sub_level.name, sub_level.inf_tier - 1) # type: ignore
                         input_pos = sub_sub_level.default_input_position(spaces.swap_orientation(facing))
                         passed.append(level)
-                        new_move_list = self.get_move_list(sub_sub_level, obj, input_pos, facing, passed)
+                        new_move_list = self.get_move_list(sub_sub_level, obj, input_pos, facing, passed, depth)
                     # push in
                     else:
                         input_pos = sub_level.default_input_position(spaces.swap_orientation(facing))
                         passed.append(level)
-                        new_move_list = self.get_move_list(sub_level, obj, input_pos, facing, passed)
+                        new_move_list = self.get_move_list(sub_level, obj, input_pos, facing, passed, depth)
                     if len(new_move_list) == 0:
                         return []
                     move_list.extend(new_move_list)
@@ -109,7 +112,7 @@ class world(object):
                 push_objects.extend(level.get_objs_from_pos_and_type(new_pos, rules.nouns_objs_dicts.get_obj(push_type))) # type: ignore
             if len(push_objects) != 0:
                 for push_object in push_objects:
-                    new_move_list = self.get_move_list(level, push_object, (push_object.x, push_object.y), facing)
+                    new_move_list = self.get_move_list(level, push_object, (push_object.x, push_object.y), facing, depth=depth)
                     if len(new_move_list) == 0:
                         return []
                     move_list.extend(new_move_list)

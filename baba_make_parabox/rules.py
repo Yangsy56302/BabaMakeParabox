@@ -16,6 +16,7 @@ class NounsObjsDicts(object):
 nouns_objs_dicts = NounsObjsDicts()
 
 nouns_objs_dicts.new_pair(objects.BABA, objects.Baba)
+nouns_objs_dicts.new_pair(objects.KEKE, objects.Keke)
 nouns_objs_dicts.new_pair(objects.WALL, objects.Wall)
 nouns_objs_dicts.new_pair(objects.BOX, objects.Box)
 nouns_objs_dicts.new_pair(objects.ROCK, objects.Rock)
