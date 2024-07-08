@@ -81,7 +81,7 @@ Don't you remember what I said? just run **prefix_edit.bat**.
 | 1.31   | 2024.07.06 | Terminal is More; Text is not Hide; Level is Red |
 | 1.4    | 2024.07.06 | Baba make Worlds |
 | 1.41   | 2024.07.06 | Level is Best and Swap |
-| 1.42   | 2024.07.06 | Code is Better |
+| 1.42   | 2024.07.08 | Code is Better |
 | 1.5    | 2024.07.08 | Baba is Float; Me is Sink; Rock is Defeat |
 
 ## Bug Reports and Advices
