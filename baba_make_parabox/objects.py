@@ -400,8 +400,6 @@ object_name: dict[str, type[Object]] = {
     "WIN": WIN
 }
 
-properties = [YOU, STOP, PUSH, SINK, FLOAT, SHUT, OPEN, MOVE, DEFEAT, WIN]
-
 class NounsObjsDicts(object):
     pairs: dict[type[Noun], type[Object]]
     def __init__(self) -> None:

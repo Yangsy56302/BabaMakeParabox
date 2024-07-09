@@ -1,29 +1,31 @@
 # Baba Make Parabox
 
+![游戏图标](BabaMakeParabox.png)
+
 **Baba Make Parabox**是一个二创同人推箱子元游戏，作者是**Yangsy56302**。
 取材游戏为[**Baba Is You**](https://hempuli.com/baba/)与[**Patrick's Parabox**](https://www.patricksparabox.com/)，
 作者分别为**Arvi Hempuli**和**Patrick Traynor**。
 
 ## 如何运行
 
-注意：带有**py**前缀的批处理文件只会运行Python代码文件，
-而带有**exe**前缀的批处理文件只会运行EXE可执行程序。
+注意：带有`py`前缀的批处理文件只会运行Python代码文件，
+而带有`exe`前缀的批处理文件只会运行EXE可执行程序。
 
 如果你想运行源代码，下载这些软件：
-- **Python *(最新版)***：[链接](https://www.python.org/downloads/)
+- **Python** **_(最新版)_**：[链接](https://www.python.org/downloads/)
 - **PIP**：应该会与Python一起安装
 - **Pygame**：在终端或类似终端的地方运行`pip install -U pygame`
-- **PyInstaller *(可选，仅制作EXE用)***：类似上面，运行`pip install -U pyinstaller`
+- **PyInstaller** **_(可选，仅制作EXE用)_**：类似上面，运行`pip install -U pyinstaller`
 
-运行**前缀_test.bat**以开始该游戏的官方测试。
+运行`前缀_test.bat`以开始该游戏的官方测试。
 
-运行**前缀_input.bat**以从**worlds**文件夹内读取存档的JSON文件来开始游戏。
+运行`前缀_input.bat`以从`worlds`文件夹内读取存档的JSON文件来开始游戏。
 
-运行**前缀_edit.bat**以编辑**worlds**文件夹内的存档文件并在原地保存，若无文件则会新建一份。
+运行`前缀_edit.bat`以编辑`worlds`文件夹内的存档文件并在原地保存，若无文件则会新建一份。
 
-可以运行**前缀_help.bat**以获取更多关于如何在终端运行该游戏的说明。
+可以运行`前缀_help.bat`以获取更多关于如何在终端运行该游戏的说明。
 
-如果你需要打包EXE文件，运行**py_2_exe.bat**。
+如果你需要打包EXE文件，运行`py_2_exe.bat`。
 
 ### 如何控制
 
@@ -35,7 +37,7 @@
 
 ### 如何胜利
 
-只需要把标记为**你 *(you)***的物体移到标记为**赢 *(WIN)***的物体上。
+只需要把标记为**你** **_(you)_**的物体移到标记为**赢** **_(you)_**的物体上。
 
 记住：
 
@@ -45,8 +47,6 @@
 4. 有时你需要创造一个悖论。
 
 ## 如何制作存档
-
-我前面说过了：运行**前缀_edit.bat**。
 
 **注意：放置的房间和克隆房间指向摄像头所在的房间。**
 **若有将某个房间放在其他房间内的需要，请考虑剪切粘贴。**

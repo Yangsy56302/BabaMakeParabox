@@ -95,11 +95,11 @@ class level(object):
                 for prop_obj in prop_objs:
                     if not spaces.on_line((noun_obj.x, noun_obj.y), (oper_obj.x, oper_obj.y), (prop_obj.x, prop_obj.y)):
                         continue
-                    self.rule_list.append((type(noun_obj), type(oper_obj), type(prop_obj)))
+                    self.rule_list.append([type(noun_obj), type(oper_obj), type(prop_obj)])
                 for noun_obj_2 in noun_objs:
                     if not spaces.on_line((noun_obj.x, noun_obj.y), (oper_obj.x, oper_obj.y), (noun_obj_2.x, noun_obj_2.y)):
                         continue
-                    self.rule_list.append((type(noun_obj), type(oper_obj), type(noun_obj_2)))
+                    self.rule_list.append([type(noun_obj), type(oper_obj), type(noun_obj_2)])
     def find_rules(self, *match_rule: Optional[type[objects.Text]]) -> list[rules.Rule]:
         found_rules = []
         for rule in self.rule_list:

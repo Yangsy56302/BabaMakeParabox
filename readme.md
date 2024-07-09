@@ -1,29 +1,31 @@
 # Baba Make Parabox
 
+![Game icon](BabaMakeParabox.png)
+
 **Baba Make Parabox** is a fan-made sokoban-like metagame by **Yangsy56302**.
 The original games are [**Baba Is You**](https://hempuli.com/baba/) and [**Patrick's Parabox**](https://www.patricksparabox.com/),
 made separately by **Arvi Hempuli** and **Patrick Traynor**.
 
 ## How to run
 
-Note: batch files with **py** prefix only works with python files,
-and batch files with **exe** prefix only works with execution files.
+Note: batch files with `py` prefix only works with python files,
+and batch files with `exe` prefix only works with execution files.
 
 If you want to run the source code, download These Things:
-- **Python *(latest)***: [Link](https://www.python.org/downloads/)
+- **Python** **_(latest)_**: [Link](https://www.python.org/downloads/)
 - **PIP**: Should install with Python
 - **Pygame**: Run `pip install -U pygame` in Terminal or something similar to Terminal
-- **PyInstaller *(optional, if you need .exe)***: Run `pip install -U pyinstaller` in Terminal too
+- **PyInstaller** **_(optional, if you need .exe)_**: Run `pip install -U pyinstaller` in Terminal too
 
-Run **prefix_test.bat** to start a official game test.
+Run `prefix_test.bat` to start a official game test.
 
-Run **prefix_input.bat** to play a world from json file in the **worlds** folder.
+Run `prefix_input.bat` to play a world from json file in the `worlds*`* folder.
 
-Run **prefix_edit.bat** to edit and save a world from json file in the **worlds** folder, or create one.
+Run `prefix_edit.bat` to edit and save a world from json file in the `worlds` folder, or create one.
 
-You can run **prefix_help.bat** for more information with how to run the game in terminal.
+You can run `prefix_help.bat` for more information with how to run the game in terminal.
 
-If you need to make an .exe file, run **py_2_exe.bat**.
+If you need to make an .exe file, run `py_2_exe.bat`.
 
 ### How to control
 
@@ -45,8 +47,6 @@ And remember:
 4. Sometimes you need to create a paradox.
 
 ## How to make a custom world
-
-Don't you remember what I said? just run **prefix_edit.bat**.
 
 **Important: the levels that placed are pointed to the levels that camera looks at.**
 **If you want to put levels inside other levels, please considering cut / paste.**

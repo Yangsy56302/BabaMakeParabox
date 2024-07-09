@@ -37,6 +37,9 @@ class world(object):
     def get_level(self, name: str, inf_tier: int) -> Optional[levels.level]:
         level = list(filter(lambda l: l.name == name and l.inf_tier == inf_tier, self.level_list))
         return level[0] if len(level) != 0 else None
+    def get_exist_level(self, name: str, inf_tier: int) -> levels.level:
+        level = list(filter(lambda l: l.name == name and l.inf_tier == inf_tier, self.level_list))
+        return level[0]
     def find_super_level(self, name: str, inf_tier: int) -> Optional[tuple[levels.level, objects.Object]]:
         for super_level in self.level_list:
             for obj in super_level.get_levels():
@@ -104,10 +107,14 @@ class world(object):
             for level_like_object in level_like_objects:
                 if level_like_object in [t[0] for t in move_list]:
                     continue
-                sub_level: levels.level = self.get_level(level_like_object.name, level_like_object.inf_tier) # type: ignore
+                sub_level = self.get_level(level_like_object.name, level_like_object.inf_tier)
+                if sub_level is None:
+                    return None
                 # inf in
-                if sub_level in passed:
-                    sub_sub_level: levels.level = self.get_level(sub_level.name, sub_level.inf_tier - 1) # type: ignore
+                elif sub_level in passed:
+                    sub_sub_level = self.get_level(sub_level.name, sub_level.inf_tier - 1)
+                    if sub_sub_level is None:
+                        return None
                     input_pos = sub_sub_level.default_input_position(spaces.swap_orientation(facing))
                     passed.append(level)
                     new_move_list = self.get_move_list(sub_sub_level, obj, input_pos, facing, passed, depth)
@@ -232,12 +239,13 @@ class world(object):
             for obj in level.object_list:
                 obj.clear_prop()
         for level in self.level_list:
-            for prop in objects.properties:
-                prop_rules = level.find_rules(objects.Noun, objects.IS, prop) + self.find_rules(objects.Noun, objects.IS, prop)
-                for obj_type in [t[0] for t in prop_rules]:
-                    for obj in level.get_objs_from_type(objects.nouns_objs_dicts.get_obj(obj_type)): # type: ignore
-                        obj: objects.Object
-                        obj.new_prop(prop)
+            for prop in objects.object_name.values():
+                if issubclass(prop, objects.Property):
+                    prop_rules = level.find_rules(objects.Noun, objects.IS, prop) + self.find_rules(objects.Noun, objects.IS, prop)
+                    for obj_type in [t[0] for t in prop_rules]:
+                        for obj in level.get_objs_from_type(objects.nouns_objs_dicts.get_obj(obj_type)): # type: ignore
+                            obj: objects.Object
+                            obj.new_prop(prop)
     def winned(self) -> bool:
         for level in self.level_list:
             you_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU), level.object_list)
