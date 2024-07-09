@@ -156,6 +156,18 @@ class world(object):
                 move_obj.x, move_obj.y = new_pos
                 move_obj.facing = new_facing
                 new_level.new_obj(move_obj)
+    def you(self, facing: spaces.PlayerOperation) -> None:
+        if facing == " ":
+            return
+        move_list = []
+        for level in self.level_list:
+            for obj in level.object_list:
+                if obj.has_prop(objects.YOU):
+                    new_move_list = self.get_move_list(level, obj, (obj.x, obj.y), facing)
+                    if new_move_list is not None:
+                        move_list.extend(new_move_list)
+        move_list = basics.remove_same_elements(move_list)
+        self.move_objs_from_move_list(move_list)
     def move(self) -> None:
         move_list = []
         for level in self.level_list:
@@ -170,18 +182,6 @@ class world(object):
                             move_list.extend(new_move_list)
                         else:
                             move_list.append((obj, level, (obj.x, obj.y), spaces.swap_orientation(obj.facing)))
-        move_list = basics.remove_same_elements(move_list)
-        self.move_objs_from_move_list(move_list)
-    def you(self, facing: spaces.PlayerOperation) -> None:
-        if facing == " ":
-            return
-        move_list = []
-        for level in self.level_list:
-            for obj in level.object_list:
-                if obj.has_prop(objects.YOU):
-                    new_move_list = self.get_move_list(level, obj, (obj.x, obj.y), facing)
-                    if new_move_list is not None:
-                        move_list.extend(new_move_list)
         move_list = basics.remove_same_elements(move_list)
         self.move_objs_from_move_list(move_list)
     def sink(self) -> None:
@@ -274,6 +274,7 @@ class world(object):
         self.transform()
         self.update_rules()
         self.sink()
+        self.hot_and_melt()
         self.defeat()
         self.open_and_shut()
         self.update_rules()

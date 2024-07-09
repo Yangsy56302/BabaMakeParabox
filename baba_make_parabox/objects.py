@@ -403,6 +403,30 @@ class DEFEAT(Property):
     def __repr__(self) -> str:
         return repr(super())
 
+class SHIFT(Property):
+    class_name: str = "SHIFT"
+    sprite_name: str = "text_shift"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class TELE(Property):
+    class_name: str = "TELE"
+    sprite_name: str = "text_tele"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class WORD(Property):
+    class_name: str = "WORD"
+    sprite_name: str = "text_word"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 def json_to_object(json_object: basics.JsonObject) -> Object: # oh hell no
     type_name: str = json_object["type"] # type: ignore
     object_type: type[Object] = object_name[type_name]
@@ -451,7 +475,10 @@ object_name: dict[str, type[Object]] = {
     "HOT": HOT,
     "MELT": MELT,
     "WIN": WIN,
-    "DEFEAT": DEFEAT
+    "DEFEAT": DEFEAT,
+    "SHIFT": SHIFT,
+    "TELE": TELE,
+    "WORD": WORD
 }
 
 class NounsObjsDicts(object):

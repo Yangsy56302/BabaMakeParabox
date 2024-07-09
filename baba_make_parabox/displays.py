@@ -153,5 +153,8 @@ sprite_colors["text_hot"] = LIGHT_ORANGE
 sprite_colors["text_melt"] = LIGHT_GRAY_BLUE
 sprite_colors["text_win"] = LIGHT_YELLOW
 sprite_colors["text_defeat"] = DARK_RED
+sprite_colors["text_shift"] = LIGHT_GRAY_BLUE
+sprite_colors["text_tele"] = LIGHTER_GRAY_BLUE
+sprite_colors["text_word"] = WHITE
 
 sprites = Sprites(sprite_colors)
