@@ -55,7 +55,7 @@ def level_editor(world: worlds.world) -> worlds.world:
     yes = ["y", "Y", "yes", "Yes", "YES"]
     window.fill("#000000")
     window.blit(pygame.transform.scale(world.show_level(current_level, basics.options["level_display_recursion_depth"], current_cursor_pos), (720, 720)), (0, 0))
-    window.blit(pygame.transform.scale(basics.game_data.sprites[current_object_type.sprite_name], (72, 72)), (1208, 0))
+    window.blit(pygame.transform.scale(displays.sprites[current_object_type.sprite_name], (72, 72)), (1208, 0))
     pygame.display.flip()
     editor_running = True
     while editor_running:
@@ -223,7 +223,7 @@ def level_editor(world: worlds.world) -> worlds.world:
         if refresh:
             window.fill("#000000")
             window.blit(pygame.transform.scale(world.show_level(current_level, basics.options["level_display_recursion_depth"], current_cursor_pos), (720, 720)), (0, 0))
-            window.blit(pygame.transform.scale(basics.game_data.sprites[current_object_type.sprite_name], (72, 72)), (1208, 0))
+            window.blit(pygame.transform.scale(displays.sprites[current_object_type.sprite_name], (72, 72)), (1208, 0))
             pygame.display.flip()
         for key in cooldowns:
             if cooldowns[key] > 0:

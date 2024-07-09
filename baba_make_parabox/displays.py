@@ -1,5 +1,48 @@
 import pygame
+import os
 import random
+
+DARK_GRAY = pygame.Color("#242424")
+LIGHT_GRAY = pygame.Color("#737373")
+SILVER = pygame.Color("#C3C3C3")
+WHITE = pygame.Color("#FFFFFF")
+MAYBE_BLACK = pygame.Color("#080808")
+
+DARKER_GRAY_BLUE = pygame.Color("#15181F")
+DARK_GRAY_BLUE = pygame.Color("#293141")
+BLUE_GRAY = pygame.Color("#3E7688")
+LIGHT_GRAY_BLUE = pygame.Color("#5F9DD1")
+LIGHTER_GRAY_BLUE = pygame.Color("#83C8E5")
+
+DARKER_RED = pygame.Color("#421910")
+DARK_RED = pygame.Color("#82261C")
+LIGHT_RED = pygame.Color("#E5533B")
+LIGHT_ORANGE = pygame.Color("#E49950")
+LIGHT_YELLOW = pygame.Color("#EDE285")
+
+PURPLE = pygame.Color("#603981")
+LIGHT_PURPLE = pygame.Color("#8E5E9C")
+DARK_BLUE = pygame.Color("#4759B1")
+LIGHT_BLUE = pygame.Color("#557AE0")
+GOLD = pygame.Color("#FFBD47")
+
+DARK_MAGENTA = pygame.Color("#682E4C")
+MAGENTA = pygame.Color("#D9396A")
+PINK = pygame.Color("#EB91CA")
+DARKER_BLUE = pygame.Color("#294891")
+LIGHTER_BLUE = pygame.Color("#73ABF3")
+
+DARK_GRAY_GREEN = pygame.Color("#303824")
+DARK_GREEN = pygame.Color("#4B5C1C")
+GRAY_GREEN = pygame.Color("#5C8339")
+LIGHT_GRAY_GREEN = pygame.Color("#A5B13F")
+LIGHT_GREEN = pygame.Color("#B6D340")
+
+DARK_BROWN = pygame.Color("#503F24")
+BROWN = pygame.Color("#90673E")
+LIGHT_BROWN = pygame.Color("#C29E46")
+DARKER_BROWN = pygame.Color("#362E22")
+MAYBE_NOT_BLACK = pygame.Color("#0B0B0E")
 
 def set_color_dark(surface: pygame.Surface, color: pygame.Color) -> pygame.Surface:
     new_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
@@ -54,3 +97,57 @@ def random_level_color() -> pygame.Color:
 
 pixel_size = 6
 sprite_size = 24
+
+def get_sprites(sprite_colors: dict[str, pygame.Color]) -> dict[str, pygame.Surface]:
+    sprites = {}
+    sprites_path = "sprites"
+    for filename in os.listdir(sprites_path):
+        sprite = pygame.image.load(os.path.join(sprites_path, filename))
+        sprite_name = os.path.splitext(filename)[0]
+        sprites[sprite_name] = set_color_dark(sprite, sprite_colors.get(sprite_name, WHITE))
+    return sprites
+
+sprite_colors: dict[str, pygame.Color] = {}
+
+sprite_colors["baba"] = WHITE
+sprite_colors["keke"] = LIGHT_RED
+sprite_colors["me"] = LIGHT_PURPLE
+sprite_colors["wall"] = DARK_GRAY_BLUE
+sprite_colors["water"] = LIGHT_GRAY_BLUE
+sprite_colors["lava"] = LIGHT_ORANGE
+sprite_colors["door"] = LIGHT_RED
+sprite_colors["key"] = LIGHT_YELLOW
+sprite_colors["box"] = BROWN
+sprite_colors["rock"] = LIGHT_BROWN
+sprite_colors["flag"] = LIGHT_YELLOW
+sprite_colors["level"] = MAGENTA
+sprite_colors["clone"] = PINK
+sprite_colors["text_baba"] = MAGENTA
+sprite_colors["text_keke"] = LIGHT_RED
+sprite_colors["text_me"] = LIGHT_PURPLE
+sprite_colors["text_wall"] = LIGHT_GRAY
+sprite_colors["text_water"] = LIGHT_GRAY_BLUE
+sprite_colors["text_lava"] = LIGHT_ORANGE
+sprite_colors["text_door"] = LIGHT_RED
+sprite_colors["text_key"] = LIGHT_YELLOW
+sprite_colors["text_box"] = BROWN
+sprite_colors["text_rock"] = BROWN
+sprite_colors["text_flag"] = LIGHT_YELLOW
+sprite_colors["text_level"] = MAGENTA
+sprite_colors["text_clone"] = PINK
+sprite_colors["text_text"] = MAGENTA
+sprite_colors["text_is"] = WHITE
+sprite_colors["text_you"] = MAGENTA
+sprite_colors["text_move"] = LIGHT_GREEN
+sprite_colors["text_stop"] = DARK_GREEN
+sprite_colors["text_push"] = BROWN
+sprite_colors["text_sink"] = LIGHT_GRAY_BLUE
+sprite_colors["text_float"] = LIGHTER_GRAY_BLUE
+sprite_colors["text_open"] = LIGHT_YELLOW
+sprite_colors["text_shut"] = LIGHT_RED
+sprite_colors["text_hot"] = LIGHT_ORANGE
+sprite_colors["text_melt"] = LIGHT_GRAY_BLUE
+sprite_colors["text_win"] = LIGHT_YELLOW
+sprite_colors["text_defeat"] = DARK_RED
+
+sprites: dict[str, pygame.Surface] = get_sprites(sprite_colors)

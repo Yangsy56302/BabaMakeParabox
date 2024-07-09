@@ -99,6 +99,22 @@ class Wall(Object):
     def __repr__(self) -> str:
         return repr(super())
 
+class Water(Object):
+    class_name: str = "Water"
+    sprite_name: str = "water"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class Lava(Object):
+    class_name: str = "Lava"
+    sprite_name: str = "lava"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 class Door(Object):
     class_name: str = "Door"
     sprite_name: str = "door"
@@ -203,6 +219,22 @@ class WALL(Noun):
     def __repr__(self) -> str:
         return repr(super())
 
+class WATER(Noun):
+    class_name: str = "WATER"
+    sprite_name: str = "text_water"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class LAVA(Noun):
+    class_name: str = "LAVA"
+    sprite_name: str = "text_lava"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 class DOOR(Noun):
     class_name: str = "DOOR"
     sprite_name: str = "text_door"
@@ -283,6 +315,14 @@ class YOU(Property):
     def __repr__(self) -> str:
         return repr(super())
 
+class MOVE(Property):
+    class_name: str = "MOVE"
+    sprite_name: str = "text_move"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 class STOP(Property):
     class_name: str = "STOP"
     sprite_name: str = "text_stop"
@@ -315,14 +355,6 @@ class FLOAT(Property):
     def __repr__(self) -> str:
         return repr(super())
 
-class SHUT(Property):
-    class_name: str = "SHUT"
-    sprite_name: str = "text_shut"
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
-
 class OPEN(Property):
     class_name: str = "OPEN"
     sprite_name: str = "text_open"
@@ -331,17 +363,25 @@ class OPEN(Property):
     def __repr__(self) -> str:
         return repr(super())
 
-class MOVE(Property):
-    class_name: str = "MOVE"
-    sprite_name: str = "text_move"
+class SHUT(Property):
+    class_name: str = "SHUT"
+    sprite_name: str = "text_shut"
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
         return repr(super())
 
-class DEFEAT(Property):
-    class_name: str = "DEFEAT"
-    sprite_name: str = "text_defeat"
+class HOT(Property):
+    class_name: str = "HOT"
+    sprite_name: str = "text_hot"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class MELT(Property):
+    class_name: str = "MELT"
+    sprite_name: str = "text_melt"
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -350,6 +390,14 @@ class DEFEAT(Property):
 class WIN(Property):
     class_name: str = "WIN"
     sprite_name: str = "text_win"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class DEFEAT(Property):
+    class_name: str = "DEFEAT"
+    sprite_name: str = "text_defeat"
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -372,6 +420,8 @@ object_name: dict[str, type[Object]] = {
     "Keke": Keke,
     "Me": Me,
     "Wall": Wall,
+    "Water": Water,
+    "Lava": Lava,
     "Box": Box,
     "Rock": Rock,
     "Flag": Flag,
@@ -381,6 +431,8 @@ object_name: dict[str, type[Object]] = {
     "KEKE": KEKE,
     "ME": ME,
     "WALL": WALL,
+    "WATER": WATER,
+    "LAVA": LAVA,
     "BOX": BOX,
     "ROCK": ROCK,
     "FLAG": FLAG,
@@ -389,15 +441,17 @@ object_name: dict[str, type[Object]] = {
     "CLONE": CLONE,
     "IS": IS,
     "YOU": YOU,
+    "MOVE": MOVE,
     "STOP": STOP,
     "PUSH": PUSH,
     "SINK": SINK,
     "FLOAT": FLOAT,
-    "SHUT": SHUT,
     "OPEN": OPEN,
-    "MOVE": MOVE,
-    "DEFEAT": DEFEAT,
-    "WIN": WIN
+    "SHUT": SHUT,
+    "HOT": HOT,
+    "MELT": MELT,
+    "WIN": WIN,
+    "DEFEAT": DEFEAT
 }
 
 class NounsObjsDicts(object):
@@ -417,6 +471,8 @@ nouns_objs_dicts.new_pair(BABA, Baba)
 nouns_objs_dicts.new_pair(KEKE, Keke)
 nouns_objs_dicts.new_pair(ME, Me)
 nouns_objs_dicts.new_pair(WALL, Wall)
+nouns_objs_dicts.new_pair(WATER, Water)
+nouns_objs_dicts.new_pair(LAVA, Lava)
 nouns_objs_dicts.new_pair(DOOR, Door)
 nouns_objs_dicts.new_pair(KEY, Key)
 nouns_objs_dicts.new_pair(BOX, Box)

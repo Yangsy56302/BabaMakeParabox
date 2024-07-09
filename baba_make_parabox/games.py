@@ -22,8 +22,7 @@ def play(world: worlds.world) -> None:
         for obj_type in rule:
             str_list.append(obj_type.class_name)
         print(" ".join(str_list))
-    for level in world.level_list:
-        level.update_rules()
+    world.update_rules()
     history = [copy.deepcopy(world)]
     start = copy.deepcopy(world)
     window = pygame.display.set_mode((720, 720))

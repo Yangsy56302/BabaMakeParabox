@@ -34,16 +34,6 @@ def remove_same_elements(a_list: list) -> list:
     o_list = map(lambda e: e[1], filter(lambda e: e[0] not in r_list, e_list))
     return list(o_list)
 
-class GameData(object):
-    class_name: str = "GameData"
-    sprites: dict[str, pygame.Surface]
-    def __init__(self) -> None:
-        self.sprites = {}
-        path = os.path.abspath(".")
-        sprites_path = os.path.join(path, "sprites")
-        for filename in os.listdir(sprites_path):
-            self.sprites[os.path.splitext(filename)[0]] = pygame.image.load(os.path.join(sprites_path, filename))
-
 class ArgumentParser(argparse.ArgumentParser):
     def error(self, message):
         raise argparse.ArgumentError(argument=None, message=message)
@@ -70,5 +60,3 @@ try:
     args = parser.parse_args(argv)
 except Exception:
     arg_error = True
-
-game_data = GameData()

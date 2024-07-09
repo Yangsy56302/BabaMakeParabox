@@ -71,8 +71,6 @@
 
 ## 版本列表（版本详细信息暂不翻译）
 
-注意：制作完成时间可能不准确，具体以Git记录为准。
-
 | 版本号 |    时间    | 版本详细信息 |
 |--------|------------|--------------|
 | 1.0    | 2024.07.05 | Initialized. |
@@ -86,6 +84,7 @@
 | 1.42   | 2024.07.08 | Code is Better |
 | 1.5    | 2024.07.08 | Baba is Float; Me is Sink; Rock is Defeat |
 | 1.6    | 2024.07.08 | Door is Shut; Key is Open |
+| 1.7    | 2024.07.08 | All has Color; Lava is Hot; Ice is Melt |
 
 ## 报告漏洞和提出建议
 

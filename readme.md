@@ -71,8 +71,6 @@ And remember:
 
 ## List of Versions
 
-P.s. Time might be incorrect, please check git info.
-
 | Number |    Time    | Informations |
 |--------|------------|--------------|
 | 1.0    | 2024.07.05 | Initialized. |
@@ -86,6 +84,7 @@ P.s. Time might be incorrect, please check git info.
 | 1.42   | 2024.07.08 | Code is Better |
 | 1.5    | 2024.07.08 | Baba is Float; Me is Sink; Rock is Defeat |
 | 1.6    | 2024.07.08 | Door is Shut; Key is Open |
+| 1.7    | 2024.07.08 | All has Color; Lava is Hot; Ice is Melt |
 
 ## Bug Reports and Advices
 

@@ -16,7 +16,7 @@ import baba_make_parabox.games as games
 
 import pygame
 
-versions = "1.5"
+versions = "1.7"
 
 def main() -> None:
     if os.environ.get("PYINSTALLER") == "TRUE":

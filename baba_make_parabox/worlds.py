@@ -46,6 +46,19 @@ class world(object):
                 if name == obj.name and inf_tier == obj.inf_tier:
                     return (super_level, obj)
         return None
+    def update_rules(self) -> None:
+        for level in self.level_list:
+            level.update_rules()
+            for obj in level.object_list:
+                obj.clear_prop()
+        for level in self.level_list:
+            for prop in objects.object_name.values():
+                if issubclass(prop, objects.Property):
+                    prop_rules = level.find_rules(objects.Noun, objects.IS, prop) + self.find_rules(objects.Noun, objects.IS, prop)
+                    for obj_type in [t[0] for t in prop_rules]:
+                        for obj in level.get_objs_from_type(objects.nouns_objs_dicts.get_obj(obj_type)): # type: ignore
+                            obj: objects.Object
+                            obj.new_prop(prop)
     def get_move_list(self, level: levels.level, obj: objects.Object, pos: spaces.Coord, facing: spaces.Orient, passed: Optional[list[levels.level]] = None, depth: int = 1) -> Optional[list[tuple[objects.Object, levels.level, spaces.Coord, spaces.Orient]]]:
         if depth > 127:
             return None
@@ -171,17 +184,6 @@ class world(object):
                         move_list.extend(new_move_list)
         move_list = basics.remove_same_elements(move_list)
         self.move_objs_from_move_list(move_list)
-    def defeat(self) -> None:
-        for level in self.level_list:
-            you_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU), level.object_list)
-            defeat_objs = filter(lambda o: objects.Object.has_prop(o, objects.DEFEAT), level.object_list)
-            float_objs = filter(lambda o: objects.Object.has_prop(o, objects.FLOAT), level.object_list)
-            for defeat_obj in defeat_objs:
-                for you_obj in you_objs:
-                    if you_obj.x == defeat_obj.x and you_obj.y == defeat_obj.y:
-                        if not ((you_obj in float_objs) ^ (defeat_obj in float_objs)):
-                            level.del_obj(you_obj.uuid)
-                            continue
     def sink(self) -> None:
         for level in self.level_list:
             sink_objs = filter(lambda o: objects.Object.has_prop(o, objects.SINK), level.object_list)
@@ -199,10 +201,30 @@ class world(object):
                                 break
             for uuid in delete_list:
                 level.del_obj(uuid)
-    def shut_and_open(self) -> None:
+    def hot_and_melt(self) -> None:
         for level in self.level_list:
-            shut_objs = filter(lambda o: objects.Object.has_prop(o, objects.SHUT), level.object_list)
+            hot_objs = filter(lambda o: objects.Object.has_prop(o, objects.HOT), level.object_list)
+            melt_objs = filter(lambda o: objects.Object.has_prop(o, objects.MELT), level.object_list)
+            float_objs = filter(lambda o: objects.Object.has_prop(o, objects.FLOAT), level.object_list)
+            for hot_obj in hot_objs:
+                for melt_obj in melt_objs:
+                    if melt_obj.x == hot_obj.x and melt_obj.y == hot_obj.y:
+                        if not ((melt_obj in float_objs) ^ (hot_obj in float_objs)):
+                            level.del_obj(melt_obj.uuid)
+    def defeat(self) -> None:
+        for level in self.level_list:
+            you_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU), level.object_list)
+            defeat_objs = filter(lambda o: objects.Object.has_prop(o, objects.DEFEAT), level.object_list)
+            float_objs = filter(lambda o: objects.Object.has_prop(o, objects.FLOAT), level.object_list)
+            for defeat_obj in defeat_objs:
+                for you_obj in you_objs:
+                    if you_obj.x == defeat_obj.x and you_obj.y == defeat_obj.y:
+                        if not ((you_obj in float_objs) ^ (defeat_obj in float_objs)):
+                            level.del_obj(you_obj.uuid)
+    def open_and_shut(self) -> None:
+        for level in self.level_list:
             open_objs = filter(lambda o: objects.Object.has_prop(o, objects.OPEN), level.object_list)
+            shut_objs = filter(lambda o: objects.Object.has_prop(o, objects.SHUT), level.object_list)
             delete_list = []
             for shut_obj in shut_objs:
                 for open_obj in open_objs:
@@ -233,19 +255,6 @@ class world(object):
                         new_obj = new_type((old_obj.x, old_obj.y), old_obj.facing)
                         level.del_obj(old_obj.uuid)
                         level.new_obj(new_obj)
-    def update_rules(self) -> None:
-        for level in self.level_list:
-            level.update_rules()
-            for obj in level.object_list:
-                obj.clear_prop()
-        for level in self.level_list:
-            for prop in objects.object_name.values():
-                if issubclass(prop, objects.Property):
-                    prop_rules = level.find_rules(objects.Noun, objects.IS, prop) + self.find_rules(objects.Noun, objects.IS, prop)
-                    for obj_type in [t[0] for t in prop_rules]:
-                        for obj in level.get_objs_from_type(objects.nouns_objs_dicts.get_obj(obj_type)): # type: ignore
-                            obj: objects.Object
-                            obj.new_prop(prop)
     def winned(self) -> bool:
         for level in self.level_list:
             you_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU), level.object_list)
@@ -258,17 +267,20 @@ class world(object):
                             return True
         return False
     def round(self, op: spaces.PlayerOperation) -> bool:
+        self.update_rules()
         self.you(op)
         self.move()
+        self.update_rules()
         self.transform()
+        self.update_rules()
         self.sink()
         self.defeat()
-        self.shut_and_open()
+        self.open_and_shut()
         self.update_rules()
         return self.winned()
     def show_level(self, level: levels.level, layer: int, cursor: Optional[spaces.Coord] = None) -> pygame.Surface:
         if layer <= 0:
-            return basics.game_data.sprites["text_level"].copy()
+            return displays.sprites["text_level"].copy()
         pixel_sprite_size = displays.sprite_size * displays.pixel_size
         level_surface_size = (level.width * pixel_sprite_size, level.height * pixel_sprite_size)
         level_surface = pygame.Surface(level_surface_size, pygame.SRCALPHA)
@@ -280,20 +292,20 @@ class world(object):
                     obj_surface = self.show_level(obj_level, layer - 1)
                     obj_surface = displays.set_color_dark(obj_surface, pygame.Color("#CCCCCC"))
                 else:
-                    obj_surface = basics.game_data.sprites["level"].copy()
+                    obj_surface = displays.sprites["level"].copy()
             elif isinstance(obj, objects.Clone):
                 obj_level = self.get_level(obj.name, obj.inf_tier)
                 if obj_level is not None:
                     obj_surface = self.show_level(obj_level, layer - 1)
                     obj_surface = displays.set_color_light(obj_surface, pygame.Color("#444444"))
                 else:
-                    obj_surface = basics.game_data.sprites["clone"].copy()
+                    obj_surface = displays.sprites["clone"].copy()
             else:
-                obj_surface = basics.game_data.sprites[obj.sprite_name].copy()
+                obj_surface = displays.sprites[obj.sprite_name].copy()
             pos = (obj.x * pixel_sprite_size, obj.y * pixel_sprite_size)
             level_surface.blit(pygame.transform.scale(obj_surface, (pixel_sprite_size, pixel_sprite_size)), pos)
         if cursor is not None:
-            obj_surface = basics.game_data.sprites["cursor"].copy()
+            obj_surface = displays.sprites["cursor"].copy()
             pos = (cursor[0] * pixel_sprite_size, cursor[1] * pixel_sprite_size)
             level_surface.blit(pygame.transform.scale(obj_surface, (pixel_sprite_size, pixel_sprite_size)), pos)
         level_background = pygame.Surface(level_surface.get_size(), pygame.SRCALPHA)
