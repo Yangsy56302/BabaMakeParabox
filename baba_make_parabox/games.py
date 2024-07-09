@@ -5,6 +5,7 @@ import json
 import baba_make_parabox.basics as basics
 import baba_make_parabox.objects as objects
 import baba_make_parabox.levels as levels
+import baba_make_parabox.displays as displays
 import baba_make_parabox.worlds as worlds
 
 import pygame
@@ -25,7 +26,6 @@ def play(world: worlds.world) -> None:
     world.update_rules()
     history = [copy.deepcopy(world)]
     start = copy.deepcopy(world)
-    window = pygame.display.set_mode((720, 720))
     clock = pygame.time.Clock()
     keybinds = {"W": pygame.K_w,
                 "A": pygame.K_a,
@@ -38,9 +38,9 @@ def play(world: worlds.world) -> None:
                 " ": pygame.K_SPACE}
     keys = {v: False for v in keybinds.values()}
     cooldowns = {v: 0 for v in keybinds.values()}
-    window.fill("#000000")
+    displays.window.fill("#000000")
     current_level_index = 0
-    window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], basics.options["level_display_recursion_depth"]), (720, 720)), (0, 0))
+    displays.window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], basics.options["level_display_recursion_depth"]), (720, 720)), (0, 0))
     pygame.display.flip()
     winned = False
     game_running = True
@@ -93,8 +93,8 @@ def play(world: worlds.world) -> None:
                 cooldowns[key] = basics.options["input_cooldown"]
         current_level_index = current_level_index % len(world.level_list) if current_level_index >= 0 else len(world.level_list) - 1
         if refresh:
-            window.fill("#000000")
-            window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], basics.options["level_display_recursion_depth"]), (720, 720)), (0, 0))
+            displays.window.fill("#000000")
+            displays.window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], basics.options["level_display_recursion_depth"]), (720, 720)), (0, 0))
             pygame.display.flip()
         for key in cooldowns:
             if cooldowns[key] > 0:

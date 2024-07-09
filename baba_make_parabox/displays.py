@@ -2,6 +2,8 @@ import pygame
 import os
 import random
 
+window = pygame.display.set_mode((720, 720))
+
 DARK_GRAY = pygame.Color("#242424")
 LIGHT_GRAY = pygame.Color("#737373")
 SILVER = pygame.Color("#C3C3C3")
@@ -102,7 +104,7 @@ def get_sprites(sprite_colors: dict[str, pygame.Color]) -> dict[str, pygame.Surf
     sprites = {}
     sprites_path = "sprites"
     for filename in os.listdir(sprites_path):
-        sprite = pygame.image.load(os.path.join(sprites_path, filename))
+        sprite = pygame.image.load(os.path.join(sprites_path, filename)).convert_alpha()
         sprite_name = os.path.splitext(filename)[0]
         sprites[sprite_name] = set_color_dark(sprite, sprite_colors.get(sprite_name, WHITE))
     return sprites

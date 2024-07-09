@@ -4,6 +4,8 @@ import json
 print("Baba Make Parabox")
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "TRUE"
 
+import pygame
+
 import baba_make_parabox.basics as basics
 import baba_make_parabox.spaces as spaces
 import baba_make_parabox.objects as objects
@@ -13,8 +15,6 @@ import baba_make_parabox.displays as displays
 import baba_make_parabox.worlds as worlds
 import baba_make_parabox.edits as edits
 import baba_make_parabox.games as games
-
-import pygame
 
 versions = "1.7"
 

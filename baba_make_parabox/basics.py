@@ -4,6 +4,8 @@ import sys
 import json
 import argparse
 
+pygame.init()
+
 JsonObject = None | int | float | str | list["JsonObject"] | dict["str", "JsonObject"]
 
 os.makedirs("worlds", exist_ok=True)

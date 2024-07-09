@@ -17,7 +17,7 @@ def level_editor(world: worlds.world) -> worlds.world:
             str_list.append(obj_type.class_name)
         print(" ".join(str_list))
     history = [copy.deepcopy(world)]
-    window = pygame.display.set_mode((1280, 720))
+    displays.window = pygame.display.set_mode((1280, 720))
     clock = pygame.time.Clock()
     keybinds = {"W": pygame.K_w,
                 "A": pygame.K_a,
@@ -43,7 +43,7 @@ def level_editor(world: worlds.world) -> worlds.world:
                 "\t": pygame.K_TAB}
     keys = {v: False for v in keybinds.values()}
     cooldowns = {v: 0 for v in keybinds.values()}
-    window.fill("#000000")
+    displays.window.fill("#000000")
     current_level_index = 0
     current_level = world.level_list[current_level_index]
     object_list = list(objects.object_name.values())
@@ -53,9 +53,9 @@ def level_editor(world: worlds.world) -> worlds.world:
     current_cursor_pos = (0, 0)
     current_clipboard = []
     yes = ["y", "Y", "yes", "Yes", "YES"]
-    window.fill("#000000")
-    window.blit(pygame.transform.scale(world.show_level(current_level, basics.options["level_display_recursion_depth"], current_cursor_pos), (720, 720)), (0, 0))
-    window.blit(pygame.transform.scale(displays.sprites[current_object_type.sprite_name], (72, 72)), (1208, 0))
+    displays.window.fill("#000000")
+    displays.window.blit(pygame.transform.scale(world.show_level(current_level, basics.options["level_display_recursion_depth"], current_cursor_pos), (720, 720)), (0, 0))
+    displays.window.blit(pygame.transform.scale(displays.sprites[current_object_type.sprite_name], (72, 72)), (1208, 0))
     pygame.display.flip()
     editor_running = True
     while editor_running:
@@ -221,9 +221,9 @@ def level_editor(world: worlds.world) -> worlds.world:
         current_object_index = current_object_index % len(object_list) if current_object_index >= 0 else len(object_list) - 1
         current_object_type = object_list[current_object_index]
         if refresh:
-            window.fill("#000000")
-            window.blit(pygame.transform.scale(world.show_level(current_level, basics.options["level_display_recursion_depth"], current_cursor_pos), (720, 720)), (0, 0))
-            window.blit(pygame.transform.scale(displays.sprites[current_object_type.sprite_name], (72, 72)), (1208, 0))
+            displays.window.fill("#000000")
+            displays.window.blit(pygame.transform.scale(world.show_level(current_level, basics.options["level_display_recursion_depth"], current_cursor_pos), (720, 720)), (0, 0))
+            displays.window.blit(pygame.transform.scale(displays.sprites[current_object_type.sprite_name], (72, 72)), (1208, 0))
             pygame.display.flip()
         for key in cooldowns:
             if cooldowns[key] > 0:
