@@ -25,6 +25,8 @@ def play(world: worlds.world) -> None:
         print(" ".join(str_list))
     world.update_rules()
     history = [copy.deepcopy(world)]
+    window = pygame.display.set_mode((720, 720))
+    displays.sprites.update()
     start = copy.deepcopy(world)
     clock = pygame.time.Clock()
     keybinds = {"W": pygame.K_w,
@@ -38,9 +40,9 @@ def play(world: worlds.world) -> None:
                 " ": pygame.K_SPACE}
     keys = {v: False for v in keybinds.values()}
     cooldowns = {v: 0 for v in keybinds.values()}
-    displays.window.fill("#000000")
+    window.fill("#000000")
     current_level_index = 0
-    displays.window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], basics.options["level_display_recursion_depth"]), (720, 720)), (0, 0))
+    window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], basics.options["level_display_recursion_depth"]), (720, 720)), (0, 0))
     pygame.display.flip()
     winned = False
     game_running = True
@@ -93,8 +95,8 @@ def play(world: worlds.world) -> None:
                 cooldowns[key] = basics.options["input_cooldown"]
         current_level_index = current_level_index % len(world.level_list) if current_level_index >= 0 else len(world.level_list) - 1
         if refresh:
-            displays.window.fill("#000000")
-            displays.window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], basics.options["level_display_recursion_depth"]), (720, 720)), (0, 0))
+            window.fill("#000000")
+            window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], basics.options["level_display_recursion_depth"]), (720, 720)), (0, 0))
             pygame.display.flip()
         for key in cooldowns:
             if cooldowns[key] > 0:
@@ -109,7 +111,7 @@ def play(world: worlds.world) -> None:
 
 def test() -> None:
     # Superlevel
-    level_0 = levels.level("main", (9, 9), color=pygame.Color("#888888"))
+    level_0 = levels.level("main", (9, 9), color=pygame.Color("#111111"))
     # Rules
     level_0.new_obj(objects.BABA((0, 1)))
     level_0.new_obj(objects.IS((1, 1)))
@@ -151,7 +153,7 @@ def test() -> None:
                 level_0.new_obj(objects.Wall((x, y)))
     level_0.del_objs_from_type(objects.Keke)
     # Sublevel
-    level_1 = levels.level("sub", (7, 7), color=pygame.Color("#004488"))
+    level_1 = levels.level("sub", (7, 7), color=pygame.Color("#000022"))
     # Rules
     level_1.new_obj(objects.BABA((6, 0)))
     level_1.new_obj(objects.IS((6, 1)))

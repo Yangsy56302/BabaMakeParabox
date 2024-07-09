@@ -2,8 +2,6 @@ import pygame
 import os
 import random
 
-window = pygame.display.set_mode((720, 720))
-
 DARK_GRAY = pygame.Color("#242424")
 LIGHT_GRAY = pygame.Color("#737373")
 SILVER = pygame.Color("#C3C3C3")
@@ -100,14 +98,18 @@ def random_level_color() -> pygame.Color:
 pixel_size = 6
 sprite_size = 24
 
-def get_sprites(sprite_colors: dict[str, pygame.Color]) -> dict[str, pygame.Surface]:
-    sprites = {}
-    sprites_path = "sprites"
-    for filename in os.listdir(sprites_path):
-        sprite = pygame.image.load(os.path.join(sprites_path, filename)).convert_alpha()
-        sprite_name = os.path.splitext(filename)[0]
-        sprites[sprite_name] = set_color_dark(sprite, sprite_colors.get(sprite_name, WHITE))
-    return sprites
+class Sprites(object):
+    def __init__(self, sprite_colors: dict[str, pygame.Color]) -> None:
+        self.sprite_colors = sprite_colors
+    def update(self) -> None:
+        self.sprites = {}
+        sprites_path = "sprites"
+        for filename in os.listdir(sprites_path):
+            sprite = pygame.image.load(os.path.join(sprites_path, filename)).convert_alpha()
+            sprite_name = os.path.splitext(filename)[0]
+            self.sprites[sprite_name] = set_color_dark(sprite, self.sprite_colors.get(sprite_name, WHITE))
+    def get(self, sprite_name: str) -> pygame.Surface:
+        return self.sprites[sprite_name]
 
 sprite_colors: dict[str, pygame.Color] = {}
 
@@ -152,4 +154,4 @@ sprite_colors["text_melt"] = LIGHT_GRAY_BLUE
 sprite_colors["text_win"] = LIGHT_YELLOW
 sprite_colors["text_defeat"] = DARK_RED
 
-sprites: dict[str, pygame.Surface] = get_sprites(sprite_colors)
+sprites = Sprites(sprite_colors)

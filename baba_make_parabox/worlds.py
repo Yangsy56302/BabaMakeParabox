@@ -280,7 +280,7 @@ class world(object):
         return self.winned()
     def show_level(self, level: levels.level, layer: int, cursor: Optional[spaces.Coord] = None) -> pygame.Surface:
         if layer <= 0:
-            return displays.sprites["text_level"].copy()
+            return displays.sprites.get("text_level").copy()
         pixel_sprite_size = displays.sprite_size * displays.pixel_size
         level_surface_size = (level.width * pixel_sprite_size, level.height * pixel_sprite_size)
         level_surface = pygame.Surface(level_surface_size, pygame.SRCALPHA)
@@ -292,20 +292,20 @@ class world(object):
                     obj_surface = self.show_level(obj_level, layer - 1)
                     obj_surface = displays.set_color_dark(obj_surface, pygame.Color("#CCCCCC"))
                 else:
-                    obj_surface = displays.sprites["level"].copy()
+                    obj_surface = displays.sprites.get("level").copy()
             elif isinstance(obj, objects.Clone):
                 obj_level = self.get_level(obj.name, obj.inf_tier)
                 if obj_level is not None:
                     obj_surface = self.show_level(obj_level, layer - 1)
                     obj_surface = displays.set_color_light(obj_surface, pygame.Color("#444444"))
                 else:
-                    obj_surface = displays.sprites["clone"].copy()
+                    obj_surface = displays.sprites.get("clone").copy()
             else:
-                obj_surface = displays.sprites[obj.sprite_name].copy()
+                obj_surface = displays.sprites.get(obj.sprite_name).copy()
             pos = (obj.x * pixel_sprite_size, obj.y * pixel_sprite_size)
             level_surface.blit(pygame.transform.scale(obj_surface, (pixel_sprite_size, pixel_sprite_size)), pos)
         if cursor is not None:
-            obj_surface = displays.sprites["cursor"].copy()
+            obj_surface = displays.sprites.get("cursor").copy()
             pos = (cursor[0] * pixel_sprite_size, cursor[1] * pixel_sprite_size)
             level_surface.blit(pygame.transform.scale(obj_surface, (pixel_sprite_size, pixel_sprite_size)), pos)
         level_background = pygame.Surface(level_surface.get_size(), pygame.SRCALPHA)
