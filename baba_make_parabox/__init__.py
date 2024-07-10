@@ -8,8 +8,8 @@ import baba_make_parabox.basics as basics
 import baba_make_parabox.spaces as spaces
 import baba_make_parabox.objects as objects
 import baba_make_parabox.rules as rules
-import baba_make_parabox.levels as levels
 import baba_make_parabox.displays as displays
+import baba_make_parabox.levels as levels
 import baba_make_parabox.worlds as worlds
 import baba_make_parabox.edits as edits
 import baba_make_parabox.games as games

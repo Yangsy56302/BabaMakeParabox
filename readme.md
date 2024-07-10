@@ -11,6 +11,10 @@ made separately by **Arvi Hempuli** and **Patrick Traynor**.
 Note: batch files in `python` folder only works when python files exists,
 and batch files in `exe` folder only works when execution files exists.
 
+**DO NOT CLOSE OR CLICK THE TERMINAL**
+**UNLESS YOU NEED TO INPUT SOMETHING INTO TERMINAL**
+**OR YOU KNOW WHAT YOU ARE DOING.**
+
 If you want to run the source code, download These Things:
 - **Python** **_(latest)_**: [Link](https://www.python.org/downloads/)
 - **PIP**: Should install with Python
