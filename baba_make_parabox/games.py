@@ -26,6 +26,8 @@ def play(world: worlds.world) -> None:
     world.update_rules()
     history = [copy.deepcopy(world)]
     window = pygame.display.set_mode((720, 720))
+    pygame.display.set_caption(f"Baba Make Parabox Version {basics.versions}")
+    pygame.display.set_icon(pygame.image.load("BabaMakeParabox.png"))
     displays.sprites.update()
     start = copy.deepcopy(world)
     clock = pygame.time.Clock()

@@ -6,6 +6,8 @@ import argparse
 
 pygame.init()
 
+versions = "1.8"
+
 JsonObject = None | int | float | str | list["JsonObject"] | dict["str", "JsonObject"]
 
 os.makedirs("worlds", exist_ok=True)

@@ -16,14 +16,12 @@ import baba_make_parabox.worlds as worlds
 import baba_make_parabox.edits as edits
 import baba_make_parabox.games as games
 
-versions = "1.7"
-
 def main() -> None:
     if os.environ.get("PYINSTALLER") == "TRUE":
         pass # just do nothing
     elif not basics.arg_error:
         if basics.args.versions:
-            print(f"Version: {versions}")
+            print(f"Version: {basics.versions}")
         if basics.args.test:
             games.test()
             pygame.quit()

@@ -67,7 +67,7 @@
 - X：剪切光标上的物体至剪切板
 - C：复制光标上的物体至剪切板
 - V：从剪切板粘贴物体到光标上
-- 关闭窗口：保存并退出
+- 关闭游戏窗口：保存并退出
 
 ## 版本列表（版本详细信息暂不翻译）
 
@@ -84,7 +84,8 @@
 | 1.42   | 2024.07.08 | Code is Better |
 | 1.5    | 2024.07.08 | Baba is Float; Me is Sink; Rock is Defeat |
 | 1.6    | 2024.07.08 | Door is Shut; Key is Open |
-| 1.7    | 2024.07.08 | All has Color; Lava is Hot; Ice is Melt |
+| 1.7    | 2024.07.09 | All has Color; Lava is Hot; Ice is Melt |
+| 1.8    | 2024.07.10 | Game has Icon; Baba is Word; Keke is Shift; Rock is Tele |
 
 ## 报告漏洞和提出建议
 

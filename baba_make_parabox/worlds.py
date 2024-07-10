@@ -1,4 +1,5 @@
 from typing import Any, Optional
+import random
 import pygame
 
 import baba_make_parabox.basics as basics
@@ -46,11 +47,9 @@ class world(object):
                 if name == obj.name and inf_tier == obj.inf_tier:
                     return (super_level, obj)
         return None
-    def update_rules(self) -> None:
+    def update_rules_with_word(self) -> None:
         for level in self.level_list:
-            level.update_rules()
-            for obj in level.object_list:
-                obj.clear_prop()
+            level.update_rules_with_word()
         for level in self.level_list:
             for prop in objects.object_name.values():
                 if issubclass(prop, objects.Property):
@@ -59,6 +58,20 @@ class world(object):
                         for obj in level.get_objs_from_type(objects.nouns_objs_dicts.get_obj(obj_type)): # type: ignore
                             obj: objects.Object
                             obj.new_prop(prop)
+    def update_rules(self) -> None:
+        for level in self.level_list:
+            for obj in level.object_list:
+                obj.clear_prop()
+            level.update_rules()
+        for level in self.level_list:
+            for prop in objects.object_name.values():
+                if issubclass(prop, objects.Property):
+                    prop_rules = level.find_rules(objects.Noun, objects.IS, prop) + self.find_rules(objects.Noun, objects.IS, prop)
+                    for obj_type in [t[0] for t in prop_rules]:
+                        for obj in level.get_objs_from_type(objects.nouns_objs_dicts.get_obj(obj_type)): # type: ignore
+                            obj: objects.Object
+                            obj.new_prop(prop)
+        self.update_rules_with_word()
     def get_move_list(self, level: levels.level, obj: objects.Object, pos: spaces.Coord, facing: spaces.Orient, passed: Optional[list[levels.level]] = None, depth: int = 1) -> Optional[list[tuple[objects.Object, levels.level, spaces.Coord, spaces.Orient]]]:
         if depth > 127:
             return None
@@ -161,29 +174,61 @@ class world(object):
             return
         move_list = []
         for level in self.level_list:
-            for obj in level.object_list:
-                if obj.has_prop(objects.YOU):
-                    new_move_list = self.get_move_list(level, obj, (obj.x, obj.y), facing)
-                    if new_move_list is not None:
-                        move_list.extend(new_move_list)
+            you_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU), level.object_list)
+            for obj in you_objs:
+                new_move_list = self.get_move_list(level, obj, (obj.x, obj.y), facing)
+                if new_move_list is not None:
+                    move_list.extend(new_move_list)
         move_list = basics.remove_same_elements(move_list)
         self.move_objs_from_move_list(move_list)
     def move(self) -> None:
         move_list = []
         for level in self.level_list:
-            for obj in level.object_list:
-                if obj.has_prop(objects.MOVE):
-                    new_move_list = self.get_move_list(level, obj, (obj.x, obj.y), obj.facing)
+            move_objs = filter(lambda o: objects.Object.has_prop(o, objects.MOVE), level.object_list)
+            for obj in move_objs:
+                new_move_list = self.get_move_list(level, obj, (obj.x, obj.y), obj.facing)
+                if new_move_list is not None:
+                    move_list.extend(new_move_list)
+                else:
+                    new_move_list = self.get_move_list(level, obj, (obj.x, obj.y), spaces.swap_orientation(obj.facing))
                     if new_move_list is not None:
                         move_list.extend(new_move_list)
                     else:
-                        new_move_list = self.get_move_list(level, obj, (obj.x, obj.y), spaces.swap_orientation(obj.facing))
-                        if new_move_list is not None:
-                            move_list.extend(new_move_list)
-                        else:
-                            move_list.append((obj, level, (obj.x, obj.y), spaces.swap_orientation(obj.facing)))
+                        move_list.append((obj, level, (obj.x, obj.y), spaces.swap_orientation(obj.facing)))
         move_list = basics.remove_same_elements(move_list)
         self.move_objs_from_move_list(move_list)
+    def shift(self) -> None:
+        move_list = []
+        for level in self.level_list:
+            shift_objs = filter(lambda o: objects.Object.has_prop(o, objects.SHIFT), level.object_list)
+            float_objs = filter(lambda o: objects.Object.has_prop(o, objects.FLOAT), level.object_list)
+            for shift_obj in shift_objs:
+                for obj in level.get_objs_from_pos((shift_obj.x, shift_obj.y)):
+                    if shift_obj != obj:
+                        if not ((shift_obj in float_objs) ^ (obj in float_objs)):
+                            new_move_list = self.get_move_list(level, obj, (obj.x, obj.y), shift_obj.facing)
+                            if new_move_list is not None:
+                                move_list.extend(new_move_list)
+        move_list = basics.remove_same_elements(move_list)
+        self.move_objs_from_move_list(move_list)
+    def tele(self) -> None:
+        tele_list: list[tuple[objects.Object, spaces.Coord]] = []
+        object_list = []
+        for level in self.level_list:
+            object_list.extend(level.object_list)
+        tele_objs = filter(lambda o: objects.Object.has_prop(o, objects.TELE), object_list)
+        float_objs = filter(lambda o: objects.Object.has_prop(o, objects.FLOAT), object_list)
+        for tele_obj in tele_objs:
+            other_tele_objs = list(filter(lambda o: objects.Object.has_prop(o, objects.TELE) and isinstance(o, type(tele_obj)) and o != tele_obj, object_list))
+            if len(other_tele_objs) <= 1:
+                continue
+            for obj in level.get_objs_from_pos((tele_obj.x, tele_obj.y)):
+                if tele_obj != obj:
+                    if not ((tele_obj in float_objs) ^ (obj in float_objs)):
+                        other_tele_obj = random.choice(other_tele_objs)
+                        tele_list.append((obj, (other_tele_obj.x, other_tele_obj.y)))
+        for obj, pos in tele_list:
+            obj.x, obj.y = pos
     def sink(self) -> None:
         for level in self.level_list:
             sink_objs = filter(lambda o: objects.Object.has_prop(o, objects.SINK), level.object_list)
@@ -271,7 +316,11 @@ class world(object):
         self.you(op)
         self.move()
         self.update_rules()
+        self.shift()
+        self.update_rules()
         self.transform()
+        self.update_rules()
+        self.tele()
         self.update_rules()
         self.sink()
         self.hot_and_melt()

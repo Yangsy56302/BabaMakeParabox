@@ -7,7 +7,7 @@ import baba_make_parabox.spaces as spaces
 class Object(object):
     class_name: str = "Object"
     sprite_name: str
-    def __init__(self, pos: spaces.Coord, facing: spaces.Orient = "W") -> None:
+    def __init__(self, pos: spaces.Coord, facing: spaces.Orient = "S") -> None:
         self.uuid: uuid.UUID = uuid.uuid4()
         self.x: int = pos[0]
         self.y: int = pos[1]
@@ -158,7 +158,7 @@ class Flag(Object):
 class Level(Object):
     class_name: str = "Level"
     sprite_name: str = "level"
-    def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = "W") -> None:
+    def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = "S") -> None:
         super().__init__(pos, facing)
         self.name: str = name
         self.inf_tier: int = inf_tier
@@ -174,7 +174,7 @@ class Level(Object):
 class Clone(Object):
     class_name: str = "Clone"
     sprite_name: str = "clone"
-    def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = "W") -> None:
+    def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = "S") -> None:
         super().__init__(pos, facing)
         self.name: str = name
         self.inf_tier: int = inf_tier

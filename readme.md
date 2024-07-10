@@ -67,7 +67,7 @@ And remember:
 - X: Cut all objects on cursor.
 - C: Copy all objects on cursor.
 - V: Paste all objects on cursor.
-- Close Window: Save and quit.
+- Close Pygame Window: Save and quit.
 
 ## List of Versions
 
@@ -84,7 +84,8 @@ And remember:
 | 1.42   | 2024.07.08 | Code is Better |
 | 1.5    | 2024.07.08 | Baba is Float; Me is Sink; Rock is Defeat |
 | 1.6    | 2024.07.08 | Door is Shut; Key is Open |
-| 1.7    | 2024.07.08 | All has Color; Lava is Hot; Ice is Melt |
+| 1.7    | 2024.07.09 | All has Color; Lava is Hot; Ice is Melt |
+| 1.8    | 2024.07.10 | Game has Icon; Baba is Word; Keke is Shift; Rock is Tele |
 
 ## Bug Reports and Advices
 

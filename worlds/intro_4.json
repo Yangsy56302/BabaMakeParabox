@@ -9,9 +9,9 @@
                 9
             ],
             "color": [
-                136,
-                136,
-                136
+                17,
+                17,
+                17
             ],
             "object_list": [
                 {
@@ -20,7 +20,7 @@
                         0,
                         1
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "IS",
@@ -28,7 +28,7 @@
                         1,
                         1
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "YOU",
@@ -36,7 +36,7 @@
                         2,
                         1
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "WALL",
@@ -44,7 +44,7 @@
                         8,
                         1
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "IS",
@@ -52,7 +52,7 @@
                         8,
                         2
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "STOP",
@@ -60,7 +60,7 @@
                         8,
                         3
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "TEXT",
@@ -68,7 +68,7 @@
                         8,
                         5
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "IS",
@@ -76,7 +76,7 @@
                         8,
                         6
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "PUSH",
@@ -84,7 +84,7 @@
                         8,
                         7
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "FLAG",
@@ -92,7 +92,7 @@
                         4,
                         1
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "IS",
@@ -100,7 +100,7 @@
                         5,
                         1
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Level",
@@ -108,7 +108,7 @@
                         3,
                         3
                     ],
-                    "orientation": "W",
+                    "orientation": "S",
                     "level": {
                         "name": "sub",
                         "infinite_tier": 0
@@ -120,7 +120,7 @@
                         2,
                         4
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Flag",
@@ -128,7 +128,7 @@
                         4,
                         6
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Baba",
@@ -136,7 +136,7 @@
                         1,
                         7
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -144,7 +144,7 @@
                         0,
                         0
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -152,7 +152,7 @@
                         0,
                         2
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -160,7 +160,7 @@
                         0,
                         3
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -168,7 +168,7 @@
                         0,
                         4
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -176,7 +176,7 @@
                         0,
                         5
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -184,7 +184,7 @@
                         0,
                         6
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -192,7 +192,7 @@
                         0,
                         7
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -200,7 +200,7 @@
                         0,
                         8
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -208,7 +208,7 @@
                         1,
                         0
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -216,7 +216,7 @@
                         1,
                         2
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -224,7 +224,7 @@
                         1,
                         5
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -232,7 +232,7 @@
                         1,
                         8
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -240,7 +240,7 @@
                         2,
                         0
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -248,7 +248,7 @@
                         2,
                         2
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -256,7 +256,7 @@
                         2,
                         8
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -264,7 +264,7 @@
                         3,
                         0
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -272,7 +272,7 @@
                         3,
                         1
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -280,7 +280,7 @@
                         3,
                         2
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -288,7 +288,7 @@
                         3,
                         4
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -296,7 +296,7 @@
                         3,
                         5
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -304,7 +304,7 @@
                         3,
                         6
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -312,7 +312,7 @@
                         3,
                         7
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -320,7 +320,7 @@
                         3,
                         8
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -328,7 +328,7 @@
                         4,
                         0
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -336,7 +336,7 @@
                         4,
                         2
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -344,7 +344,7 @@
                         4,
                         4
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -352,7 +352,7 @@
                         4,
                         5
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -360,7 +360,7 @@
                         4,
                         7
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -368,7 +368,7 @@
                         4,
                         8
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -376,7 +376,7 @@
                         5,
                         0
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -384,7 +384,7 @@
                         5,
                         2
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -392,7 +392,7 @@
                         5,
                         4
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -400,7 +400,7 @@
                         5,
                         5
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -408,7 +408,7 @@
                         5,
                         7
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -416,7 +416,7 @@
                         5,
                         8
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -424,7 +424,7 @@
                         6,
                         0
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -432,7 +432,7 @@
                         6,
                         7
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -440,7 +440,7 @@
                         6,
                         8
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -448,7 +448,7 @@
                         7,
                         0
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -456,7 +456,7 @@
                         7,
                         1
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -464,7 +464,7 @@
                         7,
                         2
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -472,7 +472,7 @@
                         7,
                         3
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -480,7 +480,7 @@
                         7,
                         4
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -488,7 +488,7 @@
                         7,
                         5
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -496,7 +496,7 @@
                         7,
                         6
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -504,7 +504,7 @@
                         7,
                         7
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -512,7 +512,7 @@
                         7,
                         8
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -520,7 +520,7 @@
                         8,
                         0
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -528,7 +528,7 @@
                         8,
                         4
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -536,7 +536,7 @@
                         8,
                         8
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 }
             ]
         },
@@ -549,8 +549,8 @@
             ],
             "color": [
                 0,
-                68,
-                136
+                0,
+                34
             ],
             "object_list": [
                 {
@@ -559,7 +559,7 @@
                         6,
                         0
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "IS",
@@ -567,7 +567,7 @@
                         6,
                         1
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "YOU",
@@ -575,7 +575,7 @@
                         6,
                         2
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "WALL",
@@ -583,7 +583,7 @@
                         6,
                         4
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "IS",
@@ -591,7 +591,7 @@
                         6,
                         5
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "STOP",
@@ -599,7 +599,7 @@
                         6,
                         6
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "TEXT",
@@ -607,7 +607,7 @@
                         2,
                         6
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "IS",
@@ -615,7 +615,7 @@
                         3,
                         6
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "PUSH",
@@ -623,7 +623,7 @@
                         4,
                         6
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -631,7 +631,7 @@
                         0,
                         0
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -639,7 +639,7 @@
                         0,
                         1
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -647,7 +647,7 @@
                         0,
                         2
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -655,7 +655,7 @@
                         0,
                         4
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -663,7 +663,7 @@
                         0,
                         5
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -671,7 +671,7 @@
                         0,
                         6
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -679,7 +679,7 @@
                         0,
                         7
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -687,7 +687,7 @@
                         0,
                         8
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -695,7 +695,7 @@
                         1,
                         0
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -703,7 +703,7 @@
                         1,
                         1
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -711,7 +711,7 @@
                         1,
                         2
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -719,7 +719,7 @@
                         1,
                         4
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -727,7 +727,7 @@
                         1,
                         5
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -735,7 +735,7 @@
                         1,
                         6
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -743,7 +743,7 @@
                         1,
                         7
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -751,7 +751,7 @@
                         1,
                         8
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -759,7 +759,7 @@
                         2,
                         0
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -767,7 +767,7 @@
                         2,
                         1
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -775,7 +775,7 @@
                         2,
                         2
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -783,7 +783,7 @@
                         2,
                         5
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -791,7 +791,7 @@
                         2,
                         7
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -799,7 +799,7 @@
                         2,
                         8
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -807,7 +807,7 @@
                         3,
                         5
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -815,7 +815,7 @@
                         3,
                         7
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -823,7 +823,7 @@
                         3,
                         8
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -831,7 +831,7 @@
                         4,
                         0
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -839,7 +839,7 @@
                         4,
                         1
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -847,7 +847,7 @@
                         4,
                         2
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -855,7 +855,7 @@
                         4,
                         3
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -863,7 +863,7 @@
                         4,
                         4
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -871,7 +871,7 @@
                         4,
                         5
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -879,7 +879,7 @@
                         4,
                         7
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -887,7 +887,7 @@
                         4,
                         8
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -895,7 +895,7 @@
                         5,
                         0
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -903,7 +903,7 @@
                         5,
                         1
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -911,7 +911,7 @@
                         5,
                         2
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -919,7 +919,7 @@
                         5,
                         3
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -927,7 +927,7 @@
                         5,
                         4
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -935,7 +935,7 @@
                         5,
                         5
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -943,7 +943,7 @@
                         5,
                         6
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -951,7 +951,7 @@
                         5,
                         7
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -959,7 +959,7 @@
                         5,
                         8
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -967,7 +967,7 @@
                         6,
                         3
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -975,7 +975,7 @@
                         6,
                         7
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -983,7 +983,7 @@
                         6,
                         8
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -991,7 +991,7 @@
                         7,
                         0
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -999,7 +999,7 @@
                         7,
                         1
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -1007,7 +1007,7 @@
                         7,
                         2
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -1015,7 +1015,7 @@
                         7,
                         3
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -1023,7 +1023,7 @@
                         7,
                         4
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -1031,7 +1031,7 @@
                         7,
                         5
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -1039,7 +1039,7 @@
                         7,
                         6
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -1047,7 +1047,7 @@
                         7,
                         7
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -1055,7 +1055,7 @@
                         7,
                         8
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -1063,7 +1063,7 @@
                         8,
                         0
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -1071,7 +1071,7 @@
                         8,
                         1
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -1079,7 +1079,7 @@
                         8,
                         2
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -1087,7 +1087,7 @@
                         8,
                         3
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -1095,7 +1095,7 @@
                         8,
                         4
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -1103,7 +1103,7 @@
                         8,
                         5
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -1111,7 +1111,7 @@
                         8,
                         6
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -1119,7 +1119,7 @@
                         8,
                         7
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 },
                 {
                     "type": "Wall",
@@ -1127,7 +1127,7 @@
                         8,
                         8
                     ],
-                    "orientation": "W"
+                    "orientation": "S"
                 }
             ]
         }

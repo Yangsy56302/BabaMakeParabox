@@ -18,6 +18,8 @@ def level_editor(world: worlds.world) -> worlds.world:
         print(" ".join(str_list))
     history = [copy.deepcopy(world)]
     window = pygame.display.set_mode((1280, 720))
+    pygame.display.set_caption(f"Baba Make Parabox In-game Editor Version {basics.versions}")
+    pygame.display.set_icon(pygame.image.load("BabaMakeParabox.png"))
     displays.sprites.update()
     clock = pygame.time.Clock()
     keybinds = {"W": pygame.K_w,
@@ -50,7 +52,7 @@ def level_editor(world: worlds.world) -> worlds.world:
     object_list = list(objects.object_name.values())
     current_object_index = 0
     current_object_type = object_list[current_object_index]
-    current_facing = "W"
+    current_facing = "S"
     current_cursor_pos = (0, 0)
     current_clipboard = []
     yes = ["y", "Y", "yes", "Yes", "YES"]
