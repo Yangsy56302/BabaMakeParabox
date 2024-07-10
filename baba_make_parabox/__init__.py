@@ -1,9 +1,7 @@
 import os
 import json
 
-print("Baba Make Parabox")
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "TRUE"
-
 import pygame
 
 import baba_make_parabox.basics as basics
@@ -17,6 +15,7 @@ import baba_make_parabox.edits as edits
 import baba_make_parabox.games as games
 
 def main() -> None:
+    print("Baba Make Parabox")
     if os.environ.get("PYINSTALLER") == "TRUE":
         pass # just do nothing
     elif not basics.arg_error:
