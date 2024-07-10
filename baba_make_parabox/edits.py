@@ -106,10 +106,8 @@ def level_editor(world: worlds.world) -> worlds.world:
             current_object_index += 1
         elif keys[keybinds["\n"]] and cooldowns[keybinds["\n"]] == 0:
             history.append(copy.deepcopy(world))
-            if current_object_type == objects.Level:
-                current_level.new_obj(objects.Level(current_cursor_pos, current_level.name, current_level.inf_tier, current_facing))
-            elif current_object_type == objects.Clone:
-                current_level.new_obj(objects.Clone(current_cursor_pos, current_level.name, current_level.inf_tier, current_facing))
+            if issubclass(current_object_type, objects.LevelContainer):
+                current_level.new_obj(current_object_type(current_cursor_pos, current_level.name, current_level.inf_tier, current_facing))
             else:
                 current_level.new_obj(current_object_type(current_cursor_pos, current_facing))
         elif keys[keybinds["P"]] and cooldowns[keybinds["P"]] == 0:
@@ -198,7 +196,7 @@ def level_editor(world: worlds.world) -> worlds.world:
             history.append(copy.deepcopy(world))
             for obj in current_clipboard:
                 new_obj = copy.deepcopy(obj)
-                new_obj.x, new_obj.y = current_cursor_pos
+                new_obj.pos = current_cursor_pos
                 current_level.new_obj(new_obj)
         elif keys[keybinds["-"]] and cooldowns[keybinds["-"]] == 0:
             current_level_index -= 1

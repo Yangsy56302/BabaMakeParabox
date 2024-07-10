@@ -22,6 +22,19 @@ class Object(object):
         return self.class_name
     def __repr__(self) -> str:
         return self.class_name
+    @property
+    def pos(self) -> spaces.Coord:
+        return (self.x, self.y)
+    @pos.getter
+    def pos(self) -> spaces.Coord:
+        return (self.x, self.y)
+    @pos.setter
+    def pos(self, new_pos: spaces.Coord) -> None:
+        self.x, self.y = new_pos
+    @pos.deleter
+    def pos(self) -> None:
+        del self.x
+        del self.y
     def new_prop(self, prop: type["Property"]) -> None:
         if prop not in self.properties:
             self.properties.append(prop)
@@ -146,7 +159,7 @@ class Water(Tiled):
 
 class Lava(Tiled):
     class_name: str = "Lava"
-    sprite_name: str = "water"
+    sprite_name: str = "lava"
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -192,37 +205,32 @@ class Flag(Static):
     def __repr__(self) -> str:
         return repr(super())
 
-class Level(Object):
+class LevelContainer(Object):
+    class_name: str = "LevelContainer"
+    def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = spaces.S) -> None:
+        super().__init__(pos, facing)
+        self.name: str = name
+        self.inf_tier: int = inf_tier
+    def __str__(self) -> str:
+        return " ".join([self.class_name, self.name, str(self.inf_tier)])
+    def __repr__(self) -> str:
+        return " ".join([self.class_name, self.name, str(self.inf_tier)])
+    def to_json(self) -> basics.JsonObject:
+        json_object = super().to_json()
+        json_object.update({"level": {"name": self.name, "infinite_tier": self.inf_tier}})
+        return json_object
+
+class Level(LevelContainer):
     class_name: str = "Level"
     sprite_name: str = "level"
     def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = spaces.S) -> None:
-        super().__init__(pos, facing)
-        self.name: str = name
-        self.inf_tier: int = inf_tier
-    def __str__(self) -> str:
-        return " ".join([self.class_name, self.name, str(self.inf_tier)])
-    def __repr__(self) -> str:
-        return " ".join([self.class_name, self.name, str(self.inf_tier)])
-    def to_json(self) -> basics.JsonObject:
-        json_object = super().to_json()
-        json_object.update({"level": {"name": self.name, "infinite_tier": self.inf_tier}})
-        return json_object
+        super().__init__(pos, name, inf_tier, facing)
         
-class Clone(Object):
+class Clone(LevelContainer):
     class_name: str = "Clone"
     sprite_name: str = "clone"
     def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = spaces.S) -> None:
-        super().__init__(pos, facing)
-        self.name: str = name
-        self.inf_tier: int = inf_tier
-    def __str__(self) -> str:
-        return " ".join([self.class_name, self.name, str(self.inf_tier)])
-    def __repr__(self) -> str:
-        return " ".join([self.class_name, self.name, str(self.inf_tier)])
-    def to_json(self) -> basics.JsonObject:
-        json_object = super().to_json()
-        json_object.update({"level": {"name": self.name, "infinite_tier": self.inf_tier}})
-        return json_object
+        super().__init__(pos, name, inf_tier, facing)
 
 class Text(Static):
     class_name: str = "Text"

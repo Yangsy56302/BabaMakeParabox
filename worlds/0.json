@@ -135,94 +135,6 @@
                     "orientation": "S"
                 },
                 {
-                    "type": "Wall",
-                    "position": [
-                        3,
-                        8
-                    ],
-                    "orientation": "S"
-                },
-                {
-                    "type": "Wall",
-                    "position": [
-                        4,
-                        8
-                    ],
-                    "orientation": "S"
-                },
-                {
-                    "type": "Wall",
-                    "position": [
-                        5,
-                        8
-                    ],
-                    "orientation": "S"
-                },
-                {
-                    "type": "Wall",
-                    "position": [
-                        2,
-                        8
-                    ],
-                    "orientation": "S"
-                },
-                {
-                    "type": "Wall",
-                    "position": [
-                        1,
-                        8
-                    ],
-                    "orientation": "S"
-                },
-                {
-                    "type": "Wall",
-                    "position": [
-                        0,
-                        8
-                    ],
-                    "orientation": "S"
-                },
-                {
-                    "type": "Wall",
-                    "position": [
-                        6,
-                        8
-                    ],
-                    "orientation": "S"
-                },
-                {
-                    "type": "Wall",
-                    "position": [
-                        7,
-                        8
-                    ],
-                    "orientation": "S"
-                },
-                {
-                    "type": "Wall",
-                    "position": [
-                        8,
-                        8
-                    ],
-                    "orientation": "S"
-                },
-                {
-                    "type": "Wall",
-                    "position": [
-                        7,
-                        7
-                    ],
-                    "orientation": "S"
-                },
-                {
-                    "type": "Wall",
-                    "position": [
-                        1,
-                        7
-                    ],
-                    "orientation": "S"
-                },
-                {
                     "type": "Baba",
                     "position": [
                         4,
@@ -303,6 +215,78 @@
                     "position": [
                         5,
                         4
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        1,
+                        7
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        1,
+                        8
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        7,
+                        7
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        7,
+                        8
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        6,
+                        8
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        5,
+                        8
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        4,
+                        8
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        3,
+                        8
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        2,
+                        8
                     ],
                     "orientation": "S"
                 }

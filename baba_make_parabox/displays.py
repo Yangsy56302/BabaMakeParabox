@@ -2,6 +2,8 @@ import pygame
 import os
 import random
 
+import baba_make_parabox.objects as objects
+
 DARK_GRAY = pygame.Color("#242424")
 LIGHT_GRAY = pygame.Color("#737373")
 SILVER = pygame.Color("#C3C3C3")
@@ -159,5 +161,17 @@ sprite_colors["text_defeat"] = DARK_RED
 sprite_colors["text_shift"] = LIGHT_GRAY_BLUE
 sprite_colors["text_tele"] = LIGHTER_GRAY_BLUE
 sprite_colors["text_word"] = WHITE
+
+order = [objects.Operator,
+         objects.Noun,
+         objects.Property,
+         objects.Character,
+         objects.Static,
+         objects.AnimatedDirectional,
+         objects.Directional,
+         objects.Animated,
+         objects.Tiled,
+         objects.LevelContainer,
+         objects.Object]
 
 sprites = Sprites(sprite_colors)

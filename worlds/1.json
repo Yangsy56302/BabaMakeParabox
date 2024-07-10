@@ -1,0 +1,353 @@
+{
+    "name": "0",
+    "level_list": [
+        {
+            "name": "1",
+            "infinite_tier": 0,
+            "size": [
+                9,
+                9
+            ],
+            "color": [
+                0,
+                0,
+                0
+            ],
+            "object_list": [
+                {
+                    "type": "BABA",
+                    "position": [
+                        1,
+                        1
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "IS",
+                    "position": [
+                        2,
+                        1
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "YOU",
+                    "position": [
+                        3,
+                        1
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "FLAG",
+                    "position": [
+                        5,
+                        1
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "IS",
+                    "position": [
+                        6,
+                        1
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "WIN",
+                    "position": [
+                        7,
+                        1
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "PUSH",
+                    "position": [
+                        7,
+                        7
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "FLAG",
+                    "position": [
+                        5,
+                        7
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "WALL",
+                    "position": [
+                        1,
+                        7
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "IS",
+                    "position": [
+                        2,
+                        7
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "IS",
+                    "position": [
+                        6,
+                        7
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "STOP",
+                    "position": [
+                        3,
+                        7
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        4,
+                        8
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        4,
+                        7
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        4,
+                        6
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        4,
+                        5
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        4,
+                        4
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        4,
+                        3
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        4,
+                        2
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        4,
+                        1
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        4,
+                        0
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        0,
+                        4
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        0,
+                        5
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        0,
+                        6
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        0,
+                        7
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        0,
+                        8
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        0,
+                        3
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        0,
+                        2
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        0,
+                        1
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        0,
+                        0
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        1,
+                        0
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        2,
+                        0
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        3,
+                        0
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        3,
+                        8
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        2,
+                        8
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Wall",
+                    "position": [
+                        1,
+                        8
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Baba",
+                    "position": [
+                        2,
+                        3
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Flag",
+                    "position": [
+                        6,
+                        3
+                    ],
+                    "orientation": "S"
+                },
+                {
+                    "type": "Level",
+                    "position": [
+                        2,
+                        5
+                    ],
+                    "orientation": "S",
+                    "level": {
+                        "name": "1",
+                        "infinite_tier": 0
+                    }
+                }
+            ]
+        }
+    ],
+    "rule_list": [
+        [
+            "TEXT",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "LEVEL",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "CLONE",
+            "IS",
+            "PUSH"
+        ]
+    ]
+}

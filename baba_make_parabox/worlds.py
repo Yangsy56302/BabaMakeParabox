@@ -88,7 +88,7 @@ class world(object):
                 if ret is None:
                     return None
                 super_level, level_obj = ret
-                get_move_list = self.get_move_list(super_level, obj, (level_obj.x, level_obj.y), facing, passed, depth)
+                get_move_list = self.get_move_list(super_level, obj, level_obj.pos, facing, passed, depth)
                 if get_move_list is None:
                     return None
                 move_list.extend(get_move_list)
@@ -98,7 +98,7 @@ class world(object):
                     return None
                 super_level, level_obj = ret
                 passed.append(level)
-                get_move_list = self.get_move_list(super_level, obj, (level_obj.x, level_obj.y), facing, passed, depth)
+                get_move_list = self.get_move_list(super_level, obj, level_obj.pos, facing, passed, depth)
                 if get_move_list is None:
                     return None
                 move_list.extend(get_move_list)
@@ -118,9 +118,9 @@ class world(object):
         push_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.PUSH), level.get_objs_from_pos(new_pos)))
         if len(push_objects) != 0:
             for push_object in push_objects:
-                new_move_list = self.get_move_list(level, push_object, (push_object.x, push_object.y), facing, depth=depth)
+                new_move_list = self.get_move_list(level, push_object, push_object.pos, facing, depth=depth)
                 if new_move_list is None:
-                    if not isinstance(push_object, (objects.Level, objects.Clone)):
+                    if not isinstance(push_object, objects.LevelContainer):
                         return None
                 else:
                     move_list.extend(new_move_list)
@@ -164,11 +164,11 @@ class world(object):
                 if level.get_obj(move_obj.uuid) is not None:
                     old_level = level
             if old_level == new_level:
-                move_obj.x, move_obj.y = new_pos
+                move_obj.pos = new_pos
                 move_obj.facing = new_facing
             else:
                 old_level.del_obj(move_obj.uuid)
-                move_obj.x, move_obj.y = new_pos
+                move_obj.pos = new_pos
                 move_obj.facing = new_facing
                 new_level.new_obj(move_obj)
     def you(self, facing: spaces.PlayerOperation) -> None:
@@ -178,7 +178,7 @@ class world(object):
         for level in self.level_list:
             you_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU), level.object_list)
             for obj in you_objs:
-                new_move_list = self.get_move_list(level, obj, (obj.x, obj.y), facing)
+                new_move_list = self.get_move_list(level, obj, obj.pos, facing)
                 if new_move_list is not None:
                     move_list.extend(new_move_list)
         move_list = basics.remove_same_elements(move_list)
@@ -188,15 +188,15 @@ class world(object):
         for level in self.level_list:
             move_objs = filter(lambda o: objects.Object.has_prop(o, objects.MOVE), level.object_list)
             for obj in move_objs:
-                new_move_list = self.get_move_list(level, obj, (obj.x, obj.y), obj.facing)
+                new_move_list = self.get_move_list(level, obj, obj.pos, obj.facing)
                 if new_move_list is not None:
                     move_list.extend(new_move_list)
                 else:
-                    new_move_list = self.get_move_list(level, obj, (obj.x, obj.y), spaces.swap_orientation(obj.facing))
+                    new_move_list = self.get_move_list(level, obj, obj.pos, spaces.swap_orientation(obj.facing))
                     if new_move_list is not None:
                         move_list.extend(new_move_list)
                     else:
-                        move_list.append((obj, level, (obj.x, obj.y), spaces.swap_orientation(obj.facing)))
+                        move_list.append((obj, level, obj.pos, spaces.swap_orientation(obj.facing)))
         move_list = basics.remove_same_elements(move_list)
         self.move_objs_from_move_list(move_list)
     def shift(self) -> None:
@@ -205,10 +205,10 @@ class world(object):
             shift_objs = filter(lambda o: objects.Object.has_prop(o, objects.SHIFT), level.object_list)
             float_objs = filter(lambda o: objects.Object.has_prop(o, objects.FLOAT), level.object_list)
             for shift_obj in shift_objs:
-                for obj in level.get_objs_from_pos((shift_obj.x, shift_obj.y)):
+                for obj in level.get_objs_from_pos(shift_obj.pos):
                     if shift_obj != obj:
                         if not ((shift_obj in float_objs) ^ (obj in float_objs)):
-                            new_move_list = self.get_move_list(level, obj, (obj.x, obj.y), shift_obj.facing)
+                            new_move_list = self.get_move_list(level, obj, obj.pos, shift_obj.facing)
                             if new_move_list is not None:
                                 move_list.extend(new_move_list)
         move_list = basics.remove_same_elements(move_list)
@@ -224,13 +224,13 @@ class world(object):
             other_tele_objs = list(filter(lambda o: objects.Object.has_prop(o, objects.TELE) and isinstance(o, type(tele_obj)) and o != tele_obj, object_list))
             if len(other_tele_objs) <= 1:
                 continue
-            for obj in level.get_objs_from_pos((tele_obj.x, tele_obj.y)):
+            for obj in level.get_objs_from_pos(tele_obj.pos):
                 if tele_obj != obj:
                     if not ((tele_obj in float_objs) ^ (obj in float_objs)):
                         other_tele_obj = random.choice(other_tele_objs)
-                        tele_list.append((obj, (other_tele_obj.x, other_tele_obj.y)))
+                        tele_list.append((obj, other_tele_obj.pos))
         for obj, pos in tele_list:
-            obj.x, obj.y = pos
+            obj.pos = pos
     def sink(self) -> None:
         for level in self.level_list:
             sink_objs = filter(lambda o: objects.Object.has_prop(o, objects.SINK), level.object_list)
@@ -240,7 +240,7 @@ class world(object):
                 for obj in level.object_list:
                     if obj == sink_obj:
                         continue
-                    if obj.x == sink_obj.x and obj.y == sink_obj.y:
+                    if obj.pos == sink_obj.pos:
                         if not ((obj in float_objs) ^ (sink_obj in float_objs)):
                             if obj.uuid not in delete_list and sink_obj.uuid not in delete_list:
                                 delete_list.append(obj.uuid)
@@ -255,7 +255,7 @@ class world(object):
             float_objs = filter(lambda o: objects.Object.has_prop(o, objects.FLOAT), level.object_list)
             for hot_obj in hot_objs:
                 for melt_obj in melt_objs:
-                    if melt_obj.x == hot_obj.x and melt_obj.y == hot_obj.y:
+                    if melt_obj.pos == hot_obj.pos:
                         if not ((melt_obj in float_objs) ^ (hot_obj in float_objs)):
                             level.del_obj(melt_obj.uuid)
     def defeat(self) -> None:
@@ -265,7 +265,7 @@ class world(object):
             float_objs = filter(lambda o: objects.Object.has_prop(o, objects.FLOAT), level.object_list)
             for defeat_obj in defeat_objs:
                 for you_obj in you_objs:
-                    if you_obj.x == defeat_obj.x and you_obj.y == defeat_obj.y:
+                    if you_obj.pos == defeat_obj.pos:
                         if not ((you_obj in float_objs) ^ (defeat_obj in float_objs)):
                             level.del_obj(you_obj.uuid)
     def open_and_shut(self) -> None:
@@ -275,7 +275,7 @@ class world(object):
             delete_list = []
             for shut_obj in shut_objs:
                 for open_obj in open_objs:
-                    if shut_obj.x == open_obj.x and shut_obj.y == open_obj.y:
+                    if shut_obj.pos == open_obj.pos:
                         if shut_obj.uuid not in delete_list and open_obj.uuid not in delete_list:
                             delete_list.append(shut_obj.uuid)
                             delete_list.append(open_obj.uuid)
@@ -291,15 +291,15 @@ class world(object):
                 for old_obj in level.get_objs_from_type(objects.nouns_objs_dicts.get_obj(rule[0])): # type: ignore
                     old_obj: objects.Object
                     new_type = objects.nouns_objs_dicts.get_obj(rule[2]) # type: ignore
-                    if new_type in (objects.Level, objects.Clone):
+                    if issubclass(new_type, objects.LevelContainer):
                         new_level = levels.level(old_obj.uuid.hex, (1, 1), 0, pygame.Color("#000000"))
                         self.level_list.append(new_level)
                         new_level.new_obj(type(old_obj)((0, 0)))
-                        new_obj = new_type((old_obj.x, old_obj.y), old_obj.uuid.hex, 0, old_obj.facing)
+                        new_obj = new_type(old_obj.pos, old_obj.uuid.hex, 0, old_obj.facing)
                         level.del_obj(old_obj.uuid)
                         level.new_obj(new_obj)
                     else:
-                        new_obj = new_type((old_obj.x, old_obj.y), old_obj.facing)
+                        new_obj = new_type(old_obj.pos, old_obj.facing)
                         level.del_obj(old_obj.uuid)
                         level.new_obj(new_obj)
     def winned(self) -> bool:
@@ -309,7 +309,7 @@ class world(object):
             float_objs = filter(lambda o: objects.Object.has_prop(o, objects.FLOAT), level.object_list)
             for you_obj in you_objs:
                 for win_obj in win_objs:
-                    if you_obj.x == win_obj.x and you_obj.y == win_obj.y:
+                    if you_obj.pos == win_obj.pos:
                         if not ((you_obj in float_objs) ^ (win_obj in float_objs)):
                             return True
         return False
@@ -339,6 +339,7 @@ class world(object):
         pixel_sprite_size = displays.sprite_size * displays.pixel_size
         level_surface_size = (level.width * pixel_sprite_size, level.height * pixel_sprite_size)
         level_surface = pygame.Surface(level_surface_size, pygame.SRCALPHA)
+        obj_surface_list: list[tuple[spaces.Coord, pygame.Surface, objects.Object]] = []
         for i in range(len(level.object_list)):
             obj = level.object_list[i]
             if isinstance(obj, objects.Level):
@@ -357,8 +358,12 @@ class world(object):
                     obj_surface = displays.sprites.get("clone", 0, frame).copy()
             else:
                 obj_surface = displays.sprites.get(obj.sprite_name, obj.sprite_state, frame).copy()
-            pos = (obj.x * pixel_sprite_size, obj.y * pixel_sprite_size)
-            level_surface.blit(pygame.transform.scale(obj_surface, (pixel_sprite_size, pixel_sprite_size)), pos)
+            surface_pos = (obj.x * pixel_sprite_size, obj.y * pixel_sprite_size)
+            obj_surface_list.append((surface_pos, obj_surface, obj))
+        sorted_obj_surface_list = map(lambda o: list(map(lambda t: isinstance(o[2], t), displays.order)).index(True), obj_surface_list)
+        sorted_obj_surface_list = map(lambda t: t[1], sorted(zip(sorted_obj_surface_list, obj_surface_list), key=lambda t: t[0]))
+        for pos, surface, _ in sorted_obj_surface_list:
+            level_surface.blit(pygame.transform.scale(surface, (pixel_sprite_size, pixel_sprite_size)), pos)
         if cursor is not None:
             obj_surface = displays.sprites.get("cursor", 0, frame).copy()
             pos = (cursor[0] * pixel_sprite_size, cursor[1] * pixel_sprite_size)

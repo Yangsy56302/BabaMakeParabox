@@ -9,7 +9,7 @@ import baba_make_parabox.rules as rules
 import baba_make_parabox.displays as displays
 
 def match_pos(obj: objects.Object, pos: spaces.Coord) -> bool:
-    return (obj.x, obj.y) == tuple(pos)
+    return obj.pos == pos
 
 class level(object):
     class_name: str = "level"
@@ -88,16 +88,16 @@ class level(object):
         prop_objs = [o for o in text_objs if isinstance(o, objects.Property)]
         for noun_obj in noun_objs:
             for oper_obj in oper_objs:
-                if not spaces.on_line((noun_obj.x, noun_obj.y), (oper_obj.x, oper_obj.y)):
+                if not spaces.on_line(noun_obj.pos, oper_obj.pos):
                     continue
                 if not isinstance(oper_obj, objects.IS):
                     continue
                 for prop_obj in prop_objs:
-                    if not spaces.on_line((noun_obj.x, noun_obj.y), (oper_obj.x, oper_obj.y), (prop_obj.x, prop_obj.y)):
+                    if not spaces.on_line(noun_obj.pos, oper_obj.pos, prop_obj.pos):
                         continue
                     self.rule_list.append([type(noun_obj), type(oper_obj), type(prop_obj)])
                 for noun_obj_2 in noun_objs:
-                    if not spaces.on_line((noun_obj.x, noun_obj.y), (oper_obj.x, oper_obj.y), (noun_obj_2.x, noun_obj_2.y)):
+                    if not spaces.on_line(noun_obj.pos, oper_obj.pos, noun_obj_2.pos):
                         continue
                     self.rule_list.append([type(noun_obj), type(oper_obj), type(noun_obj_2)])
     def update_rules_with_word(self) -> None:
@@ -105,21 +105,21 @@ class level(object):
         text_objs = self.get_objs_from_type(objects.Text)
         noun_objs = [o for o in text_objs if isinstance(o, objects.Noun)]
         word_objs = filter(lambda o: o.has_prop(objects.WORD), self.object_list)
-        noun_objs.extend(map(lambda o: objects.nouns_objs_dicts.get_noun(type(o))((o.x, o.y)), word_objs))
+        noun_objs.extend(map(lambda o: objects.nouns_objs_dicts.get_noun(type(o))(o.pos), word_objs))
         oper_objs = [o for o in text_objs if isinstance(o, objects.Operator)]
         prop_objs = [o for o in text_objs if isinstance(o, objects.Property)]
         for noun_obj in noun_objs:
             for oper_obj in oper_objs:
-                if not spaces.on_line((noun_obj.x, noun_obj.y), (oper_obj.x, oper_obj.y)):
+                if not spaces.on_line(noun_obj.pos, oper_obj.pos):
                     continue
                 if not isinstance(oper_obj, objects.IS):
                     continue
                 for prop_obj in prop_objs:
-                    if not spaces.on_line((noun_obj.x, noun_obj.y), (oper_obj.x, oper_obj.y), (prop_obj.x, prop_obj.y)):
+                    if not spaces.on_line(noun_obj.pos, oper_obj.pos, prop_obj.pos):
                         continue
                     self.rule_list.append([type(noun_obj), type(oper_obj), type(prop_obj)])
                 for noun_obj_2 in noun_objs:
-                    if not spaces.on_line((noun_obj.x, noun_obj.y), (oper_obj.x, oper_obj.y), (noun_obj_2.x, noun_obj_2.y)):
+                    if not spaces.on_line(noun_obj.pos, oper_obj.pos, noun_obj_2.pos):
                         continue
                     self.rule_list.append([type(noun_obj), type(oper_obj), type(noun_obj_2)])
     def find_rules(self, *match_rule: Optional[type[objects.Text]]) -> list[rules.Rule]:
@@ -151,13 +151,13 @@ class level(object):
             if isinstance(obj, objects.Character):
                 obj.set_sprite()
             if isinstance(obj, objects.Tiled):
-                w_pos = spaces.pos_facing((obj.x, obj.y), spaces.W)
+                w_pos = spaces.pos_facing(obj.pos, spaces.W)
                 w = self.out_of_range(w_pos) or len(self.get_objs_from_pos_and_type(w_pos, type(obj))) != 0
-                s_pos = spaces.pos_facing((obj.x, obj.y), spaces.S)
+                s_pos = spaces.pos_facing(obj.pos, spaces.S)
                 s = self.out_of_range(s_pos) or len(self.get_objs_from_pos_and_type(s_pos, type(obj))) != 0
-                a_pos = spaces.pos_facing((obj.x, obj.y), spaces.A)
+                a_pos = spaces.pos_facing(obj.pos, spaces.A)
                 a = self.out_of_range(a_pos) or len(self.get_objs_from_pos_and_type(a_pos, type(obj))) != 0
-                d_pos = spaces.pos_facing((obj.x, obj.y), spaces.D)
+                d_pos = spaces.pos_facing(obj.pos, spaces.D)
                 d = self.out_of_range(d_pos) or len(self.get_objs_from_pos_and_type(d_pos, type(obj))) != 0
                 obj.set_sprite({spaces.W: w, spaces.S: s, spaces.A: a, spaces.D: d})
     def default_input_position(self, side: spaces.Orient) -> spaces.Coord:
