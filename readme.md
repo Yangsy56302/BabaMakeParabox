@@ -87,6 +87,7 @@ And remember:
 | 1.7    | 2024.07.09 | All has Color; Lava is Hot; Ice is Melt |
 | 1.8    | 2024.07.10 | Game has Icon; Baba is Word; Keke is Shift; Rock is Tele |
 | 1.81   | 2024.07.10 | Argv is Better |
+| 1.9    | 2024.07.10 | All is Wobble; Code is Better |
 
 ## Bug Reports and Advices
 

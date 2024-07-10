@@ -105,14 +105,15 @@ class world(object):
             simple_push = False
         # stop wall & shut door
         stop_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.STOP), level.get_objs_from_pos(new_pos)))
-        shut_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.SHUT), level.get_objs_from_pos(new_pos)))
         if len(stop_objects) != 0:
-            if not obj.has_prop(objects.OPEN):
-                return None
+            if obj.has_prop(objects.OPEN):
+                for stop_object in stop_objects:
+                    if stop_object.has_prop(objects.SHUT):
+                        return None
+                return [(obj, level, new_pos, facing)]
             for stop_object in stop_objects:
-                if stop_object not in shut_objects:
+                if not stop_object.has_prop(objects.PUSH):
                     return None
-            return [(obj, level, new_pos, facing)]
         # push box
         push_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.PUSH), level.get_objs_from_pos(new_pos)))
         if len(push_objects) != 0:
@@ -158,6 +159,7 @@ class world(object):
     def move_objs_from_move_list(self, move_list: list[tuple[objects.Object, levels.level, spaces.Coord, spaces.Orient]]) -> None:
         move_list = basics.remove_same_elements(move_list)
         for move_obj, new_level, new_pos, new_facing in move_list:
+            move_obj.moved = True
             for level in self.level_list:
                 if level.get_obj(move_obj.uuid) is not None:
                     old_level = level
@@ -170,7 +172,7 @@ class world(object):
                 move_obj.facing = new_facing
                 new_level.new_obj(move_obj)
     def you(self, facing: spaces.PlayerOperation) -> None:
-        if facing == " ":
+        if facing == spaces.O:
             return
         move_list = []
         for level in self.level_list:
@@ -312,6 +314,9 @@ class world(object):
                             return True
         return False
     def round(self, op: spaces.PlayerOperation) -> bool:
+        for level in self.level_list:
+            for obj in level.object_list:
+                obj.moved = False
         self.update_rules()
         self.you(op)
         self.move()
@@ -328,9 +333,9 @@ class world(object):
         self.open_and_shut()
         self.update_rules()
         return self.winned()
-    def show_level(self, level: levels.level, layer: int, cursor: Optional[spaces.Coord] = None) -> pygame.Surface:
+    def show_level(self, level: levels.level, layer: int, frame: int, cursor: Optional[spaces.Coord] = None) -> pygame.Surface:
         if layer <= 0:
-            return displays.sprites.get("text_level").copy()
+            return displays.sprites.get("text_level", 0, frame).copy()
         pixel_sprite_size = displays.sprite_size * displays.pixel_size
         level_surface_size = (level.width * pixel_sprite_size, level.height * pixel_sprite_size)
         level_surface = pygame.Surface(level_surface_size, pygame.SRCALPHA)
@@ -339,23 +344,23 @@ class world(object):
             if isinstance(obj, objects.Level):
                 obj_level = self.get_level(obj.name, obj.inf_tier)
                 if obj_level is not None:
-                    obj_surface = self.show_level(obj_level, layer - 1)
+                    obj_surface = self.show_level(obj_level, layer - 1, frame)
                     obj_surface = displays.set_color_dark(obj_surface, pygame.Color("#CCCCCC"))
                 else:
-                    obj_surface = displays.sprites.get("level").copy()
+                    obj_surface = displays.sprites.get("level", 0, frame).copy()
             elif isinstance(obj, objects.Clone):
                 obj_level = self.get_level(obj.name, obj.inf_tier)
                 if obj_level is not None:
-                    obj_surface = self.show_level(obj_level, layer - 1)
+                    obj_surface = self.show_level(obj_level, layer - 1, frame)
                     obj_surface = displays.set_color_light(obj_surface, pygame.Color("#444444"))
                 else:
-                    obj_surface = displays.sprites.get("clone").copy()
+                    obj_surface = displays.sprites.get("clone", 0, frame).copy()
             else:
-                obj_surface = displays.sprites.get(obj.sprite_name).copy()
+                obj_surface = displays.sprites.get(obj.sprite_name, obj.sprite_state, frame).copy()
             pos = (obj.x * pixel_sprite_size, obj.y * pixel_sprite_size)
             level_surface.blit(pygame.transform.scale(obj_surface, (pixel_sprite_size, pixel_sprite_size)), pos)
         if cursor is not None:
-            obj_surface = displays.sprites.get("cursor").copy()
+            obj_surface = displays.sprites.get("cursor", 0, frame).copy()
             pos = (cursor[0] * pixel_sprite_size, cursor[1] * pixel_sprite_size)
             level_surface.blit(pygame.transform.scale(obj_surface, (pixel_sprite_size, pixel_sprite_size)), pos)
         level_background = pygame.Surface(level_surface.get_size(), pygame.SRCALPHA)

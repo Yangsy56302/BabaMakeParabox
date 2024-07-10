@@ -1,29 +1,60 @@
-from typing import Literal
+from typing import Literal, Final
+
 
 Coord = tuple[int, int]
-Orient = Literal["W", "A", "S", "D"]
-PlayerOperation = Orient | Literal[" "]
+Orient = Literal[0x1, 0x2, 0x4, 0x8]
+PlayerOperation = Orient | Literal[0x10]
+
+W = 0x2
+A = 0x4
+S = 0x8
+D = 0x1
+O = 0x10
 
 def swap_orientation(direction: Orient) -> Orient:
     match direction:
-        case "W":
-            return "S"
-        case "A":
-            return "D"
-        case "S":
+        case 0x2:
+            return S
+        case 0x4:
+            return D
+        case 0x8:
+            return W
+        case 0x1:
+            return A
+
+def orient_to_str(direction: Orient) -> str:
+    match direction:
+        case 0x2:
             return "W"
-        case "D":
+        case 0x4:
             return "A"
+        case 0x8:
+            return "S"
+        case 0x1:
+            return "D"
+
+def str_to_orient(direction: str) -> Orient:
+    match direction:
+        case "W":
+            return W
+        case "A":
+            return A
+        case "S":
+            return S
+        case "D":
+            return D
+        case _:
+            raise ValueError()
 
 def pos_facing(pos: Coord, facing: Orient) -> Coord:
     match facing:
-        case "W":
+        case 0x2:
             return (pos[0], pos[1] - 1)
-        case "A":
+        case 0x4:
             return (pos[0] - 1, pos[1])
-        case "S":
+        case 0x8:
             return (pos[0], pos[1] + 1)
-        case "D":
+        case 0x1:
             return (pos[0] + 1, pos[1])
 
 def on_line(*poses: Coord) -> bool:

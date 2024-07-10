@@ -3,6 +3,7 @@ import copy
 import json
 
 import baba_make_parabox.basics as basics
+import baba_make_parabox.spaces as spaces
 import baba_make_parabox.objects as objects
 import baba_make_parabox.levels as levels
 import baba_make_parabox.displays as displays
@@ -24,11 +25,15 @@ def play(world: worlds.world) -> None:
             str_list.append(obj_type.class_name)
         print(" ".join(str_list))
     world.update_rules()
+    for level in world.level_list:
+        level.set_sprite_states(0)
     history = [copy.deepcopy(world)]
+    round_num = 0
     window = pygame.display.set_mode((720, 720))
     pygame.display.set_caption(f"Baba Make Parabox Version {basics.versions}")
     pygame.display.set_icon(pygame.image.load("BabaMakeParabox.png"))
     displays.sprites.update()
+    milliseconds = 0
     start = copy.deepcopy(world)
     clock = pygame.time.Clock()
     keybinds = {"W": pygame.K_w,
@@ -44,11 +49,14 @@ def play(world: worlds.world) -> None:
     cooldowns = {v: 0 for v in keybinds.values()}
     window.fill("#000000")
     current_level_index = 0
-    window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], basics.options["level_display_recursion_depth"]), (720, 720)), (0, 0))
+    window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], basics.options["level_display_recursion_depth"], 1), (720, 720)), (0, 0))
     pygame.display.flip()
     winned = False
     game_running = True
     while game_running:
+        if milliseconds >= 360000000:
+            milliseconds = 0
+        frame = (milliseconds // 333) % 3 + 1
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game_running = False
@@ -59,57 +67,63 @@ def play(world: worlds.world) -> None:
         refresh = False
         if keys[keybinds["W"]] and cooldowns[keybinds["W"]] == 0:
             history.append(copy.deepcopy(world))
-            winned = world.round("W")
+            round_num += 1
+            winned = world.round(spaces.W)
             refresh = True
         elif keys[keybinds["S"]] and cooldowns[keybinds["S"]] == 0:
             history.append(copy.deepcopy(world))
-            winned = world.round("S")
+            round_num += 1
+            winned = world.round(spaces.S)
             refresh = True
         elif keys[keybinds["A"]] and cooldowns[keybinds["A"]] == 0:
             history.append(copy.deepcopy(world))
-            winned = world.round("A")
+            round_num += 1
+            winned = world.round(spaces.A)
             refresh = True
         elif keys[keybinds["D"]] and cooldowns[keybinds["D"]] == 0:
             history.append(copy.deepcopy(world))
-            winned = world.round("D")
+            round_num += 1
+            winned = world.round(spaces.D)
             refresh = True
         elif keys[keybinds[" "]] and cooldowns[keybinds[" "]] == 0:
             history.append(copy.deepcopy(world))
-            winned = world.round(" ")
+            round_num += 1
+            winned = world.round(spaces.O)
             refresh = True
         elif keys[keybinds["Z"]] and cooldowns[keybinds["Z"]] == 0:
             if len(history) > 1:
                 world = copy.deepcopy(history.pop())
+                round_num -= 1
             else:
                 world = copy.deepcopy(history[0])
+                round_num = 0
             refresh = True
         elif keys[keybinds["R"]] and cooldowns[keybinds["R"]] == 0:
+            round_num = 0
             world = copy.deepcopy(start)
             refresh = True
         elif keys[keybinds["-"]] and cooldowns[keybinds["-"]] == 0:
             current_level_index -= 1
-            refresh = True
         elif keys[keybinds["="]] and cooldowns[keybinds["="]] == 0:
             current_level_index += 1
-            refresh = True
         for key, value in keys.items():
             if value and cooldowns[key] == 0:
                 cooldowns[key] = basics.options["input_cooldown"]
         current_level_index = current_level_index % len(world.level_list) if current_level_index >= 0 else len(world.level_list) - 1
         if refresh:
-            window.fill("#000000")
-            window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], basics.options["level_display_recursion_depth"]), (720, 720)), (0, 0))
-            pygame.display.flip()
+            for level in world.level_list:
+                level.set_sprite_states(round_num)
+        window.fill("#000000")
+        window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], basics.options["level_display_recursion_depth"], frame), (720, 720)), (0, 0))
+        pygame.display.flip()
         for key in cooldowns:
             if cooldowns[key] > 0:
                 cooldowns[key] -= 1
-        if len(history) > 100:
-            history = history[1:]
         if winned:
             print("Congratulations!")
             print("You Win!")
             game_running = False
-        clock.tick(basics.options["fps"])
+        milliseconds += clock.tick(basics.options["fps"])
 
 def test() -> None:
     # Superlevel

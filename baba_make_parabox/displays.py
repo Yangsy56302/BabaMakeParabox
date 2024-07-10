@@ -107,9 +107,12 @@ class Sprites(object):
         for filename in os.listdir(sprites_path):
             sprite = pygame.image.load(os.path.join(sprites_path, filename)).convert_alpha()
             sprite_name = os.path.splitext(filename)[0]
-            self.sprites[sprite_name] = set_color_dark(sprite, self.sprite_colors.get(sprite_name, WHITE))
-    def get(self, sprite_name: str) -> pygame.Surface:
-        return self.sprites[sprite_name]
+            sprite_basename = sprite_name
+            sprite_basename = sprite_basename[:sprite_basename.rfind("_")]
+            sprite_basename = sprite_basename[:sprite_basename.rfind("_")]
+            self.sprites[sprite_name] = set_color_dark(sprite, self.sprite_colors.get(sprite_basename, WHITE))
+    def get(self, sprite_name: str, state: int, frame: int = 0) -> pygame.Surface:
+        return self.sprites["_".join([sprite_name, str(state), str(frame)])]
 
 sprite_colors: dict[str, pygame.Color] = {}
 

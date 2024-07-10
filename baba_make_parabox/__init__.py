@@ -27,7 +27,7 @@ def main() -> None:
             pygame.quit()
             print("Thank you for testing Baba Make Parabox!")
             return
-        elif basics.args.edit is not None:
+        elif basics.args.edit:
             if basics.args.input is not None:
                 filename: str = basics.args.input.lstrip()
                 if os.path.isfile(os.path.join("worlds", filename + ".json")):

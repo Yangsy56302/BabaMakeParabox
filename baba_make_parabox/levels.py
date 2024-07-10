@@ -138,15 +138,37 @@ class level(object):
                 continue
             found_rules.append(rule)
         return found_rules
+    def set_sprite_states(self, round_num: int = 0) -> None:
+        for obj in self.object_list:
+            if isinstance(obj, objects.Static):
+                obj.set_sprite()
+            if isinstance(obj, objects.Directional):
+                obj.set_sprite()
+            if isinstance(obj, objects.Animated):
+                obj.set_sprite(round_num)
+            if isinstance(obj, objects.AnimatedDirectional):
+                obj.set_sprite(round_num)
+            if isinstance(obj, objects.Character):
+                obj.set_sprite()
+            if isinstance(obj, objects.Tiled):
+                w_pos = spaces.pos_facing((obj.x, obj.y), spaces.W)
+                w = self.out_of_range(w_pos) or len(self.get_objs_from_pos_and_type(w_pos, type(obj))) != 0
+                s_pos = spaces.pos_facing((obj.x, obj.y), spaces.S)
+                s = self.out_of_range(s_pos) or len(self.get_objs_from_pos_and_type(s_pos, type(obj))) != 0
+                a_pos = spaces.pos_facing((obj.x, obj.y), spaces.A)
+                a = self.out_of_range(a_pos) or len(self.get_objs_from_pos_and_type(a_pos, type(obj))) != 0
+                d_pos = spaces.pos_facing((obj.x, obj.y), spaces.D)
+                d = self.out_of_range(d_pos) or len(self.get_objs_from_pos_and_type(d_pos, type(obj))) != 0
+                obj.set_sprite({spaces.W: w, spaces.S: s, spaces.A: a, spaces.D: d})
     def default_input_position(self, side: spaces.Orient) -> spaces.Coord:
         match side:
-            case "W":
+            case spaces.W:
                 return (self.width // 2, -1)
-            case "A":
+            case spaces.A:
                 return (-1, self.height // 2)
-            case "S":
+            case spaces.S:
                 return (self.width // 2, self.height)
-            case "D":
+            case spaces.D:
                 return (self.width, self.height // 2)
     def to_json(self) -> basics.JsonObject:
         json_object = {"name": self.name, "infinite_tier": self.inf_tier, "size": [self.width, self.height],

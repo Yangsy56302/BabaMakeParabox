@@ -6,7 +6,7 @@ import argparse
 
 pygame.init()
 
-versions = "1.81"
+versions = "1.9"
 
 JsonObject = None | int | float | str | list["JsonObject"] | dict["str", "JsonObject"]
 
