@@ -8,8 +8,8 @@
 
 ## 如何运行
 
-注意：带有`py`前缀的批处理文件只会运行Python代码文件，
-而带有`exe`前缀的批处理文件只会运行EXE可执行程序。
+注意：`py`文件夹中的批处理文件只会在Python代码文件存在时工作，
+而`exe`文件夹中的批处理文件只会在EXE可执行程序文件存在时工作。
 
 如果你想运行源代码，下载这些软件：
 - **Python** **_(最新版)_**：[链接](https://www.python.org/downloads/)
@@ -17,13 +17,13 @@
 - **Pygame**：在终端或类似终端的地方运行`pip install -U pygame`
 - **PyInstaller** **_(可选，仅制作EXE用)_**：类似上面，运行`pip install -U pyinstaller`
 
-运行`前缀_test.bat`以开始该游戏的官方测试。
+运行`test.bat`以开始该游戏的官方测试。
 
-运行`前缀_input.bat`以从`worlds`文件夹内读取存档的JSON文件来开始游戏。
+运行`input.bat`以从`worlds`文件夹内读取存档的JSON文件来开始游戏。
 
-运行`前缀_edit.bat`以编辑`worlds`文件夹内的存档文件并在原地保存，若无文件则会新建一份。
+运行`edit.bat`以编辑`worlds`文件夹内的存档文件并在原地保存，若无文件则会新建一份。
 
-可以运行`前缀_help.bat`以获取更多关于如何在终端运行该游戏的说明。
+可以运行`help.bat`以获取更多关于如何在终端运行该游戏的说明。
 
 如果你需要打包EXE文件，运行`py_2_exe.bat`。
 
@@ -86,6 +86,7 @@
 | 1.6    | 2024.07.08 | Door is Shut; Key is Open |
 | 1.7    | 2024.07.09 | All has Color; Lava is Hot; Ice is Melt |
 | 1.8    | 2024.07.10 | Game has Icon; Baba is Word; Keke is Shift; Rock is Tele |
+| 1.81   | 2024.07.10 | Argv is Better |
 
 ## 报告漏洞和提出建议
 

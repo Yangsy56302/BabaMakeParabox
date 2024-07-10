@@ -8,8 +8,8 @@ made separately by **Arvi Hempuli** and **Patrick Traynor**.
 
 ## How to run
 
-Note: batch files with `py` prefix only works with python files,
-and batch files with `exe` prefix only works with execution files.
+Note: batch files in `python` folder only works when python files exists,
+and batch files in `exe` folder only works when execution files exists.
 
 If you want to run the source code, download These Things:
 - **Python** **_(latest)_**: [Link](https://www.python.org/downloads/)
@@ -17,13 +17,13 @@ If you want to run the source code, download These Things:
 - **Pygame**: Run `pip install -U pygame` in Terminal or something similar to Terminal
 - **PyInstaller** **_(optional, if you need .exe)_**: Run `pip install -U pyinstaller` in Terminal too
 
-Run `prefix_test.bat` to start a official game test.
+Run `test.bat` to start a official game test.
 
-Run `prefix_input.bat` to play a world from json file in the `worlds*`* folder.
+Run `input.bat` to play a world from json file in the `worlds*`* folder.
 
-Run `prefix_edit.bat` to edit and save a world from json file in the `worlds` folder, or create one.
+Run `edit.bat` to edit and save a world from json file in the `worlds` folder, or create one.
 
-You can run `prefix_help.bat` for more information with how to run the game in terminal.
+You can run `help.bat` for more information with how to run the game in terminal.
 
 If you need to make an .exe file, run `py_2_exe.bat`.
 
@@ -86,6 +86,7 @@ And remember:
 | 1.6    | 2024.07.08 | Door is Shut; Key is Open |
 | 1.7    | 2024.07.09 | All has Color; Lava is Hot; Ice is Melt |
 | 1.8    | 2024.07.10 | Game has Icon; Baba is Word; Keke is Shift; Rock is Tele |
+| 1.81   | 2024.07.10 | Argv is Better |
 
 ## Bug Reports and Advices
 
