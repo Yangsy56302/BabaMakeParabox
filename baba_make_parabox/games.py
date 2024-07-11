@@ -51,18 +51,17 @@ def play(levelpack: levelpacks.levelpack) -> None:
     window.fill("#000000")
     current_level = levelpack.get_exist_level(levelpack.main_level)
     current_world_index = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
-    level_info = {"win": False, "current_level": None, "new_levels": [], "transform_to": []}
+    level_info = {"win": False, "selected_level": None, "new_levels": [], "transform_to": []}
     history = {current_level.name: [copy.deepcopy(current_level)]}
     window.blit(pygame.transform.scale(current_level.show_world(current_level.world_list[current_world_index], basics.options["world_display_recursion_depth"], 1), (720, 720)), (0, 0))
     pygame.display.flip()
-    game_running = True
-    while game_running:
+    while True:
         if milliseconds >= 360000000:
             milliseconds = 0
         frame = (milliseconds // 333) % 3 + 1
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                game_running = False
+                return
             if event.type == pygame.KEYDOWN and event.key in keybinds.values():
                 keys[event.key] = True
             elif event.type == pygame.KEYUP and event.key in keybinds.values():
@@ -105,6 +104,8 @@ def play(levelpack: levelpacks.levelpack) -> None:
             levelpack = copy.deepcopy(levelpack_backup)
             current_level = levelpack.get_exist_level(levelpack.main_level)
             current_world_index = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
+            history = {current_level.name: [copy.deepcopy(current_level)]}
+            level_info = {"win": False, "selected_level": None, "new_levels": [], "transform_to": []}
             refresh = True
         elif keys[keybinds["-"]] and cooldowns[keybinds["-"]] == 0:
             current_world_index -= 1
@@ -148,20 +149,33 @@ def play(levelpack: levelpacks.levelpack) -> None:
                                 new_obj = objects.Level(transform_obj.pos, from_world.name, transform_obj.facing)
                                 world.del_obj(transform_obj.uuid)
                                 world.new_obj(new_obj)
+            levelpack.set_level(current_level)
             if level_info["win"]:
                 if current_level.name == levelpack.main_level:
                     print("You Win!")
-                    game_running = False
+                    return
                 else:
                     level_info["win"] = False
                     print("Congratulations!")
-            if level_info["win"] or transform_success:
                 history.pop(current_level.name, None)
                 level = levelpack_backup.get_level(current_level.name)
                 if level is not None:
                     levelpack.set_level(level)
-            if level_info["current_level"] is not None:
-                current_level = levelpack.get_exist_level(level_info["current_level"] if level_info["current_level"] is not None else levelpack.main_level)
+                super_level_name = current_level.super_level
+                super_level = levelpack.get_level(super_level_name if super_level_name is not None else levelpack.main_level)
+                current_level = super_level if super_level is not None else levelpack.get_exist_level(levelpack.main_level)
+            elif transform_success:
+                print("This level has been transformed into something...")
+                history.pop(current_level.name, None)
+                level = levelpack_backup.get_level(current_level.name)
+                if level is not None:
+                    levelpack.set_level(level)
+                super_level_name = current_level.super_level
+                super_level = levelpack.get_level(super_level_name if super_level_name is not None else levelpack.main_level)
+                current_level = super_level if super_level is not None else levelpack.get_exist_level(levelpack.main_level)
+            elif level_info["selected_level"] is not None:
+                current_level = levelpack.get_exist_level(level_info["selected_level"])
+                print(f"You have entered a level named {current_level.name}")
                 if history.get(current_level.name) is None:
                     history[current_level.name] = [copy.deepcopy(current_level)]
                 current_world_index = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
@@ -169,7 +183,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
             for level in levelpack.level_list:
                 for world in current_level.world_list:
                     world.set_sprite_states(round_num)
-            level_info = {"win": False, "current_level": None, "new_levels": [], "transform_to": []}
+            level_info = {"win": False, "selected_level": None, "new_levels": [], "transform_to": []}
         current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
         window.fill("#000000")
         window.blit(pygame.transform.scale(current_level.show_world(current_level.world_list[current_world_index], basics.options["world_display_recursion_depth"], frame), (720, 720)), (0, 0))

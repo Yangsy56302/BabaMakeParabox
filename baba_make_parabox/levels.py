@@ -445,8 +445,7 @@ class level(object):
         new_levels, transform_to = self.transform()
         self.update_rules()
         self.tele()
-        current_level = self.select(op)
-        current_level = self.super_level if len(transform_to) != 0 else current_level
+        selected_level = self.select(op)
         self.update_rules()
         self.sink()
         self.hot_and_melt()
@@ -454,8 +453,7 @@ class level(object):
         self.open_and_shut()
         self.update_rules()
         win = self.winned()
-        current_level = self.super_level if win else current_level
-        return {"win": win, "current_level": current_level, "new_levels": new_levels, "transform_to": transform_to}
+        return {"win": win, "selected_level": selected_level, "new_levels": new_levels, "transform_to": transform_to}
     def show_world(self, world: worlds.world, layer: int, frame: int, cursor: Optional[spaces.Coord] = None) -> pygame.Surface:
         if layer <= 0:
             return displays.sprites.get("text_world", 0, frame).copy()

@@ -80,7 +80,7 @@ Please remember:
 | Number |    Time    | Informations |
 |--------|------------|--------------|
 | 1.0    | 2024.07.05 | Initialized. |
-| 1.1    | 2024.07.06 | Keke is Move; Undo and Restart; Baba make Levels |
+| 1.1    | 2024.07.06 | Keke is Move; Game is Undo and Restart; Baba make Levels |
 | 1.11   | 2024.07.06 | Level is Previous and Next |
 | 1.2    | 2024.07.06 | Flag is Win; Game is EXE |
 | 1.3    | 2024.07.06 | Baba is Keke; World is Input and Output |
@@ -97,6 +97,7 @@ Please remember:
 | 1.91   | 2024.07.10 | Lava is Orange; Pos is Best |
 | 2.0    | 2024.07.11 | Level is not World; Cursor is Select |
 | 2.1    | 2024.07.11 | Bug is Fix; World is Level |
+| 2.11   | 2024.07.12 | Undo and Restart is Fix |
 
 ## Bug Reports and Suggestions
 
