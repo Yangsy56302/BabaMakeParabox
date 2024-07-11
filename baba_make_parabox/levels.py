@@ -195,12 +195,14 @@ class level(object):
                     levels.extend(world.get_levels_from_pos(obj.pos))
                     if len(levels) != 0:
                         return levels[0].name
-        for world in self.world_list:
-            select_objs = filter(lambda o: objects.Object.has_prop(o, objects.SELECT), world.object_list)
-            for obj in select_objs:
-                new_pos = spaces.pos_facing(obj.pos, facing) # type: ignore
-                if not world.out_of_range(new_pos):
-                    obj.pos = new_pos
+        else:
+            for world in self.world_list:
+                select_objs = filter(lambda o: objects.Object.has_prop(o, objects.SELECT), world.object_list)
+                for obj in select_objs:
+                    new_pos = spaces.pos_facing(obj.pos, facing) # type: ignore
+                    if not world.out_of_range(new_pos):
+                        obj.pos = new_pos
+            return None
     def move(self) -> None:
         move_list = []
         for world in self.world_list:
@@ -307,6 +309,8 @@ class level(object):
         for world in self.world_list:
             transform_rules = world.find_rules(objects.Noun, objects.IS, objects.Noun)
             transform_rules.extend(global_transform_rules)
+            world_transform_to: list[objects.Object] = []
+            clone_transform_to: list[objects.Object] = []
             for rule in transform_rules:
                 old_type = objects.nouns_objs_dicts.get_obj(rule[0]) # type: ignore
                 new_type = objects.nouns_objs_dicts.get_obj(rule[2]) # type: ignore
@@ -314,14 +318,39 @@ class level(object):
                     if issubclass(new_type, objects.Level):
                         continue
                     elif issubclass(new_type, objects.WorldPointer):
-                        info = {"from": {"type": objects.Level, "name": old_obj.name},
+                        info = {"from": {"type": objects.Level, "name": self.name},
                                 "to": {"type": new_type}}
                         transform_to.append(objects.Transform((0, 0), info))
                     elif issubclass(new_type, objects.Text):
                         transform_to.append(objects.nouns_objs_dicts.get_noun(old_type)((0, 0)))
                     else:
                         transform_to.append(new_type((0, 0)))
+                elif issubclass(old_type, objects.World):
+                    if issubclass(new_type, objects.World):
+                        continue
+                    elif issubclass(new_type, objects.Level):
+                        new_levels.append(level(world.name, self.world_list, self.name, world.name, world.inf_tier, self.rule_list))
+                        world_transform_to.append(objects.Level((0, 0), world.name))
+                    elif issubclass(new_type, objects.Clone):
+                        world_transform_to.append(objects.Clone((0, 0), world.name, world.inf_tier))
+                    elif issubclass(new_type, objects.Text):
+                        world_transform_to.append(objects.nouns_objs_dicts.get_noun(old_type)((0, 0)))
+                    else:
+                        world_transform_to.append(new_type((0, 0)))
+                elif issubclass(old_type, objects.Clone):
+                    if issubclass(new_type, objects.Clone):
+                        continue
+                    elif issubclass(new_type, objects.Level):
+                        new_levels.append(level(world.name, self.world_list, self.name, world.name, world.inf_tier, self.rule_list))
+                        clone_transform_to.append(objects.Level((0, 0), world.name))
+                    elif issubclass(new_type, objects.World):
+                        clone_transform_to.append(objects.World((0, 0), world.name, world.inf_tier))
+                    elif issubclass(new_type, objects.Text):
+                        clone_transform_to.append(objects.nouns_objs_dicts.get_noun(old_type)((0, 0)))
+                    else:
+                        clone_transform_to.append(new_type((0, 0)))
                 for old_obj in world.get_objs_from_type(old_type): # type: ignore
+                    old_obj: objects.Object # type: ignore
                     if issubclass(old_type, objects.Level):
                         old_obj: objects.Level # type: ignore
                         if issubclass(new_type, objects.Level):
@@ -337,8 +366,7 @@ class level(object):
                         else:
                             new_obj = new_type(old_obj.pos, old_obj.facing)
                             world.new_obj(new_obj)
-                    elif issubclass(old_type, objects.WorldPointer):
-                        old_obj: objects.WorldPointer # type: ignore
+                    if isinstance(old_obj, objects.WorldPointer):
                         if old_type == new_type:
                             continue
                         elif issubclass(new_type, objects.Level):
@@ -358,16 +386,16 @@ class level(object):
                     else:
                         if old_type == new_type:
                             continue
-                        if issubclass(new_type, objects.Level):
+                        elif issubclass(new_type, objects.Level):
                             new_world = worlds.world(old_obj.uuid.hex, (1, 1), 0, pygame.Color("#000000"))
                             new_levels.append(level(old_obj.uuid.hex, [new_world], self.name, rule_list = self.rule_list))
-                            new_world.new_obj(old_type((0, 0)))
+                            new_world.new_obj(old_type((0, 0))) # type: ignore
                             new_obj = objects.Level(old_obj.pos, old_obj.uuid.hex, old_obj.facing)
                             world.new_obj(new_obj)
                         elif issubclass(new_type, objects.WorldPointer):
                             new_world = worlds.world(old_obj.uuid.hex, (1, 1), 0, pygame.Color("#000000"))
                             self.world_list.append(new_world)
-                            new_world.new_obj(old_type((0, 0)))
+                            new_world.new_obj(old_type((0, 0))) # type: ignore
                             new_obj = new_type(old_obj.pos, old_obj.uuid.hex, 0, old_obj.facing)
                             world.new_obj(new_obj)
                         elif issubclass(new_type, objects.Text) and not issubclass(old_type, objects.Text):
@@ -377,6 +405,21 @@ class level(object):
                             new_obj = new_type(old_obj.pos, old_obj.facing)
                             world.new_obj(new_obj)
                     world.del_obj(old_obj.uuid)
+            for super_world in self.world_list:
+                for world_obj in filter(lambda o: o.name == world.name and o.inf_tier == world.inf_tier, super_world.get_worlds()):
+                    for transform_obj in world_transform_to:
+                        transform_obj.pos = world_obj.pos
+                        transform_obj.facing = world_obj.facing
+                        super_world.new_obj(transform_obj)
+                    if len(world_transform_to) != 0:
+                        super_world.del_obj(world_obj.uuid)
+                for clone_obj in filter(lambda o: o.name == world.name and o.inf_tier == world.inf_tier, super_world.get_worlds()):
+                    for transform_obj in clone_transform_to:
+                        transform_obj.pos = clone_obj.pos
+                        transform_obj.facing = clone_obj.facing
+                        super_world.new_obj(transform_obj)
+                    if len(clone_transform_to) != 0:
+                        super_world.del_obj(clone_obj.uuid)
         return (new_levels, transform_to)
     def winned(self) -> bool:
         for world in self.world_list:
@@ -403,7 +446,6 @@ class level(object):
         self.update_rules()
         self.tele()
         current_level = self.select(op)
-        current_level = current_level if current_level is not None else self.name
         current_level = self.super_level if len(transform_to) != 0 else current_level
         self.update_rules()
         self.sink()

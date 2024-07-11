@@ -29,8 +29,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
         level.update_rules()
         for world in level.world_list:
             world.set_sprite_states(0)
-    history = [copy.deepcopy(levelpack)]
-    start = copy.deepcopy(levelpack)
+    levelpack_backup = copy.deepcopy(levelpack)
     round_num = 0
     window = pygame.display.set_mode((720, 720))
     pygame.display.set_caption(f"Baba Make Parabox Version {basics.versions}")
@@ -51,7 +50,9 @@ def play(levelpack: levelpacks.levelpack) -> None:
     cooldowns = {v: 0 for v in keybinds.values()}
     window.fill("#000000")
     current_level = levelpack.get_exist_level(levelpack.main_level)
-    current_world_index = 0
+    current_world_index = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
+    level_info = {"win": False, "current_level": None, "new_levels": [], "transform_to": []}
+    history = {current_level.name: [copy.deepcopy(current_level)]}
     window.blit(pygame.transform.scale(current_level.show_world(current_level.world_list[current_world_index], basics.options["world_display_recursion_depth"], 1), (720, 720)), (0, 0))
     pygame.display.flip()
     game_running = True
@@ -67,45 +68,43 @@ def play(levelpack: levelpacks.levelpack) -> None:
             elif event.type == pygame.KEYUP and event.key in keybinds.values():
                 keys[event.key] = False
         refresh = False
-        level_info = {"win": False, "current_level": current_level.name, "new_levels": [], "transform_to": []}
         if keys[keybinds["W"]] and cooldowns[keybinds["W"]] == 0:
-            history.append(copy.deepcopy(levelpack))
+            history[current_level.name].append(copy.deepcopy(current_level))
             round_num += 1
             level_info = current_level.round(spaces.W)
             refresh = True
         elif keys[keybinds["S"]] and cooldowns[keybinds["S"]] == 0:
-            history.append(copy.deepcopy(levelpack))
+            history[current_level.name].append(copy.deepcopy(current_level))
             round_num += 1
             level_info = current_level.round(spaces.S)
             refresh = True
         elif keys[keybinds["A"]] and cooldowns[keybinds["A"]] == 0:
-            history.append(copy.deepcopy(levelpack))
+            history[current_level.name].append(copy.deepcopy(current_level))
             round_num += 1
             level_info = current_level.round(spaces.A)
             refresh = True
         elif keys[keybinds["D"]] and cooldowns[keybinds["D"]] == 0:
-            history.append(copy.deepcopy(levelpack))
+            history[current_level.name].append(copy.deepcopy(current_level))
             round_num += 1
             level_info = current_level.round(spaces.D)
             refresh = True
         elif keys[keybinds[" "]] and cooldowns[keybinds[" "]] == 0:
-            history.append(copy.deepcopy(levelpack))
+            history[current_level.name].append(copy.deepcopy(current_level))
             round_num += 1
             level_info = current_level.round(spaces.O)
             refresh = True
         elif keys[keybinds["Z"]] and cooldowns[keybinds["Z"]] == 0:
-            if len(history) > 1:
-                levelpack = copy.deepcopy(history.pop())
+            if len(history[current_level.name]) > 1:
+                current_level = copy.deepcopy(history[current_level.name].pop())
                 round_num -= 1
             else:
-                levelpack = copy.deepcopy(history[0])
+                current_level = copy.deepcopy(history[current_level.name][0])
                 round_num = 0
             refresh = True
         elif keys[keybinds["R"]] and cooldowns[keybinds["R"]] == 0:
-            round_num = 0
-            levelpack = copy.deepcopy(start)
+            levelpack = copy.deepcopy(levelpack_backup)
             current_level = levelpack.get_exist_level(levelpack.main_level)
-            current_world_index = 0
+            current_world_index = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
             refresh = True
         elif keys[keybinds["-"]] and cooldowns[keybinds["-"]] == 0:
             current_world_index -= 1
@@ -116,11 +115,13 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 cooldowns[key] = basics.options["input_cooldown"]
         if refresh:
             levelpack.level_list.extend(level_info["new_levels"])
+            transform_success = False
             if len(level_info["transform_to"]) != 0:
                 for level in levelpack.level_list:
                     for world in level.world_list:
                         for level_obj in world.get_levels():
                             if current_level.name == level_obj.name:
+                                transform_success = True
                                 for obj in level_info["transform_to"]:
                                     obj: objects.Object
                                     obj.pos = level_obj.pos
@@ -135,16 +136,15 @@ def play(levelpack: levelpacks.levelpack) -> None:
                         if issubclass(transform_obj.from_type, objects.Level):
                             from_level = levelpack.get_exist_level(transform_obj.from_name)
                             if issubclass(transform_obj.to_type, objects.WorldPointer):
+                                level.world_list.extend(from_level.world_list)
                                 new_obj = transform_obj.to_type(transform_obj.pos, from_level.main_world_name, from_level.main_world_tier, transform_obj.facing)
                                 world.del_obj(transform_obj.uuid)
                                 world.new_obj(new_obj)
                         elif issubclass(transform_obj.from_type, objects.WorldPointer):
                             from_world = level.get_exist_world(transform_obj.from_name, transform_obj.from_inf_tier)
                             if issubclass(transform_obj.to_type, objects.Level):
-                                has_level = any(filter(lambda l: from_world.name == l.name, levelpack.level_list)) # type: ignore
-                                if not has_level:
-                                    new_level = levels.level(from_world.name, level.world_list, transform_obj.from_name, level.name, transform_obj.from_inf_tier, level.rule_list)
-                                    levelpack.level_list.append(new_level)
+                                new_level = levels.level(from_world.name, level.world_list, level.name, transform_obj.from_name, transform_obj.from_inf_tier, level.rule_list)
+                                levelpack.set_level(new_level)
                                 new_obj = objects.Level(transform_obj.pos, from_world.name, transform_obj.facing)
                                 world.del_obj(transform_obj.uuid)
                                 world.new_obj(new_obj)
@@ -155,13 +155,22 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 else:
                     level_info["win"] = False
                     print("Congratulations!")
-            if level_info["win"] or len(level_info["transform_to"]) != 0:
-                levelpack.set_level(start.get_exist_level(current_level.name))
-            current_level = levelpack.get_exist_level(level_info["current_level"] if level_info["current_level"] is not None else levelpack.main_level)
-            current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
+            if level_info["win"] or transform_success:
+                history.pop(current_level.name, None)
+                level = levelpack_backup.get_level(current_level.name)
+                if level is not None:
+                    levelpack.set_level(level)
+            if level_info["current_level"] is not None:
+                current_level = levelpack.get_exist_level(level_info["current_level"] if level_info["current_level"] is not None else levelpack.main_level)
+                if history.get(current_level.name) is None:
+                    history[current_level.name] = [copy.deepcopy(current_level)]
+                current_world_index = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
+                round_num = 0
             for level in levelpack.level_list:
                 for world in current_level.world_list:
                     world.set_sprite_states(round_num)
+            level_info = {"win": False, "current_level": None, "new_levels": [], "transform_to": []}
+        current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
         window.fill("#000000")
         window.blit(pygame.transform.scale(current_level.show_world(current_level.world_list[current_world_index], basics.options["world_display_recursion_depth"], frame), (720, 720)), (0, 0))
         pygame.display.flip()

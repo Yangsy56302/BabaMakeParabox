@@ -23,9 +23,9 @@
 
 运行`test.bat`以开始该游戏的官方测试。
 
-运行`input.bat`以从`levelpacks`文件夹内读取存档的JSON文件来开始游戏。
+运行`input.bat`以从`levelpacks`文件夹内读取关卡包的JSON文件来开始游戏。
 
-运行`edit.bat`以编辑`levelpacks`文件夹内的存档文件并在原地保存，若无文件则会新建一份。
+运行`edit.bat`以编辑`levelpacks`文件夹内的关卡包文件并在原地保存，若无文件则会新建一份。
 
 可以运行`help.bat`以获取更多关于如何在终端运行该游戏的说明。
 
@@ -35,8 +35,8 @@
 
 - WSAD：移动
 - Space：等待
-- Z：撤回
-- R：重新开始
+- Z：关卡内撤回
+- R：重新开始关卡包
 - \- / =：选择摄像机所在的世界
 
 ### 如何胜利
@@ -96,6 +96,7 @@
 | 1.9    | 2024.07.10 | All is Wobble; Code is Better |
 | 1.91   | 2024.07.10 | Lava is Orange; Pos is Best |
 | 2.0    | 2024.07.11 | Level is not World; Cursor is Select |
+| 2.1    | 2024.07.11 | Bug is Fix; World is Level |
 
 ## 报告漏洞和提出建议
 

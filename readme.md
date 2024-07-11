@@ -23,9 +23,9 @@ If you want to run the source code, download These Things:
 
 Run `test.bat` to start a official game test.
 
-Run `input.bat` to play a world from json file in the `levelpacks*`* folder.
+Run `input.bat` to play a levelpack from json file in the `levelpacks*`* folder.
 
-Run `edit.bat` to edit and save a world from json file in the `levelpacks` folder, or create one.
+Run `edit.bat` to edit and save a levelpack from json file in the `levelpacks` folder, or create one.
 
 You can run `help.bat` for more information with how to run the game in terminal.
 
@@ -35,8 +35,8 @@ If you need to make an .exe file, run `py_2_exe.bat`.
 
 - WSAD: You / Cursor move.
 - Space: You wait for something / Cursor select a level to play.
-- Z: Undo.
-- R: Restart.
+- Z: Undo your last step in this level.
+- R: Restart the levelpack.
 - \- / =: Select world for camera to focus.
 
 ### How to win
@@ -96,6 +96,7 @@ Please remember:
 | 1.9    | 2024.07.10 | All is Wobble; Code is Better |
 | 1.91   | 2024.07.10 | Lava is Orange; Pos is Best |
 | 2.0    | 2024.07.11 | Level is not World; Cursor is Select |
+| 2.1    | 2024.07.11 | Bug is Fix; World is Level |
 
 ## Bug Reports and Suggestions
 

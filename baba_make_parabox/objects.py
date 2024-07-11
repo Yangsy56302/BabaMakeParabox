@@ -262,7 +262,7 @@ class Transform(Object):
         self.from_type: type[Object] = info["from"]["type"]
         self.from_name: str = info["from"]["name"]
         if issubclass(self.from_type, WorldPointer):
-            self.from_inf_tier: int = info["from"]["infinite_tier"]
+            self.from_inf_tier: int = info["from"]["inf_tier"]
         self.to_type: type[Object] = info["to"]["type"]
     def __str__(self) -> str:
         return str(super())
