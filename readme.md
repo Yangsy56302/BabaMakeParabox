@@ -41,9 +41,7 @@ If you need to make an .exe file, run `py_2_exe.bat`.
 
 ### How to win
 
-Put something that is **YOU** to something that is **WIN**.
-
-And please remember:
+Please remember:
 
 1. Sometimes the rules itself can be changed;
 2. Sometimes some of the rules can not be changed;
