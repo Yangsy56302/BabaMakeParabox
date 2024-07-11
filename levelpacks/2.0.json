@@ -1,0 +1,301 @@
+{
+    "name": "2.0",
+    "level_list": [
+        {
+            "name": "main",
+            "world_list": [
+                {
+                    "name": "main_0",
+                    "infinite_tier": 0,
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "color": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "object_list": [
+                        {
+                            "type": "BABA",
+                            "position": [
+                                1,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                2,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "YOU",
+                            "position": [
+                                3,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "WIN",
+                            "position": [
+                                7,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                6,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "FLAG",
+                            "position": [
+                                5,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Cursor",
+                            "position": [
+                                4,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Level",
+                            "position": [
+                                2,
+                                3
+                            ],
+                            "orientation": "S",
+                            "level": {
+                                "name": "baba"
+                            }
+                        },
+                        {
+                            "type": "Level",
+                            "position": [
+                                6,
+                                3
+                            ],
+                            "orientation": "S",
+                            "level": {
+                                "name": "flag"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "super_level": null,
+            "main_world": {
+                "name": "main_0",
+                "infinite_tier": 0
+            }
+        },
+        {
+            "name": "baba",
+            "world_list": [
+                {
+                    "name": "baba_0",
+                    "infinite_tier": 0,
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "color": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "object_list": [
+                        {
+                            "type": "BABA",
+                            "position": [
+                                3,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                4,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "YOU",
+                            "position": [
+                                5,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                4,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "LEVEL",
+                            "position": [
+                                3,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Baba",
+                            "position": [
+                                5,
+                                5
+                            ],
+                            "orientation": "S"
+                        }
+                    ]
+                }
+            ],
+            "super_level": "main",
+            "main_world": {
+                "name": "baba_0",
+                "infinite_tier": 0
+            }
+        },
+        {
+            "name": "flag",
+            "world_list": [
+                {
+                    "name": "flag_0",
+                    "infinite_tier": 0,
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "color": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "object_list": [
+                        {
+                            "type": "BABA",
+                            "position": [
+                                1,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "FLAG",
+                            "position": [
+                                5,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "LEVEL",
+                            "position": [
+                                4,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Baba",
+                            "position": [
+                                2,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Flag",
+                            "position": [
+                                6,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                6,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                2,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "YOU",
+                            "position": [
+                                3,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "WIN",
+                            "position": [
+                                7,
+                                1
+                            ],
+                            "orientation": "S"
+                        }
+                    ]
+                }
+            ],
+            "super_level": "main",
+            "main_world": {
+                "name": "flag_0",
+                "infinite_tier": 0
+            }
+        }
+    ],
+    "main_level": "main",
+    "rule_list": [
+        [
+            "CURSOR",
+            "IS",
+            "SELECT"
+        ],
+        [
+            "TEXT",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "WORLD",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "CLONE",
+            "IS",
+            "PUSH"
+        ]
+    ]
+}

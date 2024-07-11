@@ -23,9 +23,9 @@ If you want to run the source code, download These Things:
 
 Run `test.bat` to start a official game test.
 
-Run `input.bat` to play a world from json file in the `worlds*`* folder.
+Run `input.bat` to play a world from json file in the `levelpacks*`* folder.
 
-Run `edit.bat` to edit and save a world from json file in the `worlds` folder, or create one.
+Run `edit.bat` to edit and save a world from json file in the `levelpacks` folder, or create one.
 
 You can run `help.bat` for more information with how to run the game in terminal.
 
@@ -33,17 +33,17 @@ If you need to make an .exe file, run `py_2_exe.bat`.
 
 ### How to control
 
-- WSAD: You move.
-- Space: You wait for something.
-- Z: Undo, max 100 times.
+- WSAD: You / Cursor move.
+- Space: You wait for something / Cursor select a level to play.
+- Z: Undo.
 - R: Restart.
-- Minus / Equals: Select level for camera to focus.
+- \- / =: Select world for camera to focus.
 
 ### How to win
 
-Simply put something that is **YOU** to something that is **WIN**.
+Put something that is **YOU** to something that is **WIN**.
 
-And remember:
+And please remember:
 
 1. Sometimes the rules itself can be changed;
 2. Sometimes some of the rules can not be changed;
@@ -52,8 +52,8 @@ And remember:
 
 ## How to make a custom world
 
-**Important: the levels that placed are pointed to the levels that camera looks at.**
-**If you want to put levels inside other levels, please considering cut / paste.**
+**Important: the levels / worlds / clones that placed are pointed to the levels / worlds / clones that camera looks at.**
+**If you want to put levels / worlds / clones inside other levels / worlds, please considering cut, copy and paste.**
 
 ### How to control
 
@@ -63,15 +63,19 @@ And remember:
 - Tab: Switch object / noun.
 - Enter: Place object on cursor.
 - Backspace: Destroy all objects on cursor.
-- Minus / Equals: Select level.
-- P: New level (information from terminal inputs).
-- O: Delete current level (confirm in terminal).
+- \- / =: Select world.
+- \[ / \]: Select level.
+- P: New world (information from terminal inputs).
+- O: Delete current world (confirm in terminal).
+- M: New level (information from terminal inputs).
+- N: Delete current level (confirm in terminal).
 - R: Change global rules (information from terminal inputs).
-- Z: Undo, max 100 times.
+- Z: Undo.
 - X: Cut all objects on cursor.
 - C: Copy all objects on cursor.
 - V: Paste all objects on cursor.
 - Close Pygame Window: Save and quit.
+- Close Terminal: Do not save, just quit.
 
 ## List of Versions
 
@@ -93,10 +97,11 @@ And remember:
 | 1.81   | 2024.07.10 | Argv is Better |
 | 1.9    | 2024.07.10 | All is Wobble; Code is Better |
 | 1.91   | 2024.07.10 | Lava is Orange; Pos is Best |
+| 2.0    | 2024.07.11 | Level is not World; Cursor is Select |
 
 ## Bug Reports and Suggestions
 
-Send your message to yangsy56302@163.com!
+Send your message to **yangsy56302@163.com**!
 
 ## Support
 

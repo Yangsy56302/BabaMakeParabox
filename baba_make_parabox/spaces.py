@@ -5,11 +5,11 @@ Coord = tuple[int, int]
 Orient = Literal[0x1, 0x2, 0x4, 0x8]
 PlayerOperation = Orient | Literal[0x10]
 
-W = 0x2
-A = 0x4
-S = 0x8
-D = 0x1
-O = 0x10
+W: Orient = 0x2
+A: Orient = 0x4
+S: Orient = 0x8
+D: Orient = 0x1
+O: PlayerOperation = 0x10
 
 def swap_orientation(direction: Orient) -> Orient:
     match direction:

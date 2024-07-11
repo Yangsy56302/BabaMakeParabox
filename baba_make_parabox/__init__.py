@@ -9,8 +9,9 @@ import baba_make_parabox.spaces as spaces
 import baba_make_parabox.objects as objects
 import baba_make_parabox.rules as rules
 import baba_make_parabox.displays as displays
-import baba_make_parabox.levels as levels
 import baba_make_parabox.worlds as worlds
+import baba_make_parabox.levels as levels
+import baba_make_parabox.levelpacks as levelpacks
 import baba_make_parabox.edits as edits
 import baba_make_parabox.games as games
 
@@ -29,27 +30,29 @@ def main() -> None:
         elif basics.args.edit:
             if basics.args.input is not None:
                 filename: str = basics.args.input.lstrip()
-                if os.path.isfile(os.path.join("worlds", filename + ".json")):
-                    with open(os.path.join("worlds", filename + ".json"), "r", encoding="ascii") as file:
-                        world = worlds.json_to_world(json.load(file))
+                if os.path.isfile(os.path.join("levelpacks", filename + ".json")):
+                    with open(os.path.join("levelpacks", filename + ".json"), "r", encoding="ascii") as file:
+                        levelpack = levelpacks.json_to_levelpack(json.load(file))
                 else:
-                    level = levels.level("main", (16, 16), color=pygame.Color("#000000"))
-                    world = worlds.world(filename, [level])
+                    world = worlds.world(filename, (15, 15), color=pygame.Color("#000000"))
+                    level = levels.level(filename, [world])
+                    levelpack = levelpacks.levelpack(filename, [level])
             else:
-                level = levels.level("main", (16, 16), color=pygame.Color("#000000"))
-                world = worlds.world("noname", [level])
-            world = edits.level_editor(world)
+                world = worlds.world("main", (15, 15), color=pygame.Color("#000000"))
+                level = levels.level("main", [world])
+                levelpack = levelpacks.levelpack("main", [level])
+            levelpack = edits.levelpack_editor(levelpack)
             if basics.args.output is not None:
                 filename: str = basics.args.output.lstrip()
-                with open(os.path.join("worlds", filename + ".json"), "w", encoding="ascii") as file:
-                    json.dump(world.to_json(), file, indent=4)
+                with open(os.path.join("levelpacks", filename + ".json"), "w", encoding="ascii") as file:
+                    json.dump(levelpack.to_json(), file, indent=4)
             pygame.quit()
             print("Thank you for editing Baba Make Parabox!")
             return
         elif basics.args.input is not None:
             filename: str = basics.args.input.lstrip()
-            with open(os.path.join("worlds", filename + ".json"), "r", encoding="ascii") as file:
-                games.play(worlds.json_to_world(json.load(file)))
+            with open(os.path.join("levelpacks", filename + ".json"), "r", encoding="ascii") as file:
+                games.play(levelpacks.json_to_levelpack(json.load(file)))
             pygame.quit()
             print("Thank you for playing Baba Make Parabox!")
             return
@@ -61,4 +64,4 @@ def main() -> None:
         print("Thank you for testing Baba Make Parabox!")
         return
 
-__all__ = ["basics", "spaces", "objects", "rules", "levels", "displays", "worlds", "edits", "main"]
+__all__ = ["basics", "spaces", "objects", "rules", "worlds", "displays", "levels", "edits", "main"]

@@ -1,8 +1,10 @@
+from typing import Optional
 import pygame
 import os
 import random
 
 import baba_make_parabox.objects as objects
+import baba_make_parabox.spaces as spaces
 
 DARK_GRAY = pygame.Color("#242424")
 LIGHT_GRAY = pygame.Color("#737373")
@@ -92,9 +94,9 @@ def random_hue() -> pygame.Color:
         b = 255 * ((n - 5 / 6) * 6)
     return pygame.Color(int(r), int(g), int(b))
 
-def random_level_color() -> pygame.Color:
+def random_world_color() -> pygame.Color:
     color = random_hue()
-    color = pygame.Color(color.r // 4, color.g // 4, color.b // 4)
+    color = pygame.Color(color.r // 16, color.g // 16, color.b // 16)
     return color
 
 pixel_size = 6
@@ -116,6 +118,21 @@ class Sprites(object):
     def get(self, sprite_name: str, state: int, frame: int = 0) -> pygame.Surface:
         return self.sprites["_".join([sprite_name, str(state), str(frame)])]
 
+def set_sprite_state(obj: objects.Object, round_num: int = 0, wsad: Optional[dict[spaces.Orient, bool]] = None) -> objects.Object:
+    if isinstance(obj, objects.Static):
+        obj.set_sprite()
+    if isinstance(obj, objects.Directional):
+        obj.set_sprite()
+    if isinstance(obj, objects.Animated):
+        obj.set_sprite(round_num)
+    if isinstance(obj, objects.AnimatedDirectional):
+        obj.set_sprite(round_num)
+    if isinstance(obj, objects.Character):
+        obj.set_sprite()
+    if isinstance(obj, objects.Tiled):
+        obj.set_sprite(wsad if wsad is not None else {spaces.W: False, spaces.S: False, spaces.A: False, spaces.D: False})
+    return obj
+
 sprite_colors: dict[str, pygame.Color] = {}
 
 sprite_colors["baba"] = WHITE
@@ -129,7 +146,9 @@ sprite_colors["key"] = LIGHT_YELLOW
 sprite_colors["box"] = BROWN
 sprite_colors["rock"] = LIGHT_BROWN
 sprite_colors["flag"] = LIGHT_YELLOW
+sprite_colors["cursor"] = PINK
 sprite_colors["level"] = MAGENTA
+sprite_colors["world"] = PINK
 sprite_colors["clone"] = PINK
 sprite_colors["text_baba"] = MAGENTA
 sprite_colors["text_keke"] = LIGHT_RED
@@ -142,7 +161,9 @@ sprite_colors["text_key"] = LIGHT_YELLOW
 sprite_colors["text_box"] = BROWN
 sprite_colors["text_rock"] = BROWN
 sprite_colors["text_flag"] = LIGHT_YELLOW
+sprite_colors["text_cursor"] = LIGHT_YELLOW
 sprite_colors["text_level"] = MAGENTA
+sprite_colors["text_world"] = PINK
 sprite_colors["text_clone"] = PINK
 sprite_colors["text_text"] = MAGENTA
 sprite_colors["text_is"] = WHITE
@@ -171,7 +192,7 @@ order = [objects.Operator,
          objects.Directional,
          objects.Animated,
          objects.Tiled,
-         objects.LevelContainer,
+         objects.WorldPointer,
          objects.Object]
 
 sprites = Sprites(sprite_colors)

@@ -2,23 +2,27 @@ import baba_make_parabox.basics as basics
 import baba_make_parabox.spaces as spaces
 import baba_make_parabox.objects as objects
 import baba_make_parabox.rules as rules
-import baba_make_parabox.levels as levels
-import baba_make_parabox.displays as displays
 import baba_make_parabox.worlds as worlds
+import baba_make_parabox.displays as displays
+import baba_make_parabox.levels as levels
+import baba_make_parabox.levelpacks as levelpacks
 
 import copy
 import pygame
 
-def level_editor(world: worlds.world) -> worlds.world:
+def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
     print("Global Rule List:")
-    for rule in world.rule_list:
+    for rule in levelpack.rule_list:
         str_list = []
         for obj_type in rule:
             str_list.append(obj_type.class_name)
         print(" ".join(str_list))
-    for level in world.level_list:
-        level.set_sprite_states(0)
-    history = [copy.deepcopy(world)]
+    for level in levelpack.level_list:
+        level.rule_list = levelpack.rule_list
+        level.update_rules()
+        for world in level.world_list:
+            world.set_sprite_states(0)
+    history = [copy.deepcopy(levelpack)]
     window = pygame.display.set_mode((1280, 720))
     pygame.display.set_caption(f"Baba Make Parabox In-game Editor Version {basics.versions}")
     pygame.display.set_icon(pygame.image.load("BabaMakeParabox.png"))
@@ -41,9 +45,13 @@ def level_editor(world: worlds.world) -> worlds.world:
                 "V": pygame.K_v,
                 "O": pygame.K_o,
                 "P": pygame.K_p,
+                "N": pygame.K_n,
+                "M": pygame.K_m,
                 "R": pygame.K_r,
                 "-": pygame.K_MINUS,
                 "=": pygame.K_EQUALS,
+                "[": pygame.K_LEFTBRACKET,
+                "]": pygame.K_RIGHTBRACKET,
                 "\n": pygame.K_RETURN,
                 "\b": pygame.K_BACKSPACE,
                 "\t": pygame.K_TAB}
@@ -51,17 +59,22 @@ def level_editor(world: worlds.world) -> worlds.world:
     cooldowns = {v: 0 for v in keybinds.values()}
     window.fill("#000000")
     current_level_index = 0
-    current_level = world.level_list[current_level_index]
+    current_level = levelpack.level_list[current_level_index]
+    current_world_index = 0
+    current_world = current_level.world_list[current_world_index]
     object_list = list(objects.object_name.values())
     current_object_index = 0
     current_object_type = object_list[current_object_index]
     current_facing = spaces.S
     current_cursor_pos = (0, 0)
     current_clipboard = []
+    level_changed = True
+    world_changed = True
     yes = ["y", "Y", "yes", "Yes", "YES"]
     window.fill("#000000")
-    window.blit(pygame.transform.scale(world.show_level(current_level, basics.options["level_display_recursion_depth"], 1, current_cursor_pos), (720, 720)), (0, 0))
-    window.blit(pygame.transform.scale(displays.sprites.get(current_object_type.sprite_name, 0, 1), (72, 72)), (1208, 0))
+    window.blit(pygame.transform.scale(current_level.show_world(current_world, basics.options["world_display_recursion_depth"], 1, current_cursor_pos), (720, 720)), (0, 0))
+    current_object = displays.set_sprite_state(current_object_type((0, 0), current_facing))
+    window.blit(pygame.transform.scale(displays.sprites.get(current_object_type.sprite_name, current_object.sprite_state, 1), (72, 72)), (1208, 0))
     pygame.display.flip()
     editor_running = True
     while editor_running:
@@ -75,22 +88,21 @@ def level_editor(world: worlds.world) -> worlds.world:
                 keys[event.key] = True
             elif event.type == pygame.KEYUP and event.key in keybinds.values():
                 keys[event.key] = False
-        refresh = False
         if keys[keybinds["W"]] and cooldowns[keybinds["W"]] == 0:
             new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.W)
-            if not current_level.out_of_range(new_cursor_pos):
+            if not current_world.out_of_range(new_cursor_pos):
                 current_cursor_pos = new_cursor_pos
         elif keys[keybinds["S"]] and cooldowns[keybinds["S"]] == 0:
             new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.S)
-            if not current_level.out_of_range(new_cursor_pos):
+            if not current_world.out_of_range(new_cursor_pos):
                 current_cursor_pos = new_cursor_pos
         elif keys[keybinds["A"]] and cooldowns[keybinds["A"]] == 0:
             new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.A)
-            if not current_level.out_of_range(new_cursor_pos):
+            if not current_world.out_of_range(new_cursor_pos):
                 current_cursor_pos = new_cursor_pos
         elif keys[keybinds["D"]] and cooldowns[keybinds["D"]] == 0:
             new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.D)
-            if not current_level.out_of_range(new_cursor_pos):
+            if not current_world.out_of_range(new_cursor_pos):
                 current_cursor_pos = new_cursor_pos
         elif keys[keybinds["I"]] and cooldowns[keybinds["I"]] == 0:
             current_facing = spaces.W
@@ -105,28 +117,56 @@ def level_editor(world: worlds.world) -> worlds.world:
         elif keys[keybinds["E"]] and cooldowns[keybinds["E"]] == 0:
             current_object_index += 1
         elif keys[keybinds["\n"]] and cooldowns[keybinds["\n"]] == 0:
-            history.append(copy.deepcopy(world))
-            if issubclass(current_object_type, objects.LevelContainer):
-                current_level.new_obj(current_object_type(current_cursor_pos, current_level.name, current_level.inf_tier, current_facing))
+            history.append(copy.deepcopy(levelpack))
+            if issubclass(current_object_type, objects.Level):
+                current_world.new_obj(current_object_type(current_cursor_pos, current_level.name, current_facing))
+            elif issubclass(current_object_type, objects.WorldPointer):
+                current_world.new_obj(current_object_type(current_cursor_pos, current_world.name, current_world.inf_tier, current_facing))
             else:
-                current_level.new_obj(current_object_type(current_cursor_pos, current_facing))
+                current_world.new_obj(current_object_type(current_cursor_pos, current_facing))
         elif keys[keybinds["P"]] and cooldowns[keybinds["P"]] == 0:
-            if input("Are you sure you want to create a new level? [y/N]: ") in yes:
-                history.append(copy.deepcopy(world))
-                name = input("Level's Name: ")
-                size = (int(input("Level's width: ")), int(input("Level's height: ")))
-                inf_tier = input("Level's infinite tier: ")
+            if input("Are you sure you want to create a new world? [y/N]: ") in yes:
+                history.append(copy.deepcopy(levelpack))
+                name = input("World's Name: ")
+                size = (int(input("World's width: ")), int(input("World's height: ")))
+                inf_tier = input("World's infinite tier: ")
                 inf_tier = int(inf_tier if inf_tier != "" else 0)
-                color = input("Level's color: ")
-                color = pygame.Color(color if color != "" else displays.random_level_color())
-                world.level_list.append(levels.level(name, size, inf_tier, color))
-                current_level_index = len(world.level_list) - 1
+                color = input("World's color: ")
+                color = pygame.Color(color if color != "" else displays.random_world_color())
+                current_level.world_list.append(worlds.world(name, size, inf_tier, color))
+                current_world_index = len(current_level.world_list) - 1
+                world_changed = True
         elif keys[keybinds["O"]] and cooldowns[keybinds["O"]] == 0:
+            if input("Are you sure you want to delete this world? [y/N]: ") in yes:
+                current_level.world_list.pop(current_world_index)
+                current_world_index -= 1
+                world_changed = True
+        elif keys[keybinds["M"]] and cooldowns[keybinds["M"]] == 0:
+            if input("Are you sure you want to create a new level? [y/N]: ") in yes:
+                history.append(copy.deepcopy(levelpack))
+                level_name = input("Level's Name: ")
+                super_level = input("Superlevel's Name: ")
+                name = input("World's Name: ")
+                size = (int(input("World's width: ")), int(input("World's height: ")))
+                inf_tier = int(input("World's Infinite Tier: "))
+                inf_tier = int(inf_tier if inf_tier != "" else 0)
+                color = input("World's color: ")
+                color = pygame.Color(color if color != "" else displays.random_world_color())
+                default_world = worlds.world(name, size, inf_tier, color)
+                levelpack.level_list.append(levels.level(level_name, [default_world], super_level, name, inf_tier, levelpack.rule_list))
+                current_level_index = len(levelpack.level_list) - 1
+                current_world_index = 0
+                level_changed = True
+                world_changed = True
+        elif keys[keybinds["N"]] and cooldowns[keybinds["N"]] == 0:
             if input("Are you sure you want to delete this level? [y/N]: ") in yes:
-                world.level_list.pop(current_level_index)
+                levelpack.level_list.pop(current_level_index)
                 current_level_index -= 1
+                current_world_index = 0
+                level_changed = True
+                world_changed = True
         elif keys[keybinds["R"]] and cooldowns[keybinds["R"]] == 0:
-            text_rule = input("Global Rule: ").upper().split()
+            text_rule = input("Levelpack's Global Rule: ").upper().split()
             type_rule: list[type[objects.Text]] = []
             valid_input = True
             for text in text_rule:
@@ -142,24 +182,24 @@ def level_editor(world: worlds.world) -> worlds.world:
                     break
             if valid_input:
                 dupe_list = []
-                for rule in world.rule_list:
+                for rule in levelpack.rule_list:
                     duplicated = False
                     if len(type_rule) == len(rule):
                         duplicated = all(map(lambda x, y: x == y, type_rule, rule))
                     dupe_list.append(duplicated)
                 if any(dupe_list):
-                    world.rule_list.pop(dupe_list.index(True))
+                    levelpack.rule_list.pop(dupe_list.index(True))
                 else:
-                    world.rule_list.append(list(type_rule))
-            print("Global Rule List:")
-            for rule in world.rule_list:
+                    levelpack.rule_list.append(list(type_rule))
+            print("Levelpack's Global Rule List:")
+            for rule in levelpack.rule_list:
                 str_list = []
                 for obj_type in rule:
                     str_list.append(obj_type.class_name)
                 print(" ".join(str_list))
         elif keys[keybinds["\b"]] and cooldowns[keybinds["\b"]] == 0:
-            history.append(copy.deepcopy(world))
-            current_level.del_objs_from_pos(current_cursor_pos)
+            history.append(copy.deepcopy(levelpack))
+            current_world.del_objs_from_pos(current_cursor_pos)
         elif keys[keybinds["\t"]] and cooldowns[keybinds["\t"]] == 0:
             try:
                 obj_to_noun = None
@@ -182,43 +222,68 @@ def level_editor(world: worlds.world) -> worlds.world:
                     pass
         elif keys[keybinds["Z"]] and cooldowns[keybinds["Z"]] == 0:
             if len(history) > 1:
-                world = copy.deepcopy(history.pop())
+                levelpack = copy.deepcopy(history.pop())
             else:
-                world = copy.deepcopy(history[0])
+                levelpack = copy.deepcopy(history[0])
+            world_changed = True
+            level_changed = True
         elif keys[keybinds["X"]] and cooldowns[keybinds["X"]] == 0:
-            history.append(copy.deepcopy(world))
-            current_clipboard = current_level.get_objs_from_pos(current_cursor_pos)
-            current_level.del_objs_from_pos(current_cursor_pos)
+            history.append(copy.deepcopy(levelpack))
+            current_clipboard = current_world.get_objs_from_pos(current_cursor_pos)
+            current_world.del_objs_from_pos(current_cursor_pos)
         elif keys[keybinds["C"]] and cooldowns[keybinds["C"]] == 0:
-            history.append(copy.deepcopy(world))
-            current_clipboard = current_level.get_objs_from_pos(current_cursor_pos)
+            history.append(copy.deepcopy(levelpack))
+            current_clipboard = current_world.get_objs_from_pos(current_cursor_pos)
         elif keys[keybinds["V"]] and cooldowns[keybinds["V"]] == 0:
-            history.append(copy.deepcopy(world))
+            history.append(copy.deepcopy(levelpack))
             for obj in current_clipboard:
                 new_obj = copy.deepcopy(obj)
                 new_obj.pos = current_cursor_pos
-                current_level.new_obj(new_obj)
+                current_world.new_obj(new_obj)
         elif keys[keybinds["-"]] and cooldowns[keybinds["-"]] == 0:
-            current_level_index -= 1
+            current_world_index -= 1
             current_cursor_pos = (0, 0)
+            world_changed = True
         elif keys[keybinds["="]] and cooldowns[keybinds["="]] == 0:
-            current_level_index += 1
+            current_world_index += 1
             current_cursor_pos = (0, 0)
+            world_changed = True
+        elif keys[keybinds["["]] and cooldowns[keybinds["["]] == 0:
+            current_level_index -= 1
+            current_world_index = 0
+            current_cursor_pos = (0, 0)
+            level_changed = True
+            world_changed = True
+        elif keys[keybinds["]"]] and cooldowns[keybinds["]"]] == 0:
+            current_level_index += 1
+            current_world_index = 0
+            current_cursor_pos = (0, 0)
+            level_changed = True
+            world_changed = True
         for key, value in keys.items():
             if value and cooldowns[key] == 0:
                 cooldowns[key] = basics.options["input_cooldown"]
-        current_level_index = current_level_index % len(world.level_list) if current_level_index >= 0 else len(world.level_list) - 1
-        current_level = world.level_list[current_level_index]
+        if level_changed:
+            current_level_index = current_level_index % len(levelpack.level_list) if current_level_index >= 0 else len(levelpack.level_list) - 1
+            current_level = levelpack.level_list[current_level_index]
+            print("Current Level:", current_level.name)
+            level_changed = False
+        if world_changed:
+            current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
+            current_world = current_level.world_list[current_world_index]
+            print("Current World:", current_world.name)
+            world_changed = False
         current_object_index = current_object_index % len(object_list) if current_object_index >= 0 else len(object_list) - 1
         current_object_type = object_list[current_object_index]
-        for level in world.level_list:
-            level.set_sprite_states(0)
+        for world in current_level.world_list:
+            world.set_sprite_states(0)
         window.fill("#000000")
-        window.blit(pygame.transform.scale(world.show_level(current_level, basics.options["level_display_recursion_depth"], frame, current_cursor_pos), (720, 720)), (0, 0))
-        window.blit(pygame.transform.scale(displays.sprites.get(current_object_type.sprite_name, 0, frame), (72, 72)), (1208, 0))
+        window.blit(pygame.transform.scale(current_level.show_world(current_world, basics.options["world_display_recursion_depth"], frame, current_cursor_pos), (720, 720)), (0, 0))
+        current_object = displays.set_sprite_state(current_object_type((0, 0), current_facing))
+        window.blit(pygame.transform.scale(displays.sprites.get(current_object_type.sprite_name, current_object.sprite_state, frame), (72, 72)), (1208, 0))
         pygame.display.flip()
         for key in cooldowns:
             if cooldowns[key] > 0:
                 cooldowns[key] -= 1
         milliseconds += clock.tick(basics.options["fps"])
-    return world
+    return levelpack

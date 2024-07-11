@@ -6,11 +6,13 @@ import argparse
 
 pygame.init()
 
-versions = "1.91"
+versions = "2.0"
 
-JsonObject = None | int | float | str | list["JsonObject"] | dict["str", "JsonObject"]
+BasicJsonElement = None | int | float | str
+JsonElement = list[BasicJsonElement] | list["JsonElement"] | dict[str, BasicJsonElement] | dict[str, "JsonElement"]
+JsonObject = dict[str, JsonElement]
 
-os.makedirs("worlds", exist_ok=True)
+os.makedirs("levelpacks", exist_ok=True)
 options_filename = "options.json"
 try:
     file = open(options_filename, "r", encoding="ascii")
@@ -18,13 +20,13 @@ try:
     file.close()
 except OSError as e:
     file = open(options_filename, "w", encoding="ascii")
-    options = {"fps": 15, "input_cooldown": 3, "level_display_recursion_depth": 2}
+    options = {"fps": 15, "input_cooldown": 3, "world_display_recursion_depth": 2}
     json.dump(options, file, indent=4)
     file.close()
 except json.JSONDecodeError as e:
     file.close()
     file = open(options_filename, "w", encoding="ascii")
-    options = {"fps": 15, "input_cooldown": 3, "level_display_recursion_depth": 2}
+    options = {"fps": 15, "input_cooldown": 3, "world_display_recursion_depth": 2}
     json.dump(options, file, indent=4)
     file.close()
 
@@ -50,9 +52,9 @@ parser.add_argument("-v", "--versions", dest="versions", action="store_true", he
 play_or_edit_group = parser.add_mutually_exclusive_group()
 play_group = parser.add_argument_group()
 input_group = play_group.add_mutually_exclusive_group()
-input_group.add_argument("-i", "--input", dest="input", type=str, metavar="filename", help="input world from json file at ./worlds")
+input_group.add_argument("-i", "--input", dest="input", type=str, metavar="filename", help="input world from json file at ./levelpacks")
 input_group.add_argument("-t", "--test", dest="test", action="store_true", default=False, help="play the test world")
-play_group.add_argument("-o", "--output", dest="output", type=str, metavar="filename", help="output world to json file at ./worlds")
+play_group.add_argument("-o", "--output", dest="output", type=str, metavar="filename", help="output world to json file at ./levelpacks")
 play_or_edit_group.add_argument("-e", "--edit", dest="edit", action="store_true", default=False, help="open in editor mode")
 parser.add_argument("bp_1", type=str, default="808", help="bypass pyinstaller, do not use * 1")
 parser.add_argument("bp_2", type=str, default="388", help="bypass pyinstaller, do not use * 2")

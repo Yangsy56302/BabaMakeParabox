@@ -5,36 +5,38 @@ import json
 import baba_make_parabox.basics as basics
 import baba_make_parabox.spaces as spaces
 import baba_make_parabox.objects as objects
-import baba_make_parabox.levels as levels
-import baba_make_parabox.displays as displays
 import baba_make_parabox.worlds as worlds
+import baba_make_parabox.displays as displays
+import baba_make_parabox.levels as levels
+import baba_make_parabox.levelpacks as levelpacks
 
 import pygame
 
-def play(world: worlds.world) -> None:
+def play(levelpack: levelpacks.levelpack) -> None:
     if not basics.arg_error:
         if basics.args.output is not None:
             filename: str = basics.args.output
             filename = filename.lstrip()
-            with open(os.path.join("worlds", filename + ".json"), "w", encoding="ascii") as file:
-                json.dump(world.to_json(), file, indent=4)
-    print("Global Rule List:")
-    for rule in world.rule_list:
+            with open(os.path.join("levelpacks", filename + ".json"), "w", encoding="ascii") as file:
+                json.dump(levelpack.to_json(), file, indent=4)
+    print("Levelpack's Global Rule List:")
+    for rule in levelpack.rule_list:
         str_list = []
         for obj_type in rule:
             str_list.append(obj_type.class_name)
         print(" ".join(str_list))
-    world.update_rules()
-    for level in world.level_list:
-        level.set_sprite_states(0)
-    history = [copy.deepcopy(world)]
+    for level in levelpack.level_list:
+        level.update_rules()
+        for world in level.world_list:
+            world.set_sprite_states(0)
+    history = [copy.deepcopy(levelpack)]
+    start = copy.deepcopy(levelpack)
     round_num = 0
     window = pygame.display.set_mode((720, 720))
     pygame.display.set_caption(f"Baba Make Parabox Version {basics.versions}")
     pygame.display.set_icon(pygame.image.load("BabaMakeParabox.png"))
     displays.sprites.update()
     milliseconds = 0
-    start = copy.deepcopy(world)
     clock = pygame.time.Clock()
     keybinds = {"W": pygame.K_w,
                 "A": pygame.K_a,
@@ -48,10 +50,10 @@ def play(world: worlds.world) -> None:
     keys = {v: False for v in keybinds.values()}
     cooldowns = {v: 0 for v in keybinds.values()}
     window.fill("#000000")
-    current_level_index = 0
-    window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], basics.options["level_display_recursion_depth"], 1), (720, 720)), (0, 0))
+    current_level = levelpack.get_exist_level(levelpack.main_level)
+    current_world_index = 0
+    window.blit(pygame.transform.scale(current_level.show_world(current_level.world_list[current_world_index], basics.options["world_display_recursion_depth"], 1), (720, 720)), (0, 0))
     pygame.display.flip()
-    winned = False
     game_running = True
     while game_running:
         if milliseconds >= 360000000:
@@ -65,137 +67,180 @@ def play(world: worlds.world) -> None:
             elif event.type == pygame.KEYUP and event.key in keybinds.values():
                 keys[event.key] = False
         refresh = False
+        level_info = {"win": False, "current_level": current_level.name, "new_levels": [], "transform_to": []}
         if keys[keybinds["W"]] and cooldowns[keybinds["W"]] == 0:
-            history.append(copy.deepcopy(world))
+            history.append(copy.deepcopy(levelpack))
             round_num += 1
-            winned = world.round(spaces.W)
+            level_info = current_level.round(spaces.W)
             refresh = True
         elif keys[keybinds["S"]] and cooldowns[keybinds["S"]] == 0:
-            history.append(copy.deepcopy(world))
+            history.append(copy.deepcopy(levelpack))
             round_num += 1
-            winned = world.round(spaces.S)
+            level_info = current_level.round(spaces.S)
             refresh = True
         elif keys[keybinds["A"]] and cooldowns[keybinds["A"]] == 0:
-            history.append(copy.deepcopy(world))
+            history.append(copy.deepcopy(levelpack))
             round_num += 1
-            winned = world.round(spaces.A)
+            level_info = current_level.round(spaces.A)
             refresh = True
         elif keys[keybinds["D"]] and cooldowns[keybinds["D"]] == 0:
-            history.append(copy.deepcopy(world))
+            history.append(copy.deepcopy(levelpack))
             round_num += 1
-            winned = world.round(spaces.D)
+            level_info = current_level.round(spaces.D)
             refresh = True
         elif keys[keybinds[" "]] and cooldowns[keybinds[" "]] == 0:
-            history.append(copy.deepcopy(world))
+            history.append(copy.deepcopy(levelpack))
             round_num += 1
-            winned = world.round(spaces.O)
+            level_info = current_level.round(spaces.O)
             refresh = True
         elif keys[keybinds["Z"]] and cooldowns[keybinds["Z"]] == 0:
             if len(history) > 1:
-                world = copy.deepcopy(history.pop())
+                levelpack = copy.deepcopy(history.pop())
                 round_num -= 1
             else:
-                world = copy.deepcopy(history[0])
+                levelpack = copy.deepcopy(history[0])
                 round_num = 0
             refresh = True
         elif keys[keybinds["R"]] and cooldowns[keybinds["R"]] == 0:
             round_num = 0
-            world = copy.deepcopy(start)
+            levelpack = copy.deepcopy(start)
+            current_level = levelpack.get_exist_level(levelpack.main_level)
+            current_world_index = 0
             refresh = True
         elif keys[keybinds["-"]] and cooldowns[keybinds["-"]] == 0:
-            current_level_index -= 1
+            current_world_index -= 1
         elif keys[keybinds["="]] and cooldowns[keybinds["="]] == 0:
-            current_level_index += 1
+            current_world_index += 1
         for key, value in keys.items():
             if value and cooldowns[key] == 0:
                 cooldowns[key] = basics.options["input_cooldown"]
-        current_level_index = current_level_index % len(world.level_list) if current_level_index >= 0 else len(world.level_list) - 1
         if refresh:
-            for level in world.level_list:
-                level.set_sprite_states(round_num)
+            levelpack.level_list.extend(level_info["new_levels"])
+            if len(level_info["transform_to"]) != 0:
+                for level in levelpack.level_list:
+                    for world in level.world_list:
+                        for level_obj in world.get_levels():
+                            if current_level.name == level_obj.name:
+                                for obj in level_info["transform_to"]:
+                                    obj: objects.Object
+                                    obj.pos = level_obj.pos
+                                    obj.facing = level_obj.facing
+                                    world.new_obj(obj)
+                                world.del_obj(level_obj.uuid)
+            for level in levelpack.level_list:
+                for world in level.world_list:
+                    transform_objs = filter(lambda o: isinstance(o, objects.Transform), world.object_list)
+                    for transform_obj in transform_objs: # type: ignore
+                        transform_obj: objects.Transform
+                        if issubclass(transform_obj.from_type, objects.Level):
+                            from_level = levelpack.get_exist_level(transform_obj.from_name)
+                            if issubclass(transform_obj.to_type, objects.WorldPointer):
+                                new_obj = transform_obj.to_type(transform_obj.pos, from_level.main_world_name, from_level.main_world_tier, transform_obj.facing)
+                                world.del_obj(transform_obj.uuid)
+                                world.new_obj(new_obj)
+                        elif issubclass(transform_obj.from_type, objects.WorldPointer):
+                            from_world = level.get_exist_world(transform_obj.from_name, transform_obj.from_inf_tier)
+                            if issubclass(transform_obj.to_type, objects.Level):
+                                has_level = any(filter(lambda l: from_world.name == l.name, levelpack.level_list)) # type: ignore
+                                if not has_level:
+                                    new_level = levels.level(from_world.name, level.world_list, transform_obj.from_name, level.name, transform_obj.from_inf_tier, level.rule_list)
+                                    levelpack.level_list.append(new_level)
+                                new_obj = objects.Level(transform_obj.pos, from_world.name, transform_obj.facing)
+                                world.del_obj(transform_obj.uuid)
+                                world.new_obj(new_obj)
+            if level_info["win"]:
+                if current_level.name == levelpack.main_level:
+                    print("You Win!")
+                    game_running = False
+                else:
+                    level_info["win"] = False
+                    print("Congratulations!")
+            if level_info["win"] or len(level_info["transform_to"]) != 0:
+                levelpack.set_level(start.get_exist_level(current_level.name))
+            current_level = levelpack.get_exist_level(level_info["current_level"] if level_info["current_level"] is not None else levelpack.main_level)
+            current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
+            for level in levelpack.level_list:
+                for world in current_level.world_list:
+                    world.set_sprite_states(round_num)
         window.fill("#000000")
-        window.blit(pygame.transform.scale(world.show_level(world.level_list[current_level_index], basics.options["level_display_recursion_depth"], frame), (720, 720)), (0, 0))
+        window.blit(pygame.transform.scale(current_level.show_world(current_level.world_list[current_world_index], basics.options["world_display_recursion_depth"], frame), (720, 720)), (0, 0))
         pygame.display.flip()
         for key in cooldowns:
             if cooldowns[key] > 0:
                 cooldowns[key] -= 1
-        if winned:
-            print("Congratulations!")
-            print("You Win!")
-            game_running = False
         milliseconds += clock.tick(basics.options["fps"])
 
 def test() -> None:
-    # Superlevel
-    level_0 = levels.level("main", (9, 9), color=pygame.Color("#111111"))
+    # Superworld
+    world_0 = worlds.world("main", (9, 9), color=pygame.Color("#111111"))
     # Rules
-    level_0.new_obj(objects.BABA((0, 1)))
-    level_0.new_obj(objects.IS((1, 1)))
-    level_0.new_obj(objects.YOU((2, 1)))
-    level_0.new_obj(objects.WALL((8, 1)))
-    level_0.new_obj(objects.IS((8, 2)))
-    level_0.new_obj(objects.STOP((8, 3)))
-    level_0.new_obj(objects.TEXT((8, 5)))
-    level_0.new_obj(objects.IS((8, 6)))
-    level_0.new_obj(objects.PUSH((8, 7)))
-    level_0.new_obj(objects.FLAG((4, 1)))
-    level_0.new_obj(objects.IS((5, 1)))
+    world_0.new_obj(objects.BABA((0, 1)))
+    world_0.new_obj(objects.IS((1, 1)))
+    world_0.new_obj(objects.YOU((2, 1)))
+    world_0.new_obj(objects.WALL((8, 1)))
+    world_0.new_obj(objects.IS((8, 2)))
+    world_0.new_obj(objects.STOP((8, 3)))
+    world_0.new_obj(objects.TEXT((8, 5)))
+    world_0.new_obj(objects.IS((8, 6)))
+    world_0.new_obj(objects.PUSH((8, 7)))
+    world_0.new_obj(objects.FLAG((4, 1)))
+    world_0.new_obj(objects.IS((5, 1)))
     # Things
-    level_0.new_obj(objects.Level((3, 3), name="sub"))
-    level_0.new_obj(objects.WIN((2, 4)))
-    level_0.new_obj(objects.Flag((4, 6)))
-    level_0.new_obj(objects.Baba((1, 7)))
+    world_0.new_obj(objects.World((3, 3), name="sub"))
+    world_0.new_obj(objects.WIN((2, 4)))
+    world_0.new_obj(objects.Flag((4, 6)))
+    world_0.new_obj(objects.Baba((1, 7)))
     # Empty spaces
-    level_0.new_obj(objects.Keke((6, 1)))
-    level_0.new_obj(objects.Keke((6, 2)))
-    level_0.new_obj(objects.Keke((1, 3)))
-    level_0.new_obj(objects.Keke((2, 3)))
-    level_0.new_obj(objects.Keke((4, 3)))
-    level_0.new_obj(objects.Keke((5, 3)))
-    level_0.new_obj(objects.Keke((6, 3)))
-    level_0.new_obj(objects.Keke((1, 4)))
-    level_0.new_obj(objects.Keke((6, 4)))
-    level_0.new_obj(objects.Keke((2, 5)))
-    level_0.new_obj(objects.Keke((6, 5)))
-    level_0.new_obj(objects.Keke((1, 6)))
-    level_0.new_obj(objects.Keke((2, 6)))
-    level_0.new_obj(objects.Keke((5, 6)))
-    level_0.new_obj(objects.Keke((6, 6)))
-    level_0.new_obj(objects.Keke((2, 7)))
+    world_0.new_obj(objects.Keke((6, 1)))
+    world_0.new_obj(objects.Keke((6, 2)))
+    world_0.new_obj(objects.Keke((1, 3)))
+    world_0.new_obj(objects.Keke((2, 3)))
+    world_0.new_obj(objects.Keke((4, 3)))
+    world_0.new_obj(objects.Keke((5, 3)))
+    world_0.new_obj(objects.Keke((6, 3)))
+    world_0.new_obj(objects.Keke((1, 4)))
+    world_0.new_obj(objects.Keke((6, 4)))
+    world_0.new_obj(objects.Keke((2, 5)))
+    world_0.new_obj(objects.Keke((6, 5)))
+    world_0.new_obj(objects.Keke((1, 6)))
+    world_0.new_obj(objects.Keke((2, 6)))
+    world_0.new_obj(objects.Keke((5, 6)))
+    world_0.new_obj(objects.Keke((6, 6)))
+    world_0.new_obj(objects.Keke((2, 7)))
     # Walls
     for x in range(9):
         for y in range(9):
-            if len(level_0.get_objs_from_pos((x, y))) == 0:
-                level_0.new_obj(objects.Wall((x, y)))
-    level_0.del_objs_from_type(objects.Keke)
-    # Sublevel
-    level_1 = levels.level("sub", (7, 7), color=pygame.Color("#000022"))
+            if len(world_0.get_objs_from_pos((x, y))) == 0:
+                world_0.new_obj(objects.Wall((x, y)))
+    world_0.del_objs_from_type(objects.Keke)
+    # Subworld
+    world_1 = worlds.world("sub", (7, 7), color=pygame.Color("#000022"))
     # Rules
-    level_1.new_obj(objects.BABA((6, 0)))
-    level_1.new_obj(objects.IS((6, 1)))
-    level_1.new_obj(objects.YOU((6, 2)))
-    level_1.new_obj(objects.WALL((6, 4)))
-    level_1.new_obj(objects.IS((6, 5)))
-    level_1.new_obj(objects.STOP((6, 6)))
-    level_1.new_obj(objects.TEXT((2, 6)))
-    level_1.new_obj(objects.IS((3, 6)))
-    level_1.new_obj(objects.PUSH((4, 6)))
+    world_1.new_obj(objects.BABA((6, 0)))
+    world_1.new_obj(objects.IS((6, 1)))
+    world_1.new_obj(objects.YOU((6, 2)))
+    world_1.new_obj(objects.WALL((6, 4)))
+    world_1.new_obj(objects.IS((6, 5)))
+    world_1.new_obj(objects.STOP((6, 6)))
+    world_1.new_obj(objects.TEXT((2, 6)))
+    world_1.new_obj(objects.IS((3, 6)))
+    world_1.new_obj(objects.PUSH((4, 6)))
     # Empty spaces
-    level_1.new_obj(objects.Keke((3, 0)))
-    level_1.new_obj(objects.Keke((3, 1)))
-    level_1.new_obj(objects.Keke((3, 2)))
-    level_1.new_obj(objects.Keke((0, 3)))
-    level_1.new_obj(objects.Keke((1, 3)))
-    level_1.new_obj(objects.Keke((2, 3)))
-    level_1.new_obj(objects.Keke((3, 3)))
-    level_1.new_obj(objects.Keke((2, 4)))
-    level_1.new_obj(objects.Keke((3, 4)))
+    world_1.new_obj(objects.Keke((3, 0)))
+    world_1.new_obj(objects.Keke((3, 1)))
+    world_1.new_obj(objects.Keke((3, 2)))
+    world_1.new_obj(objects.Keke((0, 3)))
+    world_1.new_obj(objects.Keke((1, 3)))
+    world_1.new_obj(objects.Keke((2, 3)))
+    world_1.new_obj(objects.Keke((3, 3)))
+    world_1.new_obj(objects.Keke((2, 4)))
+    world_1.new_obj(objects.Keke((3, 4)))
     # Walls
     for x in range(9):
         for y in range(9):
-            if len(level_1.get_objs_from_pos((x, y))) == 0:
-                level_1.new_obj(objects.Wall((x, y)))
-    level_1.del_objs_from_type(objects.Keke)
+            if len(world_1.get_objs_from_pos((x, y))) == 0:
+                world_1.new_obj(objects.Wall((x, y)))
+    world_1.del_objs_from_type(objects.Keke)
     # World
-    world = worlds.world("Intro 4", [level_0, level_1])
-    play(world)
+    level = levels.level("Intro 4", [world_0, world_1])
+    play(levelpacks.levelpack("Intro 4", [level]))

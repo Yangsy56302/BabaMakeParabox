@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional
 import math
 import uuid
 
@@ -53,7 +53,7 @@ class Object(object):
     def clear_prop(self) -> None:
         self.properties = []
     def to_json(self) -> dict[str, basics.JsonObject]:
-        return {"type": self.class_name, "position": [self.x, self.y], "orientation": spaces.orient_to_str(self.facing)}
+        return {"type": self.class_name, "position": [self.x, self.y], "orientation": spaces.orient_to_str(self.facing)} # type: ignore
 
 class Static(Object):
     class_name: str = "Baba"
@@ -205,8 +205,31 @@ class Flag(Static):
     def __repr__(self) -> str:
         return repr(super())
 
-class LevelContainer(Object):
-    class_name: str = "LevelContainer"
+class Cursor(Static):
+    class_name: str = "Cursor"
+    sprite_name: str = "cursor"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class Level(Object):
+    class_name: str = "Level"
+    sprite_name: str = "level"
+    def __init__(self, pos: spaces.Coord, name: str, facing: spaces.Orient = spaces.S) -> None:
+        super().__init__(pos, facing)
+        self.name: str = name
+    def __str__(self) -> str:
+        return " ".join([self.class_name, self.name])
+    def __repr__(self) -> str:
+        return " ".join([self.class_name, self.name])
+    def to_json(self) -> basics.JsonObject:
+        json_object = super().to_json()
+        json_object.update({"level": {"name": self.name}}) # type: ignore
+        return json_object # type: ignore
+
+class WorldPointer(Object):
+    class_name: str = "WorldContainer"
     def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = spaces.S) -> None:
         super().__init__(pos, facing)
         self.name: str = name
@@ -217,20 +240,34 @@ class LevelContainer(Object):
         return " ".join([self.class_name, self.name, str(self.inf_tier)])
     def to_json(self) -> basics.JsonObject:
         json_object = super().to_json()
-        json_object.update({"level": {"name": self.name, "infinite_tier": self.inf_tier}})
-        return json_object
+        json_object.update({"world": {"name": self.name, "infinite_tier": self.inf_tier}}) # type: ignore
+        return json_object # type: ignore
 
-class Level(LevelContainer):
-    class_name: str = "Level"
-    sprite_name: str = "level"
+class World(WorldPointer):
+    class_name: str = "World"
+    sprite_name: str = "world"
     def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = spaces.S) -> None:
         super().__init__(pos, name, inf_tier, facing)
         
-class Clone(LevelContainer):
+class Clone(WorldPointer):
     class_name: str = "Clone"
     sprite_name: str = "clone"
     def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = spaces.S) -> None:
         super().__init__(pos, name, inf_tier, facing)
+
+class Transform(Object):
+    class_name: str = "Transform"
+    def __init__(self, pos: spaces.Coord, info: dict[str, Any], facing: spaces.Orient = spaces.S) -> None:
+        super().__init__(pos, facing)
+        self.from_type: type[Object] = info["from"]["type"]
+        self.from_name: str = info["from"]["name"]
+        if issubclass(self.from_type, WorldPointer):
+            self.from_inf_tier: int = info["from"]["infinite_tier"]
+        self.to_type: type[Object] = info["to"]["type"]
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class Text(Static):
     class_name: str = "Text"
@@ -348,6 +385,14 @@ class FLAG(Noun):
     def __repr__(self) -> str:
         return repr(super())
 
+class CURSOR(Noun):
+    class_name: str = "CURSOR"
+    sprite_name: str = "text_cursor"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 class TEXT(Noun):
     class_name: str = "TEXT"
     sprite_name: str = "text_text"
@@ -359,6 +404,14 @@ class TEXT(Noun):
 class LEVEL(Noun):
     class_name: str = "LEVEL"
     sprite_name: str = "text_level"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class WORLD(Noun):
+    class_name: str = "WORLD"
+    sprite_name: str = "text_world"
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -500,13 +553,31 @@ class WORD(Property):
     def __repr__(self) -> str:
         return repr(super())
 
+class SELECT(Property):
+    class_name: str = "SELECT"
+    sprite_name: str = "text_select"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 def json_to_object(json_object: basics.JsonObject) -> Object: # oh hell no
     type_name: str = json_object["type"] # type: ignore
     object_type: type[Object] = object_name[type_name]
-    if object_type in [Level, Clone]:
-        return object_type(pos=tuple(json_object["position"]), # type: ignore
+    if issubclass(object_type, WorldPointer):
+        if json_object.get("world") is not None:
+            return object_type(pos=tuple(json_object["position"]), # type: ignore
+                            name=json_object["world"]["name"], # type: ignore
+                            inf_tier=json_object["world"]["infinite_tier"], # type: ignore
+                            facing=spaces.str_to_orient(json_object["orientation"])) # type: ignore
+        else:
+            return object_type(pos=tuple(json_object["position"]), # type: ignore
+                            name=json_object["level"]["name"], # type: ignore
+                            inf_tier=json_object["level"]["infinite_tier"], # type: ignore
+                            facing=spaces.str_to_orient(json_object["orientation"])) # type: ignore
+    elif object_type == Level:
+        return object_type(pos=tuple(json_object["position"]),
                            name=json_object["level"]["name"], # type: ignore
-                           inf_tier=json_object["level"]["infinite_tier"], # type: ignore
                            facing=spaces.str_to_orient(json_object["orientation"])) # type: ignore
     else:
         return object_type(pos=tuple(json_object["position"]), # type: ignore
@@ -522,7 +593,9 @@ object_name: dict[str, type[Object]] = {
     "Box": Box,
     "Rock": Rock,
     "Flag": Flag,
+    "Cursor": Cursor,
     "Level": Level,
+    "World": World,
     "Clone": Clone,
     "BABA": BABA,
     "KEKE": KEKE,
@@ -533,8 +606,10 @@ object_name: dict[str, type[Object]] = {
     "BOX": BOX,
     "ROCK": ROCK,
     "FLAG": FLAG,
+    "CURSOR": CURSOR,
     "TEXT": TEXT,
     "LEVEL": LEVEL,
+    "WORLD": WORLD,
     "CLONE": CLONE,
     "IS": IS,
     "YOU": YOU,
@@ -551,7 +626,8 @@ object_name: dict[str, type[Object]] = {
     "DEFEAT": DEFEAT,
     "SHIFT": SHIFT,
     "TELE": TELE,
-    "WORD": WORD
+    "WORD": WORD,
+    "SELECT": SELECT
 }
 
 class NounsObjsDicts(object):
@@ -578,6 +654,8 @@ nouns_objs_dicts.new_pair(KEY, Key)
 nouns_objs_dicts.new_pair(BOX, Box)
 nouns_objs_dicts.new_pair(ROCK, Rock)
 nouns_objs_dicts.new_pair(FLAG, Flag)
+nouns_objs_dicts.new_pair(CURSOR, Cursor)
 nouns_objs_dicts.new_pair(LEVEL, Level)
+nouns_objs_dicts.new_pair(WORLD, World)
 nouns_objs_dicts.new_pair(CLONE, Clone)
 nouns_objs_dicts.new_pair(TEXT, Text)

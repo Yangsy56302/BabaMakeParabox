@@ -1,24 +1,131 @@
 from typing import Any, Optional
-import random
 import pygame
+import uuid
 
 import baba_make_parabox.basics as basics
 import baba_make_parabox.spaces as spaces
 import baba_make_parabox.objects as objects
 import baba_make_parabox.rules as rules
-import baba_make_parabox.levels as levels
 import baba_make_parabox.displays as displays
 
+def match_pos(obj: objects.Object, pos: spaces.Coord) -> bool:
+    return obj.pos == pos
+
 class world(object):
-    class_name: str = "World"
-    def __init__(self, name: str, level_list: list[levels.level], rule_list: Optional[list[rules.Rule]] = None) -> None:
+    class_name: str = "world"
+    def __init__(self, name: str, size: tuple[int, int], inf_tier: int = 0, color: Optional[pygame.Color] = None) -> None:
+        self.uuid: uuid.UUID = uuid.uuid4()
         self.name: str = name
-        self.level_list: list[levels.level] = list(level_list)
-        self.rule_list: list[rules.Rule] = rule_list if rule_list is not None else rules.default_rule_list
+        self.inf_tier: int = inf_tier
+        self.width: int = size[0]
+        self.height: int = size[1]
+        self.color: pygame.Color = color if color is not None else displays.random_hue()
+        self.object_list: list[objects.Object] = []
+        self.rule_list: list[rules.Rule] = []
+    def __eq__(self, world: "world") -> bool:
+        return self.uuid == world.uuid
     def __str__(self) -> str:
-        return self.class_name
+        return " ".join([self.class_name, self.name, str(self.inf_tier)])
     def __repr__(self) -> str:
-        return self.class_name
+        return " ".join([self.class_name, self.name, str(self.inf_tier)])
+    def out_of_range(self, coord: spaces.Coord) -> bool:
+        return coord[0] < 0 or coord[1] < 0 or coord[0] >= self.width or coord[1] >= self.height
+    def new_obj(self, obj: objects.Object) -> bool:
+        self.object_list.append(obj)
+        return True
+    def get_obj(self, uid: uuid.UUID) -> Optional[objects.Object]:
+        res = [o for o in self.object_list if uid == o.uuid]
+        return res[0] if len(res) != 0 else None
+    def get_objs_from_pos_and_type[T: objects.Object](self, pos: spaces.Coord, obj_type: type[T]) -> list[T]:
+        return [o for o in self.object_list if isinstance(o, obj_type) and match_pos(o, pos)]
+    def get_objs_from_pos(self, pos: spaces.Coord) -> list[objects.Object]:
+        return [o for o in self.object_list if match_pos(o, pos)]
+    def get_objs_from_type[T: objects.Object](self, obj_type: type[T]) -> list[T]:
+        return [o for o in self.object_list if isinstance(o, obj_type)]
+    def del_obj(self, uid: uuid.UUID) -> bool:
+        for i in range(len(self.object_list)):
+            if uid == self.object_list[i].uuid:
+                self.object_list.pop(i)
+                return True
+        return False
+    def del_obj_from_pos_and_type(self, pos: spaces.Coord, obj_type: type) -> bool:
+        for i in range(len(self.object_list)):
+            if match_pos(self.object_list[i], pos) and isinstance(self.object_list[i], obj_type):
+                self.object_list.pop(i)
+                return True
+        return False
+    def del_objs_from_pos_and_type(self, pos: spaces.Coord, obj_type: type) -> bool:
+        old_length = len(self.object_list)
+        new_objects = filter(lambda o: not match_pos(o, pos) and isinstance(o, obj_type), self.object_list)
+        self.object_list = list(new_objects)
+        new_length = len(self.object_list)
+        return old_length - new_length > 0
+    def del_objs_from_pos(self, pos: spaces.Coord) -> bool:
+        old_length = len(self.object_list)
+        new_objects = filter(lambda o: not match_pos(o, pos), self.object_list)
+        self.object_list = list(new_objects)
+        new_length = len(self.object_list)
+        return old_length - new_length > 0
+    def del_objs_from_type(self, obj_type: type[objects.Object]) -> bool:
+        old_length = len(self.object_list)
+        new_objects = filter(lambda o: not isinstance(o, obj_type), self.object_list)
+        self.object_list = list(new_objects)
+        new_length = len(self.object_list)
+        return old_length - new_length > 0
+    def get_worlds(self) -> list[objects.World]:
+        return [o for o in self.object_list if isinstance(o, objects.World)]
+    def get_worlds_from_pos(self, pos: spaces.Coord) -> list[objects.World]:
+        return [o for o in self.object_list if isinstance(o, objects.World) and match_pos(o, pos)]
+    def get_clones(self) -> list[objects.Clone]:
+        return [o for o in self.object_list if isinstance(o, objects.Clone)]
+    def get_clones_from_pos(self, pos: spaces.Coord) -> list[objects.Clone]:
+        return [o for o in self.object_list if isinstance(o, objects.Clone) and match_pos(o, pos)]
+    def get_levels(self) -> list[objects.Level]:
+        return [o for o in self.object_list if isinstance(o, objects.Level)]
+    def get_levels_from_pos(self, pos: spaces.Coord) -> list[objects.Level]:
+        return [o for o in self.object_list if isinstance(o, objects.Level) and match_pos(o, pos)]
+    def update_rules(self) -> None:
+        self.rule_list = []
+        text_objs = self.get_objs_from_type(objects.Text)
+        noun_objs = [o for o in text_objs if isinstance(o, objects.Noun)]
+        oper_objs = [o for o in text_objs if isinstance(o, objects.Operator)]
+        prop_objs = [o for o in text_objs if isinstance(o, objects.Property)]
+        for noun_obj in noun_objs:
+            for oper_obj in oper_objs:
+                if not spaces.on_line(noun_obj.pos, oper_obj.pos):
+                    continue
+                if not isinstance(oper_obj, objects.IS):
+                    continue
+                for prop_obj in prop_objs:
+                    if not spaces.on_line(noun_obj.pos, oper_obj.pos, prop_obj.pos):
+                        continue
+                    self.rule_list.append([type(noun_obj), type(oper_obj), type(prop_obj)])
+                for noun_obj_2 in noun_objs:
+                    if not spaces.on_line(noun_obj.pos, oper_obj.pos, noun_obj_2.pos):
+                        continue
+                    self.rule_list.append([type(noun_obj), type(oper_obj), type(noun_obj_2)])
+    def update_rules_with_word(self) -> None:
+        self.rule_list = []
+        text_objs = self.get_objs_from_type(objects.Text)
+        noun_objs = [o for o in text_objs if isinstance(o, objects.Noun)]
+        word_objs = filter(lambda o: o.has_prop(objects.WORD), self.object_list)
+        noun_objs.extend(map(lambda o: objects.nouns_objs_dicts.get_noun(type(o))(o.pos), word_objs))
+        oper_objs = [o for o in text_objs if isinstance(o, objects.Operator)]
+        prop_objs = [o for o in text_objs if isinstance(o, objects.Property)]
+        for noun_obj in noun_objs:
+            for oper_obj in oper_objs:
+                if not spaces.on_line(noun_obj.pos, oper_obj.pos):
+                    continue
+                if not isinstance(oper_obj, objects.IS):
+                    continue
+                for prop_obj in prop_objs:
+                    if not spaces.on_line(noun_obj.pos, oper_obj.pos, prop_obj.pos):
+                        continue
+                    self.rule_list.append([type(noun_obj), type(oper_obj), type(prop_obj)])
+                for noun_obj_2 in noun_objs:
+                    if not spaces.on_line(noun_obj.pos, oper_obj.pos, noun_obj_2.pos):
+                        continue
+                    self.rule_list.append([type(noun_obj), type(oper_obj), type(noun_obj_2)])
     def find_rules(self, *match_rule: Optional[type[objects.Text]]) -> list[rules.Rule]:
         found_rules = []
         for rule in self.rule_list:
@@ -35,363 +142,45 @@ class world(object):
                 continue
             found_rules.append(rule)
         return found_rules
-    def get_level(self, name: str, inf_tier: int) -> Optional[levels.level]:
-        level = list(filter(lambda l: l.name == name and l.inf_tier == inf_tier, self.level_list))
-        return level[0] if len(level) != 0 else None
-    def get_exist_level(self, name: str, inf_tier: int) -> levels.level:
-        level = list(filter(lambda l: l.name == name and l.inf_tier == inf_tier, self.level_list))
-        return level[0]
-    def find_super_level(self, name: str, inf_tier: int) -> Optional[tuple[levels.level, objects.Object]]:
-        for super_level in self.level_list:
-            for obj in super_level.get_levels():
-                if name == obj.name and inf_tier == obj.inf_tier:
-                    return (super_level, obj)
-        return None
-    def update_rules_with_word(self) -> None:
-        for level in self.level_list:
-            level.update_rules_with_word()
-        for level in self.level_list:
-            for prop in objects.object_name.values():
-                if issubclass(prop, objects.Property):
-                    prop_rules = level.find_rules(objects.Noun, objects.IS, prop) + self.find_rules(objects.Noun, objects.IS, prop)
-                    for obj_type in [t[0] for t in prop_rules]:
-                        for obj in level.get_objs_from_type(objects.nouns_objs_dicts.get_obj(obj_type)): # type: ignore
-                            obj: objects.Object
-                            obj.new_prop(prop)
-    def update_rules(self) -> None:
-        for level in self.level_list:
-            for obj in level.object_list:
-                obj.clear_prop()
-            level.update_rules()
-        for level in self.level_list:
-            for prop in objects.object_name.values():
-                if issubclass(prop, objects.Property):
-                    prop_rules = level.find_rules(objects.Noun, objects.IS, prop) + self.find_rules(objects.Noun, objects.IS, prop)
-                    for obj_type in [t[0] for t in prop_rules]:
-                        for obj in level.get_objs_from_type(objects.nouns_objs_dicts.get_obj(obj_type)): # type: ignore
-                            obj: objects.Object
-                            obj.new_prop(prop)
-        self.update_rules_with_word()
-    def get_move_list(self, level: levels.level, obj: objects.Object, pos: spaces.Coord, facing: spaces.Orient, passed: Optional[list[levels.level]] = None, depth: int = 1) -> Optional[list[tuple[objects.Object, levels.level, spaces.Coord, spaces.Orient]]]:
-        if depth > 127:
-            return None
-        depth += 1
-        passed = passed[:] if passed is not None else []
-        new_pos = spaces.pos_facing(pos, facing)
-        simple_push = True
-        # push out
-        move_list = []
-        if level.out_of_range(new_pos):
-            # inf out
-            if level in passed:
-                ret = self.find_super_level(level.name, level.inf_tier + 1)
-                if ret is None:
-                    return None
-                super_level, level_obj = ret
-                get_move_list = self.get_move_list(super_level, obj, level_obj.pos, facing, passed, depth)
-                if get_move_list is None:
-                    return None
-                move_list.extend(get_move_list)
+    def set_sprite_states(self, round_num: int = 0) -> None:
+        for obj in self.object_list:
+            if isinstance(obj, objects.Tiled):
+                w_pos = spaces.pos_facing(obj.pos, spaces.W)
+                w = self.out_of_range(w_pos) or len(self.get_objs_from_pos_and_type(w_pos, type(obj))) != 0
+                s_pos = spaces.pos_facing(obj.pos, spaces.S)
+                s = self.out_of_range(s_pos) or len(self.get_objs_from_pos_and_type(s_pos, type(obj))) != 0
+                a_pos = spaces.pos_facing(obj.pos, spaces.A)
+                a = self.out_of_range(a_pos) or len(self.get_objs_from_pos_and_type(a_pos, type(obj))) != 0
+                d_pos = spaces.pos_facing(obj.pos, spaces.D)
+                d = self.out_of_range(d_pos) or len(self.get_objs_from_pos_and_type(d_pos, type(obj))) != 0
+                wsad = {spaces.W: w, spaces.S: s, spaces.A: a, spaces.D: d}
             else:
-                ret = self.find_super_level(level.name, level.inf_tier)
-                if ret is None:
-                    return None
-                super_level, level_obj = ret
-                passed.append(level)
-                get_move_list = self.get_move_list(super_level, obj, level_obj.pos, facing, passed, depth)
-                if get_move_list is None:
-                    return None
-                move_list.extend(get_move_list)
-            simple_push = False
-        # stop wall & shut door
-        stop_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.STOP), level.get_objs_from_pos(new_pos)))
-        if len(stop_objects) != 0:
-            if obj.has_prop(objects.OPEN):
-                for stop_object in stop_objects:
-                    if stop_object.has_prop(objects.SHUT):
-                        return None
-                return [(obj, level, new_pos, facing)]
-            for stop_object in stop_objects:
-                if not stop_object.has_prop(objects.PUSH):
-                    return None
-        # push box
-        push_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.PUSH), level.get_objs_from_pos(new_pos)))
-        if len(push_objects) != 0:
-            for push_object in push_objects:
-                new_move_list = self.get_move_list(level, push_object, push_object.pos, facing, depth=depth)
-                if new_move_list is None:
-                    if not isinstance(push_object, objects.LevelContainer):
-                        return None
-                else:
-                    move_list.extend(new_move_list)
-            move_list.append((obj, level, new_pos, facing))
-            simple_push = False
-        # level
-        level_objects = level.get_levels_from_pos(new_pos)
-        clone_objects = level.get_clones_from_pos(new_pos)
-        level_like_objects = level_objects + clone_objects
-        if len(level_like_objects) != 0:
-            for level_like_object in level_like_objects:
-                if level_like_object in [t[0] for t in move_list]:
-                    continue
-                sub_level = self.get_level(level_like_object.name, level_like_object.inf_tier)
-                if sub_level is None:
-                    return None
-                # inf in
-                elif sub_level in passed:
-                    sub_sub_level = self.get_level(sub_level.name, sub_level.inf_tier - 1)
-                    if sub_sub_level is None:
-                        return None
-                    input_pos = sub_sub_level.default_input_position(spaces.swap_orientation(facing))
-                    passed.append(level)
-                    new_move_list = self.get_move_list(sub_sub_level, obj, input_pos, facing, passed, depth)
-                # push in
-                else:
-                    input_pos = sub_level.default_input_position(spaces.swap_orientation(facing))
-                    passed.append(level)
-                    new_move_list = self.get_move_list(sub_level, obj, input_pos, facing, passed, depth)
-                if new_move_list is None:
-                    return None
-                move_list.extend(new_move_list)
-            simple_push = False
-        move_list = basics.remove_same_elements(move_list)
-        return [(obj, level, new_pos, facing)] if simple_push else move_list
-    def move_objs_from_move_list(self, move_list: list[tuple[objects.Object, levels.level, spaces.Coord, spaces.Orient]]) -> None:
-        move_list = basics.remove_same_elements(move_list)
-        for move_obj, new_level, new_pos, new_facing in move_list:
-            move_obj.moved = True
-            for level in self.level_list:
-                if level.get_obj(move_obj.uuid) is not None:
-                    old_level = level
-            if old_level == new_level:
-                move_obj.pos = new_pos
-                move_obj.facing = new_facing
-            else:
-                old_level.del_obj(move_obj.uuid)
-                move_obj.pos = new_pos
-                move_obj.facing = new_facing
-                new_level.new_obj(move_obj)
-    def you(self, facing: spaces.PlayerOperation) -> None:
-        if facing == spaces.O:
-            return
-        move_list = []
-        for level in self.level_list:
-            you_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU), level.object_list)
-            for obj in you_objs:
-                new_move_list = self.get_move_list(level, obj, obj.pos, facing)
-                if new_move_list is not None:
-                    move_list.extend(new_move_list)
-        move_list = basics.remove_same_elements(move_list)
-        self.move_objs_from_move_list(move_list)
-    def move(self) -> None:
-        move_list = []
-        for level in self.level_list:
-            move_objs = filter(lambda o: objects.Object.has_prop(o, objects.MOVE), level.object_list)
-            for obj in move_objs:
-                new_move_list = self.get_move_list(level, obj, obj.pos, obj.facing)
-                if new_move_list is not None:
-                    move_list.extend(new_move_list)
-                else:
-                    new_move_list = self.get_move_list(level, obj, obj.pos, spaces.swap_orientation(obj.facing))
-                    if new_move_list is not None:
-                        move_list.extend(new_move_list)
-                    else:
-                        move_list.append((obj, level, obj.pos, spaces.swap_orientation(obj.facing)))
-        move_list = basics.remove_same_elements(move_list)
-        self.move_objs_from_move_list(move_list)
-    def shift(self) -> None:
-        move_list = []
-        for level in self.level_list:
-            shift_objs = filter(lambda o: objects.Object.has_prop(o, objects.SHIFT), level.object_list)
-            float_objs = filter(lambda o: objects.Object.has_prop(o, objects.FLOAT), level.object_list)
-            for shift_obj in shift_objs:
-                for obj in level.get_objs_from_pos(shift_obj.pos):
-                    if shift_obj != obj:
-                        if not ((shift_obj in float_objs) ^ (obj in float_objs)):
-                            new_move_list = self.get_move_list(level, obj, obj.pos, shift_obj.facing)
-                            if new_move_list is not None:
-                                move_list.extend(new_move_list)
-        move_list = basics.remove_same_elements(move_list)
-        self.move_objs_from_move_list(move_list)
-    def tele(self) -> None:
-        tele_list: list[tuple[objects.Object, spaces.Coord]] = []
-        object_list = []
-        for level in self.level_list:
-            object_list.extend(level.object_list)
-        tele_objs = filter(lambda o: objects.Object.has_prop(o, objects.TELE), object_list)
-        float_objs = filter(lambda o: objects.Object.has_prop(o, objects.FLOAT), object_list)
-        for tele_obj in tele_objs:
-            other_tele_objs = list(filter(lambda o: objects.Object.has_prop(o, objects.TELE) and isinstance(o, type(tele_obj)) and o != tele_obj, object_list))
-            if len(other_tele_objs) <= 1:
-                continue
-            for obj in level.get_objs_from_pos(tele_obj.pos):
-                if tele_obj != obj:
-                    if not ((tele_obj in float_objs) ^ (obj in float_objs)):
-                        other_tele_obj = random.choice(other_tele_objs)
-                        tele_list.append((obj, other_tele_obj.pos))
-        for obj, pos in tele_list:
-            obj.pos = pos
-    def sink(self) -> None:
-        for level in self.level_list:
-            sink_objs = filter(lambda o: objects.Object.has_prop(o, objects.SINK), level.object_list)
-            float_objs = filter(lambda o: objects.Object.has_prop(o, objects.FLOAT), level.object_list)
-            delete_list = []
-            for sink_obj in sink_objs:
-                for obj in level.object_list:
-                    if obj == sink_obj:
-                        continue
-                    if obj.pos == sink_obj.pos:
-                        if not ((obj in float_objs) ^ (sink_obj in float_objs)):
-                            if obj.uuid not in delete_list and sink_obj.uuid not in delete_list:
-                                delete_list.append(obj.uuid)
-                                delete_list.append(sink_obj.uuid)
-                                break
-            for uuid in delete_list:
-                level.del_obj(uuid)
-    def hot_and_melt(self) -> None:
-        for level in self.level_list:
-            hot_objs = filter(lambda o: objects.Object.has_prop(o, objects.HOT), level.object_list)
-            melt_objs = filter(lambda o: objects.Object.has_prop(o, objects.MELT), level.object_list)
-            float_objs = filter(lambda o: objects.Object.has_prop(o, objects.FLOAT), level.object_list)
-            for hot_obj in hot_objs:
-                for melt_obj in melt_objs:
-                    if melt_obj.pos == hot_obj.pos:
-                        if not ((melt_obj in float_objs) ^ (hot_obj in float_objs)):
-                            level.del_obj(melt_obj.uuid)
-    def defeat(self) -> None:
-        for level in self.level_list:
-            you_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU), level.object_list)
-            defeat_objs = filter(lambda o: objects.Object.has_prop(o, objects.DEFEAT), level.object_list)
-            float_objs = filter(lambda o: objects.Object.has_prop(o, objects.FLOAT), level.object_list)
-            for defeat_obj in defeat_objs:
-                for you_obj in you_objs:
-                    if you_obj.pos == defeat_obj.pos:
-                        if not ((you_obj in float_objs) ^ (defeat_obj in float_objs)):
-                            level.del_obj(you_obj.uuid)
-    def open_and_shut(self) -> None:
-        for level in self.level_list:
-            open_objs = filter(lambda o: objects.Object.has_prop(o, objects.OPEN), level.object_list)
-            shut_objs = filter(lambda o: objects.Object.has_prop(o, objects.SHUT), level.object_list)
-            delete_list = []
-            for shut_obj in shut_objs:
-                for open_obj in open_objs:
-                    if shut_obj.pos == open_obj.pos:
-                        if shut_obj.uuid not in delete_list and open_obj.uuid not in delete_list:
-                            delete_list.append(shut_obj.uuid)
-                            delete_list.append(open_obj.uuid)
-                            break
-            for uuid in delete_list:
-                level.del_obj(uuid)
-    def transform(self) -> None:
-        global_transform_rules = self.find_rules(objects.Noun, objects.IS, objects.Noun)
-        for level in self.level_list:
-            transform_rules = level.find_rules(objects.Noun, objects.IS, objects.Noun)
-            transform_rules.extend(global_transform_rules)
-            for rule in transform_rules:
-                for old_obj in level.get_objs_from_type(objects.nouns_objs_dicts.get_obj(rule[0])): # type: ignore
-                    old_obj: objects.Object
-                    new_type = objects.nouns_objs_dicts.get_obj(rule[2]) # type: ignore
-                    if issubclass(new_type, objects.LevelContainer):
-                        new_level = levels.level(old_obj.uuid.hex, (1, 1), 0, pygame.Color("#000000"))
-                        self.level_list.append(new_level)
-                        new_level.new_obj(type(old_obj)((0, 0)))
-                        new_obj = new_type(old_obj.pos, old_obj.uuid.hex, 0, old_obj.facing)
-                        level.del_obj(old_obj.uuid)
-                        level.new_obj(new_obj)
-                    else:
-                        new_obj = new_type(old_obj.pos, old_obj.facing)
-                        level.del_obj(old_obj.uuid)
-                        level.new_obj(new_obj)
-    def winned(self) -> bool:
-        for level in self.level_list:
-            you_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU), level.object_list)
-            win_objs = filter(lambda o: objects.Object.has_prop(o, objects.WIN), level.object_list)
-            float_objs = filter(lambda o: objects.Object.has_prop(o, objects.FLOAT), level.object_list)
-            for you_obj in you_objs:
-                for win_obj in win_objs:
-                    if you_obj.pos == win_obj.pos:
-                        if not ((you_obj in float_objs) ^ (win_obj in float_objs)):
-                            return True
-        return False
-    def round(self, op: spaces.PlayerOperation) -> bool:
-        for level in self.level_list:
-            for obj in level.object_list:
-                obj.moved = False
-        self.update_rules()
-        self.you(op)
-        self.move()
-        self.update_rules()
-        self.shift()
-        self.update_rules()
-        self.transform()
-        self.update_rules()
-        self.tele()
-        self.update_rules()
-        self.sink()
-        self.hot_and_melt()
-        self.defeat()
-        self.open_and_shut()
-        self.update_rules()
-        return self.winned()
-    def show_level(self, level: levels.level, layer: int, frame: int, cursor: Optional[spaces.Coord] = None) -> pygame.Surface:
-        if layer <= 0:
-            return displays.sprites.get("text_level", 0, frame).copy()
-        pixel_sprite_size = displays.sprite_size * displays.pixel_size
-        level_surface_size = (level.width * pixel_sprite_size, level.height * pixel_sprite_size)
-        level_surface = pygame.Surface(level_surface_size, pygame.SRCALPHA)
-        obj_surface_list: list[tuple[spaces.Coord, pygame.Surface, objects.Object]] = []
-        for i in range(len(level.object_list)):
-            obj = level.object_list[i]
-            if isinstance(obj, objects.Level):
-                obj_level = self.get_level(obj.name, obj.inf_tier)
-                if obj_level is not None:
-                    obj_surface = self.show_level(obj_level, layer - 1, frame)
-                    obj_surface = displays.set_color_dark(obj_surface, pygame.Color("#CCCCCC"))
-                else:
-                    obj_surface = displays.sprites.get("level", 0, frame).copy()
-            elif isinstance(obj, objects.Clone):
-                obj_level = self.get_level(obj.name, obj.inf_tier)
-                if obj_level is not None:
-                    obj_surface = self.show_level(obj_level, layer - 1, frame)
-                    obj_surface = displays.set_color_light(obj_surface, pygame.Color("#444444"))
-                else:
-                    obj_surface = displays.sprites.get("clone", 0, frame).copy()
-            else:
-                obj_surface = displays.sprites.get(obj.sprite_name, obj.sprite_state, frame).copy()
-            surface_pos = (obj.x * pixel_sprite_size, obj.y * pixel_sprite_size)
-            obj_surface_list.append((surface_pos, obj_surface, obj))
-        sorted_obj_surface_list = map(lambda o: list(map(lambda t: isinstance(o[2], t), displays.order)).index(True), obj_surface_list)
-        sorted_obj_surface_list = map(lambda t: t[1], sorted(zip(sorted_obj_surface_list, obj_surface_list), key=lambda t: t[0]))
-        for pos, surface, _ in sorted_obj_surface_list:
-            level_surface.blit(pygame.transform.scale(surface, (pixel_sprite_size, pixel_sprite_size)), pos)
-        if cursor is not None:
-            obj_surface = displays.sprites.get("cursor", 0, frame).copy()
-            pos = (cursor[0] * pixel_sprite_size, cursor[1] * pixel_sprite_size)
-            level_surface.blit(pygame.transform.scale(obj_surface, (pixel_sprite_size, pixel_sprite_size)), pos)
-        level_background = pygame.Surface(level_surface.get_size(), pygame.SRCALPHA)
-        level_background.fill(pygame.Color(level.color))
-        level_background.blit(level_surface, (0, 0))
-        level_surface = level_background
-        return level_surface
+                wsad = {spaces.W: False, spaces.S: False, spaces.A: False, spaces.D: False}
+            displays.set_sprite_state(obj, round_num, wsad) # type: ignore
+    def default_input_position(self, side: spaces.Orient) -> spaces.Coord:
+        match side:
+            case spaces.W:
+                return (self.width // 2, -1)
+            case spaces.A:
+                return (-1, self.height // 2)
+            case spaces.S:
+                return (self.width // 2, self.height)
+            case spaces.D:
+                return (self.width, self.height // 2)
+            case _:
+                raise ValueError()
     def to_json(self) -> basics.JsonObject:
-        json_object = {"name": self.name, "level_list": [], "rule_list": []}
-        for level in self.level_list:
-            json_object["level_list"].append(level.to_json())
-        for rule in self.rule_list:
-            json_object["rule_list"].append([])
-            for obj in rule:
-                json_object["rule_list"][-1].append({v: k for k, v in objects.object_name.items()}[obj])
+        json_object = {"name": self.name, "infinite_tier": self.inf_tier, "size": [self.width, self.height],
+                       "color": [self.color.r, self.color.g, self.color.b], "object_list": []}
+        for obj in self.object_list:
+            json_object["object_list"].append(obj.to_json())
         return json_object
 
-def json_to_world(json_object: basics.JsonObject) -> world: # oh hell no * 3
-    level_list = []
-    for level in json_object["level_list"]: # type: ignore
-        level_list.append(levels.json_to_level(level))
-    rule_list = []
-    for rule in json_object["rule_list"]: # type: ignore
-        rule_list.append([])
-        for obj_type in rule:
-            rule_list[-1].append(objects.object_name[obj_type])
-    return world(name=json_object["name"], # type: ignore
-                 level_list=level_list, # type: ignore
-                 rule_list=rule_list) # type: ignore
+def json_to_world(json_object: basics.JsonObject) -> world: # oh hell no * 2
+    new_world = world(name=json_object["name"], # type: ignore
+                      inf_tier=int(json_object["infinite_tier"]), # type: ignore
+                      size=tuple(json_object["size"]), # type: ignore
+                      color=pygame.Color(json_object["color"])) # type: ignore
+    for obj in json_object["object_list"]: # type: ignore
+        new_world.new_obj(objects.json_to_object(obj)) # type: ignore
+    return new_world
