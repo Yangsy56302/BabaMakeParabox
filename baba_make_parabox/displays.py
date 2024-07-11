@@ -182,6 +182,7 @@ sprite_colors["text_defeat"] = DARK_RED
 sprite_colors["text_shift"] = LIGHT_GRAY_BLUE
 sprite_colors["text_tele"] = LIGHTER_GRAY_BLUE
 sprite_colors["text_word"] = WHITE
+sprite_colors["text_select"] = LIGHT_YELLOW
 
 order = [objects.Operator,
          objects.Noun,
