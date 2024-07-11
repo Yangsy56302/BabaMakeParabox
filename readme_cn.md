@@ -16,10 +16,10 @@
 **或者你确实知道你要干什么。**
 
 如果你想运行源代码，下载这些软件：
-- **Python** **_（最新版）_**：[链接](https://www.python.org/downloads/)
+- **Python** *（最新版）*：[链接](https://www.python.org/downloads/)
 - **PIP**：应该会与Python一起安装
 - **Pygame**：在终端或类似终端的地方运行`pip install -U pygame`
-- **PyInstaller** **_（可选，仅制作EXE用）_**：类似上面，运行`pip install -U pyinstaller`
+- **PyInstaller** *（可选，仅制作EXE用）*：类似上面，运行`pip install -U pyinstaller`
 
 运行`test.bat`以开始该游戏的官方测试。
 
@@ -41,8 +41,8 @@
 
 ### 如何胜利
 
-把标记为**你** **_（you）_**的物体
-移到标记为**赢** **_（win）_**的物体上。
+把标记为**你** *（you）*的物体
+移到标记为**赢** *（win）*的物体上。
 
 并且请记住：
 
