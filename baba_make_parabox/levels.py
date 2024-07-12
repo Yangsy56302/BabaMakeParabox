@@ -75,7 +75,7 @@ class level(object):
                             obj: objects.Object
                             obj.new_prop(prop)
         self.update_rules_with_word()
-    def get_move_list(self, world: worlds.world, obj: objects.Object, pos: spaces.Coord, facing: spaces.Orient, passed: Optional[list[worlds.world]] = None, depth: int = 1) -> Optional[list[tuple[objects.Object, worlds.world, spaces.Coord, spaces.Orient]]]:
+    def get_move_list(self, world: worlds.world, obj: objects.Object, pos: spaces.Coord, facing: spaces.Orient, passed: Optional[list[worlds.world]] = None, transnum: Optional[float] = None, depth: int = 1) -> Optional[list[tuple[objects.Object, worlds.world, spaces.Coord, spaces.Orient]]]:
         if depth > 127:
             return None
         depth += 1
@@ -91,17 +91,20 @@ class level(object):
                 if ret is None:
                     return None
                 super_world, world_obj = ret
-                get_move_list = self.get_move_list(super_world, obj, world_obj.pos, facing, passed, depth)
+                new_transnum = super_world.transnum_to_bigger_transnum(transnum, world_obj.pos, facing) if transnum is not None else world.pos_to_transnum(obj.pos, facing)
+                get_move_list = self.get_move_list(super_world, obj, world_obj.pos, facing, passed, new_transnum, depth)
                 if get_move_list is None:
                     return None
                 move_list.extend(get_move_list)
+            # normal push out
             else:
                 ret = self.find_super_world(world.name, world.inf_tier)
                 if ret is None:
                     return None
                 super_world, world_obj = ret
+                new_transnum = super_world.transnum_to_bigger_transnum(transnum, world_obj.pos, facing) if transnum is not None else world.pos_to_transnum(obj.pos, facing)
                 passed.append(world)
-                get_move_list = self.get_move_list(super_world, obj, world_obj.pos, facing, passed, depth)
+                get_move_list = self.get_move_list(super_world, obj, world_obj.pos, facing, passed, new_transnum, depth)
                 if get_move_list is None:
                     return None
                 move_list.extend(get_move_list)
@@ -121,7 +124,7 @@ class level(object):
         push_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.PUSH), world.get_objs_from_pos(new_pos)))
         if len(push_objects) != 0:
             for push_object in push_objects:
-                new_move_list = self.get_move_list(world, push_object, push_object.pos, facing, depth=depth)
+                new_move_list = self.get_move_list(world, push_object, new_pos, facing, depth=depth)
                 if new_move_list is None:
                     if not isinstance(push_object, objects.WorldPointer):
                         return None
@@ -140,19 +143,44 @@ class level(object):
                 sub_world = self.get_world(world_like_object.name, world_like_object.inf_tier)
                 if sub_world is None:
                     return None
+                # opposite push in
+                opposite_push_in = False
+                newer_pos = spaces.pos_facing(new_pos, facing)
+                if not world.out_of_range(newer_pos):
+                    new_push_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.PUSH), world.get_objs_from_pos(newer_pos)))
+                    if len(new_push_objects) != 0:
+                        test_move_list = []
+                        for new_push_object in new_push_objects:
+                            temp_move_list = self.get_move_list(world, new_push_object, newer_pos, facing, passed, depth=depth)
+                            test_move_list.extend(temp_move_list if temp_move_list is not None else [])
+                        if len(test_move_list) == 0:
+                            new_move_list = []
+                            for obj in new_push_objects:
+                                input_pos = sub_world.default_input_position(facing)
+                                new_transnum = 0.5
+                                temp_move_list = self.get_move_list(sub_world, obj, input_pos, spaces.swap_orientation(facing), passed, new_transnum, depth)
+                                if temp_move_list is None:
+                                    return None
+                                new_move_list.extend(temp_move_list)
+                            new_move_list.append([world_like_object, world, newer_pos, facing])
+                            opposite_push_in = True
+                if opposite_push_in:
+                    pass
                 # inf in
                 elif sub_world in passed:
                     sub_sub_world = self.get_world(sub_world.name, sub_world.inf_tier - 1)
                     if sub_sub_world is None:
                         return None
+                    new_transnum = 0.5
                     input_pos = sub_sub_world.default_input_position(spaces.swap_orientation(facing))
                     passed.append(world)
-                    new_move_list = self.get_move_list(sub_sub_world, obj, input_pos, facing, passed, depth)
+                    new_move_list = self.get_move_list(sub_sub_world, obj, input_pos, facing, passed, new_transnum, depth)
                 # push in
                 else:
-                    input_pos = sub_world.default_input_position(spaces.swap_orientation(facing))
+                    new_transnum = world.transnum_to_smaller_transnum(transnum, world_like_object.pos, spaces.swap_orientation(facing)) if transnum is not None else 0.5
+                    input_pos = sub_world.transnum_to_pos(transnum, spaces.swap_orientation(facing)) if transnum is not None else sub_world.default_input_position(spaces.swap_orientation(facing))
                     passed.append(world)
-                    new_move_list = self.get_move_list(sub_world, obj, input_pos, facing, passed, depth)
+                    new_move_list = self.get_move_list(sub_world, obj, input_pos, facing, passed, new_transnum, depth)
                 if new_move_list is None:
                     return None
                 move_list.extend(new_move_list)
@@ -455,8 +483,8 @@ class level(object):
         self.update_rules()
         win = self.winned()
         return {"win": win, "selected_level": selected_level, "new_levels": new_levels, "transform_to": transform_to}
-    def show_world(self, world: worlds.world, layer: int, frame: int, cursor: Optional[spaces.Coord] = None) -> pygame.Surface:
-        if layer <= 0:
+    def show_world(self, world: worlds.world, frame: int, layer: int = 0, cursor: Optional[spaces.Coord] = None) -> pygame.Surface:
+        if layer >= basics.options.get("world_display_recursion_depth", 3):
             return displays.sprites.get("world", 0, frame).copy()
         pixel_sprite_size = displays.sprite_size * displays.pixel_size
         world_surface_size = (world.width * pixel_sprite_size, world.height * pixel_sprite_size)
@@ -467,14 +495,14 @@ class level(object):
             if isinstance(obj, objects.World):
                 obj_world = self.get_world(obj.name, obj.inf_tier)
                 if obj_world is not None:
-                    obj_surface = self.show_world(obj_world, layer - 1, frame)
+                    obj_surface = self.show_world(obj_world, frame, layer + 1)
                     obj_surface = displays.set_color_dark(obj_surface, pygame.Color("#CCCCCC"))
                 else:
                     obj_surface = displays.sprites.get("level", 0, frame).copy()
             elif isinstance(obj, objects.Clone):
                 obj_world = self.get_world(obj.name, obj.inf_tier)
                 if obj_world is not None:
-                    obj_surface = self.show_world(obj_world, layer - 1, frame)
+                    obj_surface = self.show_world(obj_world, frame, layer + 1)
                     obj_surface = displays.set_color_light(obj_surface, pygame.Color("#111111"))
                 else:
                     obj_surface = displays.sprites.get("clone", 0, frame).copy()

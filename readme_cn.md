@@ -101,6 +101,7 @@
 | 2.11   | 2024.07.12 | Undo and Restart is Fix |
 | 2.12   | 2024.07.12 | Object is More |
 | 2.13   | 2024.07.12 | Esc is Out |
+| 2.2    | 2024.07.12 | World feeling Push and Options is Better |
 
 ## 报告漏洞和提出建议
 

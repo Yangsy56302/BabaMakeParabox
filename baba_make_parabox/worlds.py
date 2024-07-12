@@ -169,6 +169,33 @@ class world(object):
                 return (self.width, self.height // 2)
             case _:
                 raise ValueError()
+    def pos_to_transnum(self, pos: spaces.Coord, side: spaces.Orient) -> float:
+        if side in (spaces.W, spaces.S):
+            return (pos[0] + 0.5) / self.width
+        else:
+            return (pos[1] + 0.5) / self.height
+    def transnum_to_pos(self, num: float, side: spaces.Orient) -> spaces.Coord:
+        match side:
+            case spaces.W:
+                return (int((num * self.width)), -1)
+            case spaces.S:
+                return (int((num * self.width)), self.height)
+            case spaces.A:
+                return (-1, int((num * self.height)))
+            case spaces.D:
+                return (self.width, int((num * self.height)))
+            case _:
+                raise ValueError()
+    def transnum_to_smaller_transnum(self, num: float, pos: spaces.Coord, side: spaces.Orient) -> float:
+        if side in (spaces.W, spaces.S):
+            return (num * self.width) - pos[0]
+        else:
+            return (num * self.height) - pos[1]
+    def transnum_to_bigger_transnum(self, num: float, pos: spaces.Coord, side: spaces.Orient) -> float:
+        if side in (spaces.W, spaces.S):
+            return (num + pos[0]) / self.width
+        else:
+            return (num + pos[1]) / self.height
     def to_json(self) -> basics.JsonObject:
         json_object = {"name": self.name, "infinite_tier": self.inf_tier, "size": [self.width, self.height],
                        "color": [self.color.r, self.color.g, self.color.b], "object_list": []}

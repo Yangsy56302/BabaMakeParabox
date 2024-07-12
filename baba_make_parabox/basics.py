@@ -6,7 +6,7 @@ import argparse
 
 pygame.init()
 
-versions = "2.13"
+versions = "2.2"
 
 BasicJsonElement = None | int | float | str
 JsonElement = list[BasicJsonElement] | list["JsonElement"] | dict[str, BasicJsonElement] | dict[str, "JsonElement"]
@@ -20,13 +20,13 @@ try:
     file.close()
 except OSError as e:
     file = open(options_filename, "w", encoding="ascii")
-    options = {"fps": 15, "input_cooldown": 3, "world_display_recursion_depth": 2}
+    options = {}
     json.dump(options, file, indent=4)
     file.close()
 except json.JSONDecodeError as e:
     file.close()
     file = open(options_filename, "w", encoding="ascii")
-    options = {"fps": 15, "input_cooldown": 3, "world_display_recursion_depth": 2}
+    options = {}
     json.dump(options, file, indent=4)
     file.close()
 
