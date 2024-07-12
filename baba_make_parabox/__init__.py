@@ -28,17 +28,20 @@ def main() -> None:
             print("Thank you for testing Baba Make Parabox!")
             return
         elif basics.args.edit:
+            default_new_world_settings = basics.options.get("default_new_world", {"width": 9, "height": 9, "color": "#000000"})
+            size = (default_new_world_settings["width"], default_new_world_settings["height"])
+            color = pygame.Color(default_new_world_settings["color"])
             if basics.args.input is not None:
                 filename: str = basics.args.input.lstrip()
                 if os.path.isfile(os.path.join("levelpacks", filename + ".json")):
                     with open(os.path.join("levelpacks", filename + ".json"), "r", encoding="ascii") as file:
                         levelpack = levelpacks.json_to_levelpack(json.load(file))
                 else:
-                    world = worlds.world(filename, (15, 15), color=pygame.Color("#000000"))
+                    world = worlds.world(filename, size, color=color)
                     level = levels.level(filename, [world])
                     levelpack = levelpacks.levelpack(filename, [level])
             else:
-                world = worlds.world("main", (15, 15), color=pygame.Color("#000000"))
+                world = worlds.world("main", size, color=color)
                 level = levels.level("main", [world])
                 levelpack = levelpacks.levelpack("main", [level])
             levelpack = edits.levelpack_editor(levelpack)

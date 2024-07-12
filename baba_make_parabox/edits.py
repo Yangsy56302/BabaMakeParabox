@@ -72,7 +72,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
     world_changed = True
     yes = ["y", "Y", "yes", "Yes", "YES"]
     window.fill("#000000")
-    window.blit(pygame.transform.scale(current_level.show_world(current_world, basics.options["world_display_recursion_depth"], 1, current_cursor_pos), (720, 720)), (0, 0))
+    window.blit(pygame.transform.scale(current_level.show_world(current_world, 1, cursor=current_cursor_pos), (720, 720)), (0, 0))
     current_object = displays.set_sprite_state(current_object_type((0, 0), current_facing))
     window.blit(pygame.transform.scale(displays.sprites.get(current_object_type.sprite_name, current_object.sprite_state, 1), (72, 72)), (1208, 0))
     pygame.display.flip()

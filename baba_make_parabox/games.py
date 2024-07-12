@@ -198,7 +198,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
             level_info = {"win": False, "selected_level": None, "new_levels": [], "transform_to": []}
         current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
         window.fill("#000000")
-        window.blit(pygame.transform.scale(current_level.show_world(current_level.world_list[current_world_index], basics.options["world_display_recursion_depth"], frame), (720, 720)), (0, 0))
+        window.blit(pygame.transform.scale(current_level.show_world(current_level.world_list[current_world_index], frame), (720, 720)), (0, 0))
         pygame.display.flip()
         for key in cooldowns:
             if cooldowns[key] > 0:

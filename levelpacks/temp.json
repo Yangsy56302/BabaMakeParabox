@@ -1,0 +1,57 @@
+{
+    "name": "temp",
+    "level_list": [
+        {
+            "name": "temp",
+            "world_list": [
+                {
+                    "name": "temp",
+                    "infinite_tier": 0,
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "color": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "object_list": []
+                }
+            ],
+            "super_level": null,
+            "main_world": {
+                "name": "temp",
+                "infinite_tier": 0
+            }
+        }
+    ],
+    "main_level": "temp",
+    "rule_list": [
+        [
+            "CURSOR",
+            "IS",
+            "SELECT"
+        ],
+        [
+            "TEXT",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "WORLD",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "CLONE",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "LEVEL",
+            "IS",
+            "STOP"
+        ]
+    ]
+}

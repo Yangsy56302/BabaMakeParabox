@@ -138,6 +138,7 @@ sprite_colors: dict[str, pygame.Color] = {}
 sprite_colors["baba"] = WHITE
 sprite_colors["keke"] = LIGHT_RED
 sprite_colors["me"] = LIGHT_PURPLE
+sprite_colors["patrick"] = MAGENTA
 sprite_colors["skull"] = DARKER_RED
 sprite_colors["ghost"] = PINK
 sprite_colors["wall"] = DARK_GRAY_BLUE
@@ -158,6 +159,7 @@ sprite_colors["clone"] = PINK
 sprite_colors["text_baba"] = MAGENTA
 sprite_colors["text_keke"] = LIGHT_RED
 sprite_colors["text_me"] = LIGHT_PURPLE
+sprite_colors["text_patrick"] = MAGENTA
 sprite_colors["text_skull"] = DARKER_RED
 sprite_colors["text_ghost"] = PINK
 sprite_colors["text_wall"] = LIGHT_GRAY
@@ -193,7 +195,6 @@ sprite_colors["text_shift"] = LIGHT_GRAY_BLUE
 sprite_colors["text_tele"] = LIGHTER_GRAY_BLUE
 sprite_colors["text_word"] = WHITE
 sprite_colors["text_select"] = LIGHT_YELLOW
-
 
 order = [objects.Operator,
          objects.Noun,

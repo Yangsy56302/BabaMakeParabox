@@ -102,6 +102,7 @@ Please remember:
 | 2.12   | 2024.07.12 | Object is More |
 | 2.13   | 2024.07.12 | Esc is Out |
 | 2.2    | 2024.07.12 | World feeling Push and Options is Better |
+| 2.21   | 2024.07.12 | Bug is Fix; Patrick is You |
 
 ## Bug Reports and Suggestions
 

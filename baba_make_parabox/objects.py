@@ -141,6 +141,14 @@ class Me(Character):
     def __repr__(self) -> str:
         return repr(super())
 
+class Patrick(Directional):
+    class_name: str = "Patrick"
+    sprite_name: str = "patrick"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 class Skull(Directional):
     class_name: str = "Skull"
     sprite_name: str = "skull"
@@ -356,6 +364,14 @@ class KEKE(Noun):
 class ME(Noun):
     class_name: str = "ME"
     sprite_name: str = "text_me"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class PATRICK(Noun):
+    class_name: str = "PATRICK"
+    sprite_name: str = "text_patrick"
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -667,6 +683,7 @@ object_name: dict[str, type[Object]] = {
     "Baba": Baba,
     "Keke": Keke,
     "Me": Me,
+    "Patrick": Patrick,
     "Skull": Skull,
     "Ghost": Ghost,
     "Wall": Wall,
@@ -685,6 +702,7 @@ object_name: dict[str, type[Object]] = {
     "BABA": BABA,
     "KEKE": KEKE,
     "ME": ME,
+    "PATRICK": PATRICK,
     "SKULL": SKULL,
     "GHOST": GHOST,
     "WALL": WALL,
@@ -736,6 +754,7 @@ nouns_objs_dicts = NounsObjsDicts()
 nouns_objs_dicts.new_pair(BABA, Baba)
 nouns_objs_dicts.new_pair(KEKE, Keke)
 nouns_objs_dicts.new_pair(ME, Me)
+nouns_objs_dicts.new_pair(PATRICK, Patrick)
 nouns_objs_dicts.new_pair(SKULL, Skull)
 nouns_objs_dicts.new_pair(GHOST, Ghost)
 nouns_objs_dicts.new_pair(WALL, Wall)
