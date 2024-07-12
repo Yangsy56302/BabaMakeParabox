@@ -9,7 +9,7 @@ made separately by **Arvi Hempuli** and **Patrick Traynor**.
 ## How to run
 
 Note: batch files in `python` folder only works when python files exists,
-and batch files in `exe` folder only works when execution files exists.
+and batch files in `windows` folder only works when execution files exists.
 
 **DO NOT CLOSE OR CLICK THE TERMINAL**
 **UNLESS YOU NEED TO INPUT SOMETHING INTO TERMINAL**
@@ -98,6 +98,7 @@ Please remember:
 | 2.0    | 2024.07.11 | Level is not World; Cursor is Select |
 | 2.1    | 2024.07.11 | Bug is Fix; World is Level |
 | 2.11   | 2024.07.12 | Undo and Restart is Fix |
+| 2.12   | 2024.07.12 | Object is More |
 
 ## Bug Reports and Suggestions
 

@@ -8,8 +8,8 @@
 
 ## 如何运行
 
-注意：`py`文件夹中的批处理文件只会在Python代码文件存在时工作，
-而`exe`文件夹中的批处理文件只会在EXE可执行程序文件存在时工作。
+注意：`python`文件夹中的批处理文件只会在Python代码文件存在时工作，
+而`windows`文件夹中的批处理文件只会在EXE可执行程序文件存在时工作。
 
 **不要关闭或点击终端窗口**
 **除非你需要在终端里面输入数据**
@@ -98,6 +98,7 @@
 | 2.0    | 2024.07.11 | Level is not World; Cursor is Select |
 | 2.1    | 2024.07.11 | Bug is Fix; World is Level |
 | 2.11   | 2024.07.12 | Undo and Restart is Fix |
+| 2.12   | 2024.07.12 | Object is More |
 
 ## 报告漏洞和提出建议
 

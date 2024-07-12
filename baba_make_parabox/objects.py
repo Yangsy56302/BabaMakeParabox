@@ -141,9 +141,41 @@ class Me(Character):
     def __repr__(self) -> str:
         return repr(super())
 
+class Skull(Directional):
+    class_name: str = "Skull"
+    sprite_name: str = "skull"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class Ghost(Directional):
+    class_name: str = "Ghost"
+    sprite_name: str = "ghost"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 class Wall(Tiled):
     class_name: str = "Wall"
     sprite_name: str = "wall"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class Tile(Static):
+    class_name: str = "Tile"
+    sprite_name: str = "tile"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class Grass(Tiled):
+    class_name: str = "Grass"
+    sprite_name: str = "grass"
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -192,6 +224,14 @@ class Box(Static):
 class Rock(Static):
     class_name: str = "Rock"
     sprite_name: str = "rock"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class Sun(Static):
+    class_name: str = "Sun"
+    sprite_name: str = "sun"
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -321,9 +361,41 @@ class ME(Noun):
     def __repr__(self) -> str:
         return repr(super())
 
+class SKULL(Noun):
+    class_name: str = "SKULL"
+    sprite_name: str = "text_skull"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class GHOST(Noun):
+    class_name: str = "GHOST"
+    sprite_name: str = "text_ghost"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 class WALL(Noun):
     class_name: str = "WALL"
     sprite_name: str = "text_wall"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class TILE(Noun):
+    class_name: str = "TILE"
+    sprite_name: str = "text_tile"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class GRASS(Noun):
+    class_name: str = "GRASS"
+    sprite_name: str = "text_grass"
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -372,6 +444,14 @@ class BOX(Noun):
 class ROCK(Noun):
     class_name: str = "ROCK"
     sprite_name: str = "text_rock"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class SUN(Noun):
+    class_name: str = "SUN"
+    sprite_name: str = "text_sun"
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -587,11 +667,16 @@ object_name: dict[str, type[Object]] = {
     "Baba": Baba,
     "Keke": Keke,
     "Me": Me,
+    "Skull": Skull,
+    "Ghost": Ghost,
     "Wall": Wall,
+    "Tile": Tile,
+    "Grass": Grass,
     "Water": Water,
     "Lava": Lava,
     "Box": Box,
     "Rock": Rock,
+    "Sun": Sun,
     "Flag": Flag,
     "Cursor": Cursor,
     "Level": Level,
@@ -600,11 +685,16 @@ object_name: dict[str, type[Object]] = {
     "BABA": BABA,
     "KEKE": KEKE,
     "ME": ME,
+    "SKULL": SKULL,
+    "GHOST": GHOST,
     "WALL": WALL,
+    "TILE": TILE,
+    "GRASS": GRASS,
     "WATER": WATER,
     "LAVA": LAVA,
     "BOX": BOX,
     "ROCK": ROCK,
+    "SUN": SUN,
     "FLAG": FLAG,
     "CURSOR": CURSOR,
     "TEXT": TEXT,
@@ -646,13 +736,18 @@ nouns_objs_dicts = NounsObjsDicts()
 nouns_objs_dicts.new_pair(BABA, Baba)
 nouns_objs_dicts.new_pair(KEKE, Keke)
 nouns_objs_dicts.new_pair(ME, Me)
+nouns_objs_dicts.new_pair(SKULL, Skull)
+nouns_objs_dicts.new_pair(GHOST, Ghost)
 nouns_objs_dicts.new_pair(WALL, Wall)
+nouns_objs_dicts.new_pair(TILE, Tile)
+nouns_objs_dicts.new_pair(GRASS, Grass)
 nouns_objs_dicts.new_pair(WATER, Water)
 nouns_objs_dicts.new_pair(LAVA, Lava)
 nouns_objs_dicts.new_pair(DOOR, Door)
 nouns_objs_dicts.new_pair(KEY, Key)
 nouns_objs_dicts.new_pair(BOX, Box)
 nouns_objs_dicts.new_pair(ROCK, Rock)
+nouns_objs_dicts.new_pair(SUN, Sun)
 nouns_objs_dicts.new_pair(FLAG, Flag)
 nouns_objs_dicts.new_pair(CURSOR, Cursor)
 nouns_objs_dicts.new_pair(LEVEL, Level)

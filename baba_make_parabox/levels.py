@@ -456,7 +456,7 @@ class level(object):
         return {"win": win, "selected_level": selected_level, "new_levels": new_levels, "transform_to": transform_to}
     def show_world(self, world: worlds.world, layer: int, frame: int, cursor: Optional[spaces.Coord] = None) -> pygame.Surface:
         if layer <= 0:
-            return displays.sprites.get("text_world", 0, frame).copy()
+            return displays.sprites.get("world", 0, frame).copy()
         pixel_sprite_size = displays.sprite_size * displays.pixel_size
         world_surface_size = (world.width * pixel_sprite_size, world.height * pixel_sprite_size)
         world_surface = pygame.Surface(world_surface_size, pygame.SRCALPHA)
@@ -474,7 +474,7 @@ class level(object):
                 obj_world = self.get_world(obj.name, obj.inf_tier)
                 if obj_world is not None:
                     obj_surface = self.show_world(obj_world, layer - 1, frame)
-                    obj_surface = displays.set_color_light(obj_surface, pygame.Color("#444444"))
+                    obj_surface = displays.set_color_light(obj_surface, pygame.Color("#111111"))
                 else:
                     obj_surface = displays.sprites.get("clone", 0, frame).copy()
             else:
