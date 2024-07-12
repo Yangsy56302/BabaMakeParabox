@@ -169,10 +169,9 @@ def play(levelpack: levelpacks.levelpack) -> None:
             levelpack.set_level(current_level)
             if level_info["win"]:
                 if current_level.name == levelpack.main_level:
-                    print("You Win!")
+                    print("You Won This Levelpack!")
                     return
                 else:
-                    level_info["win"] = False
                     print("Congratulations!")
                 level = levelpack_backup.get_level(current_level.name)
                 if level is not None:
@@ -183,9 +182,6 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 current_level = levelpack.get_exist_level(current_level_name)
             elif transform_success:
                 print("This level has been transformed into something...")
-                level = levelpack_backup.get_level(current_level.name)
-                if level is not None:
-                    levelpack.set_level(level)
                 super_level_name = current_level.super_level
                 super_level = levelpack.get_level(super_level_name if super_level_name is not None else levelpack.main_level)
                 current_level_name = super_level.name if super_level is not None else levelpack.main_level
