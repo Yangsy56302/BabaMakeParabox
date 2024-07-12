@@ -366,7 +366,8 @@ class level(object):
                         else:
                             new_obj = new_type(old_obj.pos, old_obj.facing)
                             world.new_obj(new_obj)
-                    if isinstance(old_obj, objects.WorldPointer):
+                    elif issubclass(old_type, objects.WorldPointer):
+                        old_obj: objects.WorldPointer # type: ignore
                         if old_type == new_type:
                             continue
                         elif issubclass(new_type, objects.Level):

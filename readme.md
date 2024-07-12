@@ -35,8 +35,9 @@ If you need to make an .exe file, run `py_2_exe.bat`.
 
 - WSAD: You / Cursor move.
 - Space: You wait for something / Cursor select a level to play.
-- Z: Undo your last step in this level.
+- Z: Undo.
 - R: Restart the levelpack.
+- Esc：Save level state and go back
 - \- / =: Select world for camera to focus.
 
 ### How to win
@@ -61,8 +62,8 @@ Please remember:
 - Tab: Switch object / noun.
 - Enter: Place object on cursor.
 - Backspace: Destroy all objects on cursor.
-- \- / =: Select world.
-- \[ / \]: Select level.
+- \- / =: Select world for camera to focus.
+- \[ / \]: Select level for camera to focus.
 - P: New world (information from terminal inputs).
 - O: Delete current world (confirm in terminal).
 - M: New level (information from terminal inputs).
@@ -99,6 +100,7 @@ Please remember:
 | 2.1    | 2024.07.11 | Bug is Fix; World is Level |
 | 2.11   | 2024.07.12 | Undo and Restart is Fix |
 | 2.12   | 2024.07.12 | Object is More |
+| 2.13   | 2024.07.12 | Esc is Out |
 
 ## Bug Reports and Suggestions
 
