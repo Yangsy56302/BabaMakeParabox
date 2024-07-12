@@ -50,17 +50,6 @@ class level(object):
                 if name == obj.name and inf_tier == obj.inf_tier:
                     return (super_world, obj)
         return None
-    def update_rules_with_word(self) -> None:
-        for world in self.world_list:
-            world.update_rules_with_word()
-        for world in self.world_list:
-            for prop in objects.object_name.values():
-                if issubclass(prop, objects.Property):
-                    prop_rules = world.find_rules(objects.Noun, objects.IS, prop) + self.find_rules(objects.Noun, objects.IS, prop)
-                    for obj_type in [t[0] for t in prop_rules]:
-                        for obj in world.get_objs_from_type(objects.nouns_objs_dicts.get_obj(obj_type)): # type: ignore
-                            obj: objects.Object
-                            obj.new_prop(prop)
     def update_rules(self) -> None:
         for world in self.world_list:
             for obj in world.object_list:
@@ -74,7 +63,18 @@ class level(object):
                         for obj in world.get_objs_from_type(objects.nouns_objs_dicts.get_obj(obj_type)): # type: ignore
                             obj: objects.Object
                             obj.new_prop(prop)
-        self.update_rules_with_word()
+        for world in self.world_list:
+            world.update_rules()
+            for obj in world.object_list:
+                obj.clear_prop()
+        for world in self.world_list:
+            for prop in objects.object_name.values():
+                if issubclass(prop, objects.Property):
+                    prop_rules = world.find_rules(objects.Noun, objects.IS, prop) + self.find_rules(objects.Noun, objects.IS, prop)
+                    for obj_type in [t[0] for t in prop_rules]:
+                        for obj in world.get_objs_from_type(objects.nouns_objs_dicts.get_obj(obj_type)): # type: ignore
+                            obj: objects.Object
+                            obj.new_prop(prop)
     def get_move_list(self, world: worlds.world, obj: objects.Object, pos: spaces.Coord, facing: spaces.Orient, passed: Optional[list[worlds.world]] = None, transnum: Optional[float] = None, depth: int = 1) -> Optional[list[tuple[objects.Object, worlds.world, spaces.Coord, spaces.Orient]]]:
         if depth > 127:
             return None
@@ -484,7 +484,7 @@ class level(object):
         win = self.winned()
         return {"win": win, "selected_level": selected_level, "new_levels": new_levels, "transform_to": transform_to}
     def show_world(self, world: worlds.world, frame: int, layer: int = 0, cursor: Optional[spaces.Coord] = None) -> pygame.Surface:
-        if layer >= basics.options.get("world_display_recursion_depth", 3):
+        if layer >= basics.options.setdefault("world_display_recursion_depth", 3):
             return displays.sprites.get("world", 0, frame).copy()
         pixel_sprite_size = displays.sprite_size * displays.pixel_size
         world_surface_size = (world.width * pixel_sprite_size, world.height * pixel_sprite_size)

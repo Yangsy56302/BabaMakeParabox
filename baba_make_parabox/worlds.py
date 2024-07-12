@@ -84,48 +84,42 @@ class world(object):
         return [o for o in self.object_list if isinstance(o, objects.Level)]
     def get_levels_from_pos(self, pos: spaces.Coord) -> list[objects.Level]:
         return [o for o in self.object_list if isinstance(o, objects.Level) and match_pos(o, pos)]
+    def get_rules_from_pos_and_orient(self, rule: rules.Rule, pos: spaces.Coord, orient: spaces.Orient) -> list[rules.Rule]:
+        return_rules: list[rules.Rule] = []
+        text_objs = self.get_objs_from_pos_and_type(pos, objects.Text)
+        word_objs = filter(lambda o: o.has_prop(objects.WORD) and match_pos(o, pos), self.object_list)
+        text_objs.extend(map(lambda o: objects.nouns_objs_dicts.get_noun(type(o))(o.pos), word_objs))
+        if len(text_objs) == 0:
+            return []
+        if len(rule) == 1:
+            for obj in text_objs:
+                if isinstance(obj, rule[0]):
+                    return_rules.append([type(obj)])
+            return return_rules
+        else:
+            remain_rules = self.get_rules_from_pos_and_orient(rule[1:], spaces.pos_facing(pos, orient), orient)
+            if len(remain_rules) == 0:
+                return []
+            getted_rules: list[rules.Rule] = []
+            for obj in text_objs:
+                if isinstance(obj, rule[0]):
+                    getted_rules.append([type(obj)])
+            if len(getted_rules) == 0:
+                return []
+            return_rules = []
+            for remain_rule in remain_rules:
+                for getted_rule in getted_rules:
+                    return_rules.append(getted_rule + remain_rule)
+            return return_rules
     def update_rules(self) -> None:
         self.rule_list = []
-        text_objs = self.get_objs_from_type(objects.Text)
-        noun_objs = [o for o in text_objs if isinstance(o, objects.Noun)]
-        oper_objs = [o for o in text_objs if isinstance(o, objects.Operator)]
-        prop_objs = [o for o in text_objs if isinstance(o, objects.Property)]
-        for noun_obj in noun_objs:
-            for oper_obj in oper_objs:
-                if not spaces.on_line(noun_obj.pos, oper_obj.pos):
-                    continue
-                if not isinstance(oper_obj, objects.IS):
-                    continue
-                for prop_obj in prop_objs:
-                    if not spaces.on_line(noun_obj.pos, oper_obj.pos, prop_obj.pos):
-                        continue
-                    self.rule_list.append([type(noun_obj), type(oper_obj), type(prop_obj)])
-                for noun_obj_2 in noun_objs:
-                    if not spaces.on_line(noun_obj.pos, oper_obj.pos, noun_obj_2.pos):
-                        continue
-                    self.rule_list.append([type(noun_obj), type(oper_obj), type(noun_obj_2)])
-    def update_rules_with_word(self) -> None:
-        self.rule_list = []
-        text_objs = self.get_objs_from_type(objects.Text)
-        noun_objs = [o for o in text_objs if isinstance(o, objects.Noun)]
-        word_objs = filter(lambda o: o.has_prop(objects.WORD), self.object_list)
-        noun_objs.extend(map(lambda o: objects.nouns_objs_dicts.get_noun(type(o))(o.pos), word_objs))
-        oper_objs = [o for o in text_objs if isinstance(o, objects.Operator)]
-        prop_objs = [o for o in text_objs if isinstance(o, objects.Property)]
-        for noun_obj in noun_objs:
-            for oper_obj in oper_objs:
-                if not spaces.on_line(noun_obj.pos, oper_obj.pos):
-                    continue
-                if not isinstance(oper_obj, objects.IS):
-                    continue
-                for prop_obj in prop_objs:
-                    if not spaces.on_line(noun_obj.pos, oper_obj.pos, prop_obj.pos):
-                        continue
-                    self.rule_list.append([type(noun_obj), type(oper_obj), type(prop_obj)])
-                for noun_obj_2 in noun_objs:
-                    if not spaces.on_line(noun_obj.pos, oper_obj.pos, noun_obj_2.pos):
-                        continue
-                    self.rule_list.append([type(noun_obj), type(oper_obj), type(noun_obj_2)])
+        for rule_type in rules.rule_types:
+            for x in range(self.width):
+                for y in range(self.height):
+                    if x + len(rule_type) <= self.width:
+                        self.rule_list.extend(self.get_rules_from_pos_and_orient(rule_type, (x, y), spaces.D))
+                    if y + len(rule_type) <= self.height:
+                        self.rule_list.extend(self.get_rules_from_pos_and_orient(rule_type, (x, y), spaces.S))
     def find_rules(self, *match_rule: Optional[type[objects.Text]]) -> list[rules.Rule]:
         found_rules = []
         for rule in self.rule_list:

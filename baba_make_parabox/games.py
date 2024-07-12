@@ -55,12 +55,15 @@ def play(levelpack: levelpacks.levelpack) -> None:
     current_world_index = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
     level_info = {"win": False, "selected_level": None, "new_levels": [], "transform_to": []}
     history = [{"world_index": current_world_index, "level_name": current_level_name, "levelpack": copy.deepcopy(levelpack)}]
+    frame = 1
+    wiggle = 1
     window.blit(pygame.transform.scale(current_level.show_world(current_level.world_list[current_world_index], 1), (720, 720)), (0, 0))
     pygame.display.flip()
     while True:
-        if milliseconds >= 360000000:
-            milliseconds = 0
-        frame = (milliseconds // 333) % 3 + 1
+        frame += 1
+        if frame >= basics.options.setdefault("fpw", 5):
+            frame = 0
+            wiggle = wiggle % 3 + 1
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return
@@ -130,7 +133,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
             current_world_index += 1
         for key, value in keys.items():
             if value and cooldowns[key] == 0:
-                cooldowns[key] = basics.options.get("input_cooldown", 3)
+                cooldowns[key] = basics.options.setdefault("input_cooldown", 3)
         if refresh:
             levelpack.level_list.extend(level_info["new_levels"])
             transform_success = False
@@ -198,12 +201,12 @@ def play(levelpack: levelpacks.levelpack) -> None:
             level_info = {"win": False, "selected_level": None, "new_levels": [], "transform_to": []}
         current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
         window.fill("#000000")
-        window.blit(pygame.transform.scale(current_level.show_world(current_level.world_list[current_world_index], frame), (720, 720)), (0, 0))
+        window.blit(pygame.transform.scale(current_level.show_world(current_level.world_list[current_world_index], wiggle), (720, 720)), (0, 0))
         pygame.display.flip()
         for key in cooldowns:
             if cooldowns[key] > 0:
                 cooldowns[key] -= 1
-        milliseconds += clock.tick(basics.options.get("fps", 15))
+        clock.tick(basics.options.setdefault("fps", 30))
 
 def test() -> None:
     # Superworld

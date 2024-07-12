@@ -76,11 +76,14 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
     current_object = displays.set_sprite_state(current_object_type((0, 0), current_facing))
     window.blit(pygame.transform.scale(displays.sprites.get(current_object_type.sprite_name, current_object.sprite_state, 1), (72, 72)), (1208, 0))
     pygame.display.flip()
+    frame = 0
+    wiggle = 1
     editor_running = True
     while editor_running:
-        if milliseconds >= 360000000:
-            milliseconds = 0
-        frame = (milliseconds // 333) % 3 + 1
+        frame += 1
+        if frame >= basics.options.setdefault("fpw", 5):
+            frame = 0
+            wiggle = wiggle % 3 + 1
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 editor_running = False
@@ -129,14 +132,14 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                 history.append(copy.deepcopy(levelpack))
                 name = input("World's Name: ")
                 width = input("World's width: ")
-                width = int(width) if width != "" else basics.options.get("default_new_world", {"width": 9}).get("width", 9)
+                width = int(width) if width != "" else basics.options.setdefault("default_new_world", {"width": 9}).get("width", 9)
                 height = input("World's height: ")
-                height = int(height) if height != "" else basics.options.get("default_new_world", {"height": 9}).get("height", 9)
+                height = int(height) if height != "" else basics.options.setdefault("default_new_world", {"height": 9}).get("height", 9)
                 size = (width, height)
                 inf_tier = input("World's infinite tier: ")
                 inf_tier = int(inf_tier) if inf_tier != "" else 0
                 color = input("World's color: ")
-                color = pygame.Color(color if color != "" else basics.options.get("default_new_world", {"color": "#000000"}).get("color", "#000000"))
+                color = pygame.Color(color if color != "" else basics.options.setdefault("default_new_world", {"color": "#000000"}).get("color", "#000000"))
                 current_level.world_list.append(worlds.world(name, size, inf_tier, color))
                 current_world_index = len(current_level.world_list) - 1
                 world_changed = True
@@ -153,14 +156,14 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                 super_level = super_level if super_level != "" else current_level.name
                 name = input("World's Name: ")
                 width = input("World's width: ")
-                width = int(width) if width != "" else basics.options.get("default_new_world", {"width": 9}).get("width", 9)
+                width = int(width) if width != "" else basics.options.setdefault("default_new_world", {"width": 9}).get("width", 9)
                 height = input("World's height: ")
-                height = int(height) if height != "" else basics.options.get("default_new_world", {"height": 9}).get("height", 9)
+                height = int(height) if height != "" else basics.options.setdefault("default_new_world", {"height": 9}).get("height", 9)
                 size = (width, height)
                 inf_tier = input("World's Infinite Tier: ")
                 inf_tier = int(inf_tier) if inf_tier != "" else 0
                 color = input("World's color: ")
-                color = pygame.Color(color if color != "" else basics.options.get("default_new_world", {"color": "#000000"}).get("color", "#000000"))
+                color = pygame.Color(color if color != "" else basics.options.setdefault("default_new_world", {"color": "#000000"}).get("color", "#000000"))
                 default_world = worlds.world(name, size, inf_tier, color)
                 levelpack.level_list.append(levels.level(level_name, [default_world], super_level, name, inf_tier, levelpack.rule_list))
                 current_level_index = len(levelpack.level_list) - 1
@@ -271,7 +274,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
             world_changed = True
         for key, value in keys.items():
             if value and cooldowns[key] == 0:
-                cooldowns[key] = basics.options.get("input_cooldown", 3)
+                cooldowns[key] = basics.options.setdefault("input_cooldown", 3)
         if level_changed:
             current_level_index = current_level_index % len(levelpack.level_list) if current_level_index >= 0 else len(levelpack.level_list) - 1
             current_level = levelpack.level_list[current_level_index]
@@ -287,12 +290,12 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
         for world in current_level.world_list:
             world.set_sprite_states(0)
         window.fill("#000000")
-        window.blit(pygame.transform.scale(current_level.show_world(current_world, frame, cursor=current_cursor_pos), (720, 720)), (0, 0))
+        window.blit(pygame.transform.scale(current_level.show_world(current_world, wiggle, cursor=current_cursor_pos), (720, 720)), (0, 0))
         current_object = displays.set_sprite_state(current_object_type((0, 0), current_facing))
-        window.blit(pygame.transform.scale(displays.sprites.get(current_object_type.sprite_name, current_object.sprite_state, frame), (72, 72)), (1208, 0))
+        window.blit(pygame.transform.scale(displays.sprites.get(current_object_type.sprite_name, current_object.sprite_state, wiggle), (72, 72)), (1208, 0))
         pygame.display.flip()
         for key in cooldowns:
             if cooldowns[key] > 0:
                 cooldowns[key] -= 1
-        milliseconds += clock.tick(basics.options.get("fps", 15))
+        clock.tick(basics.options.setdefault("fps", 30))
     return levelpack

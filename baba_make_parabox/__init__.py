@@ -26,9 +26,10 @@ def main() -> None:
             games.test()
             pygame.quit()
             print("Thank you for testing Baba Make Parabox!")
+            basics.save_options(basics.options)
             return
         elif basics.args.edit:
-            default_new_world_settings = basics.options.get("default_new_world", {"width": 9, "height": 9, "color": "#000000"})
+            default_new_world_settings = basics.options.setdefault("default_new_world", {"width": 9, "height": 9, "color": "#000000"})
             size = (default_new_world_settings["width"], default_new_world_settings["height"])
             color = pygame.Color(default_new_world_settings["color"])
             if basics.args.input is not None:
@@ -50,6 +51,7 @@ def main() -> None:
                 with open(os.path.join("levelpacks", filename + ".json"), "w", encoding="ascii") as file:
                     json.dump(levelpack.to_json(), file, indent=4)
             pygame.quit()
+            basics.save_options(basics.options)
             print("Thank you for editing Baba Make Parabox!")
             return
         elif basics.args.input is not None:
@@ -57,6 +59,7 @@ def main() -> None:
             with open(os.path.join("levelpacks", filename + ".json"), "r", encoding="ascii") as file:
                 games.play(levelpacks.json_to_levelpack(json.load(file)))
             pygame.quit()
+            basics.save_options(basics.options)
             print("Thank you for playing Baba Make Parabox!")
             return
     else:
@@ -64,6 +67,7 @@ def main() -> None:
         print("Now the game will set a test world instead.")
         games.test()
         pygame.quit()
+        basics.save_options(basics.options)
         print("Thank you for testing Baba Make Parabox!")
         return
 

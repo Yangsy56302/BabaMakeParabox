@@ -1,5 +1,6 @@
 {
-    "fps": 15,
+    "fps": 30,
+    "fpw": 5,
     "input_cooldown": 3,
     "world_display_recursion_depth": 3,
     "default_new_world": {

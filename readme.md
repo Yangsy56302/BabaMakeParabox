@@ -76,6 +76,14 @@ Please remember:
 - Close Pygame Window: Save and quit.
 - Close Terminal: Do not save, just quit.
 
+## Misc
+
+### About options.json
+
+This game's settings file is named `options.json` in the root directory.
+You can try to modify the default settings if you know what `JSON` is.
+For example, `fps` means frames per second (theoretically, it is), and `fpw` means frames per wiggle.
+
 ## List of Versions
 
 | Number |    Time    | Informations |
@@ -103,6 +111,7 @@ Please remember:
 | 2.13   | 2024.07.12 | Esc is Out |
 | 2.2    | 2024.07.12 | World feeling Push and Options is Better |
 | 2.21   | 2024.07.12 | Bug is Fix; Patrick is You |
+| 2.22   | 2024.07.12 | Changes is Small |
 
 ## Bug Reports and Suggestions
 

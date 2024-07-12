@@ -6,7 +6,7 @@ import argparse
 
 pygame.init()
 
-versions = "2.21"
+versions = "2.22"
 
 BasicJsonElement = None | int | float | str
 JsonElement = list[BasicJsonElement] | list["JsonElement"] | dict[str, BasicJsonElement] | dict[str, "JsonElement"]
@@ -28,6 +28,11 @@ except json.JSONDecodeError as e:
     file = open(options_filename, "w", encoding="ascii")
     options = {}
     json.dump(options, file, indent=4)
+    file.close()
+
+def save_options(new_options) -> None:
+    file = open(options_filename, "w", encoding="ascii")
+    json.dump(new_options, file, indent=4)
     file.close()
 
 def remove_same_elements(a_list: list) -> list:
