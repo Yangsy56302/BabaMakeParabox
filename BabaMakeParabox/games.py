@@ -2,23 +2,17 @@ import os
 import copy
 import json
 
-import baba_make_parabox.basics as basics
-import baba_make_parabox.spaces as spaces
-import baba_make_parabox.objects as objects
-import baba_make_parabox.worlds as worlds
-import baba_make_parabox.displays as displays
-import baba_make_parabox.levels as levels
-import baba_make_parabox.levelpacks as levelpacks
+import BabaMakeParabox.basics as basics
+import BabaMakeParabox.spaces as spaces
+import BabaMakeParabox.objects as objects
+import BabaMakeParabox.worlds as worlds
+import BabaMakeParabox.displays as displays
+import BabaMakeParabox.levels as levels
+import BabaMakeParabox.levelpacks as levelpacks
 
 import pygame
 
 def play(levelpack: levelpacks.levelpack) -> None:
-    if not basics.arg_error:
-        if basics.args.output is not None:
-            filename: str = basics.args.output
-            filename = filename.lstrip()
-            with open(os.path.join("levelpacks", filename + ".json"), "w", encoding="ascii") as file:
-                json.dump(levelpack.to_json(), file, indent=4)
     print("Levelpack's Global Rule List:")
     for rule in levelpack.rule_list:
         str_list = []

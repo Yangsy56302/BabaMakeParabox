@@ -3,8 +3,8 @@ import pygame
 import os
 import random
 
-import baba_make_parabox.objects as objects
-import baba_make_parabox.spaces as spaces
+import BabaMakeParabox.objects as objects
+import BabaMakeParabox.spaces as spaces
 
 DARK_GRAY = pygame.Color("#242424")
 LIGHT_GRAY = pygame.Color("#737373")

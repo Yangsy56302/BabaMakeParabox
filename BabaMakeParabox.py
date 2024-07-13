@@ -1,3 +1,3 @@
-import baba_make_parabox as bmp
+import BabaMakeParabox as bmp
 
 bmp.main()

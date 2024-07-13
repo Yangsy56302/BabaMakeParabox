@@ -2,11 +2,11 @@ from typing import Any, Optional
 import pygame
 import uuid
 
-import baba_make_parabox.basics as basics
-import baba_make_parabox.spaces as spaces
-import baba_make_parabox.objects as objects
-import baba_make_parabox.rules as rules
-import baba_make_parabox.displays as displays
+import BabaMakeParabox.basics as basics
+import BabaMakeParabox.spaces as spaces
+import BabaMakeParabox.objects as objects
+import BabaMakeParabox.rules as rules
+import BabaMakeParabox.displays as displays
 
 def match_pos(obj: objects.Object, pos: spaces.Coord) -> bool:
     return obj.pos == pos

@@ -1,6 +1,6 @@
 from typing import Optional
 
-import baba_make_parabox.objects as objects
+import BabaMakeParabox.objects as objects
 
 Rule = list[type[objects.Text]]
 

@@ -1,11 +1,11 @@
-import baba_make_parabox.basics as basics
-import baba_make_parabox.spaces as spaces
-import baba_make_parabox.objects as objects
-import baba_make_parabox.rules as rules
-import baba_make_parabox.worlds as worlds
-import baba_make_parabox.displays as displays
-import baba_make_parabox.levels as levels
-import baba_make_parabox.levelpacks as levelpacks
+import BabaMakeParabox.basics as basics
+import BabaMakeParabox.spaces as spaces
+import BabaMakeParabox.objects as objects
+import BabaMakeParabox.rules as rules
+import BabaMakeParabox.worlds as worlds
+import BabaMakeParabox.displays as displays
+import BabaMakeParabox.levels as levels
+import BabaMakeParabox.levelpacks as levelpacks
 
 import copy
 import pygame

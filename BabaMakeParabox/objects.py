@@ -2,8 +2,8 @@ from typing import Any, Optional
 import math
 import uuid
 
-import baba_make_parabox.basics as basics
-import baba_make_parabox.spaces as spaces
+import BabaMakeParabox.basics as basics
+import BabaMakeParabox.spaces as spaces
 
 class Object(object):
     class_name: str = "Object"

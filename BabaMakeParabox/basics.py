@@ -54,9 +54,9 @@ parser = ArgumentParser(exit_on_error=False,
                         description="The information of running a fan-made sokoban-like metagame by Yangsy56302 in terminal",
                         epilog="Thank you argparse")
 parser.add_argument("-v", "--versions", dest="versions", action="store_true", help="show the game's version")
-parser.add_argument("-i", "--input", dest="input", type=str, metavar="filename", help="input or create new levelpack from json file at ./levelpacks")
+parser.add_argument("-i", "--input", dest="input", type=str, default="", metavar="filename", help="input or create new levelpack from json file at ./levelpacks")
 parser.add_argument("-t", "--test", dest="test", action="store_true", default=False, help="play the test levelpack")
-parser.add_argument("-o", "--output", dest="output", type=str, metavar="filename", help="output levelpack to json file at ./levelpacks")
+parser.add_argument("-o", "--output", dest="output", type=str, default="", metavar="filename", help="output levelpack to json file at ./levelpacks")
 parser.add_argument("-e", "--edit", dest="edit", action="store_true", default=False, help="open levelpack in editor mode")
 parser.add_argument("bp_1", type=str, default="808", help="bypass pyinstaller, do not use * 1")
 parser.add_argument("bp_2", type=str, default="388", help="bypass pyinstaller, do not use * 2")
