@@ -78,6 +78,10 @@
 
 ## 杂项
 
+### 已知的BUG
+
+- 在`MOVE`物体移动时，`STOP`无效。
+
 ### 关于 options.json
 
 位于游戏根目录下的`options.json`是本游戏的设置文件。
@@ -113,6 +117,7 @@
 | 2.21   | 2024.07.12 | Bug is Fix; Patrick is You |
 | 2.22   | 2024.07.12 | Changes is Small |
 | 2.3    | 2024.07.13 | Baba is not You; Rule is Recursion |
+| 2.31   | 2024.07.14 | Baba is More and You |
 
 ## 报告漏洞和提出建议
 

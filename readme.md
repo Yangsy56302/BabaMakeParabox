@@ -78,6 +78,10 @@ Please remember:
 
 ## Misc
 
+### Known Bugs
+
+- `MOVE` overwrite `STOP` when moving.
+
 ### About options.json
 
 This game's settings file is named `options.json` in the root directory.
@@ -113,6 +117,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 2.21   | 2024.07.12 | Bug is Fix; Patrick is You |
 | 2.22   | 2024.07.12 | Changes is Small |
 | 2.3    | 2024.07.13 | Baba is not You; Rule is Recursion |
+| 2.31   | 2024.07.14 | Baba is More and You |
 
 ## Bug Reports and Suggestions
 
