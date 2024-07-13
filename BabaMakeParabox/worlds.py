@@ -84,32 +84,33 @@ class world(object):
         return [o for o in self.object_list if isinstance(o, objects.Level)]
     def get_levels_from_pos(self, pos: spaces.Coord) -> list[objects.Level]:
         return [o for o in self.object_list if isinstance(o, objects.Level) and match_pos(o, pos)]
-    def get_rules_from_pos_and_orient(self, rule: rules.Rule, pos: spaces.Coord, orient: spaces.Orient) -> list[rules.Rule]:
+    def get_rules_from_pos_and_orient(self, rule: rules.Rule, pos: spaces.Coord, orient: spaces.Orient) -> Optional[list[rules.Rule]]:
+        if len(rule) == 0:
+            return [[]]
         return_rules: list[rules.Rule] = []
         text_objs = self.get_objs_from_pos_and_type(pos, objects.Text)
         word_objs = filter(lambda o: o.has_prop(objects.WORD) and match_pos(o, pos), self.object_list)
         text_objs.extend(map(lambda o: objects.nouns_objs_dicts.get_noun(type(o))(o.pos), word_objs))
         if len(text_objs) == 0:
-            return []
-        if len(rule) == 1:
-            for obj in text_objs:
-                if isinstance(obj, rule[0]):
-                    return_rules.append([type(obj)])
-            return return_rules
+            return None
         else:
-            remain_rules = self.get_rules_from_pos_and_orient(rule[1:], spaces.pos_facing(pos, orient), orient)
-            if len(remain_rules) == 0:
-                return []
-            getted_rules: list[rules.Rule] = []
+            objs: list[type[objects.Text]] = []
             for obj in text_objs:
                 if isinstance(obj, rule[0]):
-                    getted_rules.append([type(obj)])
-            if len(getted_rules) == 0:
-                return []
+                    objs.append(type(obj))
+            not_objs = self.get_objs_from_pos_and_type(pos, objects.NOT)
+            if len(not_objs) != 0 and issubclass(rule[0], (objects.Noun, objects.Property)):
+                remain_not_rules = self.get_rules_from_pos_and_orient(rule, spaces.pos_facing(pos, orient), orient)
+            remain_rules = self.get_rules_from_pos_and_orient(rule[1:], spaces.pos_facing(pos, orient), orient)
+            if remain_rules is None:
+                return None
             return_rules = []
             for remain_rule in remain_rules:
-                for getted_rule in getted_rules:
-                    return_rules.append(getted_rule + remain_rule)
+                for obj in objs:
+                    return_rules.append([obj] + remain_rule)
+            if len(not_objs) != 0 and issubclass(rule[0], (objects.Noun, objects.Property)) and remain_not_rules is not None:
+                for remain_not_rule in remain_not_rules:
+                    return_rules.append([objects.NOT] + remain_not_rule)
             return return_rules
     def update_rules(self) -> None:
         self.rule_list = []
@@ -117,9 +118,13 @@ class world(object):
             for x in range(self.width):
                 for y in range(self.height):
                     if x + len(rule_type) <= self.width:
-                        self.rule_list.extend(self.get_rules_from_pos_and_orient(rule_type, (x, y), spaces.D))
+                        new_rule_list = self.get_rules_from_pos_and_orient(rule_type, (x, y), spaces.D)
+                        if new_rule_list is not None:
+                            self.rule_list.extend(new_rule_list)
                     if y + len(rule_type) <= self.height:
-                        self.rule_list.extend(self.get_rules_from_pos_and_orient(rule_type, (x, y), spaces.S))
+                        new_rule_list = self.get_rules_from_pos_and_orient(rule_type, (x, y), spaces.S)
+                        if new_rule_list is not None:
+                            self.rule_list.extend(new_rule_list)
     def find_rules(self, *match_rule: Optional[type[objects.Text]]) -> list[rules.Rule]:
         found_rules = []
         for rule in self.rule_list:

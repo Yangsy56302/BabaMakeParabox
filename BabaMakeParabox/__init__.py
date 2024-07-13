@@ -55,12 +55,13 @@ def main() -> None:
             print("Thank you for editing Baba Make Parabox!")
             return
         elif basics.args.input != "":
-            input_filename: str = basics.args.output.lstrip()
+            input_filename: str = basics.args.input.lstrip()
             with open(os.path.join("levelpacks", input_filename + ".json"), "r", encoding="ascii") as file:
                 levelpack = levelpacks.json_to_levelpack(json.load(file))
-                output_filename: str = basics.args.input.lstrip()
-                with open(os.path.join("levelpacks", output_filename + ".json"), "w", encoding="ascii") as file:
-                    json.dump(levelpack.to_json(), file, indent=4)
+                if basics.args.input != "":
+                    output_filename: str = basics.args.output.lstrip()
+                    with open(os.path.join("levelpacks", output_filename + ".json"), "w", encoding="ascii") as file:
+                        json.dump(levelpack.to_json(), file, indent=4)
                 games.play(levelpack)
             pygame.quit()
             basics.save_options(basics.options)

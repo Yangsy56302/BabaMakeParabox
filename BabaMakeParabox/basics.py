@@ -6,7 +6,7 @@ import argparse
 
 pygame.init()
 
-versions = "2.22"
+versions = "2.3"
 
 BasicJsonElement = None | int | float | str
 JsonElement = list[BasicJsonElement] | list["JsonElement"] | dict[str, BasicJsonElement] | dict[str, "JsonElement"]
@@ -35,7 +35,7 @@ def save_options(new_options) -> None:
     json.dump(new_options, file, indent=4)
     file.close()
 
-def remove_same_elements(a_list: list) -> list:
+def remove_same_elements[T](a_list: list[T]) -> list[T]:
     e_list = list(enumerate(a_list))
     r_list = []
     for i, ie in e_list:

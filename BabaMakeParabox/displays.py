@@ -179,6 +179,7 @@ sprite_colors["text_world"] = PINK
 sprite_colors["text_clone"] = PINK
 sprite_colors["text_text"] = MAGENTA
 sprite_colors["text_is"] = WHITE
+sprite_colors["text_not"] = LIGHT_RED
 sprite_colors["text_you"] = MAGENTA
 sprite_colors["text_move"] = LIGHT_GREEN
 sprite_colors["text_stop"] = DARK_GREEN

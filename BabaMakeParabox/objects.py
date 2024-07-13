@@ -14,6 +14,7 @@ class Object(object):
         self.y: int = pos[1]
         self.facing: spaces.Orient = facing
         self.properties: list[type["Property"]] = []
+        self.negate_properties: list[type["Property"]] = []
         self.moved: bool = False
         self.sprite_state: int = 0
     def __eq__(self, obj: "Object") -> bool:
@@ -35,22 +36,38 @@ class Object(object):
     def pos(self) -> None:
         del self.x
         del self.y
-    def new_prop(self, prop: type["Property"]) -> None:
-        if prop not in self.properties:
-            self.properties.append(prop)
-    def del_prop(self, prop: type["Property"]) -> None:
-        if prop in self.properties:
-            self.properties.remove(prop)
-    def has_prop(self, prop: type["Property"]) -> bool:
-        if prop in self.properties:
-            return True
-        return False
-    def has_props(self, props: list[type["Property"]]) -> bool:
-        for prop in props:
+    def new_prop(self, prop: type["Property"], negate: bool = False) -> None:
+        if negate:
+            if prop not in self.negate_properties:
+                self.negate_properties.append(prop)
+        else:
             if prop not in self.properties:
-                return False
-        return True
-    def clear_prop(self) -> None:
+                self.properties.append(prop)
+    def del_prop(self, prop: type["Property"], negate: bool = False) -> None:
+        if negate:
+            if prop in self.negate_properties:
+                self.negate_properties.remove(prop)
+        else:
+            if prop in self.properties:
+                self.properties.remove(prop)
+    def has_prop(self, prop: type["Property"], negate: bool = False) -> bool:
+        if negate:
+            return prop in self.negate_properties
+        else:
+            return prop in self.properties
+    def has_props(self, props: list[type["Property"]], negate: bool = False) -> bool:
+        if negate:
+            for prop in props:
+                if prop not in self.negate_properties:
+                    return False
+            return True
+        else:
+            for prop in props:
+                if prop not in self.properties:
+                    return False
+            return True
+    def clear_prop(self, negate: bool = False) -> None:
+        self.negate_properties = []
         self.properties = []
     def to_json(self) -> dict[str, basics.JsonObject]:
         return {"type": self.class_name, "position": [self.x, self.y], "orientation": spaces.orient_to_str(self.facing)} # type: ignore
@@ -529,6 +546,14 @@ class IS(Operator):
     def __repr__(self) -> str:
         return repr(super())
 
+class NOT(Text):
+    class_name: str = "NOT"
+    sprite_name: str = "text_not"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 class YOU(Property):
     class_name: str = "YOU"
     sprite_name: str = "text_you"
@@ -720,6 +745,7 @@ object_name: dict[str, type[Object]] = {
     "WORLD": WORLD,
     "CLONE": CLONE,
     "IS": IS,
+    "NOT": NOT,
     "YOU": YOU,
     "MOVE": MOVE,
     "STOP": STOP,

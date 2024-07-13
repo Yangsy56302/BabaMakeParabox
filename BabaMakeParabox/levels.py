@@ -50,31 +50,76 @@ class level(object):
                 if name == obj.name and inf_tier == obj.inf_tier:
                     return (super_world, obj)
         return None
+    def cancel_rules(self, world: worlds.world) -> None:
+        rule_level_list: dict[int, list[rules.Rule]] = {}
+        for rule in world.rule_list:
+            is_passed = False
+            not_passed = False
+            not_count = 0
+            for obj_type in rule:
+                if is_passed and not not_passed:
+                    if obj_type == objects.NOT:
+                        not_count += 1
+                    else:
+                        not_passed = True
+                if obj_type == objects.IS:
+                    is_passed = True
+            rule_level_list[not_count] = rule_level_list.get(not_count, []) + [rule]
+        new_rule_list: list[rules.Rule] = []
+        passed: list[type[objects.Text]] = []
+        for _, rule_list in sorted(rule_level_list.items(), key=lambda i: i[0], reverse=True):
+            for rule in rule_list:
+                if rule[-1] not in passed:
+                    new_rule_list.append(rule)
+                    passed.append(rule[-1])
+        world.rule_list = new_rule_list
+    def recursion_rules(self, world: worlds.world, rule_list: Optional[list[rules.Rule]] = None, passed: Optional[list[worlds.world]] = None) -> None:
+        passed = passed if passed is not None else []
+        if world in passed:
+            return
+        passed.append(world)
+        rule_list = rule_list if rule_list is not None else []
+        world.rule_list.extend(rule_list)
+        rule_list = world.rule_list
+        sub_world_objs = world.get_worlds()
+        if len(sub_world_objs) == 0:
+            return
+        for sub_world_obj in sub_world_objs:
+            sub_world = self.get_exist_world(sub_world_obj.name, sub_world_obj.inf_tier)
+            self.recursion_rules(sub_world, rule_list, passed)
     def update_rules(self) -> None:
         for world in self.world_list:
             for obj in world.object_list:
                 obj.clear_prop()
             world.update_rules()
         for world in self.world_list:
-            for prop in objects.object_name.values():
-                if issubclass(prop, objects.Property):
-                    prop_rules = world.find_rules(objects.Noun, objects.IS, prop) + self.find_rules(objects.Noun, objects.IS, prop)
-                    for obj_type in [t[0] for t in prop_rules]:
-                        for obj in world.get_objs_from_type(objects.nouns_objs_dicts.get_obj(obj_type)): # type: ignore
-                            obj: objects.Object
-                            obj.new_prop(prop)
+            self.recursion_rules(world)
+            world.rule_list.extend([r for r in self.rule_list if r[-1] is objects.WORD])
+            world.rule_list = basics.remove_same_elements(world.rule_list)
+            self.cancel_rules(world)
+        for world in self.world_list:
+            word_rules = world.find_rules(objects.Noun, objects.IS, objects.WORD) + self.find_rules(objects.Noun, objects.IS, objects.WORD)
+            for obj_type in [t[0] for t in word_rules]:
+                for obj in world.get_objs_from_type(objects.nouns_objs_dicts.get_obj(obj_type)): # type: ignore
+                    obj: objects.Object
+                    obj.new_prop(objects.WORD)
         for world in self.world_list:
             world.update_rules()
             for obj in world.object_list:
                 obj.clear_prop()
         for world in self.world_list:
-            for prop in objects.object_name.values():
-                if issubclass(prop, objects.Property):
-                    prop_rules = world.find_rules(objects.Noun, objects.IS, prop) + self.find_rules(objects.Noun, objects.IS, prop)
-                    for obj_type in [t[0] for t in prop_rules]:
-                        for obj in world.get_objs_from_type(objects.nouns_objs_dicts.get_obj(obj_type)): # type: ignore
-                            obj: objects.Object
-                            obj.new_prop(prop)
+            self.recursion_rules(world)
+            world.rule_list.extend(self.rule_list)
+            world.rule_list = basics.remove_same_elements(world.rule_list)
+            self.cancel_rules(world)
+        for world in self.world_list:
+            prop_rules = world.find_rules(objects.Noun, objects.IS, objects.Property) + self.find_rules(objects.Noun, objects.IS, objects.Property)
+            for obj_type in [t[0] for t in prop_rules]:
+                for prop_rule in [t for t in prop_rules if issubclass(obj_type, t[0])]:
+                    prop_type = prop_rule[-1]
+                    for obj in world.get_objs_from_type(objects.nouns_objs_dicts.get_obj(obj_type)): # type: ignore
+                        obj: objects.Object
+                        obj.new_prop(prop_type, prop_rule.count(objects.NOT) % 2 == 1) # type: ignore
     def get_move_list(self, world: worlds.world, obj: objects.Object, pos: spaces.Coord, facing: spaces.Orient, passed: Optional[list[worlds.world]] = None, transnum: Optional[float] = None, depth: int = 1) -> Optional[list[tuple[objects.Object, worlds.world, spaces.Coord, spaces.Orient]]]:
         if depth > 127:
             return None
@@ -331,17 +376,15 @@ class level(object):
             for uuid in delete_list:
                 world.del_obj(uuid)
     def transform(self) -> tuple[list["level"], list[objects.Object]]:
-        global_transform_rules = self.find_rules(objects.Noun, objects.IS, objects.Noun)
         new_levels: list[level] = []
         transform_to: list[objects.Object] = []
         for world in self.world_list:
             transform_rules = world.find_rules(objects.Noun, objects.IS, objects.Noun)
-            transform_rules.extend(global_transform_rules)
             world_transform_to: list[objects.Object] = []
             clone_transform_to: list[objects.Object] = []
             for rule in transform_rules:
                 old_type = objects.nouns_objs_dicts.get_obj(rule[0]) # type: ignore
-                new_type = objects.nouns_objs_dicts.get_obj(rule[2]) # type: ignore
+                new_type = objects.nouns_objs_dicts.get_obj(rule[-1]) # type: ignore
                 if issubclass(old_type, objects.Level):
                     if issubclass(new_type, objects.Level):
                         continue
@@ -510,7 +553,7 @@ class level(object):
                 obj_surface = displays.sprites.get(obj.sprite_name, obj.sprite_state, frame).copy()
             surface_pos = (obj.x * pixel_sprite_size, obj.y * pixel_sprite_size)
             obj_surface_list.append((surface_pos, obj_surface, obj))
-        sorted_obj_surface_list = map(lambda o: list(map(lambda t: isinstance(o[2], t), displays.order)).index(True), obj_surface_list)
+        sorted_obj_surface_list = map(lambda o: list(map(lambda t: isinstance(o[-1], t), displays.order)).index(True), obj_surface_list)
         sorted_obj_surface_list = map(lambda t: t[1], sorted(zip(sorted_obj_surface_list, obj_surface_list), key=lambda t: t[0]))
         for pos, surface, _ in sorted_obj_surface_list:
             world_surface.blit(pygame.transform.scale(surface, (pixel_sprite_size, pixel_sprite_size)), pos)

@@ -13,7 +13,7 @@ and batch files in `windows` folder only works when execution files exists.
 
 **DO NOT CLOSE OR CLICK THE TERMINAL**
 **UNLESS YOU NEED TO INPUT SOMETHING INTO TERMINAL**
-**OR YOU KNOW WHAT YOU ARE DOING.**
+**OR YOU DO KNOW WHAT YOU ARE DOING.**
 
 If you want to run the source code, download These Things:
 - **Python** **_(latest)_**: [Link](https://www.python.org/downloads/)
@@ -23,13 +23,13 @@ If you want to run the source code, download These Things:
 
 Run `test.bat` to start a official game test.
 
-Run `input.bat` to play a levelpack from json file in the `levelpacks*`* folder.
+Run `play.bat` to play a levelpack from json file in the `levelpacks*`* folder.
 
 Run `edit.bat` to edit and save a levelpack from json file in the `levelpacks` folder, or create one.
 
 You can run `help.bat` for more information with how to run the game in terminal.
 
-If you need to make an .exe file, run `py_2_exe.bat`.
+If you need to make an .exe file, run `py2exe.bat`.
 
 ### How to control
 
@@ -112,6 +112,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 2.2    | 2024.07.12 | World feeling Push and Options is Better |
 | 2.21   | 2024.07.12 | Bug is Fix; Patrick is You |
 | 2.22   | 2024.07.12 | Changes is Small |
+| 2.3    | 2024.07.13 | Baba is not You; Rule is Recursion |
 
 ## Bug Reports and Suggestions
 

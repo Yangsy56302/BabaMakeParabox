@@ -23,13 +23,13 @@
 
 运行`test.bat`以开始该游戏的官方测试。
 
-运行`input.bat`以从`levelpacks`文件夹内读取关卡包的JSON文件来开始游戏。
+运行`play.bat`以从`levelpacks`文件夹内读取关卡包的JSON文件来开始游戏。
 
 运行`edit.bat`以编辑`levelpacks`文件夹内的关卡包文件并在原地保存，若无文件则会新建一份。
 
 可以运行`help.bat`以获取更多关于如何在终端运行该游戏的说明。
 
-如果你需要打包EXE文件，运行`py_2_exe.bat`。
+如果你需要打包EXE文件，运行`py2exe.bat`。
 
 ### 如何控制
 
@@ -112,6 +112,7 @@
 | 2.2    | 2024.07.12 | World feeling Push and Options is Better |
 | 2.21   | 2024.07.12 | Bug is Fix; Patrick is You |
 | 2.22   | 2024.07.12 | Changes is Small |
+| 2.3    | 2024.07.13 | Baba is not You; Rule is Recursion |
 
 ## 报告漏洞和提出建议
 

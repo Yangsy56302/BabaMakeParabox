@@ -179,7 +179,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                 world_changed = True
         elif keys[keybinds["R"]] and cooldowns[keybinds["R"]] == 0:
             text_rule = input("Levelpack's Global Rule: ").upper().split()
-            type_rule: list[type[objects.Text]] = []
+            type_rule: rules.Rule = []
             valid_input = True
             for text in text_rule:
                 obj_type = objects.object_name.get(text)

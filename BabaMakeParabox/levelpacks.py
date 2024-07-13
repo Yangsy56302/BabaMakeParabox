@@ -2,11 +2,8 @@ from typing import Any, Optional
 import pygame
 
 import BabaMakeParabox.basics as basics
-import BabaMakeParabox.spaces as spaces
 import BabaMakeParabox.objects as objects
 import BabaMakeParabox.rules as rules
-import BabaMakeParabox.worlds as worlds
-import BabaMakeParabox.displays as displays
 import BabaMakeParabox.levels as levels
 
 class levelpack(object):
