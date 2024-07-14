@@ -121,6 +121,7 @@
 | 2.31   | 2024.07.14 | Baba is More and You |
 | 2.4    | 2024.07.14 | not Baba is You; Level is Baba |
 | 2.41   | 2024.07.14 | Bug on World feeling Push is Fix |
+| 2.42   | 2024.07.14 | World is You |
 
 ## 报告漏洞和提出建议
 
