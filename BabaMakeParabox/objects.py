@@ -13,8 +13,8 @@ class Object(object):
         self.x: int = pos[0]
         self.y: int = pos[1]
         self.facing: spaces.Orient = facing
-        self.properties: list[type["Property"]] = []
-        self.negate_properties: list[type["Property"]] = []
+        self.properties: list[type["Text"]] = []
+        self.negate_properties: list[type["Text"]] = []
         self.moved: bool = False
         self.sprite_state: int = 0
     def __eq__(self, obj: "Object") -> bool:
@@ -36,26 +36,26 @@ class Object(object):
     def pos(self) -> None:
         del self.x
         del self.y
-    def new_prop(self, prop: type["Property"], negate: bool = False) -> None:
+    def new_prop(self, prop: type["Text"], negate: bool = False) -> None:
         if negate:
             if prop not in self.negate_properties:
                 self.negate_properties.append(prop)
         else:
             if prop not in self.properties:
                 self.properties.append(prop)
-    def del_prop(self, prop: type["Property"], negate: bool = False) -> None:
+    def del_prop(self, prop: type["Text"], negate: bool = False) -> None:
         if negate:
             if prop in self.negate_properties:
                 self.negate_properties.remove(prop)
         else:
             if prop in self.properties:
                 self.properties.remove(prop)
-    def has_prop(self, prop: type["Property"], negate: bool = False) -> bool:
+    def has_prop(self, prop: type["Text"], negate: bool = False) -> bool:
         if negate:
             return prop in self.negate_properties
         else:
             return prop in self.properties
-    def has_props(self, props: list[type["Property"]], negate: bool = False) -> bool:
+    def has_props(self, props: list[type["Text"]], negate: bool = False) -> bool:
         if negate:
             for prop in props:
                 if prop not in self.negate_properties:
@@ -273,6 +273,14 @@ class Flag(Static):
 class Cursor(Static):
     class_name: str = "Cursor"
     sprite_name: str = "cursor"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class Empty(Static):
+    class_name: str = "Empty"
+    sprite_name: str = "empty"
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -506,6 +514,14 @@ class CURSOR(Noun):
     def __repr__(self) -> str:
         return repr(super())
 
+class EMPTY(Noun):
+    class_name: str = "EMPTY"
+    sprite_name: str = "text_empty"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 class TEXT(Noun):
     class_name: str = "TEXT"
     sprite_name: str = "text_text"
@@ -721,6 +737,7 @@ object_name: dict[str, type[Object]] = {
     "Sun": Sun,
     "Flag": Flag,
     "Cursor": Cursor,
+    "Empty": Empty,
     "Level": Level,
     "World": World,
     "Clone": Clone,
@@ -740,6 +757,7 @@ object_name: dict[str, type[Object]] = {
     "SUN": SUN,
     "FLAG": FLAG,
     "CURSOR": CURSOR,
+    "EMPTY": EMPTY,
     "TEXT": TEXT,
     "LEVEL": LEVEL,
     "WORLD": WORLD,
@@ -795,7 +813,11 @@ nouns_objs_dicts.new_pair(ROCK, Rock)
 nouns_objs_dicts.new_pair(SUN, Sun)
 nouns_objs_dicts.new_pair(FLAG, Flag)
 nouns_objs_dicts.new_pair(CURSOR, Cursor)
+nouns_objs_dicts.new_pair(EMPTY, Empty)
 nouns_objs_dicts.new_pair(LEVEL, Level)
 nouns_objs_dicts.new_pair(WORLD, World)
 nouns_objs_dicts.new_pair(CLONE, Clone)
 nouns_objs_dicts.new_pair(TEXT, Text)
+
+not_in_all: tuple[type[Object], ...] = (Text, Level, WorldPointer)
+not_in_editor: tuple[type[Object], ...] = (Empty, EMPTY)

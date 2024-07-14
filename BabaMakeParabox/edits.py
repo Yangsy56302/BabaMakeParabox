@@ -117,8 +117,12 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
             current_facing = spaces.D
         elif keys[keybinds["Q"]] and cooldowns[keybinds["Q"]] == 0:
             current_object_index -= 1
+            while object_list[current_object_index] in objects.not_in_editor:
+                current_object_index -= 1
         elif keys[keybinds["E"]] and cooldowns[keybinds["E"]] == 0:
             current_object_index += 1
+            while object_list[current_object_index] in objects.not_in_editor:
+                current_object_index += 1
         elif keys[keybinds["\n"]] and cooldowns[keybinds["\n"]] == 0:
             history.append(copy.deepcopy(levelpack))
             if issubclass(current_object_type, objects.Level):

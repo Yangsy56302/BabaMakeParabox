@@ -78,9 +78,10 @@
 
 ## 杂项
 
-### 已知的BUG
+### 漏洞清单
 
-- 在`MOVE`物体移动时，`STOP`无效。
+- 在`MOVE`物体移动时，其同类的`STOP`无效。
+- 即使有`LEVEL IS WORD`，`Level IS BABA`等转换仍然无效。
 
 ### 关于 options.json
 
@@ -118,6 +119,7 @@
 | 2.22   | 2024.07.12 | Changes is Small |
 | 2.3    | 2024.07.13 | Baba is not You; Rule is Recursion |
 | 2.31   | 2024.07.14 | Baba is More and You |
+| 2.4    | 2024.07.14 | not Baba is You; Level is Baba |
 
 ## 报告漏洞和提出建议
 

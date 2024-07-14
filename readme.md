@@ -78,9 +78,10 @@ Please remember:
 
 ## Misc
 
-### Known Bugs
+### Bug List
 
 - `MOVE` overwrite `STOP` when moving.
+- Even if `LEVEL IS WORD`, `Level IS BABA` still not working.
 
 ### About options.json
 
@@ -118,6 +119,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 2.22   | 2024.07.12 | Changes is Small |
 | 2.3    | 2024.07.13 | Baba is not You; Rule is Recursion |
 | 2.31   | 2024.07.14 | Baba is More and You |
+| 2.4    | 2024.07.14 | not Baba is You; Level is Baba |
 
 ## Bug Reports and Suggestions
 

@@ -93,65 +93,73 @@ class world(object):
         text_objs.extend(map(lambda o: objects.nouns_objs_dicts.get_noun(type(o))(o.pos), word_objs))
         if len(text_objs) == 0:
             return None
-        else:
-            objs: list[type[objects.Text]] = []
-            for obj in text_objs:
-                if isinstance(obj, rule[0]):
-                    objs.append(type(obj))
-            not_objs = self.get_objs_from_pos_and_type(pos, objects.NOT)
-            if len(not_objs) != 0 and issubclass(rule[0], (objects.Noun, objects.Property)):
-                remain_not_rules = self.get_rules_from_pos_and_orient(rule, spaces.pos_facing(pos, orient), orient)
-            remain_rules = self.get_rules_from_pos_and_orient(rule[1:], spaces.pos_facing(pos, orient), orient)
-            if remain_rules is None:
-                return None
-            return_rules = []
+        objs: list[type[objects.Text]] = []
+        for obj in text_objs:
+            if isinstance(obj, rule[0]):
+                objs.append(type(obj))
+        not_objs = self.get_objs_from_pos_and_type(pos, objects.NOT)
+        remain_not_rules = None
+        if len(not_objs) != 0 and issubclass(rule[0], (objects.Noun, objects.Property)):
+            remain_not_rules = self.get_rules_from_pos_and_orient(rule, spaces.pos_facing(pos, orient), orient)
+        remain_rules = self.get_rules_from_pos_and_orient(rule[1:], spaces.pos_facing(pos, orient), orient)
+        return_rules = []
+        if remain_rules is not None:
             for remain_rule in remain_rules:
                 for obj in objs:
                     return_rules.append([obj] + remain_rule)
-            if len(not_objs) != 0 and issubclass(rule[0], (objects.Noun, objects.Property)) and remain_not_rules is not None:
-                for remain_not_rule in remain_not_rules:
-                    return_rules.append([objects.NOT] + remain_not_rule)
-            return return_rules
-    def update_rules(self) -> None:
-        self.rule_list = []
+        if remain_not_rules is not None:
+            for remain_not_rule in remain_not_rules:
+                return_rules.append([objects.NOT] + remain_not_rule)
+                if remain_not_rule in return_rules:
+                    return_rules.remove(remain_not_rule)
+        return return_rules
+    def get_rules(self) -> list[rules.Rule]:
+        rule_list: list[rules.Rule] = []
+        x_rule_dict: dict[int, list[rules.Rule]] = {}
+        y_rule_dict: dict[int, list[rules.Rule]] = {}
         for rule_type in rules.rule_types:
             for x in range(self.width):
-                for y in range(self.height):
-                    if x + len(rule_type) <= self.width:
-                        new_rule_list = self.get_rules_from_pos_and_orient(rule_type, (x, y), spaces.D)
-                        if new_rule_list is not None:
-                            self.rule_list.extend(new_rule_list)
-                    if y + len(rule_type) <= self.height:
-                        new_rule_list = self.get_rules_from_pos_and_orient(rule_type, (x, y), spaces.S)
-                        if new_rule_list is not None:
-                            self.rule_list.extend(new_rule_list)
-    def find_rules(self, *match_rule: Optional[type[objects.Text]]) -> list[rules.Rule]:
-        found_rules = []
-        for rule in self.rule_list:
-            if len(rule) != len(match_rule):
-                continue
-            not_match = False
-            for i in range(len(rule)):
-                text_type = match_rule[i]
-                if text_type is not None:
-                    if not issubclass(rule[i], text_type):
-                        not_match = True
-                        break
-            if not_match:
-                continue
-            found_rules.append(rule)
-        return found_rules
+                for y in range(self.height - len(rule_type) + 1):
+                    y_rule_dict.setdefault(y, [])
+                    new_rule_list = self.get_rules_from_pos_and_orient(rule_type, (x, y), spaces.S)
+                    if new_rule_list is not None:
+                        for rule_index in range(len(new_rule_list)):
+                            part_of_old_rule = False
+                            for old_y, old_rule_list in y_rule_dict.items():
+                                old_rule_list_test = list(map(lambda r: list(r[y - old_y:]), old_rule_list))
+                                if list(new_rule_list[rule_index]) in old_rule_list_test:
+                                    part_of_old_rule = True
+                            if not part_of_old_rule:
+                                y_rule_dict[y].append(new_rule_list[rule_index])
+            for y in range(self.height):
+                for x in range(self.width - len(rule_type) + 1):
+                    x_rule_dict.setdefault(x, [])
+                    new_rule_list = self.get_rules_from_pos_and_orient(rule_type, (x, y), spaces.D)
+                    if new_rule_list is not None:
+                        for rule_index in range(len(new_rule_list)):
+                            part_of_old_rule = False
+                            for old_x, old_rule_list in x_rule_dict.items():
+                                old_rule_list_test = list(map(lambda r: list(r[x - old_x:]), old_rule_list))
+                                if list(new_rule_list[rule_index]) in old_rule_list_test:
+                                    part_of_old_rule = True
+                            if not part_of_old_rule:
+                                x_rule_dict[x].append(new_rule_list[rule_index])
+        for x_rule_list in x_rule_dict.values():
+            rule_list.extend(x_rule_list)
+        for y_rule_list in y_rule_dict.values():
+            rule_list.extend(y_rule_list)
+        return rule_list
     def set_sprite_states(self, round_num: int = 0) -> None:
         for obj in self.object_list:
             if isinstance(obj, objects.Tiled):
                 w_pos = spaces.pos_facing(obj.pos, spaces.W)
-                w = self.out_of_range(w_pos) or len(self.get_objs_from_pos_and_type(w_pos, type(obj))) != 0
+                w = len(self.get_objs_from_pos_and_type(w_pos, type(obj))) != 0
                 s_pos = spaces.pos_facing(obj.pos, spaces.S)
-                s = self.out_of_range(s_pos) or len(self.get_objs_from_pos_and_type(s_pos, type(obj))) != 0
+                s = len(self.get_objs_from_pos_and_type(s_pos, type(obj))) != 0
                 a_pos = spaces.pos_facing(obj.pos, spaces.A)
-                a = self.out_of_range(a_pos) or len(self.get_objs_from_pos_and_type(a_pos, type(obj))) != 0
+                a = len(self.get_objs_from_pos_and_type(a_pos, type(obj))) != 0
                 d_pos = spaces.pos_facing(obj.pos, spaces.D)
-                d = self.out_of_range(d_pos) or len(self.get_objs_from_pos_and_type(d_pos, type(obj))) != 0
+                d = len(self.get_objs_from_pos_and_type(d_pos, type(obj))) != 0
                 wsad = {spaces.W: w, spaces.S: s, spaces.A: a, spaces.D: d}
             else:
                 wsad = {spaces.W: False, spaces.S: False, spaces.A: False, spaces.D: False}

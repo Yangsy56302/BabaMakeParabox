@@ -129,7 +129,8 @@ def play(levelpack: levelpacks.levelpack) -> None:
             if value and cooldowns[key] == 0:
                 cooldowns[key] = basics.options.setdefault("input_cooldown", 3)
         if refresh:
-            levelpack.level_list.extend(level_info["new_levels"])
+            for new_level in level_info["new_levels"]:
+                levelpack.set_level(new_level)
             transform_success = False
             if len(level_info["transform_to"]) != 0:
                 for level in levelpack.level_list:
@@ -151,7 +152,8 @@ def play(levelpack: levelpacks.levelpack) -> None:
                         if issubclass(transform_obj.from_type, objects.Level):
                             from_level = levelpack.get_exist_level(transform_obj.from_name)
                             if issubclass(transform_obj.to_type, objects.WorldPointer):
-                                level.world_list.extend(from_level.world_list)
+                                for new_world in from_level.world_list:
+                                    level.set_world(new_world)
                                 new_obj = transform_obj.to_type(transform_obj.pos, from_level.main_world_name, from_level.main_world_tier, transform_obj.facing)
                                 world.del_obj(transform_obj.uuid)
                                 world.new_obj(new_obj)
@@ -191,6 +193,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 round_num = 0
             for level in levelpack.level_list:
                 for world in current_level.world_list:
+                    world.object_list = list(filter(lambda o: not isinstance(o, objects.Empty), world.object_list))
                     world.set_sprite_states(round_num)
             level_info = {"win": False, "selected_level": None, "new_levels": [], "transform_to": []}
         current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1

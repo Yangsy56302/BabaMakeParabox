@@ -1,0 +1,213 @@
+{
+    "name": "not",
+    "level_list": [
+        {
+            "name": "not",
+            "world_list": [
+                {
+                    "name": "not",
+                    "infinite_tier": 0,
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "color": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "object_list": [
+                        {
+                            "type": "Baba",
+                            "position": [
+                                1,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "BABA",
+                            "position": [
+                                1,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                2,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "YOU",
+                            "position": [
+                                3,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "World",
+                            "position": [
+                                3,
+                                3
+                            ],
+                            "orientation": "S",
+                            "world": {
+                                "name": "aaa",
+                                "infinite_tier": 0
+                            }
+                        },
+                        {
+                            "type": "WORLD",
+                            "position": [
+                                1,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "WORLD",
+                            "position": [
+                                3,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "WORLD",
+                            "position": [
+                                5,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                2,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                2,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "NOT",
+                            "position": [
+                                4,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "NOT",
+                            "position": [
+                                4,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "LEVEL",
+                            "position": [
+                                3,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "LEVEL",
+                            "position": [
+                                1,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "LEVEL",
+                            "position": [
+                                5,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Cursor",
+                            "position": [
+                                5,
+                                3
+                            ],
+                            "orientation": "S"
+                        }
+                    ]
+                },
+                {
+                    "name": "aaa",
+                    "infinite_tier": 0,
+                    "size": [
+                        3,
+                        3
+                    ],
+                    "color": [
+                        17,
+                        17,
+                        17
+                    ],
+                    "object_list": [
+                        {
+                            "type": "Flag",
+                            "position": [
+                                1,
+                                1
+                            ],
+                            "orientation": "S"
+                        }
+                    ]
+                }
+            ],
+            "super_level": null,
+            "main_world": {
+                "name": "not",
+                "infinite_tier": 0
+            }
+        }
+    ],
+    "main_level": "not",
+    "rule_list": [
+        [
+            "CURSOR",
+            "IS",
+            "SELECT"
+        ],
+        [
+            "TEXT",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "WORLD",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "CLONE",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "LEVEL",
+            "IS",
+            "STOP"
+        ]
+    ]
+}
