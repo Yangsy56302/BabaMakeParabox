@@ -223,16 +223,15 @@ class level(object):
                         exit_list.extend(new_move_list)
         # stop wall & shut door
         stop_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.STOP) and not objects.Object.has_prop(o, objects.PUSH), world.get_objs_from_pos(new_pos)))
-        you_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.YOU), world.get_objs_from_pos(new_pos)))
         move_list = []
         can_move = True
-        if len(stop_objects + you_objects) != 0 and not world.out_of_range(new_pos):
+        if len(stop_objects) != 0 and not world.out_of_range(new_pos):
             simple_push = False
             if obj.has_prop(objects.OPEN):
-                for stop_object in stop_objects + you_objects:
+                for stop_object in stop_objects:
                     if stop_object.has_prop(objects.SHUT):
                         return [(obj, world, new_pos, facing)]
-            for stop_object in stop_objects + you_objects:
+            for stop_object in stop_objects:
                 obj_can_move = False
                 if issubclass(cause, objects.YOU) and stop_object.has_prop(objects.YOU):
                     if obj.has_prop(objects.YOU) and not obj.has_prop(objects.STOP):
@@ -248,6 +247,9 @@ class level(object):
                     can_move = False
         # push
         push_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.PUSH), world.get_objs_from_pos(new_pos)))
+        you_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.YOU), world.get_objs_from_pos(new_pos)))
+        if not issubclass(cause, objects.YOU):
+            push_objects.extend(you_objects)
         worlds_that_cant_push: list[objects.WorldPointer] = []
         push = False
         push_list = []
