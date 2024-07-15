@@ -56,9 +56,9 @@ class level(object):
                 if name == obj.name and inf_tier == obj.inf_tier:
                     return (super_world, obj)
         return None
-    def cancel_rules(self, world: worlds.world) -> None:
+    def cancel_rules(self, rule_list: list[rules.Rule]) -> list[rules.Rule]:
         rule_level_list: dict[int, list[rules.Rule]] = {}
-        for rule in world.rule_list:
+        for rule in rule_list:
             is_passed = False
             not_noun_count = 0
             not_prop_count = 0
@@ -79,7 +79,7 @@ class level(object):
                 if ((noun_negated, noun_type), prop_type) not in passed:
                     new_rule_list.append(rule)
                     passed.append(((noun_negated, noun_type), prop_type))
-        world.rule_list = new_rule_list
+        return new_rule_list
     def recursion_rules(self, world: worlds.world, rule_list: Optional[list[rules.Rule]] = None, passed: Optional[list[worlds.world]] = None) -> None:
         passed = passed if passed is not None else []
         if world in passed:
@@ -94,7 +94,50 @@ class level(object):
         for sub_world_obj in sub_world_objs:
             sub_world = self.get_exist_world(sub_world_obj.name, sub_world_obj.inf_tier)
             self.recursion_rules(sub_world, rule_list, passed)
+    def recursion_strict_rules(self, world: worlds.world, rule_list: Optional[list[rules.Rule]] = None, passed: Optional[list[worlds.world]] = None) -> None:
+        passed = passed if passed is not None else []
+        if world in passed:
+            return
+        passed.append(world)
+        rule_list = rule_list if rule_list is not None else []
+        world.strict_rule_list.extend(rule_list)
+        rule_list = world.strict_rule_list
+        sub_world_objs = world.get_worlds()
+        if len(sub_world_objs) == 0:
+            return
+        for sub_world_obj in sub_world_objs:
+            sub_world = self.get_exist_world(sub_world_obj.name, sub_world_obj.inf_tier)
+            self.recursion_rules(sub_world, rule_list, passed)
+    def update_strict_rules(self) -> None:
+        for world in self.world_list:
+            for obj in world.object_list:
+                obj.clear_prop()
+            world.strict_rule_list = world.get_rules()
+        for world in self.world_list:
+            self.recursion_strict_rules(world)
+            world.strict_rule_list.extend([r for r in self.rule_list if r[-1] is objects.WORD])
+            world.strict_rule_list = basics.remove_same_elements(world.strict_rule_list)
+            world.strict_rule_list = self.cancel_rules(world.strict_rule_list)
+        for world in self.world_list:
+            for word_rule in basics.remove_same_elements(world.strict_rule_list):
+                noun_negated, noun_type, prop_negated_count, prop_type = rules.analysis_rule(word_rule)
+                if prop_type != objects.WORD:
+                    continue
+                if noun_negated:
+                    for obj in [o for o in world.object_list if not isinstance(o, objects.not_in_all) and not isinstance(o, objects.nouns_objs_dicts.get_obj(noun_type))]:
+                        obj.new_prop(objects.WORD, prop_negated_count % 2 == 1)
+                else:
+                    for obj in [o for o in world.object_list if isinstance(o, objects.nouns_objs_dicts.get_obj(noun_type))]:
+                        obj.new_prop(objects.WORD, prop_negated_count % 2 == 1)
+        for world in self.world_list:
+            world.strict_rule_list = world.get_rules()
+            for obj in world.object_list:
+                obj.clear_prop()
+        for world in self.world_list:
+            world.strict_rule_list = basics.remove_same_elements(world.strict_rule_list)
+            world.strict_rule_list = self.cancel_rules(world.strict_rule_list)
     def update_rules(self) -> None:
+        self.update_strict_rules()
         for world in self.world_list:
             for obj in world.object_list:
                 obj.clear_prop()
@@ -103,9 +146,9 @@ class level(object):
             self.recursion_rules(world)
             world.rule_list.extend([r for r in self.rule_list if r[-1] is objects.WORD])
             world.rule_list = basics.remove_same_elements(world.rule_list)
-            self.cancel_rules(world)
+            world.rule_list = self.cancel_rules(world.rule_list)
         for world in self.world_list:
-            for word_rule in basics.remove_same_elements(world.rule_list + self.rule_list):
+            for word_rule in basics.remove_same_elements(world.rule_list):
                 noun_negated, noun_type, prop_negated_count, prop_type = rules.analysis_rule(word_rule)
                 if prop_type != objects.WORD:
                     continue
@@ -123,7 +166,7 @@ class level(object):
             self.recursion_rules(world)
             world.rule_list.extend(self.rule_list)
             world.rule_list = basics.remove_same_elements(world.rule_list)
-            self.cancel_rules(world)
+            world.rule_list = self.cancel_rules(world.rule_list)
         for world in self.world_list:
             for prop_rule in world.rule_list:
                 noun_negated, noun_type, prop_negated_count, prop_type = rules.analysis_rule(prop_rule)
@@ -465,14 +508,14 @@ class level(object):
         for world in self.world_list:
             world_transform_to: list[objects.Object] = []
             clone_transform_to: list[objects.Object] = []
-            for rule in world.get_rules():
+            for rule in world.strict_rule_list:
                 old_negated, old_type, new_negated_count, new_type = rules.analysis_rule(rule)
                 new_negated = new_negated_count % 2 == 1
                 special_not_new_types: dict[type[objects.Object], list[type[objects.Object]]] = {}
                 if new_negated and not old_negated:
                     if issubclass(old_type, (objects.Level, objects.World, objects.Clone)):
                         special_not_new_types[old_type] = special_not_new_types.get(old_type, []) + [new_type]
-            for rule in world.get_rules():
+            for rule in world.strict_rule_list:
                 old_negated, old_type, new_negated_count, new_type = rules.analysis_rule(rule)
                 if not issubclass(new_type, objects.Noun):
                     continue

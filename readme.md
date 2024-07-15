@@ -8,12 +8,13 @@ made separately by **Arvi Hempuli** and **Patrick Traynor**.
 
 ## How to run
 
+**This Game will run normally only if terminal window exists**
+**and no text is selected in terminal window.**
+If the game freeze, please confirm you are not
+selecting any text in terminal before you report this to me.
+
 Note: batch files in `python` folder only works when python files exists,
 and batch files in `windows` folder only works when execution files exists.
-
-**DO NOT CLOSE OR CLICK THE TERMINAL**
-**UNLESS YOU NEED TO INPUT SOMETHING INTO TERMINAL**
-**OR YOU DO KNOW WHAT YOU ARE DOING.**
 
 If you want to run the source code, download These Things:
 - **Python** **_(latest)_**: [Link](https://www.python.org/downloads/)
@@ -48,12 +49,13 @@ Please remember:
 1. Sometimes the rules itself can be changed;
 2. Sometimes some of the rules cannot be changed;
 3. Sometimes you need to get inside of a world;
-4. Sometimes you need to create a paradox.
+4. Sometimes you need to create a paradox;
+5. Sometimes you need to transform the levels and the worlds into each other.
 
 ## How to make a custom world
 
 **Important: the levels / worlds / clones that placed are pointed to the levels / worlds / clones that where the camera is.**
-**If you want to put levels / worlds / clones inside other levels / worlds, please considering cut, copy and paste.**
+If you want to put levels / worlds / clones inside other levels / worlds, please considering cut, copy and paste.
 
 ### How to control
 
@@ -83,7 +85,6 @@ Please remember:
 ### Bug List
 
 - `MOVE` overwrite `STOP` when moving.
-- Even if `LEVEL IS WORD`, `Level IS BABA` still not working.
 
 ### About options.json
 
@@ -124,8 +125,9 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 2.4    | 2024.07.14 | not Baba is You; Level is Baba |
 | 2.41   | 2024.07.14 | Bug on World feeling Push is Fix |
 | 2.42   | 2024.07.14 | World is You |
-| 2.43   | 2024.07.15 | Baba is You and Win; Object is More |
+| 2.43   | 2024.07.15 | Baba is You and Win |
 | 2.5    | 2024.07.15 | Key on Editor is Better; Level has Icon and Color |
+| 2.51   | 2024.07.15 | World is Word; Object is More |
 
 ## Bug Reports and Suggestions
 

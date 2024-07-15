@@ -192,9 +192,9 @@ class Wall(Tiled):
     def __repr__(self) -> str:
         return repr(super())
 
-class Hudge(Tiled):
-    class_name: str = "Hudge"
-    sprite_name: str = "hudge"
+class Hedge(Tiled):
+    class_name: str = "Hedge"
+    sprite_name: str = "hedge"
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -495,9 +495,9 @@ class WALL(Noun):
     def __repr__(self) -> str:
         return repr(super())
 
-class HUDGE(Noun):
-    class_name: str = "HUDGE"
-    sprite_name: str = "text_hudge"
+class HEDGE(Noun):
+    class_name: str = "HEDGE"
+    sprite_name: str = "text_hedge"
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -868,13 +868,21 @@ object_name: dict[str, type[Object]] = {
     "Skull": Skull,
     "Ghost": Ghost,
     "Wall": Wall,
+    "Hedge": Hedge,
+    "Ice": Ice,
     "Tile": Tile,
     "Grass": Grass,
     "Water": Water,
     "Lava": Lava,
     "Box": Box,
     "Rock": Rock,
+    "Fruit": Fruit,
+    "Belt": Belt,
     "Sun": Sun,
+    "Moon": Moon,
+    "Star": Star,
+    "What": What,
+    "Love": Love,
     "Flag": Flag,
     "Cursor": Cursor,
     "Empty": Empty,
@@ -888,13 +896,21 @@ object_name: dict[str, type[Object]] = {
     "SKULL": SKULL,
     "GHOST": GHOST,
     "WALL": WALL,
+    "HEDGE": HEDGE,
+    "ICE": ICE,
     "TILE": TILE,
     "GRASS": GRASS,
     "WATER": WATER,
     "LAVA": LAVA,
     "BOX": BOX,
     "ROCK": ROCK,
+    "FRUIT": FRUIT,
+    "BELT": BELT,
     "SUN": SUN,
+    "MOON": MOON,
+    "STAR": STAR,
+    "WHAT": WHAT,
+    "LOVE": LOVE,
     "FLAG": FLAG,
     "CURSOR": CURSOR,
     "EMPTY": EMPTY,
@@ -942,7 +958,7 @@ nouns_objs_dicts.new_pair(PATRICK, Patrick)
 nouns_objs_dicts.new_pair(SKULL, Skull)
 nouns_objs_dicts.new_pair(GHOST, Ghost)
 nouns_objs_dicts.new_pair(WALL, Wall)
-nouns_objs_dicts.new_pair(HUDGE, Hudge)
+nouns_objs_dicts.new_pair(HEDGE, Hedge)
 nouns_objs_dicts.new_pair(ICE, Ice)
 nouns_objs_dicts.new_pair(TILE, Tile)
 nouns_objs_dicts.new_pair(GRASS, Grass)

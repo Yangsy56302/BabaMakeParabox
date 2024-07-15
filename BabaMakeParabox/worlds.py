@@ -22,6 +22,7 @@ class world(object):
         self.color: pygame.Color = color if color is not None else displays.random_hue()
         self.object_list: list[objects.Object] = []
         self.rule_list: list[rules.Rule] = []
+        self.strict_rule_list: list[rules.Rule] = []
     def __eq__(self, world: "world") -> bool:
         return self.uuid == world.uuid
     def __str__(self) -> str:
