@@ -258,15 +258,17 @@ class level(object):
         # push box
         push_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.PUSH), world.get_objs_from_pos(new_pos)))
         worlds_that_cant_push: list[objects.WorldPointer] = []
+        push = False
         if len(push_objects) != 0:
             simple_push = False
+            push = True
             for push_object in push_objects:
                 new_move_list = self.get_move_list(cause, world, push_object, facing, depth=depth)
                 if new_move_list is None:
                     if isinstance(push_object, objects.WorldPointer):
                         worlds_that_cant_push.append(push_object)
                     elif opposite_push_in:
-                        pass
+                        push = False
                     else:
                         return None
                 else:
@@ -299,7 +301,7 @@ class level(object):
                 if new_move_list is None:
                     return None
                 move_list.extend(new_move_list)
-        if opposite_push_in and not push_in:
+        if opposite_push_in and not push_in and not push:
             move_list = opposite_move_list
             move_list.append((obj, world, new_pos, facing))
         move_list = basics.remove_same_elements(move_list)
