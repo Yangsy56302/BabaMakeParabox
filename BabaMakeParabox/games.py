@@ -29,6 +29,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
     pygame.display.set_caption(f"Baba Make Parabox Version {basics.versions}")
     pygame.display.set_icon(pygame.image.load("BabaMakeParabox.png"))
     displays.sprites.update()
+    pygame.key.stop_text_input()
     clock = pygame.time.Clock()
     keybinds = {"W": pygame.K_w,
                 "A": pygame.K_a,
@@ -36,8 +37,8 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 "D": pygame.K_d,
                 "Z": pygame.K_z,
                 "R": pygame.K_r,
-                "\t": pygame.K_TAB,
-                "\x1B": pygame.K_ESCAPE,
+                "TAB": pygame.K_TAB,
+                "ESCAPE": pygame.K_ESCAPE,
                 "-": pygame.K_MINUS,
                 "=": pygame.K_EQUALS,
                 " ": pygame.K_SPACE}
@@ -94,7 +95,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 round_num += 1
                 level_info = current_level.round(spaces.O)
                 refresh = True
-            elif keys[keybinds["\x1B"]] and cooldowns[keybinds["\x1B"]] == 0:
+            elif keys[keybinds["ESCAPE"]] and cooldowns[keybinds["ESCAPE"]] == 0:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "levelpack": copy.deepcopy(levelpack)})
                 current_level_name = current_level.super_level if current_level.super_level is not None else levelpack.main_level
                 current_level = levelpack.get_exist_level(current_level_name)
@@ -124,7 +125,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 history = [{"world_index": current_world_index, "level_name": current_level_name, "levelpack": copy.deepcopy(levelpack)}]
                 level_info = {"win": False, "selected_level": None, "new_levels": [], "transform_to": []}
                 refresh = True
-            elif keys[keybinds["\t"]] and cooldowns[keybinds["\t"]] == 0:
+            elif keys[keybinds["TAB"]] and cooldowns[keybinds["TAB"]] == 0:
                 print("Levelpack's Global Rule List:")
                 for rule in levelpack.rule_list:
                     str_list = []
@@ -180,7 +181,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                             if issubclass(transform_obj.to_type, objects.Level):
                                 new_level = levels.level(from_world.name, level.world_list, level.name, transform_obj.from_name, transform_obj.from_inf_tier, level.rule_list)
                                 levelpack.set_level(new_level)
-                                new_obj = objects.Level(transform_obj.pos, from_world.name, transform_obj.facing)
+                                new_obj = objects.Level(transform_obj.pos, from_world.name, icon_color=from_world.color, facing=transform_obj.facing)
                                 world.del_obj(transform_obj.uuid)
                                 world.new_obj(new_obj)
             levelpack.set_level(current_level)

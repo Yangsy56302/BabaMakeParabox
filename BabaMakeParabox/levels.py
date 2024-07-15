@@ -424,14 +424,14 @@ class level(object):
                             pass
                         elif issubclass(old_type, objects.WorldPointer):
                             new_levels.append(level(old_obj.name, self.world_list, self.name, old_obj.name, old_obj.inf_tier, self.rule_list))
-                            new_obj = objects.Level(old_obj.pos, old_obj.name, old_obj.facing)
+                            new_obj = objects.Level(old_obj.pos, old_obj.name, facing=old_obj.facing)
                             world.new_obj(new_obj)
                             transform_success = True
                         else:
                             new_world = worlds.world(old_obj.uuid.hex, (1, 1), 0, pygame.Color("#000000"))
-                            new_levels.append(level(old_obj.uuid.hex, [new_world], self.name, rule_list = self.rule_list))
+                            new_levels.append(level(old_obj.uuid.hex, [new_world], self.name, rule_list=self.rule_list))
                             new_world.new_obj(old_type((0, 0)))
-                            new_obj = objects.Level(old_obj.pos, old_obj.uuid.hex, old_obj.facing)
+                            new_obj = objects.Level(old_obj.pos, old_obj.uuid.hex, facing=old_obj.facing)
                             world.new_obj(new_obj)
                             transform_success = True
                     elif issubclass(new_type, objects.WorldPointer):
@@ -599,25 +599,43 @@ class level(object):
                     obj_surface = displays.set_color_dark(obj_surface, pygame.Color("#CCCCCC"))
                 else:
                     obj_surface = displays.sprites.get("level", 0, frame).copy()
+                surface_pos = (obj.x * pixel_sprite_size, obj.y * pixel_sprite_size)
+                obj_surface_list.append((surface_pos, obj_surface, obj))
             elif isinstance(obj, objects.Clone):
                 obj_world = self.get_world(obj.name, obj.inf_tier)
                 if obj_world is not None:
                     obj_surface = self.show_world(obj_world, frame, layer + 1)
-                    obj_surface = displays.set_color_light(obj_surface, pygame.Color("#111111"))
+                    obj_surface = displays.set_color_light(obj_surface, pygame.Color("#444444"))
                 else:
                     obj_surface = displays.sprites.get("clone", 0, frame).copy()
+                surface_pos = (obj.x * pixel_sprite_size, obj.y * pixel_sprite_size)
+                obj_surface_list.append((surface_pos, obj_surface, obj))
+            elif isinstance(obj, objects.Level):
+                obj_surface = displays.set_color_dark(displays.sprites.get(obj.sprite_name, obj.sprite_state, frame).copy(), obj.icon_color)
+                icon_surface = displays.set_color_light(displays.sprites.get(obj.icon_name, 0, frame).copy(), pygame.Color("#FFFFFF"))
+                icon_surface_pos = ((obj_surface.get_width() - icon_surface.get_width()) * displays.pixel_size // 2,
+                                    (obj_surface.get_height() - icon_surface.get_width()) * displays.pixel_size // 2)
+                obj_surface.blit(icon_surface, icon_surface_pos)
+                surface_pos = (obj.x * pixel_sprite_size - (obj_surface.get_width() - displays.sprite_size) * displays.pixel_size // 2,
+                               obj.y * pixel_sprite_size - (obj_surface.get_height() - displays.sprite_size) * displays.pixel_size // 2)
+                obj_surface_list.append((surface_pos, obj_surface, obj))
             else:
                 obj_surface = displays.sprites.get(obj.sprite_name, obj.sprite_state, frame).copy()
-            surface_pos = (obj.x * pixel_sprite_size, obj.y * pixel_sprite_size)
-            obj_surface_list.append((surface_pos, obj_surface, obj))
+                surface_pos = (obj.x * pixel_sprite_size - (obj_surface.get_width() - displays.sprite_size) * displays.pixel_size // 2,
+                               obj.y * pixel_sprite_size - (obj_surface.get_height() - displays.sprite_size) * displays.pixel_size // 2)
+                obj_surface_list.append((surface_pos, obj_surface, obj))
         sorted_obj_surface_list = map(lambda o: list(map(lambda t: isinstance(o[-1], t), displays.order)).index(True), obj_surface_list)
         sorted_obj_surface_list = map(lambda t: t[1], sorted(zip(sorted_obj_surface_list, obj_surface_list), key=lambda t: t[0]))
-        for pos, surface, _ in sorted_obj_surface_list:
-            world_surface.blit(pygame.transform.scale(surface, (pixel_sprite_size, pixel_sprite_size)), pos)
+        for pos, surface, obj in sorted_obj_surface_list:
+            if isinstance(obj, objects.WorldPointer):
+                world_surface.blit(pygame.transform.scale(surface, (pixel_sprite_size, pixel_sprite_size)), pos)
+            else:
+                world_surface.blit(pygame.transform.scale(surface, (displays.pixel_size * surface.get_width(), displays.pixel_size * surface.get_height())), pos)
         if cursor is not None:
-            obj_surface = displays.sprites.get("cursor", 0, frame).copy()
-            pos = (cursor[0] * pixel_sprite_size, cursor[1] * pixel_sprite_size)
-            world_surface.blit(pygame.transform.scale(obj_surface, (pixel_sprite_size, pixel_sprite_size)), pos)
+            surface = displays.sprites.get("cursor", 0, frame).copy()
+            pos = (cursor[0] * pixel_sprite_size - (surface.get_width() - displays.sprite_size) * displays.pixel_size // 2,
+                   cursor[1] * pixel_sprite_size - (surface.get_height() - displays.sprite_size) * displays.pixel_size // 2)
+            world_surface.blit(pygame.transform.scale(surface, (displays.pixel_size * surface.get_width(), displays.pixel_size * surface.get_height())), pos)
         world_background = pygame.Surface(world_surface.get_size(), pygame.SRCALPHA)
         world_background.fill(pygame.Color(world.color))
         world_background.blit(world_surface, (0, 0))

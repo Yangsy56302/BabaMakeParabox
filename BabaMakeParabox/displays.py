@@ -153,9 +153,9 @@ sprite_colors["rock"] = LIGHT_BROWN
 sprite_colors["sun"] = LIGHT_YELLOW
 sprite_colors["flag"] = LIGHT_YELLOW
 sprite_colors["cursor"] = PINK
-sprite_colors["level"] = MAGENTA
-sprite_colors["world"] = PINK
-sprite_colors["clone"] = PINK
+sprite_colors["level"] = WHITE
+sprite_colors["world"] = WHITE
+sprite_colors["clone"] = WHITE
 sprite_colors["text_baba"] = MAGENTA
 sprite_colors["text_keke"] = LIGHT_RED
 sprite_colors["text_me"] = LIGHT_PURPLE
@@ -197,10 +197,12 @@ sprite_colors["text_tele"] = LIGHTER_GRAY_BLUE
 sprite_colors["text_word"] = WHITE
 sprite_colors["text_select"] = LIGHT_YELLOW
 
-order = [objects.Operator,
+order = [objects.Cursor,
+         objects.Operator,
          objects.Noun,
          objects.Property,
          objects.Character,
+         objects.Level,
          objects.Static,
          objects.AnimatedDirectional,
          objects.Directional,

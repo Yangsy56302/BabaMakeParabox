@@ -27,7 +27,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
     pygame.display.set_caption(f"Baba Make Parabox In-game Editor Version {basics.versions}")
     pygame.display.set_icon(pygame.image.load("BabaMakeParabox.png"))
     displays.sprites.update()
-    milliseconds = 0
+    pygame.key.stop_text_input()
     clock = pygame.time.Clock()
     keybinds = {"W": pygame.K_w,
                 "A": pygame.K_a,
@@ -50,11 +50,13 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                 "R": pygame.K_r,
                 "-": pygame.K_MINUS,
                 "=": pygame.K_EQUALS,
-                "[": pygame.K_LEFTBRACKET,
-                "]": pygame.K_RIGHTBRACKET,
-                "\n": pygame.K_RETURN,
-                "\b": pygame.K_BACKSPACE,
-                "\t": pygame.K_TAB}
+                "RETURN": pygame.K_RETURN,
+                "BACKSPACE": pygame.K_BACKSPACE,
+                "TAB": pygame.K_TAB,
+                "LSHIFT": pygame.K_LSHIFT,
+                "RSHIFT": pygame.K_RSHIFT,
+                "LCTRL": pygame.K_LCTRL,
+                "RCTRL": pygame.K_RCTRL}
     keys = {v: False for v in keybinds.values()}
     cooldowns = {v: 0 for v in keybinds.values()}
     window.fill("#000000")
@@ -119,64 +121,70 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
             current_object_index -= 1
         elif keys[keybinds["E"]] and cooldowns[keybinds["E"]] == 0:
             current_object_index += 1
-        elif keys[keybinds["\n"]] and cooldowns[keybinds["\n"]] == 0:
+        elif keys[keybinds["RETURN"]] and cooldowns[keybinds["RETURN"]] == 0:
             history.append(copy.deepcopy(levelpack))
             if issubclass(current_object_type, objects.Level):
-                current_world.new_obj(current_object_type(current_cursor_pos, current_level.name, current_facing))
+                icon_name = input("Level's Icon Name (like: \"baba\", \"text_baba\"...): ")
+                icon_name = icon_name if icon_name is not None else "empty"
+                icon_color = input("Level's Icon Color: ")
+                icon_color = pygame.Color(icon_color) if icon_color != "" else displays.WHITE
+                current_world.new_obj(current_object_type(current_cursor_pos, current_level.name, icon_name, icon_color, current_facing))
             elif issubclass(current_object_type, objects.WorldPointer):
                 current_world.new_obj(current_object_type(current_cursor_pos, current_world.name, current_world.inf_tier, current_facing))
             else:
                 current_world.new_obj(current_object_type(current_cursor_pos, current_facing))
         elif keys[keybinds["P"]] and cooldowns[keybinds["P"]] == 0:
-            if input("Are you sure you want to create a new world? [y/N]: ") in yes:
-                history.append(copy.deepcopy(levelpack))
-                name = input("World's Name: ")
-                width = input("World's width: ")
-                width = int(width) if width != "" else basics.options.setdefault("default_new_world", {"width": 9}).get("width", 9)
-                height = input("World's height: ")
-                height = int(height) if height != "" else basics.options.setdefault("default_new_world", {"height": 9}).get("height", 9)
-                size = (width, height)
-                inf_tier = input("World's infinite tier: ")
-                inf_tier = int(inf_tier) if inf_tier != "" else 0
-                color = input("World's color: ")
-                color = pygame.Color(color if color != "" else basics.options.setdefault("default_new_world", {"color": "#000000"}).get("color", "#000000"))
-                current_level.world_list.append(worlds.world(name, size, inf_tier, color))
-                current_world_index = len(current_level.world_list) - 1
-                world_changed = True
+            if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
+                if input("Are you sure you want to create a new level? [y/N]: ") in yes:
+                    history.append(copy.deepcopy(levelpack))
+                    level_name = input("Level's Name: ")
+                    super_level = input("Superlevel's Name: ")
+                    super_level = super_level if super_level != "" else current_level.name
+                    name = input("World's Name: ")
+                    width = input("World's Width: ")
+                    width = int(width) if width != "" else basics.options.setdefault("default_new_world", {"width": 9}).get("width", 9)
+                    height = input("World's Height: ")
+                    height = int(height) if height != "" else basics.options.setdefault("default_new_world", {"height": 9}).get("height", 9)
+                    size = (width, height)
+                    inf_tier = input("World's Infinite Tier: ")
+                    inf_tier = int(inf_tier) if inf_tier != "" else 0
+                    color = input("World's color: ")
+                    color = pygame.Color(color if color != "" else basics.options.setdefault("default_new_world", {"color": "#000000"}).get("color", "#000000"))
+                    default_world = worlds.world(name, size, inf_tier, color)
+                    levelpack.level_list.append(levels.level(level_name, [default_world], super_level, name, inf_tier, levelpack.rule_list))
+                    current_level_index = len(levelpack.level_list) - 1
+                    current_world_index = 0
+                    level_changed = True
+                    world_changed = True
+            else:
+                if input("Are you sure you want to create a new world? [y/N]: ") in yes:
+                    history.append(copy.deepcopy(levelpack))
+                    name = input("World's Name: ")
+                    width = input("World's width: ")
+                    width = int(width) if width != "" else basics.options.setdefault("default_new_world", {"width": 9}).get("width", 9)
+                    height = input("World's height: ")
+                    height = int(height) if height != "" else basics.options.setdefault("default_new_world", {"height": 9}).get("height", 9)
+                    size = (width, height)
+                    inf_tier = input("World's infinite tier: ")
+                    inf_tier = int(inf_tier) if inf_tier != "" else 0
+                    color = input("World's color: ")
+                    color = pygame.Color(color if color != "" else basics.options.setdefault("default_new_world", {"color": "#000000"}).get("color", "#000000"))
+                    current_level.world_list.append(worlds.world(name, size, inf_tier, color))
+                    current_world_index = len(current_level.world_list) - 1
+                    world_changed = True
         elif keys[keybinds["O"]] and cooldowns[keybinds["O"]] == 0:
-            if input("Are you sure you want to delete this world? [y/N]: ") in yes:
-                current_level.world_list.pop(current_world_index)
-                current_world_index -= 1
-                world_changed = True
-        elif keys[keybinds["M"]] and cooldowns[keybinds["M"]] == 0:
-            if input("Are you sure you want to create a new level? [y/N]: ") in yes:
-                history.append(copy.deepcopy(levelpack))
-                level_name = input("Level's Name: ")
-                super_level = input("Superlevel's Name: ")
-                super_level = super_level if super_level != "" else current_level.name
-                name = input("World's Name: ")
-                width = input("World's width: ")
-                width = int(width) if width != "" else basics.options.setdefault("default_new_world", {"width": 9}).get("width", 9)
-                height = input("World's height: ")
-                height = int(height) if height != "" else basics.options.setdefault("default_new_world", {"height": 9}).get("height", 9)
-                size = (width, height)
-                inf_tier = input("World's Infinite Tier: ")
-                inf_tier = int(inf_tier) if inf_tier != "" else 0
-                color = input("World's color: ")
-                color = pygame.Color(color if color != "" else basics.options.setdefault("default_new_world", {"color": "#000000"}).get("color", "#000000"))
-                default_world = worlds.world(name, size, inf_tier, color)
-                levelpack.level_list.append(levels.level(level_name, [default_world], super_level, name, inf_tier, levelpack.rule_list))
-                current_level_index = len(levelpack.level_list) - 1
-                current_world_index = 0
-                level_changed = True
-                world_changed = True
-        elif keys[keybinds["N"]] and cooldowns[keybinds["N"]] == 0:
-            if input("Are you sure you want to delete this level? [y/N]: ") in yes:
-                levelpack.level_list.pop(current_level_index)
-                current_level_index -= 1
-                current_world_index = 0
-                level_changed = True
-                world_changed = True
+            if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
+                if input("Are you sure you want to delete this level? [y/N]: ") in yes:
+                    levelpack.level_list.pop(current_level_index)
+                    current_level_index -= 1
+                    current_world_index = 0
+                    level_changed = True
+                    world_changed = True
+            else:
+                if input("Are you sure you want to delete this world? [y/N]: ") in yes:
+                    current_level.world_list.pop(current_world_index)
+                    current_world_index -= 1
+                    world_changed = True
         elif keys[keybinds["R"]] and cooldowns[keybinds["R"]] == 0:
             text_rule = input("Levelpack's Global Rule: ").upper().split()
             type_rule: rules.Rule = []
@@ -200,19 +208,21 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                         duplicated = all(map(lambda x, y: x == y, type_rule, rule))
                     dupe_list.append(duplicated)
                 if any(dupe_list):
-                    levelpack.rule_list.pop(dupe_list.index(True))
+                    if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
+                        levelpack.rule_list.pop(dupe_list.index(True))
                 else:
-                    levelpack.rule_list.append(list(type_rule))
+                    if not (keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]):
+                        levelpack.rule_list.append(list(type_rule))
             print("Levelpack's Global Rule List:")
             for rule in levelpack.rule_list:
                 str_list = []
                 for obj_type in rule:
                     str_list.append(obj_type.class_name)
                 print(" ".join(str_list))
-        elif keys[keybinds["\b"]] and cooldowns[keybinds["\b"]] == 0:
+        elif keys[keybinds["BACKSPACE"]] and cooldowns[keybinds["BACKSPACE"]] == 0:
             history.append(copy.deepcopy(levelpack))
             current_world.del_objs_from_pos(current_cursor_pos)
-        elif keys[keybinds["\t"]] and cooldowns[keybinds["\t"]] == 0:
+        elif keys[keybinds["TAB"]] and cooldowns[keybinds["TAB"]] == 0:
             try:
                 obj_to_noun = None
                 if not issubclass(current_object_type, objects.Noun):
@@ -252,35 +262,43 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                 new_obj = copy.deepcopy(obj)
                 new_obj.pos = current_cursor_pos
                 current_world.new_obj(new_obj)
+                if isinstance(obj, objects.WorldPointer):
+                    name = obj.name
+                    inf_tier = obj.inf_tier
+                    for level in levelpack.level_list:
+                        world = level.get_world(name, inf_tier)
+                        if world is not None:
+                            for new_world in level.world_list:
+                                current_level.set_world(new_world)
         elif keys[keybinds["-"]] and cooldowns[keybinds["-"]] == 0:
-            current_world_index -= 1
-            current_cursor_pos = (0, 0)
-            world_changed = True
+            if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
+                current_level_index -= 1
+                current_world_index = 0
+                level_changed = True
+                world_changed = True
+            else:
+                current_world_index -= 1
+                world_changed = True
         elif keys[keybinds["="]] and cooldowns[keybinds["="]] == 0:
-            current_world_index += 1
-            current_cursor_pos = (0, 0)
-            world_changed = True
-        elif keys[keybinds["["]] and cooldowns[keybinds["["]] == 0:
-            current_level_index -= 1
-            current_world_index = 0
-            current_cursor_pos = (0, 0)
-            level_changed = True
-            world_changed = True
-        elif keys[keybinds["]"]] and cooldowns[keybinds["]"]] == 0:
-            current_level_index += 1
-            current_world_index = 0
-            current_cursor_pos = (0, 0)
-            level_changed = True
-            world_changed = True
+            if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
+                current_level_index += 1
+                current_world_index = 0
+                level_changed = True
+                world_changed = True
+            else:
+                current_world_index += 1
+                world_changed = True
         for key, value in keys.items():
             if value and cooldowns[key] == 0:
                 cooldowns[key] = basics.options.setdefault("input_cooldown", 5)
         if level_changed:
+            current_cursor_pos = (0, 0)
             current_level_index = current_level_index % len(levelpack.level_list) if current_level_index >= 0 else len(levelpack.level_list) - 1
             current_level = levelpack.level_list[current_level_index]
             print("Current Level:", current_level.name)
             level_changed = False
         if world_changed:
+            current_cursor_pos = (0, 0)
             current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
             current_world = current_level.world_list[current_world_index]
             print("Current World:", current_world.name)

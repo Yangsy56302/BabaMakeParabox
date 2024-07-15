@@ -19,7 +19,7 @@ If you want to run the source code, download These Things:
 - **Python** **_(latest)_**: [Link](https://www.python.org/downloads/)
 - **PIP**: Should install with Python
 - **Pygame**: Run `pip install -U pygame` in Terminal or something similar to Terminal
-- **PyInstaller** **_(optional, if you need .exe)_**: Run `pip install -U pyinstaller` in Terminal too
+- **PyInstaller** **_(optional, if you need exe)_**: Run `pip install -U pyinstaller` in Terminal too
 
 Run `test.bat` to start a official game test.
 
@@ -29,7 +29,7 @@ Run `edit.bat` to edit and save a levelpack from json file in the `levelpacks` f
 
 You can run `help.bat` for more information with how to run the game in terminal.
 
-If you need to make an .exe file, run `py2exe.bat`.
+If you need to make an exe, run `py2exe.bat` in the root folder.
 
 ### How to control
 
@@ -46,13 +46,13 @@ If you need to make an .exe file, run `py2exe.bat`.
 Please remember:
 
 1. Sometimes the rules itself can be changed;
-2. Sometimes some of the rules can not be changed;
-3. Sometimes you need to get inside of the sublevel;
+2. Sometimes some of the rules cannot be changed;
+3. Sometimes you need to get inside of a world;
 4. Sometimes you need to create a paradox.
 
 ## How to make a custom world
 
-**Important: the levels / worlds / clones that placed are pointed to the levels / worlds / clones that camera looks at.**
+**Important: the levels / worlds / clones that placed are pointed to the levels / worlds / clones that where the camera is.**
 **If you want to put levels / worlds / clones inside other levels / worlds, please considering cut, copy and paste.**
 
 ### How to control
@@ -61,15 +61,16 @@ Please remember:
 - IKJL: Change orientation.
 - Q / E: Select object.
 - Tab: Switch object / noun.
-- Enter: Place object on cursor.
+- Enter: Place object on cursor (level information from terminal inputs).
 - Backspace: Destroy all objects on cursor.
 - \- / =: Select world for camera to focus.
-- \[ / \]: Select level for camera to focus.
+- Shift + \- / =: Select level for camera to focus.
 - P: New world (information from terminal inputs).
+- Shift + P: New level (information from terminal inputs).
 - O: Delete current world (confirm in terminal).
-- M: New level (information from terminal inputs).
-- N: Delete current level (confirm in terminal).
-- R: Change global rules (information from terminal inputs).
+- Shift + O: Delete current level (confirm in terminal).
+- R: New global rules (information from terminal inputs).
+- Shift + R: Delete global rules (information from terminal inputs).
 - Z: Undo.
 - X: Cut all objects on cursor.
 - C: Copy all objects on cursor.
@@ -124,6 +125,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 2.41   | 2024.07.14 | Bug on World feeling Push is Fix |
 | 2.42   | 2024.07.14 | World is You |
 | 2.43   | 2024.07.15 | Baba is You and Win; Object is More |
+| 2.5    | 2024.07.15 | Key on Editor is Better; Level has Icon and Color |
 
 ## Bug Reports and Suggestions
 
