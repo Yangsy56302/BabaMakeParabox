@@ -242,8 +242,8 @@ class level(object):
                     new_push_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.PUSH), world.get_objs_from_pos(new_pos)))
                     if len(new_push_objects) != 0:
                         simple_push = False
+                        opposite_move_list = []
                         opposite_push_in = True
-                        new_move_list = []
                         temp_stop_object = objects.STOP(spaces.pos_facing(pos, spaces.swap_orientation(facing)))
                         temp_stop_object.new_prop(objects.STOP)
                         world.new_obj(temp_stop_object)
@@ -253,11 +253,8 @@ class level(object):
                             if test_move_list is None:
                                 opposite_push_in = False
                             else:
-                                new_move_list.extend(test_move_list)
+                                opposite_move_list.extend(test_move_list)
                         world.del_obj(temp_stop_object.uuid)
-            if opposite_push_in:
-                move_list = new_move_list
-                move_list.append((obj, world, new_pos, facing))
         # push box
         push_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.PUSH), world.get_objs_from_pos(new_pos)))
         worlds_that_cant_push: list[objects.WorldPointer] = []
@@ -275,8 +272,10 @@ class level(object):
                 else:
                     move_list.extend(new_move_list)
             move_list.append((obj, world, new_pos, facing))
+        push_in = False
         if len(worlds_that_cant_push) != 0:
             simple_push = False
+            push_in = True
             for world_object in worlds_that_cant_push:
                 sub_world = self.get_world(world_object.name, world_object.inf_tier)
                 if sub_world is None:
@@ -300,6 +299,9 @@ class level(object):
                 if new_move_list is None:
                     return None
                 move_list.extend(new_move_list)
+        if opposite_push_in and not push_in:
+            move_list = opposite_move_list
+            move_list.append((obj, world, new_pos, facing))
         move_list = basics.remove_same_elements(move_list)
         return [(obj, world, new_pos, facing)] if simple_push else move_list
     def move_objs_from_move_list(self, move_list: list[tuple[objects.Object, worlds.world, spaces.Coord, spaces.Orient]]) -> None:

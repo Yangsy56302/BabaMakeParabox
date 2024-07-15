@@ -129,7 +129,14 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                 icon_color = input("Level's Icon Color: ")
                 icon_color = pygame.Color(icon_color) if icon_color != "" else displays.WHITE
                 current_world.new_obj(current_object_type(current_cursor_pos, current_level.name, icon_name, icon_color, current_facing))
-            elif issubclass(current_object_type, objects.WorldPointer):
+            elif issubclass(current_object_type, objects.World):
+                for world in current_level.world_list:
+                    for world_obj in [o for o in world.object_list if isinstance(o, objects.World)]:
+                        if current_world.name == world_obj.name and current_world.inf_tier == world_obj.inf_tier:
+                            world.new_obj(objects.Clone(world_obj.pos, world_obj.name, world_obj.inf_tier, world_obj.facing))
+                            world.del_obj(world_obj.uuid)
+                current_world.new_obj(current_object_type(current_cursor_pos, current_world.name, current_world.inf_tier, current_facing))
+            elif issubclass(current_object_type, objects.Clone):
                 current_world.new_obj(current_object_type(current_cursor_pos, current_world.name, current_world.inf_tier, current_facing))
             else:
                 current_world.new_obj(current_object_type(current_cursor_pos, current_facing))
