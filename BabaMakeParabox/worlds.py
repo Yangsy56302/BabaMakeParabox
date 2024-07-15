@@ -14,7 +14,6 @@ def match_pos(obj: objects.Object, pos: spaces.Coord) -> bool:
 class world(object):
     class_name: str = "world"
     def __init__(self, name: str, size: tuple[int, int], inf_tier: int = 0, color: Optional[pygame.Color] = None) -> None:
-        self.uuid: uuid.UUID = uuid.uuid4()
         self.name: str = name
         self.inf_tier: int = inf_tier
         self.width: int = size[0]
@@ -24,7 +23,7 @@ class world(object):
         self.rule_list: list[rules.Rule] = []
         self.strict_rule_list: list[rules.Rule] = []
     def __eq__(self, world: "world") -> bool:
-        return self.uuid == world.uuid
+        return self.name == world.name and self.inf_tier == world.inf_tier
     def __str__(self) -> str:
         return " ".join([self.class_name, self.name, str(self.inf_tier)])
     def __repr__(self) -> str:

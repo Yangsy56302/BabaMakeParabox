@@ -18,6 +18,8 @@ class level(object):
         self.main_world_name: str = main_world_name if main_world_name is not None else world_list[0].name
         self.main_world_tier: int = main_world_tier if main_world_tier is not None else world_list[0].inf_tier
         self.rule_list: list[rules.Rule] = rule_list if rule_list is not None else rules.default_rule_list
+    def __eq__(self, level: "level") -> bool:
+        return self.name == level.name
     def __str__(self) -> str:
         return self.class_name
     def __repr__(self) -> str:
@@ -176,45 +178,56 @@ class level(object):
                 else:
                     for obj in [o for o in world.object_list if isinstance(o, objects.nouns_objs_dicts.get_obj(noun_type))]:
                         obj.new_prop(prop_type, prop_negated_count % 2 == 1)
-    def get_move_list(self, cause: type[objects.Property], world: worlds.world, obj: objects.Object, facing: spaces.Orient, pos: Optional[spaces.Coord] = None, passed: Optional[list[worlds.world]] = None, transnum: Optional[float] = None, depth: int = 1) -> Optional[list[tuple[objects.Object, worlds.world, spaces.Coord, spaces.Orient]]]:
-        if depth > 127:
+    def get_move_list(self, cause: type[objects.Property], world: worlds.world, obj: objects.Object, facing: spaces.Orient, pos: Optional[spaces.Coord] = None, pushed: Optional[list[objects.Object]] = None, passed: Optional[list[worlds.world]] = None, transnum: Optional[float] = None, depth: int = 0) -> Optional[list[tuple[objects.Object, worlds.world, spaces.Coord, spaces.Orient]]]:
+        if depth > 128:
             return None
         depth += 1
+        pushed = pushed[:] if pushed is not None else []
+        if obj in pushed:
+            return None
         passed = passed[:] if passed is not None else []
         pos = pos if pos is not None else obj.pos
         new_pos = spaces.pos_facing(pos, facing)
         simple_push = True
-        move_list = []
+        exit_world = False
+        exit_list = []
         if world.out_of_range(new_pos):
+            exit_world = True
+            simple_push = False
             # infinite exit
             if world in passed:
-                ret = self.find_super_world(world.name, world.inf_tier + 1)
-                if ret is None:
-                    return None
-                super_world, world_obj = ret
-                new_transnum = super_world.transnum_to_bigger_transnum(transnum, world_obj.pos, facing) if transnum is not None else world.pos_to_transnum(obj.pos, facing)
-                get_move_list = self.get_move_list(cause, super_world, obj, facing, world_obj.pos, passed, new_transnum, depth)
-                if get_move_list is None:
-                    return None
-                move_list.extend(get_move_list)
+                return_value = self.find_super_world(world.name, world.inf_tier + 1)
+                if return_value is None:
+                    exit_world = False
+                else:
+                    super_world, world_obj = return_value
+                    new_transnum = super_world.transnum_to_bigger_transnum(transnum, world_obj.pos, facing) if transnum is not None else world.pos_to_transnum(obj.pos, facing)
+                    new_move_list = self.get_move_list(cause, super_world, obj, facing, world_obj.pos, pushed, passed, new_transnum, depth)
+                    if new_move_list is None:
+                        exit_world = False
+                    else:
+                        exit_list.extend(new_move_list)
             # exit
             else:
-                ret = self.find_super_world(world.name, world.inf_tier)
-                if ret is None:
-                    return None
-                super_world, world_obj = ret
-                new_transnum = super_world.transnum_to_bigger_transnum(transnum, world_obj.pos, facing) if transnum is not None else world.pos_to_transnum(obj.pos, facing)
-                passed.append(world)
-                get_move_list = self.get_move_list(cause, super_world, obj, facing, world_obj.pos, passed, new_transnum, depth)
-                if get_move_list is None:
-                    return None
-                move_list.extend(get_move_list)
-            simple_push = False
+                return_value = self.find_super_world(world.name, world.inf_tier)
+                if return_value is None:
+                    exit_world = False
+                else:
+                    super_world, world_obj = return_value
+                    new_transnum = super_world.transnum_to_bigger_transnum(transnum, world_obj.pos, facing) if transnum is not None else world.pos_to_transnum(obj.pos, facing)
+                    passed.append(world)
+                    new_move_list = self.get_move_list(cause, super_world, obj, facing, world_obj.pos, pushed, passed, new_transnum, depth)
+                    if new_move_list is None:
+                        exit_world = False
+                    else:
+                        exit_list.extend(new_move_list)
         # stop wall & shut door
         stop_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.STOP) and not objects.Object.has_prop(o, objects.PUSH), world.get_objs_from_pos(new_pos)))
         you_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.YOU), world.get_objs_from_pos(new_pos)))
-        if len(stop_objects + you_objects) != 0:
-            can_move = True
+        move_list = []
+        can_move = True
+        if len(stop_objects + you_objects) != 0 and not world.out_of_range(new_pos):
+            simple_push = False
             if obj.has_prop(objects.OPEN):
                 for stop_object in stop_objects + you_objects:
                     if stop_object.has_prop(objects.SHUT):
@@ -225,87 +238,108 @@ class level(object):
                     if obj.has_prop(objects.YOU) and not obj.has_prop(objects.STOP):
                         obj_can_move = True
                     else:
-                        get_move_list = self.get_move_list(cause, world, stop_object, facing, depth=depth)
-                        if get_move_list is not None:
+                        pushed.append(obj)
+                        new_move_list = self.get_move_list(cause, world, stop_object, facing, pushed=pushed, depth=depth)
+                        pushed.pop()
+                        if new_move_list is not None:
                             obj_can_move = True
-                            move_list.extend(get_move_list)
+                            move_list.extend(new_move_list)
                 if not obj_can_move:
                     can_move = False
-            if not can_move:
-                return None
-        # pushin
-        opposite_push_in = False
-        if isinstance(obj, objects.WorldPointer):
-            sub_world = self.get_world(obj.name, obj.inf_tier)
-            if sub_world is not None:
-                if not world.out_of_range(new_pos):
-                    new_push_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.PUSH), world.get_objs_from_pos(new_pos)))
-                    if len(new_push_objects) != 0:
-                        simple_push = False
-                        opposite_move_list = []
-                        opposite_push_in = True
-                        temp_stop_object = objects.STOP(spaces.pos_facing(pos, spaces.swap_orientation(facing)))
-                        temp_stop_object.new_prop(objects.STOP)
-                        world.new_obj(temp_stop_object)
-                        for new_push_object in new_push_objects:
-                            input_pos = sub_world.default_input_position(facing)
-                            test_move_list = self.get_move_list(cause, sub_world, new_push_object, spaces.swap_orientation(facing), input_pos, depth=depth)
-                            if test_move_list is None:
-                                opposite_push_in = False
-                            else:
-                                opposite_move_list.extend(test_move_list)
-                        world.del_obj(temp_stop_object.uuid)
-        # push box
+        # push
         push_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.PUSH), world.get_objs_from_pos(new_pos)))
         worlds_that_cant_push: list[objects.WorldPointer] = []
         push = False
-        if len(push_objects) != 0:
-            simple_push = False
+        push_list = []
+        if len(push_objects) != 0 and not world.out_of_range(new_pos):
             push = True
+            simple_push = False
             for push_object in push_objects:
-                new_move_list = self.get_move_list(cause, world, push_object, facing, depth=depth)
+                pushed.append(obj)
+                new_move_list = self.get_move_list(cause, world, push_object, facing, pushed=pushed, depth=depth)
+                pushed.pop()
                 if new_move_list is None:
                     if isinstance(push_object, objects.WorldPointer):
                         worlds_that_cant_push.append(push_object)
-                    elif opposite_push_in:
-                        push = False
-                    else:
-                        return None
+                    push = False
+                    break
                 else:
-                    move_list.extend(new_move_list)
-            move_list.append((obj, world, new_pos, facing))
-        push_in = False
-        if len(worlds_that_cant_push) != 0:
+                    push_list.extend(new_move_list)
+            push_list.append((obj, world, new_pos, facing))
+        # squeeze
+        squeeze = False
+        squeeze_list = []
+        if isinstance(obj, objects.WorldPointer) and obj.has_prop(objects.PUSH) and not world.out_of_range(new_pos):
+            sub_world = self.get_world(obj.name, obj.inf_tier)
+            if sub_world is not None:
+                new_push_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.PUSH), world.get_objs_from_pos(new_pos)))
+                if len(new_push_objects) != 0:
+                    squeeze = True
+                    simple_push = False
+                    temp_stop_object = objects.STOP(spaces.pos_facing(pos, spaces.swap_orientation(facing)))
+                    temp_stop_object.new_prop(objects.STOP)
+                    world.new_obj(temp_stop_object)
+                    for new_push_object in new_push_objects:
+                        input_pos = sub_world.default_input_position(facing)
+                        pushed.append(obj)
+                        test_move_list = self.get_move_list(cause, sub_world, new_push_object, spaces.swap_orientation(facing), input_pos, pushed=pushed, depth=depth)
+                        pushed.pop()
+                        if test_move_list is None:
+                            squeeze = False
+                            break
+                        else:
+                            squeeze_list.extend(test_move_list)
+                    if squeeze:
+                        squeeze_list.append((obj, world, new_pos, facing))
+                    world.del_obj(temp_stop_object.uuid)
+        enter_world = False
+        enter_list = []
+        if len(worlds_that_cant_push) != 0 and not world.out_of_range(new_pos):
+            enter_world = True
             simple_push = False
-            push_in = True
             for world_object in worlds_that_cant_push:
                 sub_world = self.get_world(world_object.name, world_object.inf_tier)
                 if sub_world is None:
-                    return None
-                new_move_list = None
-                # infinite enter
-                if sub_world in passed:
-                    sub_sub_world = self.get_world(sub_world.name, sub_world.inf_tier - 1)
-                    if sub_sub_world is None:
-                        return None
-                    new_transnum = 0.5
-                    input_pos = sub_sub_world.default_input_position(spaces.swap_orientation(facing))
-                    passed.append(world)
-                    new_move_list = self.get_move_list(cause, sub_sub_world, obj, facing, input_pos, passed, new_transnum, depth)
-                # enter
+                    enter_world = False
+                    break
                 else:
-                    new_transnum = world.transnum_to_smaller_transnum(transnum, world_object.pos, spaces.swap_orientation(facing)) if transnum is not None else 0.5
-                    input_pos = sub_world.transnum_to_pos(transnum, spaces.swap_orientation(facing)) if transnum is not None else sub_world.default_input_position(spaces.swap_orientation(facing))
-                    passed.append(world)
-                    new_move_list = self.get_move_list(cause, sub_world, obj, facing, input_pos, passed, new_transnum, depth)
-                if new_move_list is None:
-                    return None
-                move_list.extend(new_move_list)
-        if opposite_push_in and not push_in and not push:
-            move_list = opposite_move_list
-            move_list.append((obj, world, new_pos, facing))
-        move_list = basics.remove_same_elements(move_list)
-        return [(obj, world, new_pos, facing)] if simple_push else move_list
+                    new_move_list = None
+                    # infinite enter
+                    if sub_world in passed:
+                        sub_sub_world = self.get_world(sub_world.name, sub_world.inf_tier - 1)
+                        if sub_sub_world is not None:
+                            new_transnum = 0.5
+                            input_pos = sub_sub_world.default_input_position(spaces.swap_orientation(facing))
+                            passed.append(world)
+                            new_move_list = self.get_move_list(cause, sub_sub_world, obj, facing, input_pos, pushed, passed, new_transnum, depth)
+                        else:
+                            enter_world = False
+                            break
+                    # enter
+                    else:
+                        new_transnum = world.transnum_to_smaller_transnum(transnum, world_object.pos, spaces.swap_orientation(facing)) if transnum is not None else 0.5
+                        input_pos = sub_world.transnum_to_pos(transnum, spaces.swap_orientation(facing)) if transnum is not None else sub_world.default_input_position(spaces.swap_orientation(facing))
+                        passed.append(world)
+                        new_move_list = self.get_move_list(cause, sub_world, obj, facing, input_pos, pushed, passed, new_transnum, depth)
+                    if new_move_list is not None:
+                        enter_list.extend(new_move_list)
+                    else:
+                        enter_world = False
+                        break
+        if exit_world:
+            move_list = exit_list
+        elif push:
+            move_list = push_list
+        elif enter_world:
+            move_list = enter_list
+        elif squeeze:
+            move_list = squeeze_list
+        if not can_move:
+            return None
+        if exit_world or push or enter_world or squeeze:
+            return basics.remove_same_elements(move_list)
+        if simple_push:
+            return [(obj, world, new_pos, facing)] 
     def move_objs_from_move_list(self, move_list: list[tuple[objects.Object, worlds.world, spaces.Coord, spaces.Orient]]) -> None:
         move_list = basics.remove_same_elements(move_list)
         for move_obj, new_world, new_pos, new_facing in move_list:

@@ -1,0 +1,130 @@
+{
+    "name": "inf",
+    "level_list": [
+        {
+            "name": "inf",
+            "world_list": [
+                {
+                    "name": "inf",
+                    "infinite_tier": 0,
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "color": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "object_list": [
+                        {
+                            "type": "Baba",
+                            "position": [
+                                4,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                4,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "World",
+                            "position": [
+                                4,
+                                0
+                            ],
+                            "orientation": "S",
+                            "world": {
+                                "name": "inf",
+                                "infinite_tier": 0
+                            }
+                        },
+                        {
+                            "type": "Clone",
+                            "position": [
+                                4,
+                                4
+                            ],
+                            "orientation": "S",
+                            "world": {
+                                "name": "inf",
+                                "infinite_tier": 0
+                            }
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                4,
+                                5
+                            ],
+                            "orientation": "S"
+                        }
+                    ]
+                },
+                {
+                    "name": "inf",
+                    "infinite_tier": -1,
+                    "size": [
+                        3,
+                        3
+                    ],
+                    "color": [
+                        18,
+                        52,
+                        86
+                    ],
+                    "object_list": []
+                }
+            ],
+            "super_level": null,
+            "main_world": {
+                "name": "inf",
+                "infinite_tier": 0
+            }
+        }
+    ],
+    "main_level": "inf",
+    "rule_list": [
+        [
+            "CURSOR",
+            "IS",
+            "SELECT"
+        ],
+        [
+            "TEXT",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "WORLD",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "CLONE",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "LEVEL",
+            "IS",
+            "STOP"
+        ],
+        [
+            "BABA",
+            "IS",
+            "YOU"
+        ],
+        [
+            "WALL",
+            "IS",
+            "STOP"
+        ]
+    ]
+}

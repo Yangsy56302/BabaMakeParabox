@@ -1,11 +1,11 @@
 {
-    "name": "p",
+    "name": "op",
     "level_list": [
         {
-            "name": "p",
+            "name": "op",
             "world_list": [
                 {
-                    "name": "p",
+                    "name": "op",
                     "infinite_tier": 0,
                     "size": [
                         9,
@@ -21,7 +21,7 @@
                             "type": "BABA",
                             "position": [
                                 1,
-                                1
+                                2
                             ],
                             "orientation": "S"
                         },
@@ -29,12 +29,28 @@
                             "type": "WALL",
                             "position": [
                                 5,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                0,
                                 1
                             ],
                             "orientation": "S"
                         },
                         {
-                            "type": "IS",
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
                             "position": [
                                 2,
                                 1
@@ -42,7 +58,7 @@
                             "orientation": "S"
                         },
                         {
-                            "type": "IS",
+                            "type": "Wall",
                             "position": [
                                 6,
                                 1
@@ -50,15 +66,7 @@
                             "orientation": "S"
                         },
                         {
-                            "type": "YOU",
-                            "position": [
-                                3,
-                                1
-                            ],
-                            "orientation": "S"
-                        },
-                        {
-                            "type": "STOP",
+                            "type": "Wall",
                             "position": [
                                 7,
                                 1
@@ -68,90 +76,7 @@
                         {
                             "type": "Wall",
                             "position": [
-                                4,
-                                6
-                            ],
-                            "orientation": "S"
-                        },
-                        {
-                            "type": "ROCK",
-                            "position": [
-                                3,
-                                7
-                            ],
-                            "orientation": "S"
-                        },
-                        {
-                            "type": "IS",
-                            "position": [
-                                4,
-                                7
-                            ],
-                            "orientation": "S"
-                        },
-                        {
-                            "type": "PUSH",
-                            "position": [
-                                5,
-                                7
-                            ],
-                            "orientation": "S"
-                        },
-                        {
-                            "type": "World",
-                            "position": [
-                                4,
-                                4
-                            ],
-                            "orientation": "S",
-                            "world": {
-                                "name": "1",
-                                "infinite_tier": 0
-                            }
-                        },
-                        {
-                            "type": "Rock",
-                            "position": [
-                                4,
-                                5
-                            ],
-                            "orientation": "S"
-                        },
-                        {
-                            "type": "Rock",
-                            "position": [
-                                4,
-                                3
-                            ],
-                            "orientation": "S"
-                        },
-                        {
-                            "type": "Baba",
-                            "position": [
-                                2,
-                                4
-                            ],
-                            "orientation": "S"
-                        }
-                    ]
-                },
-                {
-                    "name": "1",
-                    "infinite_tier": 0,
-                    "size": [
-                        3,
-                        3
-                    ],
-                    "color": [
-                        68,
-                        68,
-                        68
-                    ],
-                    "object_list": [
-                        {
-                            "type": "Wall",
-                            "position": [
-                                0,
+                                8,
                                 1
                             ],
                             "orientation": "S"
@@ -159,24 +84,16 @@
                         {
                             "type": "Wall",
                             "position": [
-                                0,
-                                2
+                                7,
+                                7
                             ],
                             "orientation": "S"
                         },
                         {
                             "type": "Wall",
                             "position": [
-                                0,
-                                0
-                            ],
-                            "orientation": "S"
-                        },
-                        {
-                            "type": "Wall",
-                            "position": [
-                                2,
-                                0
+                                6,
+                                7
                             ],
                             "orientation": "S"
                         },
@@ -184,15 +101,7 @@
                             "type": "Wall",
                             "position": [
                                 2,
-                                1
-                            ],
-                            "orientation": "S"
-                        },
-                        {
-                            "type": "Wall",
-                            "position": [
-                                2,
-                                2
+                                7
                             ],
                             "orientation": "S"
                         },
@@ -200,7 +109,190 @@
                             "type": "Wall",
                             "position": [
                                 1,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                0,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                8,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                6,
                                 2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                2,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "YOU",
+                            "position": [
+                                3,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "STOP",
+                            "position": [
+                                7,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Baba",
+                            "position": [
+                                4,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "World",
+                            "position": [
+                                4,
+                                5
+                            ],
+                            "orientation": "S",
+                            "world": {
+                                "name": "12345",
+                                "infinite_tier": 0
+                            }
+                        },
+                        {
+                            "type": "World",
+                            "position": [
+                                4,
+                                6
+                            ],
+                            "orientation": "S",
+                            "world": {
+                                "name": "op",
+                                "infinite_tier": 0
+                            }
+                        },
+                        {
+                            "type": "Rock",
+                            "position": [
+                                2,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Rock",
+                            "position": [
+                                6,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "ROCK",
+                            "position": [
+                                1,
+                                6
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                2,
+                                6
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "PUSH",
+                            "position": [
+                                3,
+                                6
+                            ],
+                            "orientation": "S"
+                        }
+                    ]
+                },
+                {
+                    "name": "12345",
+                    "infinite_tier": 0,
+                    "size": [
+                        3,
+                        3
+                    ],
+                    "color": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "object_list": [
+                        {
+                            "type": "Wall",
+                            "position": [
+                                0,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                0,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                0,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                2,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                2,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                2,
+                                0
                             ],
                             "orientation": "S"
                         }
@@ -209,12 +301,12 @@
             ],
             "super_level": null,
             "main_world": {
-                "name": "p",
+                "name": "op",
                 "infinite_tier": 0
             }
         }
     ],
-    "main_level": "p",
+    "main_level": "op",
     "rule_list": [
         [
             "CURSOR",

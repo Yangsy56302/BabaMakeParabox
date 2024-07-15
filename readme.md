@@ -128,6 +128,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 2.43   | 2024.07.15 | Baba is You and Win |
 | 2.5    | 2024.07.15 | Key on Editor is Better; Level has Icon and Color |
 | 2.51   | 2024.07.15 | World is Word; Object is More |
+| 2.52   | 2024.07.15 | Code feeling Push is Better |
 
 ## Bug Reports and Suggestions
 
