@@ -190,6 +190,22 @@ class Wall(Tiled):
     def __repr__(self) -> str:
         return repr(super())
 
+class Hudge(Tiled):
+    class_name: str = "Hudge"
+    sprite_name: str = "hudge"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class Ice(Tiled):
+    class_name: str = "Ice"
+    sprite_name: str = "ice"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 class Tile(Static):
     class_name: str = "Tile"
     sprite_name: str = "tile"
@@ -254,9 +270,57 @@ class Rock(Static):
     def __repr__(self) -> str:
         return repr(super())
 
+class Fruit(Static):
+    class_name: str = "Fruit"
+    sprite_name: str = "fruit"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class Belt(AnimatedDirectional):
+    class_name: str = "Belt"
+    sprite_name: str = "belt"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 class Sun(Static):
     class_name: str = "Sun"
     sprite_name: str = "sun"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class Moon(Static):
+    class_name: str = "Moon"
+    sprite_name: str = "moon"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class Star(Static):
+    class_name: str = "Star"
+    sprite_name: str = "star"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class What(Static):
+    class_name: str = "What"
+    sprite_name: str = "what"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class Love(Static):
+    class_name: str = "Love"
+    sprite_name: str = "love"
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -426,6 +490,22 @@ class WALL(Noun):
     def __repr__(self) -> str:
         return repr(super())
 
+class HUDGE(Noun):
+    class_name: str = "HUDGE"
+    sprite_name: str = "text_hudge"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class ICE(Noun):
+    class_name: str = "ICE"
+    sprite_name: str = "text_ice"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 class TILE(Noun):
     class_name: str = "TILE"
     sprite_name: str = "text_tile"
@@ -490,9 +570,57 @@ class ROCK(Noun):
     def __repr__(self) -> str:
         return repr(super())
 
+class FRUIT(Noun):
+    class_name: str = "FRUIT"
+    sprite_name: str = "text_fruit"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class BELT(Noun):
+    class_name: str = "BELT"
+    sprite_name: str = "text_belt"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 class SUN(Noun):
     class_name: str = "SUN"
     sprite_name: str = "text_sun"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class MOON(Noun):
+    class_name: str = "MOON"
+    sprite_name: str = "text_moon"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class STAR(Noun):
+    class_name: str = "STAR"
+    sprite_name: str = "text_star"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class WHAT(Noun):
+    class_name: str = "WHAT"
+    sprite_name: str = "text_what"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class LOVE(Noun):
+    class_name: str = "LOVE"
+    sprite_name: str = "text_love"
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -802,6 +930,8 @@ nouns_objs_dicts.new_pair(PATRICK, Patrick)
 nouns_objs_dicts.new_pair(SKULL, Skull)
 nouns_objs_dicts.new_pair(GHOST, Ghost)
 nouns_objs_dicts.new_pair(WALL, Wall)
+nouns_objs_dicts.new_pair(HUDGE, Hudge)
+nouns_objs_dicts.new_pair(ICE, Ice)
 nouns_objs_dicts.new_pair(TILE, Tile)
 nouns_objs_dicts.new_pair(GRASS, Grass)
 nouns_objs_dicts.new_pair(WATER, Water)
@@ -810,7 +940,13 @@ nouns_objs_dicts.new_pair(DOOR, Door)
 nouns_objs_dicts.new_pair(KEY, Key)
 nouns_objs_dicts.new_pair(BOX, Box)
 nouns_objs_dicts.new_pair(ROCK, Rock)
+nouns_objs_dicts.new_pair(FRUIT, Fruit)
+nouns_objs_dicts.new_pair(BELT, Belt)
 nouns_objs_dicts.new_pair(SUN, Sun)
+nouns_objs_dicts.new_pair(MOON, Moon)
+nouns_objs_dicts.new_pair(STAR, Star)
+nouns_objs_dicts.new_pair(WHAT, What)
+nouns_objs_dicts.new_pair(LOVE, Love)
 nouns_objs_dicts.new_pair(FLAG, Flag)
 nouns_objs_dicts.new_pair(CURSOR, Cursor)
 nouns_objs_dicts.new_pair(EMPTY, Empty)
@@ -820,4 +956,4 @@ nouns_objs_dicts.new_pair(CLONE, Clone)
 nouns_objs_dicts.new_pair(TEXT, Text)
 
 not_in_all: tuple[type[Object], ...] = (Text, Level, WorldPointer)
-not_in_editor: tuple[type[Object], ...] = (Empty, EMPTY)
+not_in_editor: tuple[type[Object], ...] = (Empty, EMPTY, Text)

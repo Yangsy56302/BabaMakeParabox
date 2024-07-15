@@ -274,7 +274,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
             world_changed = True
         for key, value in keys.items():
             if value and cooldowns[key] == 0:
-                cooldowns[key] = basics.options.setdefault("input_cooldown", 3)
+                cooldowns[key] = basics.options.setdefault("input_cooldown", 5)
         if level_changed:
             current_level_index = current_level_index % len(levelpack.level_list) if current_level_index >= 0 else len(levelpack.level_list) - 1
             current_level = levelpack.level_list[current_level_index]

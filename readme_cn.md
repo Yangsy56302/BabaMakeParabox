@@ -37,6 +37,7 @@
 - Space：等待
 - Z：撤回
 - R：重新开始关卡包
+- Tab：显示游戏规则
 - Esc：保存所在关卡的状态并返回上一级
 - \- / =：选择摄像机所在的世界
 
@@ -122,6 +123,7 @@
 | 2.4    | 2024.07.14 | not Baba is You; Level is Baba |
 | 2.41   | 2024.07.14 | Bug on World feeling Push is Fix |
 | 2.42   | 2024.07.14 | World is You |
+| 2.43   | 2024.07.15 | Baba is You and Win |
 
 ## 报告漏洞和提出建议
 

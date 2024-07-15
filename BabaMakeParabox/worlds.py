@@ -117,7 +117,7 @@ class world(object):
         rule_list: list[rules.Rule] = []
         x_rule_dict: dict[int, list[rules.Rule]] = {}
         y_rule_dict: dict[int, list[rules.Rule]] = {}
-        for rule_type in rules.rule_types:
+        for rule_type in rules.basic_rule_types:
             for x in range(self.width):
                 for y in range(self.height - len(rule_type) + 1):
                     y_rule_dict.setdefault(y, [])

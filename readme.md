@@ -37,7 +37,8 @@ If you need to make an .exe file, run `py2exe.bat`.
 - Space: You wait for something / Cursor select a level to play.
 - Z: Undo.
 - R: Restart the levelpack.
-- Esc：Save level state and go back
+- Tab: Display gamerules.
+- Esc：Save level state and go back.
 - \- / =: Select world for camera to focus.
 
 ### How to win
@@ -122,6 +123,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 2.4    | 2024.07.14 | not Baba is You; Level is Baba |
 | 2.41   | 2024.07.14 | Bug on World feeling Push is Fix |
 | 2.42   | 2024.07.14 | World is You |
+| 2.43   | 2024.07.15 | Baba is You and Win |
 
 ## Bug Reports and Suggestions
 

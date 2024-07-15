@@ -4,8 +4,8 @@ import BabaMakeParabox.objects as objects
 
 Rule = list[type[objects.Text]]
 
-rule_types = [[objects.Noun, objects.IS, objects.Property],
-              [objects.Noun, objects.IS, objects.Noun]]
+basic_rule_types = [[objects.Noun, objects.IS, objects.Property],
+                    [objects.Noun, objects.IS, objects.Noun]]
 
 def analysis_rule(rule: Rule) -> tuple[bool, type[objects.Noun], int, type[objects.Text]]:
     noun_index = list(map(lambda t: t != objects.NOT, rule)).index(True)
@@ -22,3 +22,10 @@ default_rule_list.append([objects.TEXT, objects.IS, objects.PUSH])
 default_rule_list.append([objects.WORLD, objects.IS, objects.PUSH])
 default_rule_list.append([objects.CLONE, objects.IS, objects.PUSH])
 default_rule_list.append([objects.LEVEL, objects.IS, objects.STOP])
+
+advanced_rule_list: list[Rule] = []
+advanced_rule_list.append([objects.BABA, objects.IS, objects.YOU])
+advanced_rule_list.append([objects.WALL, objects.IS, objects.STOP])
+advanced_rule_list.append([objects.ROCK, objects.IS, objects.PUSH])
+advanced_rule_list.append([objects.FLAG, objects.IS, objects.WIN])
+advanced_rule_list.extend(default_rule_list)
