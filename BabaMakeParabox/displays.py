@@ -48,6 +48,11 @@ LIGHT_BROWN = pygame.Color("#C29E46")
 DARKER_BROWN = pygame.Color("#362E22")
 MAYBE_NOT_BLACK = pygame.Color("#0B0B0E")
 
+def set_alpha(surface: pygame.Surface, alpha: int) -> pygame.Surface:
+    new_surface = surface.copy()
+    new_surface.fill(pygame.Color(255, 255, 255, alpha), special_flags=pygame.BLEND_RGBA_MULT)
+    return new_surface
+
 def set_color_dark(surface: pygame.Surface, color: pygame.Color) -> pygame.Surface:
     new_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
     new_surface.fill(pygame.Color(color.r, color.g, color.b, 255))

@@ -13,22 +13,13 @@
 如果游戏卡死，请先确保您
 没有在终端内选中任何文字，再向我汇报游戏漏洞。
 
-注意：`python`文件夹中的批处理文件只会在Python代码文件存在时工作，
-而`windows`文件夹中的批处理文件只会在EXE可执行程序文件存在时工作。
-
 如果你想运行源代码，下载这些软件：
 - **Python** *（最新版）*：[链接](https://www.python.org/downloads/)
 - **PIP**：应该会与Python一起安装
 - **Pygame**：在终端或类似终端的地方运行`pip install -U pygame`
 - **PyInstaller** *（可选，仅制作EXE用）*：类似上面，运行`pip install -U pyinstaller`
 
-运行`test.bat`以开始该游戏的官方测试。
-
-运行`play.bat`以从`levelpacks`文件夹内读取关卡包的JSON文件来开始游戏。
-
-运行`edit.bat`以编辑`levelpacks`文件夹内的关卡包文件并在原地保存，若无文件则会新建一份。
-
-可以运行`help.bat`以获取更多关于如何在终端运行该游戏的说明。
+运行`BabaMakeParabox.exe`（或者在终端运行`python BabaMakeParabox.py`，如果你准备好了源代码和必备软件）以开始游戏。
 
 如果你需要将代码打包成EXE，运行`py2exe.bat`。
 
@@ -136,6 +127,7 @@
 | 2.52   | 2024.07.15 | Code feeling Push is Better |
 | 2.6    | 2024.07.16 | Key on Editor is Better and Better |
 | 2.61   | 2024.07.16 | Editor has Palette |
+| 2.7    | 2024.07.16 | Game has Language |
 
 ## 报告漏洞和提出建议
 

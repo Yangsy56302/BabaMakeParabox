@@ -2,6 +2,7 @@ from typing import Any, Optional
 import copy
 
 import BabaMakeParabox.basics as basics
+import BabaMakeParabox.languages as languages
 import BabaMakeParabox.spaces as spaces
 import BabaMakeParabox.objects as objects
 import BabaMakeParabox.worlds as worlds
@@ -11,9 +12,8 @@ import BabaMakeParabox.levelpacks as levelpacks
 
 import pygame
 
-
 def play(levelpack: levelpacks.levelpack) -> None:
-    print("Levelpack's Global Rule List:")
+    print(languages.current_language["game.levelpack.rule_list"]) 
     for rule in levelpack.rule_list:
         str_list = []
         for obj_type in rule:
@@ -126,13 +126,13 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 level_info = {"win": False, "selected_level": None, "new_levels": [], "transform_to": []}
                 refresh = True
             elif keys[keybinds["TAB"]] and cooldowns[keybinds["TAB"]] == 0:
-                print("Levelpack's Global Rule List:")
+                print(languages.current_language["game.levelpack.rule_list"])
                 for rule in levelpack.rule_list:
                     str_list = []
                     for obj_type in rule:
                         str_list.append(obj_type.class_name)
                     print(" ".join(str_list))
-                print("World's Local Rule List:")
+                print(languages.current_language["game.world.rule_list"])
                 for rule in current_level.world_list[current_world_index].rule_list:
                     str_list = []
                     for obj_type in rule:
@@ -186,17 +186,17 @@ def play(levelpack: levelpacks.levelpack) -> None:
                                 world.new_obj(new_obj)
             levelpack.set_level(current_level)
             if level_info["win"]:
-                print("Congratulations!")
+                print(languages.current_language["game.level.win"])
                 if freeze_time == -1:
                     level_info_backup = copy.deepcopy(level_info)
                     freeze_time = basics.options["fps"]
             elif transform_success and len(level_info["transform_to"]) != 0:
-                print("This level has been transformed into something...")
+                print(languages.current_language["game.level.transform"])
                 if freeze_time == -1:
                     level_info_backup = copy.deepcopy(level_info)
                     freeze_time = basics.options["fps"]
             elif level_info["selected_level"] is not None:
-                print("You have entered a level.")
+                print(languages.current_language["game.level.enter"])
                 if freeze_time == -1:
                     level_info_backup = copy.deepcopy(level_info)
                     freeze_time = basics.options["fps"]
@@ -235,78 +235,3 @@ def play(levelpack: levelpacks.levelpack) -> None:
             if cooldowns[key] > 0:
                 cooldowns[key] -= 1
         clock.tick(basics.options["fps"])
-
-def test() -> None:
-    # Superworld
-    world_0 = worlds.world("main", (9, 9), color=pygame.Color("#111111"))
-    # Rules
-    world_0.new_obj(objects.BABA((0, 1)))
-    world_0.new_obj(objects.IS((1, 1)))
-    world_0.new_obj(objects.YOU((2, 1)))
-    world_0.new_obj(objects.WALL((8, 1)))
-    world_0.new_obj(objects.IS((8, 2)))
-    world_0.new_obj(objects.STOP((8, 3)))
-    world_0.new_obj(objects.TEXT((8, 5)))
-    world_0.new_obj(objects.IS((8, 6)))
-    world_0.new_obj(objects.PUSH((8, 7)))
-    world_0.new_obj(objects.FLAG((4, 1)))
-    world_0.new_obj(objects.IS((5, 1)))
-    # Things
-    world_0.new_obj(objects.World((3, 3), name="sub"))
-    world_0.new_obj(objects.WIN((2, 4)))
-    world_0.new_obj(objects.Flag((4, 6)))
-    world_0.new_obj(objects.Baba((1, 7)))
-    # Empty spaces
-    world_0.new_obj(objects.Keke((6, 1)))
-    world_0.new_obj(objects.Keke((6, 2)))
-    world_0.new_obj(objects.Keke((1, 3)))
-    world_0.new_obj(objects.Keke((2, 3)))
-    world_0.new_obj(objects.Keke((4, 3)))
-    world_0.new_obj(objects.Keke((5, 3)))
-    world_0.new_obj(objects.Keke((6, 3)))
-    world_0.new_obj(objects.Keke((1, 4)))
-    world_0.new_obj(objects.Keke((6, 4)))
-    world_0.new_obj(objects.Keke((2, 5)))
-    world_0.new_obj(objects.Keke((6, 5)))
-    world_0.new_obj(objects.Keke((1, 6)))
-    world_0.new_obj(objects.Keke((2, 6)))
-    world_0.new_obj(objects.Keke((5, 6)))
-    world_0.new_obj(objects.Keke((6, 6)))
-    world_0.new_obj(objects.Keke((2, 7)))
-    # Walls
-    for x in range(9):
-        for y in range(9):
-            if len(world_0.get_objs_from_pos((x, y))) == 0:
-                world_0.new_obj(objects.Wall((x, y)))
-    world_0.del_objs_from_type(objects.Keke)
-    # Subworld
-    world_1 = worlds.world("sub", (7, 7), color=pygame.Color("#000022"))
-    # Rules
-    world_1.new_obj(objects.BABA((6, 0)))
-    world_1.new_obj(objects.IS((6, 1)))
-    world_1.new_obj(objects.YOU((6, 2)))
-    world_1.new_obj(objects.WALL((6, 4)))
-    world_1.new_obj(objects.IS((6, 5)))
-    world_1.new_obj(objects.STOP((6, 6)))
-    world_1.new_obj(objects.TEXT((2, 6)))
-    world_1.new_obj(objects.IS((3, 6)))
-    world_1.new_obj(objects.PUSH((4, 6)))
-    # Empty spaces
-    world_1.new_obj(objects.Keke((3, 0)))
-    world_1.new_obj(objects.Keke((3, 1)))
-    world_1.new_obj(objects.Keke((3, 2)))
-    world_1.new_obj(objects.Keke((0, 3)))
-    world_1.new_obj(objects.Keke((1, 3)))
-    world_1.new_obj(objects.Keke((2, 3)))
-    world_1.new_obj(objects.Keke((3, 3)))
-    world_1.new_obj(objects.Keke((2, 4)))
-    world_1.new_obj(objects.Keke((3, 4)))
-    # Walls
-    for x in range(9):
-        for y in range(9):
-            if len(world_1.get_objs_from_pos((x, y))) == 0:
-                world_1.new_obj(objects.Wall((x, y)))
-    world_1.del_objs_from_type(objects.Keke)
-    # World
-    level = levels.level("Intro 4", [world_0, world_1])
-    play(levelpacks.levelpack("Intro 4", [level]))

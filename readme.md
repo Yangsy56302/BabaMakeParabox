@@ -13,22 +13,13 @@ made separately by **Arvi Hempuli** and **Patrick Traynor**.
 If the game freeze, please confirm you are not
 selecting any text in terminal before you report this to me.
 
-Note: batch files in `python` folder only works when python files exists,
-and batch files in `windows` folder only works when execution files exists.
-
 If you want to run the source code, download These Things:
 - **Python** **_(latest)_**: [Link](https://www.python.org/downloads/)
 - **PIP**: Should install with Python
 - **Pygame**: Run `pip install -U pygame` in Terminal or something similar to Terminal
 - **PyInstaller** **_(optional, if you need exe)_**: Run `pip install -U pyinstaller` in Terminal too
 
-Run `test.bat` to start a official game test.
-
-Run `play.bat` to play a levelpack from json file in the `levelpacks*`* folder.
-
-Run `edit.bat` to edit and save a levelpack from json file in the `levelpacks` folder, or create one.
-
-You can run `help.bat` for more information with how to run the game in terminal.
+Run `BabaMakeParabox.exe` (or `python BabaMakeParabox.py`, if you have code and python etc.) to start the game.
 
 If you need to make an exe, run `py2exe.bat` in the root folder.
 
@@ -136,6 +127,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 2.52   | 2024.07.15 | Code feeling Push is Better |
 | 2.6    | 2024.07.16 | Key on Editor is Better and Better |
 | 2.61   | 2024.07.16 | Editor has Palette |
+| 2.7    | 2024.07.16 | Game has Language |
 
 ## Bug Reports and Suggestions
 

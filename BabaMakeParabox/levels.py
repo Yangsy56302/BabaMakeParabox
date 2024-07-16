@@ -723,6 +723,24 @@ class level(object):
         world_background.fill(pygame.Color(world.color))
         world_background.blit(world_surface, (0, 0))
         world_surface = world_background
+        if world.inf_tier > 0:
+            infinite_surface = displays.sprites.get("text_infinite", 0, frame)
+            multi_infinite_surface = pygame.Surface((infinite_surface.get_width(), infinite_surface.get_height() * world.inf_tier), pygame.SRCALPHA)
+            multi_infinite_surface.fill("#00000000")
+            for i in range(world.inf_tier):
+                multi_infinite_surface.blit(infinite_surface, (0, i * infinite_surface.get_height()))
+            multi_infinite_surface = pygame.transform.scale_by(multi_infinite_surface, world.height * displays.pixel_size / world.inf_tier)
+            multi_infinite_surface = displays.set_alpha(multi_infinite_surface, 0x44)
+            world_surface.blit(multi_infinite_surface, ((world_surface.get_width() - multi_infinite_surface.get_width()) // 2, 0))
+        elif world.inf_tier < 0:
+            epsilon_surface = displays.sprites.get("text_epsilon", 0, frame)
+            multi_epsilon_surface = pygame.Surface((epsilon_surface.get_width(), epsilon_surface.get_height() * -world.inf_tier), pygame.SRCALPHA)
+            multi_epsilon_surface.fill("#00000000")
+            for i in range(-world.inf_tier):
+                multi_epsilon_surface.blit(epsilon_surface, (0, i * epsilon_surface.get_height()))
+            multi_epsilon_surface = pygame.transform.scale_by(multi_epsilon_surface, world.height * displays.pixel_size / -world.inf_tier)
+            multi_epsilon_surface = displays.set_alpha(multi_epsilon_surface, 0x44)
+            world_surface.blit(multi_epsilon_surface, ((world_surface.get_width() - multi_epsilon_surface.get_width()) // 2, 0))
         return world_surface
     def to_json(self) -> basics.JsonObject:
         json_object = {"name": self.name, "world_list": [], "super_level": self.super_level, "main_world": {"name": self.main_world_name, "infinite_tier": self.main_world_tier}}

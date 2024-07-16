@@ -1,4 +1,7 @@
+import copy
+
 import BabaMakeParabox.basics as basics
+import BabaMakeParabox.languages as languages
 import BabaMakeParabox.spaces as spaces
 import BabaMakeParabox.objects as objects
 import BabaMakeParabox.rules as rules
@@ -7,7 +10,6 @@ import BabaMakeParabox.displays as displays
 import BabaMakeParabox.levels as levels
 import BabaMakeParabox.levelpacks as levelpacks
 
-import copy
 import pygame
 
 def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
@@ -195,11 +197,11 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
             history.append(copy.deepcopy(levelpack))
             if issubclass(current_object_type, objects.Level):
                 if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
-                    name = input("Level's Name: ")
+                    name = input(languages.current_language["editor.level.new.name"])
                     name = name if levelpack.get_level(name) is not None else current_level.name
-                    icon_name = input("Level's Icon Name (like: \"baba\", \"text_baba\"... or leave it empty): ")
+                    icon_name = input(languages.current_language["editor.level.new.icon.name"])
                     icon_name = icon_name if icon_name != "" else "empty"
-                    icon_color = input("Level's Icon Color: ")
+                    icon_color = input(languages.current_language["editor.level.new.icon.color"])
                     icon_color = pygame.Color(icon_color) if icon_color != "" else displays.WHITE
                 else:
                     name = current_level.name
@@ -208,8 +210,8 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                 current_world.new_obj(current_object_type(current_cursor_pos, name, icon_name, icon_color, current_facing))
             elif issubclass(current_object_type, objects.WorldPointer):
                 if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
-                    name = input("World's Name: ")
-                    inf_tier = input("World's Infinite Tier: ")
+                    name = input(languages.current_language["editor.world.new.name"])
+                    inf_tier = input(languages.current_language["editor.world.new.inf_tier"])
                     inf_tier = int(inf_tier) if inf_tier != "" else 0
                     name, inf_tier = (name, inf_tier) if current_level.get_world(name, inf_tier) is not None else (current_world.name, current_world.inf_tier)
                 else:
@@ -220,20 +222,20 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                 current_world.new_obj(current_object_type(current_cursor_pos, current_facing))
         elif keys[keybinds["BACKSLASH"]] and cooldowns[keybinds["BACKSLASH"]] == 0:
             if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
-                if input("Are you sure you want to create a new level? [y/N]: ") in yes:
+                if input(languages.current_language["editor.level.new"]) in yes:
                     history.append(copy.deepcopy(levelpack))
-                    level_name = input("Level's Name: ")
-                    super_level = input("Superlevel's Name: ")
+                    level_name = input(languages.current_language["editor.level.new.name"])
+                    super_level = input(languages.current_language["editor.level.new.super_level.name"])
                     super_level = super_level if super_level != "" else current_level.name
-                    name = input("World's Name: ")
-                    width = input("World's Width: ")
+                    name = input(languages.current_language["editor.world.new.name"])
+                    width = input(languages.current_language["editor.world.new.width"])
                     width = int(width) if width != "" else basics.options["default_new_world"]["width"]
-                    height = input("World's Height: ")
+                    height = input(languages.current_language["editor.world.new.height"])
                     height = int(height) if height != "" else basics.options["default_new_world"]["height"]
                     size = (width, height)
-                    inf_tier = input("World's Infinite Tier: ")
+                    inf_tier = input(languages.current_language["editor.world.new.inf_tier"])
                     inf_tier = int(inf_tier) if inf_tier != "" else 0
-                    color = input("World's color: ")
+                    color = input(languages.current_language["editor.world.new.color"])
                     color = pygame.Color(color if color != "" else basics.options["default_new_world"]["color"])
                     default_world = worlds.world(name, size, inf_tier, color)
                     levelpack.level_list.append(levels.level(level_name, [default_world], super_level, name, inf_tier, levelpack.rule_list))
@@ -242,36 +244,36 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                     level_changed = True
                     world_changed = True
             else:
-                if input("Are you sure you want to create a new world? [y/N]: ") in yes:
+                if input(languages.current_language["editor.world.new"]) in yes:
                     history.append(copy.deepcopy(levelpack))
-                    name = input("World's Name: ")
-                    width = input("World's width: ")
+                    name = input(languages.current_language["editor.world.new.name"])
+                    width = input(languages.current_language["editor.world.new.width"])
                     width = int(width) if width != "" else basics.options["default_new_world"]["width"]
-                    height = input("World's height: ")
+                    height = input(languages.current_language["editor.world.new.height"])
                     height = int(height) if height != "" else basics.options["default_new_world"]["height"]
                     size = (width, height)
-                    inf_tier = input("World's infinite tier: ")
+                    inf_tier = input(languages.current_language["editor.world.new.inf_tier"])
                     inf_tier = int(inf_tier) if inf_tier != "" else 0
-                    color = input("World's color: ")
+                    color = input(languages.current_language["editor.world.new.color"])
                     color = pygame.Color(color if color != "" else basics.options["default_new_world"]["color"])
                     current_level.world_list.append(worlds.world(name, size, inf_tier, color))
                     current_world_index = len(current_level.world_list) - 1
                     world_changed = True
         elif keys[keybinds["DELETE"]] and cooldowns[keybinds["DELETE"]] == 0:
             if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
-                if input("Are you sure you want to delete this level? [y/N]: ") in yes:
+                if input(languages.current_language["editor.level.delete"]) in yes:
                     levelpack.level_list.pop(current_level_index)
                     current_level_index -= 1
                     current_world_index = 0
                     level_changed = True
                     world_changed = True
             else:
-                if input("Are you sure you want to delete this world? [y/N]: ") in yes:
+                if input(languages.current_language["editor.world.delete"]) in yes:
                     current_level.world_list.pop(current_world_index)
                     current_world_index -= 1
                     world_changed = True
         elif keys[keybinds["R"]] and cooldowns[keybinds["R"]] == 0:
-            text_rule = input("Levelpack's Global Rule: ").upper().split()
+            text_rule = input(languages.current_language["editor.levelpack.new.rule"]).upper().split()
             type_rule: rules.Rule = []
             valid_input = True
             for text in text_rule:
@@ -298,7 +300,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                 else:
                     if not (keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]):
                         levelpack.rule_list.append(list(type_rule))
-            print("Levelpack's Global Rule List:")
+            print(languages.current_language["editor.levelpack.rule_list"])
             for rule in levelpack.rule_list:
                 str_list = []
                 for obj_type in rule:
@@ -306,9 +308,9 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                 print(" ".join(str_list))
         elif keys[keybinds["T"]] and cooldowns[keybinds["T"]] == 0:
             if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
-                current_level.name = input("Level's New Name: ")
+                current_level.name = input(languages.current_language["editor.level.rename"])
             else:
-                current_world.name = input("World's New Name: ")
+                current_world.name = input(languages.current_language["editor.world.rename"])
         elif keys[keybinds["BACKSPACE"]] and cooldowns[keybinds["BACKSPACE"]] == 0:
             history.append(copy.deepcopy(levelpack))
             current_world.del_objs_from_pos(current_cursor_pos)
@@ -385,14 +387,14 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
             current_cursor_pos = (0, 0)
             current_level_index = current_level_index % len(levelpack.level_list) if current_level_index >= 0 else len(levelpack.level_list) - 1
             current_level = levelpack.level_list[current_level_index]
-            print("Current Level's Name:", current_level.name)
+            print(languages.current_language["editor.level.current.name"], current_level.name, sep=None)
             level_changed = False
         if world_changed:
             current_cursor_pos = (0, 0)
             current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
             current_world = current_level.world_list[current_world_index]
-            print("Current World's Name:", current_world.name)
-            print("Current World's Infinite Tier:", current_world.inf_tier)
+            print(languages.current_language["editor.world.current.name"], current_world.name, sep=None)
+            print(languages.current_language["editor.world.current.inf_tier"], current_world.inf_tier, sep=None)
             world_changed = False
         current_object_index = current_object_index % len(object_list) if current_object_index >= 0 else len(object_list) - 1
         current_object_type = object_list[current_object_index]
