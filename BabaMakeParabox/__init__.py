@@ -29,7 +29,7 @@ def logic(args: dict[str, Any]) -> None:
             if args.get("input") != "":
                 filename: str = args["input"]
                 if os.path.isfile(os.path.join("levelpacks", filename + ".json")):
-                    with open(filename, "r", encoding="ascii") as file:
+                    with open(os.path.join("levelpacks", filename + ".json"), "r", encoding="ascii") as file:
                         levelpack = levelpacks.json_to_levelpack(json.load(file))
                 else:
                     world = worlds.world(filename, size, color=color)
