@@ -139,6 +139,8 @@
 | 2.6    | 2024.07.16 | Key on Editor is Better and Better |
 | 2.61   | 2024.07.16 | Editor has Palette |
 | 2.7    | 2024.07.16 | Game has Language |
+| 2.71   | 2024.07.16 | Language on File is Read |
+| 2.8    | 2024.07.16 | Baba and Keke and Me is Baba and You and Win |
 
 ## 报告漏洞和提出建议
 

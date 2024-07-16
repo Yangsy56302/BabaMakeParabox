@@ -703,6 +703,14 @@ class NOT(Text):
     def __repr__(self) -> str:
         return repr(super())
 
+class AND(Text):
+    class_name: str = "AND"
+    sprite_name: str = "text_and"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 class YOU(Property):
     class_name: str = "YOU"
     sprite_name: str = "text_you"
@@ -920,6 +928,7 @@ object_name: dict[str, type[Object]] = {
     "CLONE": CLONE,
     "IS": IS,
     "NOT": NOT,
+    "AND": AND,
     "YOU": YOU,
     "MOVE": MOVE,
     "STOP": STOP,
@@ -945,9 +954,16 @@ class NounsObjsDicts(object):
     def new_pair(self, noun: type[Noun], obj: type[Object]) -> None:
         self.pairs[noun] = obj
     def get_obj(self, noun: type[Noun]) -> type[Object]:
-        return self.pairs[noun]
+        for get_noun, get_object in self.pairs.items():
+            if issubclass(noun, get_noun):
+                return get_object
+        raise ValueError()
     def get_noun(self, obj: type[Object]) -> type[Noun]:
-        return {v: k for k, v in self.pairs.items()}[obj]
+        pairs = {v: k for k, v in self.pairs.items()}
+        for get_object, get_noun in pairs.items():
+            if issubclass(obj, get_object):
+                return get_noun
+        raise ValueError()
 
 nouns_objs_dicts = NounsObjsDicts()
 

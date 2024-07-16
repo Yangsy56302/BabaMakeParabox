@@ -6,7 +6,7 @@ import copy
 
 pygame.init()
 
-versions = "2.71"
+versions = "2.8"
 
 BasicJsonElement = None | int | float | str
 JsonElement = list[BasicJsonElement] | list["JsonElement"] | dict[str, BasicJsonElement] | dict[str, "JsonElement"]

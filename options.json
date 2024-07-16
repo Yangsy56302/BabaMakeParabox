@@ -1,1 +1,0 @@
-{"lang": "id_FK", "fps": 30, "fpw": 5, "input_cooldown": 4, "world_display_recursion_depth": 3, "compressed_json_output": true, "default_new_world": {"width": 9, "height": 9, "color": "#000000"}, "object_type_shortcuts": ["Baba", "Wall", "Rock", "Flag", "Skull", "WORLD", "LEVEL", "IS", "YOU", "WIN"]}

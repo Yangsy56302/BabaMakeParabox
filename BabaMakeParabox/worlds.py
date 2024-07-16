@@ -89,34 +89,62 @@ class world(object):
         return [o for o in self.object_list if isinstance(o, objects.Level)]
     def get_levels_from_pos(self, pos: spaces.Coord) -> list[objects.Level]:
         return [o for o in self.object_list if isinstance(o, objects.Level) and match_pos(o, pos)]
-    def get_rules_from_pos_and_orient(self, rule: rules.Rule, pos: spaces.Coord, orient: spaces.Orient) -> Optional[list[rules.Rule]]:
-        if len(rule) == 0:
-            return [[]]
-        return_rules: list[rules.Rule] = []
+    def get_rules_from_pos_and_orient(self, stage: Optional[type[objects.Text]], pos: spaces.Coord, orient: spaces.Orient) -> list[rules.Rule]:
+        if stage == objects.Noun:
+            matches = (objects.Noun, )
+            next_stage = objects.Operator
+        elif stage == objects.Operator:
+            matches = (objects.Operator, )
+            next_stage = objects.Property
+        elif stage == objects.Property:
+            matches = (objects.Noun, objects.Property)
+            next_stage = None
+        elif stage is None:
+            matches = ()
+            next_stage = None
         text_objs = self.get_objs_from_pos_and_type(pos, objects.Text)
         word_objs = filter(lambda o: o.has_prop(objects.WORD) and match_pos(o, pos), self.object_list)
         text_objs.extend(map(lambda o: objects.nouns_objs_dicts.get_noun(type(o))(o.pos), word_objs))
         if len(text_objs) == 0:
-            return None
-        objs: list[type[objects.Text]] = []
-        for obj in text_objs:
-            if isinstance(obj, rule[0]):
-                objs.append(type(obj))
+            if stage is None:
+                return [[]]
+            return []
+        obj_types: list[type[objects.Text]] = []
+        if stage is not None:
+            for obj in text_objs:
+                if isinstance(obj, matches):
+                    obj_types.append(type(obj))
+        remain_rules = self.get_rules_from_pos_and_orient(next_stage, spaces.pos_facing(pos, orient), orient)
+        remain_not_rules = []
         not_objs = self.get_objs_from_pos_and_type(pos, objects.NOT)
-        remain_not_rules = None
-        if len(not_objs) != 0 and issubclass(rule[0], (objects.Noun, objects.Property)):
-            remain_not_rules = self.get_rules_from_pos_and_orient(rule, spaces.pos_facing(pos, orient), orient)
-        remain_rules = self.get_rules_from_pos_and_orient(rule[1:], spaces.pos_facing(pos, orient), orient)
-        return_rules = []
-        if remain_rules is not None:
+        if len(not_objs) != 0 and stage in (objects.Noun, objects.Property):
+            remain_not_rules = self.get_rules_from_pos_and_orient(stage, spaces.pos_facing(pos, orient), orient)
+        and_objs = self.get_objs_from_pos_and_type(pos, objects.AND)
+        remain_and_rules = []
+        if len(and_objs) != 0 and stage in (objects.Operator, None):
+            if stage == objects.Operator:
+                remain_and_rules = self.get_rules_from_pos_and_orient(objects.Noun, spaces.pos_facing(pos, orient), orient)
+            else:
+                remain_and_rules = self.get_rules_from_pos_and_orient(objects.Property, spaces.pos_facing(pos, orient), orient)
+        return_rules: list[rules.Rule] = []
+        if remain_rules != []:
             for remain_rule in remain_rules:
-                for obj in objs:
-                    return_rules.append([obj] + remain_rule)
-        if remain_not_rules is not None:
+                for obj_type in obj_types:
+                    return_rules.append([obj_type] + remain_rule)
+        if remain_not_rules != []:
             for remain_not_rule in remain_not_rules:
                 return_rules.append([objects.NOT] + remain_not_rule)
                 if remain_not_rule in return_rules:
                     return_rules.remove(remain_not_rule)
+        if remain_and_rules != []:
+            for remain_and_rule in remain_and_rules:
+                return_rules.append([objects.AND] + remain_and_rule)
+                if remain_and_rule in return_rules:
+                    return_rules.remove(remain_and_rule)
+        if len(return_rules) == 0:
+            if stage is None:
+                return [[]]
+            return []
         return return_rules
     def get_rules(self) -> list[rules.Rule]:
         rule_list: list[rules.Rule] = []
@@ -126,7 +154,7 @@ class world(object):
             for x in range(self.width):
                 for y in range(self.height - len(rule_type) + 1):
                     y_rule_dict.setdefault(y, [])
-                    new_rule_list = self.get_rules_from_pos_and_orient(rule_type, (x, y), spaces.S)
+                    new_rule_list = self.get_rules_from_pos_and_orient(objects.Noun, (x, y), spaces.S)
                     if new_rule_list is not None:
                         for rule_index in range(len(new_rule_list)):
                             part_of_old_rule = False
@@ -139,7 +167,7 @@ class world(object):
             for y in range(self.height):
                 for x in range(self.width - len(rule_type) + 1):
                     x_rule_dict.setdefault(x, [])
-                    new_rule_list = self.get_rules_from_pos_and_orient(rule_type, (x, y), spaces.D)
+                    new_rule_list = self.get_rules_from_pos_and_orient(objects.Noun, (x, y), spaces.D)
                     if new_rule_list is not None:
                         for rule_index in range(len(new_rule_list)):
                             part_of_old_rule = False
