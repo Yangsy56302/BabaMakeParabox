@@ -28,7 +28,7 @@ def logic(args: dict[str, Any]) -> None:
             color = pygame.Color(default_new_world_settings["color"])
             if args.get("input") != "":
                 filename: str = args["input"]
-                if os.path.isfile(filename):
+                if os.path.isfile(os.path.join("levelpacks", filename + ".json")):
                     with open(filename, "r", encoding="ascii") as file:
                         levelpack = levelpacks.json_to_levelpack(json.load(file))
                 else:
@@ -42,12 +42,12 @@ def logic(args: dict[str, Any]) -> None:
             levelpack = edits.levelpack_editor(levelpack)
             if args.get("output") != "":
                 filename: str = args["output"]
-                with open(filename, "w", encoding="ascii") as file:
+                with open(os.path.join("levelpacks", filename + ".json"), "w", encoding="ascii") as file:
                     json.dump(levelpack.to_json(), file, indent=None if basics.options["compressed_json_output"] else 4)
             return
         elif args.get("play", False):
-            input_filename: str = args["input"]
-            with open(input_filename, "r", encoding="ascii") as file:
+            filename: str = args["input"]
+            with open(os.path.join("levelpacks", filename + ".json"), "r", encoding="ascii") as file:
                 levelpack = levelpacks.json_to_levelpack(json.load(file))
                 games.play(levelpack)
             return
@@ -83,15 +83,15 @@ def main() -> None:
     if play_or_edit == 1:
         settings["play"] = True
         print(languages.current_language["main.open.levelpack"])
-        settings["input"] = input(languages.current_language["input.file.path.relative"])
+        settings["input"] = input(languages.current_language["input.file.name"])
     else:
         settings["edit"] = True
         print(languages.current_language["main.open.levelpack"])
         print(languages.current_language["main.open.levelpack.empty.editor"])
-        settings["input"] = input(languages.current_language["input.file.path.relative"])
+        settings["input"] = input(languages.current_language["input.file.name"])
         print(languages.current_language["main.save.levelpack"])
         print(languages.current_language["main.save.levelpack.empty.editor"])
-        settings["output"] = input(languages.current_language["input.file.path.relative"])
+        settings["output"] = input(languages.current_language["input.file.name"])
     print(languages.current_language["game.start"])
     logic(settings)
     print(languages.current_language["game.exit"])

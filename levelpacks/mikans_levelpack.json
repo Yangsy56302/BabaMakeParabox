@@ -1,0 +1,1719 @@
+{
+    "name": "MAIN",
+    "level_list": [
+        {
+            "name": "mainLevel",
+            "world_list": [
+                {
+                    "name": "mainWorld",
+                    "infinite_tier": 0,
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "color": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "object_list": [
+                        {
+                            "type": "Level",
+                            "position": [
+                                2,
+                                4
+                            ],
+                            "orientation": "S",
+                            "level": {
+                                "name": "level_1"
+                            },
+                            "icon": {
+                                "name": "text_level",
+                                "color": [
+                                    17,
+                                    69,
+                                    20
+                                ]
+                            }
+                        },
+                        {
+                            "type": "Level",
+                            "position": [
+                                4,
+                                4
+                            ],
+                            "orientation": "S",
+                            "level": {
+                                "name": "level_2"
+                            },
+                            "icon": {
+                                "name": "text_level",
+                                "color": [
+                                    17,
+                                    69,
+                                    20
+                                ]
+                            }
+                        },
+                        {
+                            "type": "Level",
+                            "position": [
+                                6,
+                                4
+                            ],
+                            "orientation": "S",
+                            "level": {
+                                "name": "level_3"
+                            },
+                            "icon": {
+                                "name": "text_level",
+                                "color": [
+                                    17,
+                                    69,
+                                    20
+                                ]
+                            }
+                        },
+                        {
+                            "type": "Cursor",
+                            "position": [
+                                2,
+                                4
+                            ],
+                            "orientation": "S"
+                        }
+                    ]
+                }
+            ],
+            "super_level": null,
+            "main_world": {
+                "name": "mainWorld",
+                "infinite_tier": 0
+            }
+        },
+        {
+            "name": "level_1",
+            "world_list": [
+                {
+                    "name": "mainWorld",
+                    "infinite_tier": 0,
+                    "size": [
+                        11,
+                        11
+                    ],
+                    "color": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "object_list": [
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                2,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                3,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                8,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                7,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                6,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                5,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                4,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                2,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "WALL",
+                            "position": [
+                                1,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                6
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                8
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                2,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                3,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                4,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                5,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                6,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                7,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                8,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                8
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                6
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "BABA",
+                            "position": [
+                                7,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                8,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                8,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "YOU",
+                            "position": [
+                                9,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "STOP",
+                            "position": [
+                                3,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "ROCK",
+                            "position": [
+                                4,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                5,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "STOP",
+                            "position": [
+                                6,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "World",
+                            "position": [
+                                5,
+                                5
+                            ],
+                            "orientation": "S",
+                            "world": {
+                                "name": "roomWorld_1",
+                                "infinite_tier": 0
+                            }
+                        },
+                        {
+                            "type": "FLAG",
+                            "position": [
+                                8,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                8,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "WIN",
+                            "position": [
+                                8,
+                                6
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "WIN",
+                            "position": [
+                                8,
+                                6
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Rock",
+                            "position": [
+                                3,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Baba",
+                            "position": [
+                                3,
+                                7
+                            ],
+                            "orientation": "S"
+                        }
+                    ]
+                },
+                {
+                    "name": "roomWorld_1",
+                    "infinite_tier": 0,
+                    "size": [
+                        5,
+                        5
+                    ],
+                    "color": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "object_list": [
+                        {
+                            "type": "Wall",
+                            "position": [
+                                0,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                0,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                3,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                4,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                4,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                3,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                0,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                0,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                4,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                4,
+                                1
+                            ],
+                            "orientation": "S"
+                        }
+                    ]
+                }
+            ],
+            "super_level": null,
+            "main_world": {
+                "name": "mainWorld",
+                "infinite_tier": 0
+            }
+        },
+        {
+            "name": "level_2",
+            "world_list": [
+                {
+                    "name": "mainWorld",
+                    "infinite_tier": 0,
+                    "size": [
+                        11,
+                        11
+                    ],
+                    "color": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "object_list": [
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                2,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                3,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                8,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                7,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                6,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                5,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                4,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                2,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "WALL",
+                            "position": [
+                                1,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                6
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                8
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                2,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                3,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                4,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                5,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                6,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                7,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                8,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                8
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                6
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "BABA",
+                            "position": [
+                                7,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                8,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                8,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "YOU",
+                            "position": [
+                                9,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "STOP",
+                            "position": [
+                                3,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "ROCK",
+                            "position": [
+                                4,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                5,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "World",
+                            "position": [
+                                5,
+                                5
+                            ],
+                            "orientation": "S",
+                            "world": {
+                                "name": "roomWorld_1",
+                                "infinite_tier": 0
+                            }
+                        },
+                        {
+                            "type": "Rock",
+                            "position": [
+                                3,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "FLAG",
+                            "position": [
+                                2,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                2,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "WIN",
+                            "position": [
+                                2,
+                                6
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "WIN",
+                            "position": [
+                                2,
+                                6
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Baba",
+                            "position": [
+                                7,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "PUSH",
+                            "position": [
+                                6,
+                                2
+                            ],
+                            "orientation": "S"
+                        }
+                    ]
+                },
+                {
+                    "name": "roomWorld_1",
+                    "infinite_tier": 0,
+                    "size": [
+                        5,
+                        5
+                    ],
+                    "color": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "object_list": [
+                        {
+                            "type": "Wall",
+                            "position": [
+                                0,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                0,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                3,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                4,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                4,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                3,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                0,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                0,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                4,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                4,
+                                1
+                            ],
+                            "orientation": "S"
+                        }
+                    ]
+                }
+            ],
+            "super_level": null,
+            "main_world": {
+                "name": "mainWorld",
+                "infinite_tier": 0
+            }
+        },
+        {
+            "name": "level_3",
+            "world_list": [
+                {
+                    "name": "mainWorld",
+                    "infinite_tier": 0,
+                    "size": [
+                        11,
+                        11
+                    ],
+                    "color": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "object_list": [
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                2,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                3,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                8,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                7,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                6,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                5,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                4,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                2,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "WALL",
+                            "position": [
+                                1,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                6
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                8
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                2,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                3,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                4,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                5,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                6,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                7,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                8,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                9
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                8
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                6
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                9,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "BABA",
+                            "position": [
+                                7,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                8,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                8,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "YOU",
+                            "position": [
+                                9,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "STOP",
+                            "position": [
+                                3,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                5,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "World",
+                            "position": [
+                                5,
+                                5
+                            ],
+                            "orientation": "S",
+                            "world": {
+                                "name": "roomWorld_1",
+                                "infinite_tier": 0
+                            }
+                        },
+                        {
+                            "type": "Baba",
+                            "position": [
+                                3,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Rock",
+                            "position": [
+                                3,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "FLAG",
+                            "position": [
+                                8,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                8,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "WIN",
+                            "position": [
+                                8,
+                                6
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "WIN",
+                            "position": [
+                                8,
+                                6
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "WALL",
+                            "position": [
+                                4,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "STOP",
+                            "position": [
+                                6,
+                                2
+                            ],
+                            "orientation": "S"
+                        }
+                    ]
+                },
+                {
+                    "name": "roomWorld_1",
+                    "infinite_tier": 0,
+                    "size": [
+                        5,
+                        5
+                    ],
+                    "color": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "object_list": [
+                        {
+                            "type": "Wall",
+                            "position": [
+                                0,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                0,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                3,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                4,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                4,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                3,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                1,
+                                0
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                0,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                0,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                4,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                4,
+                                1
+                            ],
+                            "orientation": "S"
+                        }
+                    ]
+                }
+            ],
+            "super_level": null,
+            "main_world": {
+                "name": "mainWorld",
+                "infinite_tier": 0
+            }
+        }
+    ],
+    "main_level": "mainLevel",
+    "rule_list": [
+        [
+            "CURSOR",
+            "IS",
+            "SELECT"
+        ],
+        [
+            "TEXT",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "WORLD",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "CLONE",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "LEVEL",
+            "IS",
+            "STOP"
+        ]
+    ]
+}
