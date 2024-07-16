@@ -31,6 +31,11 @@ class world(object):
     def out_of_range(self, coord: spaces.Coord) -> bool:
         return coord[0] < 0 or coord[1] < 0 or coord[0] >= self.width or coord[1] >= self.height
     def new_obj(self, obj: objects.Object) -> bool:
+        if isinstance(obj, objects.World):
+            for world_obj in self.get_objs_from_type(objects.World):
+                if obj.name == world_obj.name and obj.inf_tier == world_obj.inf_tier:
+                    self.object_list.append(objects.Clone(world_obj.pos, world_obj.name, world_obj.inf_tier, world_obj.facing))
+                    self.del_obj(world_obj.uuid)
         self.object_list.append(obj)
         return True
     def get_obj(self, uid: uuid.UUID) -> Optional[objects.Object]:

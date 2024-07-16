@@ -6,7 +6,7 @@ import argparse
 
 pygame.init()
 
-versions = "2.52"
+versions = "2.6"
 
 BasicJsonElement = None | int | float | str
 JsonElement = list[BasicJsonElement] | list["JsonElement"] | dict[str, BasicJsonElement] | dict[str, "JsonElement"]

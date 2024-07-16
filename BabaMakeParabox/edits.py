@@ -33,25 +33,30 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                 "A": pygame.K_a,
                 "S": pygame.K_s,
                 "D": pygame.K_d,
-                "I": pygame.K_i,
-                "K": pygame.K_k,
-                "J": pygame.K_j,
-                "L": pygame.K_l,
                 "Q": pygame.K_q,
                 "E": pygame.K_e,
                 "Z": pygame.K_z,
                 "X": pygame.K_x,
                 "C": pygame.K_c,
                 "V": pygame.K_v,
-                "O": pygame.K_o,
-                "P": pygame.K_p,
-                "N": pygame.K_n,
-                "M": pygame.K_m,
                 "R": pygame.K_r,
+                "T": pygame.K_t,
+                "1": pygame.K_1,
+                "2": pygame.K_2,
+                "3": pygame.K_3,
+                "4": pygame.K_4,
+                "5": pygame.K_5,
+                "6": pygame.K_6,
+                "7": pygame.K_7,
+                "8": pygame.K_8,
+                "9": pygame.K_9,
+                "0": pygame.K_0,
                 "-": pygame.K_MINUS,
                 "=": pygame.K_EQUALS,
                 "RETURN": pygame.K_RETURN,
+                "BACKSLASH": pygame.K_BACKSLASH,
                 "BACKSPACE": pygame.K_BACKSPACE,
+                "DELETE": pygame.K_DELETE,
                 "TAB": pygame.K_TAB,
                 "LSHIFT": pygame.K_LSHIFT,
                 "RSHIFT": pygame.K_RSHIFT,
@@ -94,29 +99,33 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
             elif event.type == pygame.KEYUP and event.key in keybinds.values():
                 keys[event.key] = False
         if keys[keybinds["W"]] and cooldowns[keybinds["W"]] == 0:
-            new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.W)
-            if not current_world.out_of_range(new_cursor_pos):
-                current_cursor_pos = new_cursor_pos
+            if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
+                current_facing = spaces.W
+            else:
+                new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.W)
+                if not current_world.out_of_range(new_cursor_pos):
+                    current_cursor_pos = new_cursor_pos
         elif keys[keybinds["S"]] and cooldowns[keybinds["S"]] == 0:
-            new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.S)
-            if not current_world.out_of_range(new_cursor_pos):
-                current_cursor_pos = new_cursor_pos
+            if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
+                current_facing = spaces.S
+            else:
+                new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.S)
+                if not current_world.out_of_range(new_cursor_pos):
+                    current_cursor_pos = new_cursor_pos
         elif keys[keybinds["A"]] and cooldowns[keybinds["A"]] == 0:
-            new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.A)
-            if not current_world.out_of_range(new_cursor_pos):
-                current_cursor_pos = new_cursor_pos
+            if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
+                current_facing = spaces.A
+            else:
+                new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.A)
+                if not current_world.out_of_range(new_cursor_pos):
+                    current_cursor_pos = new_cursor_pos
         elif keys[keybinds["D"]] and cooldowns[keybinds["D"]] == 0:
-            new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.D)
-            if not current_world.out_of_range(new_cursor_pos):
-                current_cursor_pos = new_cursor_pos
-        elif keys[keybinds["I"]] and cooldowns[keybinds["I"]] == 0:
-            current_facing = spaces.W
-        elif keys[keybinds["K"]] and cooldowns[keybinds["K"]] == 0:
-            current_facing = spaces.S
-        elif keys[keybinds["J"]] and cooldowns[keybinds["J"]] == 0:
-            current_facing = spaces.A
-        elif keys[keybinds["L"]] and cooldowns[keybinds["L"]] == 0:
-            current_facing = spaces.D
+            if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
+                current_facing = spaces.D
+            else:
+                new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.D)
+                if not current_world.out_of_range(new_cursor_pos):
+                    current_cursor_pos = new_cursor_pos
         elif keys[keybinds["Q"]] and cooldowns[keybinds["Q"]] == 0:
             current_object_index -= 1
         elif keys[keybinds["E"]] and cooldowns[keybinds["E"]] == 0:
@@ -124,23 +133,31 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
         elif keys[keybinds["RETURN"]] and cooldowns[keybinds["RETURN"]] == 0:
             history.append(copy.deepcopy(levelpack))
             if issubclass(current_object_type, objects.Level):
-                icon_name = input("Level's Icon Name (like: \"baba\", \"text_baba\"...): ")
-                icon_name = icon_name if icon_name is not None else "empty"
-                icon_color = input("Level's Icon Color: ")
-                icon_color = pygame.Color(icon_color) if icon_color != "" else displays.WHITE
-                current_world.new_obj(current_object_type(current_cursor_pos, current_level.name, icon_name, icon_color, current_facing))
-            elif issubclass(current_object_type, objects.World):
-                for world in current_level.world_list:
-                    for world_obj in [o for o in world.object_list if isinstance(o, objects.World)]:
-                        if current_world.name == world_obj.name and current_world.inf_tier == world_obj.inf_tier:
-                            world.new_obj(objects.Clone(world_obj.pos, world_obj.name, world_obj.inf_tier, world_obj.facing))
-                            world.del_obj(world_obj.uuid)
-                current_world.new_obj(current_object_type(current_cursor_pos, current_world.name, current_world.inf_tier, current_facing))
-            elif issubclass(current_object_type, objects.Clone):
-                current_world.new_obj(current_object_type(current_cursor_pos, current_world.name, current_world.inf_tier, current_facing))
+                if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
+                    name = input("Level's Name: ")
+                    name = name if levelpack.get_level(name) is not None else current_level.name
+                    icon_name = input("Level's Icon Name (like: \"baba\", \"text_baba\"... or leave it empty): ")
+                    icon_name = icon_name if icon_name != "" else "empty"
+                    icon_color = input("Level's Icon Color: ")
+                    icon_color = pygame.Color(icon_color) if icon_color != "" else displays.WHITE
+                else:
+                    name = current_level.name
+                    icon_name = "empty"
+                    icon_color = displays.WHITE
+                current_world.new_obj(current_object_type(current_cursor_pos, name, icon_name, icon_color, current_facing))
+            elif issubclass(current_object_type, objects.WorldPointer):
+                if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
+                    name = input("World's Name: ")
+                    inf_tier = input("World's Infinite Tier: ")
+                    inf_tier = int(inf_tier) if inf_tier != "" else 0
+                    name, inf_tier = (name, inf_tier) if current_level.get_world(name, inf_tier) is not None else (current_world.name, current_world.inf_tier)
+                else:
+                    name = current_world.name
+                    inf_tier = current_world.inf_tier
+                current_world.new_obj(current_object_type(current_cursor_pos, name, inf_tier, current_facing))
             else:
                 current_world.new_obj(current_object_type(current_cursor_pos, current_facing))
-        elif keys[keybinds["P"]] and cooldowns[keybinds["P"]] == 0:
+        elif keys[keybinds["BACKSLASH"]] and cooldowns[keybinds["BACKSLASH"]] == 0:
             if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
                 if input("Are you sure you want to create a new level? [y/N]: ") in yes:
                     history.append(copy.deepcopy(levelpack))
@@ -179,7 +196,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                     current_level.world_list.append(worlds.world(name, size, inf_tier, color))
                     current_world_index = len(current_level.world_list) - 1
                     world_changed = True
-        elif keys[keybinds["O"]] and cooldowns[keybinds["O"]] == 0:
+        elif keys[keybinds["DELETE"]] and cooldowns[keybinds["DELETE"]] == 0:
             if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
                 if input("Are you sure you want to delete this level? [y/N]: ") in yes:
                     levelpack.level_list.pop(current_level_index)
@@ -226,6 +243,11 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                 for obj_type in rule:
                     str_list.append(obj_type.class_name)
                 print(" ".join(str_list))
+        elif keys[keybinds["T"]] and cooldowns[keybinds["T"]] == 0:
+            if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
+                current_level.name = input("Level's New Name: ")
+            else:
+                current_world.name = input("World's New Name: ")
         elif keys[keybinds["BACKSPACE"]] and cooldowns[keybinds["BACKSPACE"]] == 0:
             history.append(copy.deepcopy(levelpack))
             current_world.del_objs_from_pos(current_cursor_pos)
@@ -302,13 +324,14 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
             current_cursor_pos = (0, 0)
             current_level_index = current_level_index % len(levelpack.level_list) if current_level_index >= 0 else len(levelpack.level_list) - 1
             current_level = levelpack.level_list[current_level_index]
-            print("Current Level:", current_level.name)
+            print("Current Level's Name:", current_level.name)
             level_changed = False
         if world_changed:
             current_cursor_pos = (0, 0)
             current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
             current_world = current_level.world_list[current_world_index]
-            print("Current World:", current_world.name)
+            print("Current World's Name:", current_world.name)
+            print("Current World's Infinite Tier:", current_world.inf_tier)
             world_changed = False
         current_object_index = current_object_index % len(object_list) if current_object_index >= 0 else len(object_list) - 1
         current_object_type = object_list[current_object_index]

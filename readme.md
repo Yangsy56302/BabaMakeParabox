@@ -54,25 +54,28 @@ Please remember:
 
 ## How to make a custom world
 
-**Important: the levels / worlds / clones that placed are pointed to the levels / worlds / clones that where the camera is.**
-If you want to put levels / worlds / clones inside other levels / worlds, please considering cut, copy and paste.
+**Important: as default, the levels / worlds / clones that placed are pointed to the levels / worlds / clones that where the camera is.**
+If you want to put levels / worlds / clones inside other levels / worlds, please considering shift + enter, or cut, copy, and paste.
 
 ### How to control
 
 - WSAD: Move cursor.
-- IKJL: Change orientation.
+- Shift + WSAD: Change orientation.
 - Q / E: Select object.
 - Tab: Switch object / noun.
-- Enter: Place object on cursor (level information from terminal inputs).
+- Enter: Place object on cursor (level / world information by default).
+- Shift + Enter: Place object on cursor (level / world information from terminal inputs).
 - Backspace: Destroy all objects on cursor.
 - \- / =: Select world for camera to focus.
-- Shift + \- / =: Select level for camera to focus.
-- P: New world (information from terminal inputs).
-- Shift + P: New level (information from terminal inputs).
-- O: Delete current world (confirm in terminal).
-- Shift + O: Delete current level (confirm in terminal).
+- Shift + \- / Shift + =: Select level for camera to focus.
+- \\: New world (information from terminal inputs).
+- Shift + \\: New level (information from terminal inputs).
+- Delete: Delete current world (confirm in terminal).
+- Shift + Delete: Delete current level (confirm in terminal).
 - R: New global rules (information from terminal inputs).
 - Shift + R: Delete global rules (information from terminal inputs).
+- T: Rename Current World (information from terminal inputs).
+- Shift + T: Rename Current Level (information from terminal inputs).
 - Z: Undo.
 - X: Cut all objects on cursor.
 - C: Copy all objects on cursor.
@@ -129,6 +132,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 2.5    | 2024.07.15 | Key on Editor is Better; Level has Icon and Color |
 | 2.51   | 2024.07.15 | World is Word; Object is More |
 | 2.52   | 2024.07.15 | Code feeling Push is Better |
+| 2.6    | 2024.07.16 | Key on Editor is Better and Better |
 
 ## Bug Reports and Suggestions
 
