@@ -2,31 +2,48 @@ import pygame
 import os
 import sys
 import json
+import copy
 import argparse
 
 pygame.init()
 
-versions = "2.6"
+versions = "2.61"
 
 BasicJsonElement = None | int | float | str
 JsonElement = list[BasicJsonElement] | list["JsonElement"] | dict[str, BasicJsonElement] | dict[str, "JsonElement"]
 JsonObject = dict[str, JsonElement]
+
+default_options = {
+    "fps": 30,
+    "fpw": 5,
+    "input_cooldown": 5,
+    "world_display_recursion_depth": 2,
+    "default_new_world": {
+        "width": 9,
+        "height": 9,
+        "color": "#000000"
+    },
+    "object_type_shortcuts": ["Baba", "Wall", "Rock", "Flag", "Skull", "Belt", "Level", "NOT", "IS", "YOU"]
+}
 
 os.makedirs("levelpacks", exist_ok=True)
 options_filename = "options.json"
 try:
     file = open(options_filename, "r", encoding="ascii")
     options = json.load(file)
+    updated_options = copy.deepcopy(default_options)
+    updated_options.update(options)
+    options = copy.deepcopy(updated_options)
     file.close()
 except OSError as e:
     file = open(options_filename, "w", encoding="ascii")
-    options = {}
+    options = copy.deepcopy(default_options)
     json.dump(options, file, indent=4)
     file.close()
 except json.JSONDecodeError as e:
     file.close()
     file = open(options_filename, "w", encoding="ascii")
-    options = {}
+    options = copy.deepcopy(default_options)
     json.dump(options, file, indent=4)
     file.close()
 

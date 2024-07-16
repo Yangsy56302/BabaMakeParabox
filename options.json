@@ -7,5 +7,17 @@
         "width": 9,
         "height": 9,
         "color": "#000000"
-    }
+    },
+    "object_type_shortcuts": [
+        "Baba",
+        "Wall",
+        "Rock",
+        "Flag",
+        "Skull",
+        "Belt",
+        "Level",
+        "NOT",
+        "IS",
+        "YOU"
+    ]
 }

@@ -29,7 +29,7 @@ def main() -> None:
             basics.save_options(basics.options)
             return
         elif basics.args.edit:
-            default_new_world_settings = basics.options.setdefault("default_new_world", {"width": 9, "height": 9, "color": "#000000"})
+            default_new_world_settings = basics.options["default_new_world"]
             size = (default_new_world_settings["width"], default_new_world_settings["height"])
             color = pygame.Color(default_new_world_settings["color"])
             if basics.args.input is not None:

@@ -63,6 +63,8 @@ If you want to put levels / worlds / clones inside other levels / worlds, please
 - Shift + WSAD: Change orientation.
 - Q / E: Select object.
 - Tab: Switch object / noun.
+- 0 ~ 9: Select object from palette.
+- Shift + 0 ~ Shift + 9: Set palette from selected object.
 - Enter: Place object on cursor (level / world information by default).
 - Shift + Enter: Place object on cursor (level / world information from terminal inputs).
 - Backspace: Destroy all objects on cursor.
@@ -133,6 +135,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 2.51   | 2024.07.15 | World is Word; Object is More |
 | 2.52   | 2024.07.15 | Code feeling Push is Better |
 | 2.6    | 2024.07.16 | Key on Editor is Better and Better |
+| 2.61   | 2024.07.16 | Editor has Palette |
 
 ## Bug Reports and Suggestions
 

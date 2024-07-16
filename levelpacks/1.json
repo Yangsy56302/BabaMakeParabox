@@ -1,0 +1,57 @@
+{
+    "name": "1",
+    "level_list": [
+        {
+            "name": "1",
+            "world_list": [
+                {
+                    "name": "1",
+                    "infinite_tier": 0,
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "color": [
+                        0,
+                        0,
+                        0
+                    ],
+                    "object_list": []
+                }
+            ],
+            "super_level": null,
+            "main_world": {
+                "name": "1",
+                "infinite_tier": 0
+            }
+        }
+    ],
+    "main_level": "1",
+    "rule_list": [
+        [
+            "CURSOR",
+            "IS",
+            "SELECT"
+        ],
+        [
+            "TEXT",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "WORLD",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "CLONE",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "LEVEL",
+            "IS",
+            "STOP"
+        ]
+    ]
+}

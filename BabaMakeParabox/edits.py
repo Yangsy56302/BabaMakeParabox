@@ -75,6 +75,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
     current_facing = spaces.S
     current_cursor_pos = (0, 0)
     current_clipboard = []
+    object_type_shortcuts: dict[int, type[objects.Object]] = {k: objects.object_name[v] for k, v in enumerate(basics.options["object_type_shortcuts"])}
     level_changed = True
     world_changed = True
     yes = ["y", "Y", "yes", "Yes", "YES"]
@@ -88,7 +89,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
     editor_running = True
     while editor_running:
         frame += 1
-        if frame >= basics.options.setdefault("fpw", 5):
+        if frame >= basics.options["fpw"]:
             frame = 0
             wiggle = wiggle % 3 + 1
         for event in pygame.event.get():
@@ -130,6 +131,66 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
             current_object_index -= 1
         elif keys[keybinds["E"]] and cooldowns[keybinds["E"]] == 0:
             current_object_index += 1
+        elif keys[keybinds["1"]] and cooldowns[keybinds["1"]] == 0:
+            if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
+                object_type_shortcuts[0] = current_object_type
+                basics.options["object_type_shortcuts"][0] = {v: k for k, v in objects.object_name.items()}[current_object_type]
+            else:
+                current_object_index = object_list.index(object_type_shortcuts[0])
+        elif keys[keybinds["2"]] and cooldowns[keybinds["2"]] == 0:
+            if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
+                object_type_shortcuts[1] = current_object_type
+                basics.options["object_type_shortcuts"][1] = {v: k for k, v in objects.object_name.items()}[current_object_type]
+            else:
+                current_object_index = object_list.index(object_type_shortcuts[1])
+        elif keys[keybinds["3"]] and cooldowns[keybinds["3"]] == 0:
+            if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
+                object_type_shortcuts[2] = current_object_type
+                basics.options["object_type_shortcuts"][2] = {v: k for k, v in objects.object_name.items()}[current_object_type]
+            else:
+                current_object_index = object_list.index(object_type_shortcuts[2])
+        elif keys[keybinds["4"]] and cooldowns[keybinds["4"]] == 0:
+            if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
+                object_type_shortcuts[3] = current_object_type
+                basics.options["object_type_shortcuts"][3] = {v: k for k, v in objects.object_name.items()}[current_object_type]
+            else:
+                current_object_index = object_list.index(object_type_shortcuts[3])
+        elif keys[keybinds["5"]] and cooldowns[keybinds["5"]] == 0:
+            if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
+                object_type_shortcuts[4] = current_object_type
+                basics.options["object_type_shortcuts"][4] = {v: k for k, v in objects.object_name.items()}[current_object_type]
+            else:
+                current_object_index = object_list.index(object_type_shortcuts[4])
+        elif keys[keybinds["6"]] and cooldowns[keybinds["6"]] == 0:
+            if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
+                object_type_shortcuts[5] = current_object_type
+                basics.options["object_type_shortcuts"][5] = {v: k for k, v in objects.object_name.items()}[current_object_type]
+            else:
+                current_object_index = object_list.index(object_type_shortcuts[5])
+        elif keys[keybinds["7"]] and cooldowns[keybinds["7"]] == 0:
+            if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
+                object_type_shortcuts[6] = current_object_type
+                basics.options["object_type_shortcuts"][6] = {v: k for k, v in objects.object_name.items()}[current_object_type]
+            else:
+                current_object_index = object_list.index(object_type_shortcuts[6])
+        elif keys[keybinds["8"]] and cooldowns[keybinds["8"]] == 0:
+            if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
+                object_type_shortcuts[7] = current_object_type
+                basics.options["object_type_shortcuts"][7] = {v: k for k, v in objects.object_name.items()}[current_object_type]
+            else:
+                current_object_index = object_list.index(object_type_shortcuts[7])
+        elif keys[keybinds["9"]] and cooldowns[keybinds["9"]] == 0:
+            if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
+                object_type_shortcuts[8] = current_object_type
+                basics.options["object_type_shortcuts"][8] = {v: k for k, v in objects.object_name.items()}[current_object_type]
+            else:
+                current_object_index = object_list.index(object_type_shortcuts[8])
+        elif keys[keybinds["0"]] and cooldowns[keybinds["0"]] == 0:
+            if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
+                object_type_shortcuts[9] = current_object_type
+                basics.options["object_type_shortcuts"][9] = {v: k for k, v in objects.object_name.items()}[current_object_type]
+            else:
+                current_object_index = object_list.index(object_type_shortcuts[9])
         elif keys[keybinds["RETURN"]] and cooldowns[keybinds["RETURN"]] == 0:
             history.append(copy.deepcopy(levelpack))
             if issubclass(current_object_type, objects.Level):
@@ -166,14 +227,14 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                     super_level = super_level if super_level != "" else current_level.name
                     name = input("World's Name: ")
                     width = input("World's Width: ")
-                    width = int(width) if width != "" else basics.options.setdefault("default_new_world", {"width": 9}).get("width", 9)
+                    width = int(width) if width != "" else basics.options["default_new_world"]["width"]
                     height = input("World's Height: ")
-                    height = int(height) if height != "" else basics.options.setdefault("default_new_world", {"height": 9}).get("height", 9)
+                    height = int(height) if height != "" else basics.options["default_new_world"]["height"]
                     size = (width, height)
                     inf_tier = input("World's Infinite Tier: ")
                     inf_tier = int(inf_tier) if inf_tier != "" else 0
                     color = input("World's color: ")
-                    color = pygame.Color(color if color != "" else basics.options.setdefault("default_new_world", {"color": "#000000"}).get("color", "#000000"))
+                    color = pygame.Color(color if color != "" else basics.options["default_new_world"]["color"])
                     default_world = worlds.world(name, size, inf_tier, color)
                     levelpack.level_list.append(levels.level(level_name, [default_world], super_level, name, inf_tier, levelpack.rule_list))
                     current_level_index = len(levelpack.level_list) - 1
@@ -185,14 +246,14 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                     history.append(copy.deepcopy(levelpack))
                     name = input("World's Name: ")
                     width = input("World's width: ")
-                    width = int(width) if width != "" else basics.options.setdefault("default_new_world", {"width": 9}).get("width", 9)
+                    width = int(width) if width != "" else basics.options["default_new_world"]["width"]
                     height = input("World's height: ")
-                    height = int(height) if height != "" else basics.options.setdefault("default_new_world", {"height": 9}).get("height", 9)
+                    height = int(height) if height != "" else basics.options["default_new_world"]["height"]
                     size = (width, height)
                     inf_tier = input("World's infinite tier: ")
                     inf_tier = int(inf_tier) if inf_tier != "" else 0
                     color = input("World's color: ")
-                    color = pygame.Color(color if color != "" else basics.options.setdefault("default_new_world", {"color": "#000000"}).get("color", "#000000"))
+                    color = pygame.Color(color if color != "" else basics.options["default_new_world"]["color"])
                     current_level.world_list.append(worlds.world(name, size, inf_tier, color))
                     current_world_index = len(current_level.world_list) - 1
                     world_changed = True
@@ -319,7 +380,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                 world_changed = True
         for key, value in keys.items():
             if value and cooldowns[key] == 0:
-                cooldowns[key] = basics.options.setdefault("input_cooldown", 5)
+                cooldowns[key] = basics.options["input_cooldown"]
         if level_changed:
             current_cursor_pos = (0, 0)
             current_level_index = current_level_index % len(levelpack.level_list) if current_level_index >= 0 else len(levelpack.level_list) - 1
@@ -341,9 +402,12 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
         window.blit(pygame.transform.scale(current_level.show_world(current_world, wiggle, cursor=current_cursor_pos), (720, 720)), (0, 0))
         current_object = displays.set_sprite_state(current_object_type((0, 0), current_facing))
         window.blit(pygame.transform.scale(displays.sprites.get(current_object_type.sprite_name, current_object.sprite_state, wiggle), (72, 72)), (1208, 0))
+        for index, obj_type in object_type_shortcuts.items():
+            obj = displays.set_sprite_state(obj_type((0, 0), spaces.S))
+            window.blit(pygame.transform.scale(displays.sprites.get(obj_type.sprite_name, obj.sprite_state, wiggle), (72, 72)), (920 + (index % 5 * 72), 576 + (index // 5 * 72)))
         pygame.display.flip()
         for key in cooldowns:
             if cooldowns[key] > 0:
                 cooldowns[key] -= 1
-        clock.tick(basics.options.setdefault("fps", 30))
+        clock.tick(basics.options["fps"])
     return levelpack

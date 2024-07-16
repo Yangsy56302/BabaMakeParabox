@@ -58,7 +58,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
     freeze_time = -1
     while True:
         frame += 1
-        if frame >= basics.options.setdefault("fpw", 5):
+        if frame >= basics.options["fpw"]:
             frame = 0
             wiggle = wiggle % 3 + 1
         for event in pygame.event.get():
@@ -146,7 +146,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
             freeze_time -= 1
         for key, value in keys.items():
             if value and cooldowns[key] == 0:
-                cooldowns[key] = basics.options.setdefault("input_cooldown", 5)
+                cooldowns[key] = basics.options["input_cooldown"]
         if refresh:
             for new_level in level_info["new_levels"]:
                 levelpack.set_level(new_level)
@@ -189,17 +189,17 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 print("Congratulations!")
                 if freeze_time == -1:
                     level_info_backup = copy.deepcopy(level_info)
-                    freeze_time = basics.options.setdefault("fps", 30)
+                    freeze_time = basics.options["fps"]
             elif transform_success and len(level_info["transform_to"]) != 0:
                 print("This level has been transformed into something...")
                 if freeze_time == -1:
                     level_info_backup = copy.deepcopy(level_info)
-                    freeze_time = basics.options.setdefault("fps", 30)
+                    freeze_time = basics.options["fps"]
             elif level_info["selected_level"] is not None:
                 print("You have entered a level.")
                 if freeze_time == -1:
                     level_info_backup = copy.deepcopy(level_info)
-                    freeze_time = basics.options.setdefault("fps", 30)
+                    freeze_time = basics.options["fps"]
             for level in levelpack.level_list:
                 for world in current_level.world_list:
                     world.object_list = list(filter(lambda o: not isinstance(o, objects.Empty), world.object_list))
@@ -234,7 +234,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
         for key in cooldowns:
             if cooldowns[key] > 0:
                 cooldowns[key] -= 1
-        clock.tick(basics.options.setdefault("fps", 30))
+        clock.tick(basics.options["fps"])
 
 def test() -> None:
     # Superworld

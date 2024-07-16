@@ -63,6 +63,8 @@
 - Shift + WSAD：选择物体朝向
 - Q / E：选择物体
 - Tab：切换物体和名词
+- 0 ~ 9：从调色板选择物体
+- Shift + 0 ~ Shift + 9：设置调色板的物体为当前选择的物体
 - Enter：在光标上放置物体，关卡或世界的详细信息取默认值
 - Shift + Enter：在光标上放置物体，需要在终端输入关卡或世界的详细信息
 - Backspace：删除光标上的物体
@@ -133,6 +135,7 @@
 | 2.51   | 2024.07.15 | World is Word; Object is More |
 | 2.52   | 2024.07.15 | Code feeling Push is Better |
 | 2.6    | 2024.07.16 | Key on Editor is Better and Better |
+| 2.61   | 2024.07.16 | Editor has Palette |
 
 ## 报告漏洞和提出建议
 

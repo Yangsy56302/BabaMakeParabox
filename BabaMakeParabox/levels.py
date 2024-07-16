@@ -667,7 +667,7 @@ class level(object):
         win = self.winned()
         return {"win": win, "selected_level": selected_level, "new_levels": new_levels, "transform_to": transform_to}
     def show_world(self, world: worlds.world, frame: int, layer: int = 0, cursor: Optional[spaces.Coord] = None) -> pygame.Surface:
-        if layer >= basics.options.setdefault("world_display_recursion_depth", 3):
+        if layer >= basics.options["world_display_recursion_depth"]:
             return displays.sprites.get("world", 0, frame).copy()
         pixel_sprite_size = displays.sprite_size * displays.pixel_size
         world_surface_size = (world.width * pixel_sprite_size, world.height * pixel_sprite_size)
