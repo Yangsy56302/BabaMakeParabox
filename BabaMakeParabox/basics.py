@@ -6,7 +6,7 @@ import copy
 
 pygame.init()
 
-versions = "2.7"
+versions = "2.71"
 
 BasicJsonElement = None | int | float | str
 JsonElement = list[BasicJsonElement] | list["JsonElement"] | dict[str, BasicJsonElement] | dict[str, "JsonElement"]
@@ -24,7 +24,7 @@ default_options = {
         "height": 9,
         "color": "#000000"
     },
-    "object_type_shortcuts": ["Baba", "Wall", "Rock", "Flag", "Skull", "Belt", "Level", "NOT", "IS", "YOU"]
+    "object_type_shortcuts": ["Baba", "Wall", "Rock", "Flag", "Skull", "WORLD", "LEVEL", "IS", "YOU", "WIN"]
 }
 
 os.makedirs("levelpacks", exist_ok=True)

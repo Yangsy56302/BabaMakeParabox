@@ -6,6 +6,11 @@
 The original games are [**Baba Is You**](https://hempuli.com/baba/) and [**Patrick's Parabox**](https://www.patricksparabox.com/),
 made separately by **Arvi Hempuli** and **Patrick Traynor**.
 
+**The code of this game follows the MIT Open Source License.**
+
+**I DO NOT have the copyright of the game's textures.**
+If you have some informations about the right of use for the game's textures or something, please tell me.
+
 ## How to run
 
 **This Game will run normally only if terminal window exists**
@@ -45,8 +50,10 @@ Please remember:
 
 ## How to make a custom world
 
-**Important: as default, the levels / worlds / clones that placed are pointed to the levels / worlds / clones that where the camera is.**
-If you want to put levels / worlds / clones inside other levels / worlds, please considering shift + enter, or cut, copy, and paste.
+**Important: as default, the levels / worlds / clones that placed**
+**are pointed to the levels / worlds / clones that where the camera is.**
+If you want to put levels / worlds / clones inside other levels / worlds,
+please considering shift + enter, or cut, copy, and paste.
 
 ### How to control
 
@@ -56,25 +63,29 @@ If you want to put levels / worlds / clones inside other levels / worlds, please
 - Tab: Switch object / noun.
 - 0 ~ 9: Select object from palette.
 - Shift + 0 ~ Shift + 9: Set palette from selected object.
-- Enter: Place object on cursor (level / world information by default).
-- Shift + Enter: Place object on cursor (level / world information from terminal inputs).
+- Enter: Place object on cursor by default.
+- Shift + Enter: Place object on cursor with details. \*
 - Backspace: Destroy all objects on cursor.
 - \- / =: Select world for camera to focus.
 - Shift + \- / Shift + =: Select level for camera to focus.
-- \\: New world (information from terminal inputs).
-- Shift + \\: New level (information from terminal inputs).
-- Delete: Delete current world (confirm in terminal).
-- Shift + Delete: Delete current level (confirm in terminal).
-- R: New global rules (information from terminal inputs).
-- Shift + R: Delete global rules (information from terminal inputs).
-- T: Rename Current World (information from terminal inputs).
-- Shift + T: Rename Current Level (information from terminal inputs).
+- \\: New world. \*
+- Shift + \\: New level. \*
+- Delete: Delete current world. \*
+- Shift + Delete: Delete current level. \*
+- R: New global rules. \*
+- Shift + R: Delete global rules. \*
+- T: Rename Current World. \*
+- Shift + T: Rename Current Level. \*
 - Z: Undo.
 - X: Cut all objects on cursor.
 - C: Copy all objects on cursor.
 - V: Paste all objects on cursor.
 - Close Pygame Window: Save and quit.
 - Close Terminal: Do not save, just quit.
+
+Note: Key descriptions with \* means you need to
+input some informations on terminal after pressing this key.
+During that time, the game window will freeze because the program is waiting for inputs.
 
 ## Misc
 

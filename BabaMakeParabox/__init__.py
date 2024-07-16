@@ -17,7 +17,7 @@ import BabaMakeParabox.levelpacks as levelpacks
 import BabaMakeParabox.edits as edits
 import BabaMakeParabox.games as games
 
-def main(args: dict[str, Any]) -> None:
+def logic(args: dict[str, Any]) -> None:
     print(languages.current_language["game.name"])
     if os.environ.get("PYINSTALLER") == "TRUE":
         pass # just do nothing
@@ -44,18 +44,59 @@ def main(args: dict[str, Any]) -> None:
                 filename: str = args["output"]
                 with open(filename, "w", encoding="ascii") as file:
                     json.dump(levelpack.to_json(), file, indent=None if basics.options["compressed_json_output"] else 4)
-            pygame.quit()
-            basics.save_options(basics.options)
-            print(languages.current_language["game.thank_you"])
             return
         elif args.get("play", False):
             input_filename: str = args["input"]
             with open(input_filename, "r", encoding="ascii") as file:
                 levelpack = levelpacks.json_to_levelpack(json.load(file))
                 games.play(levelpack)
-            pygame.quit()
-            basics.save_options(basics.options)
-            print(languages.current_language["game.thank_you"])
             return
+
+def main() -> None:
+    settings = {}
+    if basics.options["lang"] not in languages.language_dict.keys():
+        for lang in languages.language_dict.keys():
+            print(languages.language_dict[lang]["language.select"])
+        lang = input(">>> ")
+        languages.set_current_language(lang)
+        basics.options["lang"] = lang
+    else:
+        languages.set_current_language(basics.options["lang"])
+    print(languages.current_language["main.welcome"])
+    print(languages.current_language["main.change_options"])
+    change_options = input(languages.current_language["input.string"]) != ""
+    if change_options:
+        print(languages.current_language["main.change_options.fps"])
+        computer_level = int(input(languages.current_language["input.number"]))
+        match computer_level:
+            case 1:
+                basics.options.update({"fps": 5, "fpw": 1, "input_cooldown": 1, "world_display_recursion_depth": 1, "compressed_json_output": True})
+            case 2:
+                basics.options.update({"fps": 15, "fpw": 3, "input_cooldown": 2, "world_display_recursion_depth": 2, "compressed_json_output": True})
+            case 3:
+                basics.options.update({"fps": 30, "fpw": 5, "input_cooldown": 4, "world_display_recursion_depth": 3, "compressed_json_output": True})
+            case 4:
+                basics.options.update({"fps": 60, "fpw": 10, "input_cooldown": 8, "world_display_recursion_depth": 4, "compressed_json_output": False})
+        print(languages.current_language["main.change_options.done"])
+    print(languages.current_language["main.play_or_edit"])
+    play_or_edit = int(input(languages.current_language["input.number"]))
+    if play_or_edit == 1:
+        settings["play"] = True
+        print(languages.current_language["main.open.levelpack"])
+        settings["input"] = input(languages.current_language["input.file.path.relative"])
+    else:
+        settings["edit"] = True
+        print(languages.current_language["main.open.levelpack"])
+        print(languages.current_language["main.open.levelpack.empty.editor"])
+        settings["input"] = input(languages.current_language["input.file.path.relative"])
+        print(languages.current_language["main.save.levelpack"])
+        print(languages.current_language["main.save.levelpack.empty.editor"])
+        settings["output"] = input(languages.current_language["input.file.path.relative"])
+    print(languages.current_language["game.start"])
+    logic(settings)
+    print(languages.current_language["game.exit"])
+    basics.save_options(basics.options)
+    pygame.quit()
+    print(languages.current_language["game.thank_you"])
 
 __all__ = ["basics", "languages", "spaces", "objects", "rules", "worlds", "displays", "levels", "edits", "games", "main"]

@@ -51,6 +51,8 @@ def play(levelpack: levelpacks.levelpack) -> None:
     level_info = {"win": False, "selected_level": None, "new_levels": [], "transform_to": []}
     level_info_backup = {"win": False, "selected_level": None, "new_levels": [], "transform_to": []}
     history = [{"world_index": current_world_index, "level_name": current_level_name, "levelpack": copy.deepcopy(levelpack)}]
+    level_changed = False
+    world_changed = False
     frame = 1
     wiggle = 1
     window.blit(pygame.transform.scale(current_level.show_world(current_level.world_list[current_world_index], 1), (720, 720)), (0, 0))
@@ -100,6 +102,8 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 current_level_name = current_level.super_level if current_level.super_level is not None else levelpack.main_level
                 current_level = levelpack.get_exist_level(current_level_name)
                 current_world_index = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
+                level_changed = True
+                world_changed = True
                 refresh = True
             elif keys[keybinds["Z"]] and cooldowns[keybinds["Z"]] == 0:
                 if len(history) > 1:
@@ -140,8 +144,10 @@ def play(levelpack: levelpacks.levelpack) -> None:
                     print(" ".join(str_list))
             elif keys[keybinds["-"]] and cooldowns[keybinds["-"]] == 0:
                 current_world_index -= 1
+                world_changed = True
             elif keys[keybinds["="]] and cooldowns[keybinds["="]] == 0:
                 current_world_index += 1
+                world_changed = True
         else:
             freeze_time -= 1
         for key, value in keys.items():
@@ -206,6 +212,8 @@ def play(levelpack: levelpacks.levelpack) -> None:
                     world.set_sprite_states(round_num)
             level_info = {"win": False, "selected_level": None, "new_levels": [], "transform_to": []}
         if freeze_time == 0:
+            level_changed = True
+            world_changed = True
             if level_info_backup["win"]:
                 if current_level.name == levelpack.main_level:
                     return
@@ -228,6 +236,12 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 current_world_index = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
                 round_num = 0
         current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
+        if level_changed:
+            print(languages.current_language["game.level.current.name"], current_level.name, sep=None)
+            level_changed = False
+        if world_changed:
+            print(languages.current_language["game.world.current.name"], current_level.world_list[current_world_index].name, sep=None)
+            world_changed = False
         window.fill("#000000")
         window.blit(pygame.transform.scale(current_level.show_world(current_level.world_list[current_world_index], wiggle), (720, 720)), (0, 0))
         pygame.display.flip()
