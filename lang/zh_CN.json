@@ -20,6 +20,7 @@
     "game.levelpack.rule_list": "关卡包内的公共规则：",
     "game.world.rule_list": "世界内的本地规则：",
     "game.world.current.name": "世界名称：",
+    "game.world.current.inf_tier": "世界的无限级别：",
     "editor.levelpack.rule_list": "关卡包内的公共规则：",
     "editor.levelpack.new.rule": "输入关卡包内的公共规则：",
     "editor.level.current.name": "关卡名称：",

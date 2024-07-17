@@ -20,6 +20,7 @@
     "game.levelpack.rule_list": "Levelpack's global rule list: ",
     "game.world.rule_list": "World's local rule list: ",
     "game.world.current.name": "Current world's name: ",
+    "game.world.current.inf_tier": "Current world's infinite tier: ",
     "editor.levelpack.rule_list": "Levelpack's global rule list: ",
     "editor.levelpack.new.rule": "Input levelpack's global rule: ",
     "editor.level.current.name": "Current level's name: ",

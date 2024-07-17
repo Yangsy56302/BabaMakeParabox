@@ -1,7 +1,7 @@
 import json
 import os
 
-import BabaMakeParabox.basics as basics
+from BabaMakeParabox import basics
 
 language_dict: dict[str, dict[str, str]] = {}
 

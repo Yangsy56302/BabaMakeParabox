@@ -1,12 +1,12 @@
 from typing import Any, Optional
 import random
 
-import BabaMakeParabox.basics as basics
-import BabaMakeParabox.spaces as spaces
-import BabaMakeParabox.objects as objects
-import BabaMakeParabox.rules as rules
-import BabaMakeParabox.worlds as worlds
-import BabaMakeParabox.displays as displays
+from BabaMakeParabox import basics
+from BabaMakeParabox import spaces
+from BabaMakeParabox import objects
+from BabaMakeParabox import rules
+from BabaMakeParabox import worlds
+from BabaMakeParabox import displays
 
 import pygame
 
@@ -528,7 +528,7 @@ class level(object):
                                 world.new_obj(new_obj)
                                 transform_success = True
                             else:
-                                new_world = worlds.world(old_obj.uuid.hex, (1, 1), 0, pygame.Color("#000000"))
+                                new_world = worlds.world(old_obj.uuid.hex, (1, 1), 0, 0x000000)
                                 new_levels.append(level(old_obj.uuid.hex, [new_world], self.name, rule_list=self.rule_list))
                                 new_world.new_obj(old_type((0, 0)))
                                 new_obj = objects.Level(old_obj.pos, old_obj.uuid.hex, facing=old_obj.facing)
@@ -545,7 +545,7 @@ class level(object):
                                     world.new_obj(old_type(old_obj.pos, old_obj.name, old_obj.inf_tier, old_obj.facing))
                                     transform_success = True
                             else:
-                                new_world = worlds.world(old_obj.uuid.hex, (1, 1), 0, pygame.Color("#000000"))
+                                new_world = worlds.world(old_obj.uuid.hex, (1, 1), 0, 0x000000)
                                 new_world.new_obj(old_type((0, 0), old_obj.facing))
                                 self.set_world(new_world)
                                 world.new_obj(objects.World(old_obj.pos, old_obj.uuid.hex, 0, old_obj.facing))
@@ -702,7 +702,7 @@ class level(object):
                 obj_world = self.get_world(obj.name, obj.inf_tier)
                 if obj_world is not None:
                     obj_surface = self.show_world(obj_world, frame, layer + 1)
-                    obj_surface = displays.set_color_dark(obj_surface, pygame.Color("#CCCCCC"))
+                    obj_surface = displays.set_color_dark(obj_surface, 0xCCCCCC)
                 else:
                     obj_surface = displays.sprites.get("level", 0, frame).copy()
                 surface_pos = (obj.x * pixel_sprite_size, obj.y * pixel_sprite_size)
@@ -711,14 +711,14 @@ class level(object):
                 obj_world = self.get_world(obj.name, obj.inf_tier)
                 if obj_world is not None:
                     obj_surface = self.show_world(obj_world, frame, layer + 1)
-                    obj_surface = displays.set_color_light(obj_surface, pygame.Color("#444444"))
+                    obj_surface = displays.set_color_light(obj_surface, 0x444444)
                 else:
                     obj_surface = displays.sprites.get("clone", 0, frame).copy()
                 surface_pos = (obj.x * pixel_sprite_size, obj.y * pixel_sprite_size)
                 obj_surface_list.append((surface_pos, obj_surface, obj))
             elif isinstance(obj, objects.Level):
                 obj_surface = displays.set_color_dark(displays.sprites.get(obj.sprite_name, obj.sprite_state, frame).copy(), obj.icon_color)
-                icon_surface = displays.set_color_light(displays.sprites.get(obj.icon_name, 0, frame).copy(), pygame.Color("#FFFFFF"))
+                icon_surface = displays.set_color_light(displays.sprites.get(obj.icon_name, 0, frame).copy(), 0xFFFFFF)
                 icon_surface_pos = ((obj_surface.get_width() - icon_surface.get_width()) * displays.pixel_size // 2,
                                     (obj_surface.get_height() - icon_surface.get_width()) * displays.pixel_size // 2)
                 obj_surface.blit(icon_surface, icon_surface_pos)
@@ -765,13 +765,13 @@ class level(object):
             multi_epsilon_surface = displays.set_alpha(multi_epsilon_surface, 0x44)
             world_surface.blit(multi_epsilon_surface, ((world_surface.get_width() - multi_epsilon_surface.get_width()) // 2, 0))
         return world_surface
-    def to_json(self) -> basics.JsonObject:
+    def to_json(self) -> dict[str, Any]:
         json_object = {"name": self.name, "world_list": [], "super_level": self.super_level, "main_world": {"name": self.main_world_name, "infinite_tier": self.main_world_tier}}
         for world in self.world_list:
             json_object["world_list"].append(world.to_json())
         return json_object
 
-def json_to_level(json_object: basics.JsonObject) -> level: # oh hell no * 3
+def json_to_level(json_object: dict[str, Any]) -> level: # oh hell no * 3
     world_list = []
     for world in json_object["world_list"]: # type: ignore
         world_list.append(worlds.json_to_world(world)) # type: ignore

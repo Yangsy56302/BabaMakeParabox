@@ -6,11 +6,7 @@ import pygame
 
 pygame.init()
 
-versions = "2.81"
-
-BasicJsonElement = None | int | float | str
-JsonElement = list[BasicJsonElement] | list["JsonElement"] | dict[str, BasicJsonElement] | dict[str, "JsonElement"]
-JsonObject = dict[str, JsonElement]
+versions = "2.82"
 
 default_options = {
     "lang": "id_FK",
@@ -22,7 +18,7 @@ default_options = {
     "default_new_world": {
         "width": 9,
         "height": 9,
-        "color": "#000000"
+        "color": 0x000000
     },
     "object_type_shortcuts": ["Baba", "Wall", "Rock", "Flag", "Skull", "WORLD", "LEVEL", "IS", "YOU", "WIN"]
 }

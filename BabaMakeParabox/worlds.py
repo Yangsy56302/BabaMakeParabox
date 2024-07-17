@@ -1,11 +1,11 @@
-from typing import Optional
+from typing import Any, Optional
 import uuid
 
-import BabaMakeParabox.basics as basics
-import BabaMakeParabox.spaces as spaces
-import BabaMakeParabox.objects as objects
-import BabaMakeParabox.rules as rules
-import BabaMakeParabox.displays as displays
+from BabaMakeParabox import colors
+from BabaMakeParabox import spaces
+from BabaMakeParabox import objects
+from BabaMakeParabox import rules
+from BabaMakeParabox import displays
 
 import pygame
 
@@ -14,12 +14,12 @@ def match_pos(obj: objects.Object, pos: spaces.Coord) -> bool:
 
 class world(object):
     class_name: str = "world"
-    def __init__(self, name: str, size: tuple[int, int], inf_tier: int = 0, color: Optional[pygame.Color] = None) -> None:
+    def __init__(self, name: str, size: tuple[int, int], inf_tier: int = 0, color: Optional[colors.ColorHex] = None) -> None:
         self.name: str = name
         self.inf_tier: int = inf_tier
         self.width: int = size[0]
         self.height: int = size[1]
-        self.color: pygame.Color = color if color is not None else displays.random_hue()
+        self.color: colors.ColorHex = color if color is not None else colors.random_world_color()
         self.object_list: list[objects.Object] = []
         self.rule_list: list[rules.Rule] = []
         self.strict_rule_list: list[rules.Rule] = []
@@ -237,18 +237,17 @@ class world(object):
             return (num + pos[0]) / self.width
         else:
             return (num + pos[1]) / self.height
-    def to_json(self) -> basics.JsonObject:
-        json_object = {"name": self.name, "infinite_tier": self.inf_tier, "size": [self.width, self.height],
-                       "color": [self.color.r, self.color.g, self.color.b], "object_list": []}
+    def to_json(self) -> dict[str, Any]:
+        json_object = {"name": self.name, "infinite_tier": self.inf_tier, "size": [self.width, self.height], "color": self.color, "object_list": []}
         for obj in self.object_list:
             json_object["object_list"].append(obj.to_json())
         return json_object
 
-def json_to_world(json_object: basics.JsonObject) -> world: # oh hell no * 2
+def json_to_world(json_object: dict[str, Any]) -> world: # oh hell no * 2
     new_world = world(name=json_object["name"], # type: ignore
-                      inf_tier=int(json_object["infinite_tier"]), # type: ignore
+                      inf_tier=json_object["infinite_tier"], # type: ignore
                       size=tuple(json_object["size"]), # type: ignore
-                      color=pygame.Color(json_object["color"])) # type: ignore
+                      color=json_object["color"]) # type: ignore
     for obj in json_object["object_list"]: # type: ignore
         new_world.new_obj(objects.json_to_object(obj)) # type: ignore
     return new_world

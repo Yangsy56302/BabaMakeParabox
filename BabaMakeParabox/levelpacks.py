@@ -1,9 +1,9 @@
-from typing import Optional
+from typing import Any, Optional
 
-import BabaMakeParabox.basics as basics
-import BabaMakeParabox.objects as objects
-import BabaMakeParabox.rules as rules
-import BabaMakeParabox.levels as levels
+from BabaMakeParabox import basics
+from BabaMakeParabox import objects
+from BabaMakeParabox import rules
+from BabaMakeParabox import levels
 
 class levelpack(object):
     class_name: str = "levelpack"
@@ -32,7 +32,7 @@ class levelpack(object):
                 self.level_list[i] = level
                 return
         self.level_list.append(level)
-    def to_json(self) -> basics.JsonObject:
+    def to_json(self) -> dict[str, Any]:
         json_object = {"name": self.name, "level_list": [], "main_level": self.main_level, "rule_list": []}
         for level in self.level_list:
             json_object["level_list"].append(level.to_json())
@@ -42,7 +42,7 @@ class levelpack(object):
                 json_object["rule_list"][-1].append({v: k for k, v in objects.object_name.items()}[obj])
         return json_object
 
-def json_to_levelpack(json_object: basics.JsonObject) -> levelpack: # oh hell no * 4
+def json_to_levelpack(json_object: dict[str, Any]) -> levelpack: # oh hell no * 4
     level_list = []
     for level in json_object["level_list"]: # type: ignore
         level_list.append(levels.json_to_level(level)) # type: ignore

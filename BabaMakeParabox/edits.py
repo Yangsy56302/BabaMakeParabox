@@ -1,14 +1,15 @@
 import copy
 
-import BabaMakeParabox.basics as basics
-import BabaMakeParabox.languages as languages
-import BabaMakeParabox.spaces as spaces
-import BabaMakeParabox.objects as objects
-import BabaMakeParabox.rules as rules
-import BabaMakeParabox.worlds as worlds
-import BabaMakeParabox.displays as displays
-import BabaMakeParabox.levels as levels
-import BabaMakeParabox.levelpacks as levelpacks
+from BabaMakeParabox import basics
+from BabaMakeParabox import languages
+from BabaMakeParabox import colors
+from BabaMakeParabox import spaces
+from BabaMakeParabox import objects
+from BabaMakeParabox import rules
+from BabaMakeParabox import worlds
+from BabaMakeParabox import displays
+from BabaMakeParabox import levels
+from BabaMakeParabox import levelpacks
 
 import pygame
 
@@ -202,11 +203,11 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                     icon_name = input(languages.current_language["editor.level.new.icon.name"])
                     icon_name = icon_name if icon_name != "" else "empty"
                     icon_color = input(languages.current_language["editor.level.new.icon.color"])
-                    icon_color = pygame.Color(icon_color) if icon_color != "" else displays.WHITE
+                    icon_color = colors.str_to_hex(icon_color) if icon_color != "" else colors.WHITE
                 else:
                     name = current_level.name
                     icon_name = "empty"
-                    icon_color = displays.WHITE
+                    icon_color = colors.WHITE
                 current_world.new_obj(current_object_type(current_cursor_pos, name, icon_name, icon_color, current_facing))
             elif issubclass(current_object_type, objects.WorldPointer):
                 if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
@@ -236,7 +237,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                     inf_tier = input(languages.current_language["editor.world.new.inf_tier"])
                     inf_tier = int(inf_tier) if inf_tier != "" else 0
                     color = input(languages.current_language["editor.world.new.color"])
-                    color = pygame.Color(color if color != "" else basics.options["default_new_world"]["color"])
+                    color = colors.str_to_hex(color) if color != "" else basics.options["default_new_world"]["color"]
                     default_world = worlds.world(name, size, inf_tier, color)
                     levelpack.level_list.append(levels.level(level_name, [default_world], super_level, name, inf_tier, levelpack.rule_list))
                     current_level_index = len(levelpack.level_list) - 1
@@ -255,7 +256,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                     inf_tier = input(languages.current_language["editor.world.new.inf_tier"])
                     inf_tier = int(inf_tier) if inf_tier != "" else 0
                     color = input(languages.current_language["editor.world.new.color"])
-                    color = pygame.Color(color if color != "" else basics.options["default_new_world"]["color"])
+                    color = colors.str_to_hex(color) if color != "" else basics.options["default_new_world"]["color"]
                     current_level.world_list.append(worlds.world(name, size, inf_tier, color))
                     current_world_index = len(current_level.world_list) - 1
                     world_changed = True

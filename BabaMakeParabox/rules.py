@@ -1,4 +1,4 @@
-import BabaMakeParabox.objects as objects
+from BabaMakeParabox import objects
 
 Rule = list[type[objects.Text]]
 

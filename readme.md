@@ -142,6 +142,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 2.71   | 2024.07.16 | Language on File is Read |
 | 2.8    | 2024.07.16 | Baba and Keke and Me is Baba and You and Win |
 | 2.81   | 2024.07.17 | Bug is Fix |
+| 2.82   | 2024.07.18 | Color is Number |
 
 ## Bug Reports and Suggestions
 

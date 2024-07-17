@@ -5,17 +5,17 @@ import json
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "TRUE"
 import pygame
 
-import BabaMakeParabox.basics as basics
-import BabaMakeParabox.languages as languages
-import BabaMakeParabox.spaces as spaces
-import BabaMakeParabox.objects as objects
-import BabaMakeParabox.rules as rules
-import BabaMakeParabox.displays as displays
-import BabaMakeParabox.worlds as worlds
-import BabaMakeParabox.levels as levels
-import BabaMakeParabox.levelpacks as levelpacks
-import BabaMakeParabox.edits as edits
-import BabaMakeParabox.games as games
+from BabaMakeParabox import basics
+from BabaMakeParabox import languages
+from BabaMakeParabox import spaces
+from BabaMakeParabox import objects
+from BabaMakeParabox import rules
+from BabaMakeParabox import displays
+from BabaMakeParabox import worlds
+from BabaMakeParabox import levels
+from BabaMakeParabox import levelpacks
+from BabaMakeParabox import edits
+from BabaMakeParabox import games
 
 def logic(args: dict[str, Any]) -> None:
     print(languages.current_language["game.name"])

@@ -1,14 +1,13 @@
 from typing import Any, Optional
 import copy
 
-import BabaMakeParabox.basics as basics
-import BabaMakeParabox.languages as languages
-import BabaMakeParabox.spaces as spaces
-import BabaMakeParabox.objects as objects
-import BabaMakeParabox.worlds as worlds
-import BabaMakeParabox.displays as displays
-import BabaMakeParabox.levels as levels
-import BabaMakeParabox.levelpacks as levelpacks
+from BabaMakeParabox import basics
+from BabaMakeParabox import languages
+from BabaMakeParabox import spaces
+from BabaMakeParabox import objects
+from BabaMakeParabox import displays
+from BabaMakeParabox import levels
+from BabaMakeParabox import levelpacks
 
 import pygame
 

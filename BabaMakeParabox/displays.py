@@ -2,67 +2,29 @@ from typing import Optional
 import os
 import random
 
-import BabaMakeParabox.objects as objects
-import BabaMakeParabox.spaces as spaces
+from BabaMakeParabox import basics
+from BabaMakeParabox import colors
+from BabaMakeParabox import objects
+from BabaMakeParabox import spaces
 
 import pygame
-
-DARK_GRAY = pygame.Color("#242424")
-LIGHT_GRAY = pygame.Color("#737373")
-SILVER = pygame.Color("#C3C3C3")
-WHITE = pygame.Color("#FFFFFF")
-MAYBE_BLACK = pygame.Color("#080808")
-
-DARKER_GRAY_BLUE = pygame.Color("#15181F")
-DARK_GRAY_BLUE = pygame.Color("#293141")
-BLUE_GRAY = pygame.Color("#3E7688")
-LIGHT_GRAY_BLUE = pygame.Color("#5F9DD1")
-LIGHTER_GRAY_BLUE = pygame.Color("#83C8E5")
-
-DARKER_RED = pygame.Color("#421910")
-DARK_RED = pygame.Color("#82261C")
-LIGHT_RED = pygame.Color("#E5533B")
-LIGHT_ORANGE = pygame.Color("#E49950")
-LIGHT_YELLOW = pygame.Color("#EDE285")
-
-PURPLE = pygame.Color("#603981")
-LIGHT_PURPLE = pygame.Color("#8E5E9C")
-DARK_BLUE = pygame.Color("#4759B1")
-LIGHT_BLUE = pygame.Color("#557AE0")
-GOLD = pygame.Color("#FFBD47")
-
-DARK_MAGENTA = pygame.Color("#682E4C")
-MAGENTA = pygame.Color("#D9396A")
-PINK = pygame.Color("#EB91CA")
-DARKER_BLUE = pygame.Color("#294891")
-LIGHTER_BLUE = pygame.Color("#73ABF3")
-
-DARK_GRAY_GREEN = pygame.Color("#303824")
-DARK_GREEN = pygame.Color("#4B5C1C")
-GRAY_GREEN = pygame.Color("#5C8339")
-LIGHT_GRAY_GREEN = pygame.Color("#A5B13F")
-LIGHT_GREEN = pygame.Color("#B6D340")
-
-DARK_BROWN = pygame.Color("#503F24")
-BROWN = pygame.Color("#90673E")
-LIGHT_BROWN = pygame.Color("#C29E46")
-DARKER_BROWN = pygame.Color("#362E22")
-MAYBE_NOT_BLACK = pygame.Color("#0B0B0E")
 
 def set_alpha(surface: pygame.Surface, alpha: int) -> pygame.Surface:
     new_surface = surface.copy()
     new_surface.fill(pygame.Color(255, 255, 255, alpha), special_flags=pygame.BLEND_RGBA_MULT)
     return new_surface
 
-def set_color_dark(surface: pygame.Surface, color: pygame.Color) -> pygame.Surface:
+def set_color_dark(surface: pygame.Surface, color: colors.ColorHex) -> pygame.Surface:
+    r, g, b = colors.hex_to_rgb(color)
     new_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
-    new_surface.fill(pygame.Color(color.r, color.g, color.b, 255))
+    new_surface.fill(pygame.Color(r, g, b, 255))
     new_surface.blit(surface, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
     return new_surface
 
-def set_color_light(surface: pygame.Surface, color: pygame.Color) -> pygame.Surface:
+def set_color_light(surface: pygame.Surface, color: colors.ColorHex) -> pygame.Surface:
+    r, g, b = colors.hex_to_rgb(color)
     clr_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
-    clr_surface.fill(pygame.Color(255 - color.r, 255 - color.g, 255 - color.b, 255))
+    clr_surface.fill(pygame.Color(255 - r, 255 - g, 255 - b, 255))
     neg_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
     neg_surface.fill("#FFFFFFFF")
     neg_surface.blit(surface, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
@@ -72,44 +34,11 @@ def set_color_light(surface: pygame.Surface, color: pygame.Color) -> pygame.Surf
     new_surface.blit(clr_surface, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
     return new_surface
 
-def random_hue() -> pygame.Color:
-    n = random.random()
-    if n <= 1 / 6:
-        r = 255
-        g = 255 * (n * 6)
-        b = 0
-    elif n <= 2 / 6:
-        r = 255 - 255 * ((n - 1 / 6) * 6)
-        g = 255
-        b = 0
-    elif n <= 3 / 6:
-        r = 0
-        g = 255
-        b = 255 * ((n - 2 / 6) * 6)
-    elif n <= 4 / 6:
-        r = 0
-        g = 255 - 255 * ((n - 3 / 6) * 6)
-        b = 255
-    elif n <= 5 / 6:
-        r = 255 * ((n - 4 / 6) * 6)
-        g = 0
-        b = 255
-    else:
-        r = 255
-        g = 0
-        b = 255 * ((n - 5 / 6) * 6)
-    return pygame.Color(int(r), int(g), int(b))
-
-def random_world_color() -> pygame.Color:
-    color = random_hue()
-    color = pygame.Color(color.r // 16, color.g // 16, color.b // 16)
-    return color
-
 pixel_size = 6
 sprite_size = 24
 
 class Sprites(object):
-    def __init__(self, sprite_colors: dict[str, pygame.Color]) -> None:
+    def __init__(self, sprite_colors: dict[str, colors.ColorHex]) -> None:
         self.sprite_colors = sprite_colors
     def update(self) -> None:
         self.sprites = {}
@@ -120,7 +49,7 @@ class Sprites(object):
             sprite_basename = sprite_name
             sprite_basename = sprite_basename[:sprite_basename.rfind("_")]
             sprite_basename = sprite_basename[:sprite_basename.rfind("_")]
-            self.sprites[sprite_name] = set_color_dark(sprite, self.sprite_colors.get(sprite_basename, WHITE))
+            self.sprites[sprite_name] = set_color_dark(sprite, self.sprite_colors.get(sprite_basename, colors.WHITE))
     def get(self, sprite_name: str, state: int, frame: int = 0) -> pygame.Surface:
         return self.sprites["_".join([sprite_name, str(state), str(frame)])]
 
@@ -139,86 +68,86 @@ def set_sprite_state(obj: objects.Object, round_num: int = 0, wsad: Optional[dic
         obj.set_sprite(wsad if wsad is not None else {spaces.W: False, spaces.S: False, spaces.A: False, spaces.D: False})
     return obj
 
-sprite_colors: dict[str, pygame.Color] = {}
+sprite_colors: dict[str, colors.ColorHex] = {}
 
-sprite_colors["baba"] = WHITE
-sprite_colors["keke"] = LIGHT_RED
-sprite_colors["me"] = LIGHT_PURPLE
-sprite_colors["patrick"] = MAGENTA
-sprite_colors["skull"] = DARKER_RED
-sprite_colors["ghost"] = PINK
-sprite_colors["wall"] = DARK_GRAY_BLUE
-sprite_colors["hedge"] = DARK_GREEN
-sprite_colors["ice"] = LIGHT_GRAY_BLUE
-sprite_colors["tile"] = DARK_GRAY
-sprite_colors["grass"] = DARK_GRAY_GREEN
-sprite_colors["water"] = LIGHT_GRAY_BLUE
-sprite_colors["lava"] = LIGHT_ORANGE
-sprite_colors["door"] = LIGHT_RED
-sprite_colors["key"] = LIGHT_YELLOW
-sprite_colors["box"] = BROWN
-sprite_colors["rock"] = LIGHT_BROWN
-sprite_colors["fruit"] = LIGHT_RED
-sprite_colors["belt"] = DARK_GRAY_BLUE
-sprite_colors["sun"] = LIGHT_YELLOW
-sprite_colors["moon"] = LIGHT_YELLOW
-sprite_colors["star"] = LIGHT_YELLOW
-sprite_colors["what"] = WHITE
-sprite_colors["love"] = PINK
-sprite_colors["flag"] = LIGHT_YELLOW
-sprite_colors["cursor"] = PINK
-sprite_colors["level"] = WHITE
-sprite_colors["world"] = WHITE
-sprite_colors["clone"] = WHITE
-sprite_colors["text_baba"] = MAGENTA
-sprite_colors["text_keke"] = LIGHT_RED
-sprite_colors["text_me"] = LIGHT_PURPLE
-sprite_colors["text_patrick"] = MAGENTA
-sprite_colors["text_skull"] = DARKER_RED
-sprite_colors["text_ghost"] = PINK
-sprite_colors["text_wall"] = LIGHT_GRAY
-sprite_colors["text_hedge"] = DARK_GREEN
-sprite_colors["text_ice"] = LIGHT_GRAY_BLUE
-sprite_colors["text_tile"] = LIGHT_GRAY
-sprite_colors["text_grass"] = LIGHT_GRAY_GREEN
-sprite_colors["text_water"] = LIGHT_GRAY_BLUE
-sprite_colors["text_lava"] = LIGHT_ORANGE
-sprite_colors["text_door"] = LIGHT_RED
-sprite_colors["text_key"] = LIGHT_YELLOW
-sprite_colors["text_box"] = BROWN
-sprite_colors["text_rock"] = BROWN
-sprite_colors["text_fruit"] = LIGHT_RED
-sprite_colors["text_belt"] = LIGHT_GRAY_BLUE
-sprite_colors["text_sun"] = LIGHT_YELLOW
-sprite_colors["text_moon"] = LIGHT_YELLOW
-sprite_colors["text_star"] = LIGHT_YELLOW
-sprite_colors["text_what"] = WHITE
-sprite_colors["text_love"] = PINK
-sprite_colors["text_flag"] = LIGHT_YELLOW
-sprite_colors["text_cursor"] = LIGHT_YELLOW
-sprite_colors["text_level"] = MAGENTA
-sprite_colors["text_world"] = PINK
-sprite_colors["text_clone"] = PINK
-sprite_colors["text_text"] = MAGENTA
-sprite_colors["text_is"] = WHITE
-sprite_colors["text_not"] = LIGHT_RED
-sprite_colors["text_and"] = WHITE
-sprite_colors["text_you"] = MAGENTA
-sprite_colors["text_move"] = LIGHT_GREEN
-sprite_colors["text_stop"] = DARK_GREEN
-sprite_colors["text_push"] = BROWN
-sprite_colors["text_sink"] = LIGHT_GRAY_BLUE
-sprite_colors["text_float"] = LIGHTER_GRAY_BLUE
-sprite_colors["text_open"] = LIGHT_YELLOW
-sprite_colors["text_shut"] = LIGHT_RED
-sprite_colors["text_hot"] = LIGHT_ORANGE
-sprite_colors["text_melt"] = LIGHT_GRAY_BLUE
-sprite_colors["text_win"] = LIGHT_YELLOW
-sprite_colors["text_defeat"] = DARK_RED
-sprite_colors["text_shift"] = LIGHT_GRAY_BLUE
-sprite_colors["text_tele"] = LIGHTER_GRAY_BLUE
-sprite_colors["text_word"] = WHITE
-sprite_colors["text_select"] = LIGHT_YELLOW
+sprite_colors["baba"] = colors.WHITE
+sprite_colors["keke"] = colors.LIGHT_RED
+sprite_colors["me"] = colors.LIGHT_PURPLE
+sprite_colors["patrick"] = colors.MAGENTA
+sprite_colors["skull"] = colors.DARKER_RED
+sprite_colors["ghost"] = colors.PINK
+sprite_colors["wall"] = colors.DARK_GRAY_BLUE
+sprite_colors["hedge"] = colors.DARK_GREEN
+sprite_colors["ice"] = colors.LIGHT_GRAY_BLUE
+sprite_colors["tile"] = colors.DARK_GRAY
+sprite_colors["grass"] = colors.DARK_GRAY_GREEN
+sprite_colors["water"] = colors.LIGHT_GRAY_BLUE
+sprite_colors["lava"] = colors.LIGHT_ORANGE
+sprite_colors["door"] = colors.LIGHT_RED
+sprite_colors["key"] = colors.LIGHT_YELLOW
+sprite_colors["box"] = colors.BROWN
+sprite_colors["rock"] = colors.LIGHT_BROWN
+sprite_colors["fruit"] = colors.LIGHT_RED
+sprite_colors["belt"] = colors.DARK_GRAY_BLUE
+sprite_colors["sun"] = colors.LIGHT_YELLOW
+sprite_colors["moon"] = colors.LIGHT_YELLOW
+sprite_colors["star"] = colors.LIGHT_YELLOW
+sprite_colors["what"] = colors.WHITE
+sprite_colors["love"] = colors.PINK
+sprite_colors["flag"] = colors.LIGHT_YELLOW
+sprite_colors["cursor"] = colors.PINK
+sprite_colors["level"] = colors.WHITE
+sprite_colors["world"] = colors.WHITE
+sprite_colors["clone"] = colors.WHITE
+sprite_colors["text_baba"] = colors.MAGENTA
+sprite_colors["text_keke"] = colors.LIGHT_RED
+sprite_colors["text_me"] = colors.LIGHT_PURPLE
+sprite_colors["text_patrick"] = colors.MAGENTA
+sprite_colors["text_skull"] = colors.DARKER_RED
+sprite_colors["text_ghost"] = colors.PINK
+sprite_colors["text_wall"] = colors.LIGHT_GRAY
+sprite_colors["text_hedge"] = colors.DARK_GREEN
+sprite_colors["text_ice"] = colors.LIGHT_GRAY_BLUE
+sprite_colors["text_tile"] = colors.LIGHT_GRAY
+sprite_colors["text_grass"] = colors.LIGHT_GRAY_GREEN
+sprite_colors["text_water"] = colors.LIGHT_GRAY_BLUE
+sprite_colors["text_lava"] = colors.LIGHT_ORANGE
+sprite_colors["text_door"] = colors.LIGHT_RED
+sprite_colors["text_key"] = colors.LIGHT_YELLOW
+sprite_colors["text_box"] = colors.BROWN
+sprite_colors["text_rock"] = colors.BROWN
+sprite_colors["text_fruit"] = colors.LIGHT_RED
+sprite_colors["text_belt"] = colors.LIGHT_GRAY_BLUE
+sprite_colors["text_sun"] = colors.LIGHT_YELLOW
+sprite_colors["text_moon"] = colors.LIGHT_YELLOW
+sprite_colors["text_star"] = colors.LIGHT_YELLOW
+sprite_colors["text_what"] = colors.WHITE
+sprite_colors["text_love"] = colors.PINK
+sprite_colors["text_flag"] = colors.LIGHT_YELLOW
+sprite_colors["text_cursor"] = colors.LIGHT_YELLOW
+sprite_colors["text_level"] = colors.MAGENTA
+sprite_colors["text_world"] = colors.PINK
+sprite_colors["text_clone"] = colors.PINK
+sprite_colors["text_text"] = colors.MAGENTA
+sprite_colors["text_is"] = colors.WHITE
+sprite_colors["text_not"] = colors.LIGHT_RED
+sprite_colors["text_and"] = colors.WHITE
+sprite_colors["text_you"] = colors.MAGENTA
+sprite_colors["text_move"] = colors.LIGHT_GREEN
+sprite_colors["text_stop"] = colors.DARK_GREEN
+sprite_colors["text_push"] = colors.BROWN
+sprite_colors["text_sink"] = colors.LIGHT_GRAY_BLUE
+sprite_colors["text_float"] = colors.LIGHTER_GRAY_BLUE
+sprite_colors["text_open"] = colors.LIGHT_YELLOW
+sprite_colors["text_shut"] = colors.LIGHT_RED
+sprite_colors["text_hot"] = colors.LIGHT_ORANGE
+sprite_colors["text_melt"] = colors.LIGHT_GRAY_BLUE
+sprite_colors["text_win"] = colors.LIGHT_YELLOW
+sprite_colors["text_defeat"] = colors.DARK_RED
+sprite_colors["text_shift"] = colors.LIGHT_GRAY_BLUE
+sprite_colors["text_tele"] = colors.LIGHTER_GRAY_BLUE
+sprite_colors["text_word"] = colors.WHITE
+sprite_colors["text_select"] = colors.LIGHT_YELLOW
 
 order = [objects.Cursor,
          objects.Operator,

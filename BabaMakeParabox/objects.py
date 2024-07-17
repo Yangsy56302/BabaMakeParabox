@@ -2,10 +2,8 @@ from typing import Any
 import math
 import uuid
 
-import BabaMakeParabox.basics as basics
-import BabaMakeParabox.spaces as spaces
-
-import pygame
+from BabaMakeParabox import colors
+from BabaMakeParabox import spaces
 
 class Object(object):
     class_name: str = "Object"
@@ -71,7 +69,7 @@ class Object(object):
     def clear_prop(self, negate: bool = False) -> None:
         self.negate_properties = []
         self.properties = []
-    def to_json(self) -> dict[str, basics.JsonObject]:
+    def to_json(self) -> dict[str, Any]:
         return {"type": self.class_name, "position": [self.x, self.y], "orientation": spaces.orient_to_str(self.facing)} # type: ignore
 
 class Static(Object):
@@ -355,19 +353,19 @@ class Empty(Static):
 class Level(Object):
     class_name: str = "Level"
     sprite_name: str = "level"
-    def __init__(self, pos: spaces.Coord, name: str, icon_name: str = "empty", icon_color: pygame.Color = pygame.Color("#FFFFFF"), facing: spaces.Orient = spaces.S) -> None:
+    def __init__(self, pos: spaces.Coord, name: str, icon_name: str = "empty", icon_color: colors.ColorHex = colors.WHITE, facing: spaces.Orient = spaces.S) -> None:
         super().__init__(pos, facing)
         self.name: str = name
         self.icon_name: str = icon_name
-        self.icon_color: pygame.Color = icon_color
+        self.icon_color: colors.ColorHex = icon_color
     def __str__(self) -> str:
         return " ".join([self.class_name, self.name])
     def __repr__(self) -> str:
         return " ".join([self.class_name, self.name])
-    def to_json(self) -> basics.JsonObject:
+    def to_json(self) -> dict[str, Any]:
         json_object = super().to_json()
         json_object.update({"level": {"name": self.name}}) # type: ignore
-        json_object.update({"icon": {"name": self.icon_name, "color": [self.icon_color.r, self.icon_color.g, self.icon_color.b]}}) # type: ignore
+        json_object.update({"icon": {"name": self.icon_name, "color": self.icon_color}}) # type: ignore
         return json_object # type: ignore
 
 class WorldPointer(Object):
@@ -380,7 +378,7 @@ class WorldPointer(Object):
         return " ".join([self.class_name, self.name, str(self.inf_tier)])
     def __repr__(self) -> str:
         return " ".join([self.class_name, self.name, str(self.inf_tier)])
-    def to_json(self) -> basics.JsonObject:
+    def to_json(self) -> dict[str, Any]:
         json_object = super().to_json()
         json_object.update({"world": {"name": self.name, "infinite_tier": self.inf_tier}}) # type: ignore
         return json_object # type: ignore
@@ -839,7 +837,7 @@ class SELECT(Property):
     def __repr__(self) -> str:
         return repr(super())
 
-def json_to_object(json_object: basics.JsonObject) -> Object: # oh hell no
+def json_to_object(json_object: dict[str, Any]) -> Object: # oh hell no
     type_name: str = json_object["type"] # type: ignore
     object_type: type[Object] = object_name[type_name]
     if issubclass(object_type, WorldPointer):
@@ -855,13 +853,20 @@ def json_to_object(json_object: basics.JsonObject) -> Object: # oh hell no
                             facing=spaces.str_to_orient(json_object["orientation"])) # type: ignore
     elif object_type == Level:
         if json_object.get("icon") is not None:
-            return object_type(pos=tuple(json_object["position"]),
-                               name=json_object["level"]["name"], # type: ignore
-                               icon_name=json_object["icon"]["name"], # type: ignore
-                               icon_color=pygame.Color(json_object["icon"]["color"]), # type: ignore
-                               facing=spaces.str_to_orient(json_object["orientation"])) # type: ignore
+            if isinstance(json_object["icon"]["color"], int):
+                return object_type(pos=tuple(json_object["position"]), # type: ignore
+                                   name=json_object["level"]["name"], # type: ignore
+                                   icon_name=json_object["icon"]["name"], # type: ignore
+                                   icon_color=json_object["icon"]["color"], # type: ignore
+                                   facing=spaces.str_to_orient(json_object["orientation"])) # type: ignore
+            else:
+                return object_type(pos=tuple(json_object["position"]), # type: ignore
+                                   name=json_object["level"]["name"], # type: ignore
+                                   icon_name=json_object["icon"]["name"], # type: ignore
+                                   icon_color=colors.rgb_to_hex(*json_object["icon"]["color"]), # type: ignore
+                                   facing=spaces.str_to_orient(json_object["orientation"])) # type: ignore
         else:
-            return object_type(pos=tuple(json_object["position"]),
+            return object_type(pos=tuple(json_object["position"]), # type: ignore
                                name=json_object["level"]["name"], # type: ignore
                                facing=spaces.str_to_orient(json_object["orientation"])) # type: ignore
     else:
