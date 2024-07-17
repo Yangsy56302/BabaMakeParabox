@@ -1,6 +1,5 @@
 from typing import Any, Optional
 import random
-import pygame
 
 import BabaMakeParabox.basics as basics
 import BabaMakeParabox.spaces as spaces
@@ -8,6 +7,8 @@ import BabaMakeParabox.objects as objects
 import BabaMakeParabox.rules as rules
 import BabaMakeParabox.worlds as worlds
 import BabaMakeParabox.displays as displays
+
+import pygame
 
 class level(object):
     class_name: str = "level"
@@ -178,6 +179,8 @@ class level(object):
                     else:
                         for obj in [o for o in world.object_list if isinstance(o, objects.nouns_objs_dicts.get_obj(noun_type))]:
                             obj.new_prop(prop_type, prop_negated_count % 2 == 1)
+    def same_float_prop(self, obj_1: objects.Object, obj_2: objects.Object):
+        return not (obj_1.has_prop(objects.FLOAT) ^ obj_2.has_prop(objects.FLOAT))
     def get_move_list(self, cause: type[objects.Property], world: worlds.world, obj: objects.Object, facing: spaces.Orient, pos: Optional[spaces.Coord] = None, pushed: Optional[list[objects.Object]] = None, passed: Optional[list[worlds.world]] = None, transnum: Optional[float] = None, depth: int = 0) -> Optional[list[tuple[objects.Object, worlds.world, spaces.Coord, spaces.Orient]]]:
         if depth > 128:
             return None
@@ -406,14 +409,14 @@ class level(object):
         move_list = []
         for world in self.world_list:
             shift_objs = filter(lambda o: objects.Object.has_prop(o, objects.SHIFT), world.object_list)
-            float_objs = filter(lambda o: objects.Object.has_prop(o, objects.FLOAT), world.object_list)
             for shift_obj in shift_objs:
                 for obj in world.get_objs_from_pos(shift_obj.pos):
-                    if shift_obj != obj:
-                        if not ((shift_obj in float_objs) ^ (obj in float_objs)):
-                            new_move_list = self.get_move_list(objects.SHIFT, world, obj, shift_obj.facing)
-                            if new_move_list is not None:
-                                move_list.extend(new_move_list)
+                    if obj == shift_obj:
+                        continue
+                    if self.same_float_prop(obj, shift_obj):
+                        new_move_list = self.get_move_list(objects.SHIFT, world, obj, shift_obj.facing)
+                        if new_move_list is not None:
+                            move_list.extend(new_move_list)
         move_list = basics.remove_same_elements(move_list)
         self.move_objs_from_move_list(move_list)
     def tele(self) -> None:
@@ -422,29 +425,35 @@ class level(object):
         for world in self.world_list:
             object_list.extend(world.object_list)
         tele_objs = filter(lambda o: objects.Object.has_prop(o, objects.TELE), object_list)
-        float_objs = filter(lambda o: objects.Object.has_prop(o, objects.FLOAT), object_list)
-        for tele_obj in tele_objs:
-            other_tele_objs = list(filter(lambda o: objects.Object.has_prop(o, objects.TELE) and isinstance(o, type(tele_obj)) and o != tele_obj, object_list))
-            if len(other_tele_objs) <= 1:
+        tele_obj_types: dict[type[objects.Object], list[objects.Object]] = {}
+        for obj_type in objects.nouns_objs_dicts.pairs.values():
+            for tele_obj in tele_objs:
+                if isinstance(tele_obj, obj_type):
+                    tele_obj_types[obj_type] = tele_obj_types.get(obj_type, []) + [tele_obj]
+        for tele_objs in tele_obj_types.values():
+            if len(tele_objs) <= 1:
                 continue
-            for obj in world.get_objs_from_pos(tele_obj.pos):
-                if tele_obj != obj:
-                    if not ((tele_obj in float_objs) ^ (obj in float_objs)):
+            for tele_obj in tele_objs:
+                other_tele_objs = tele_objs[:]
+                other_tele_objs.remove(tele_obj)
+                for obj in world.get_objs_from_pos(tele_obj.pos):
+                    if obj == tele_obj:
+                        continue
+                    if self.same_float_prop(obj, tele_obj):
                         other_tele_obj = random.choice(other_tele_objs)
                         tele_list.append((obj, other_tele_obj.pos))
         for obj, pos in tele_list:
             obj.pos = pos
     def sink(self) -> None:
         for world in self.world_list:
-            sink_objs = filter(lambda o: objects.Object.has_prop(o, objects.SINK), world.object_list)
-            float_objs = filter(lambda o: objects.Object.has_prop(o, objects.FLOAT), world.object_list)
             delete_list = []
+            sink_objs = filter(lambda o: objects.Object.has_prop(o, objects.SINK), world.object_list)
             for sink_obj in sink_objs:
                 for obj in world.object_list:
                     if obj == sink_obj:
                         continue
                     if obj.pos == sink_obj.pos:
-                        if not ((obj in float_objs) ^ (sink_obj in float_objs)):
+                        if self.same_float_prop(obj, sink_obj):
                             if obj.uuid not in delete_list and sink_obj.uuid not in delete_list:
                                 delete_list.append(obj.uuid)
                                 delete_list.append(sink_obj.uuid)
@@ -453,36 +462,39 @@ class level(object):
                 world.del_obj(uuid)
     def hot_and_melt(self) -> None:
         for world in self.world_list:
-            hot_objs = filter(lambda o: objects.Object.has_prop(o, objects.HOT), world.object_list)
-            melt_objs = filter(lambda o: objects.Object.has_prop(o, objects.MELT), world.object_list)
-            float_objs = filter(lambda o: objects.Object.has_prop(o, objects.FLOAT), world.object_list)
+            delete_list = []
+            hot_objs = filter(lambda o: objects.Object.has_prop(o, objects.DEFEAT), world.object_list)
             for hot_obj in hot_objs:
+                melt_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU) and worlds.match_pos(o, hot_obj.pos), world.object_list)
                 for melt_obj in melt_objs:
-                    if melt_obj.pos == hot_obj.pos:
-                        if not ((melt_obj in float_objs) ^ (hot_obj in float_objs)):
-                            world.del_obj(melt_obj.uuid)
+                    if self.same_float_prop(hot_obj, melt_obj):
+                        if melt_obj.uuid not in delete_list:
+                            delete_list.append(melt_obj.uuid)
+            for uuid in delete_list:
+                world.del_obj(uuid)
     def defeat(self) -> None:
         for world in self.world_list:
-            you_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU), world.object_list)
+            delete_list = []
             defeat_objs = filter(lambda o: objects.Object.has_prop(o, objects.DEFEAT), world.object_list)
-            float_objs = filter(lambda o: objects.Object.has_prop(o, objects.FLOAT), world.object_list)
             for defeat_obj in defeat_objs:
+                you_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU) and worlds.match_pos(o, defeat_obj.pos), world.object_list)
                 for you_obj in you_objs:
-                    if you_obj.pos == defeat_obj.pos:
-                        if not ((you_obj in float_objs) ^ (defeat_obj in float_objs)):
-                            world.del_obj(you_obj.uuid)
+                    if self.same_float_prop(defeat_obj, you_obj):
+                        if you_obj.uuid not in delete_list:
+                            delete_list.append(you_obj.uuid)
+            for uuid in delete_list:
+                world.del_obj(uuid)
     def open_and_shut(self) -> None:
         for world in self.world_list:
-            open_objs = filter(lambda o: objects.Object.has_prop(o, objects.OPEN), world.object_list)
-            shut_objs = filter(lambda o: objects.Object.has_prop(o, objects.SHUT), world.object_list)
             delete_list = []
+            shut_objs = filter(lambda o: objects.Object.has_prop(o, objects.SHUT), world.object_list)
             for shut_obj in shut_objs:
+                open_objs = filter(lambda o: objects.Object.has_prop(o, objects.OPEN) and worlds.match_pos(o, shut_obj.pos), world.object_list)
                 for open_obj in open_objs:
-                    if shut_obj.pos == open_obj.pos:
-                        if shut_obj.uuid not in delete_list and open_obj.uuid not in delete_list:
-                            delete_list.append(shut_obj.uuid)
-                            delete_list.append(open_obj.uuid)
-                            break
+                    if shut_obj.uuid not in delete_list and open_obj.uuid not in delete_list:
+                        delete_list.append(shut_obj.uuid)
+                        delete_list.append(open_obj.uuid)
+                        break
             for uuid in delete_list:
                 world.del_obj(uuid)
     def transform(self) -> tuple[list["level"], list[objects.Object]]:

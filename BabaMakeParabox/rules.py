@@ -1,5 +1,3 @@
-from typing import Optional
-
 import BabaMakeParabox.objects as objects
 
 Rule = list[type[objects.Text]]

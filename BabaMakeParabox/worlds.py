@@ -1,5 +1,4 @@
-from typing import Any, Optional
-import pygame
+from typing import Optional
 import uuid
 
 import BabaMakeParabox.basics as basics
@@ -7,6 +6,8 @@ import BabaMakeParabox.spaces as spaces
 import BabaMakeParabox.objects as objects
 import BabaMakeParabox.rules as rules
 import BabaMakeParabox.displays as displays
+
+import pygame
 
 def match_pos(obj: objects.Object, pos: spaces.Coord) -> bool:
     return obj.pos == pos

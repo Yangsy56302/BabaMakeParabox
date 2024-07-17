@@ -1,6 +1,5 @@
 from typing import Literal, Final
 
-
 Coord = tuple[int, int]
 Orient = Literal[0x1, 0x2, 0x4, 0x8]
 PlayerOperation = Orient | Literal[0x10]

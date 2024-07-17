@@ -141,6 +141,7 @@
 | 2.7    | 2024.07.16 | Game has Language |
 | 2.71   | 2024.07.16 | Language on File is Read |
 | 2.8    | 2024.07.16 | Baba and Keke and Me is Baba and You and Win |
+| 2.81   | 2024.07.17 | Bug is Fix |
 
 ## 报告漏洞和提出建议
 

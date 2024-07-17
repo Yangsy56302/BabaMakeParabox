@@ -67,9 +67,9 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
     keys = {v: False for v in keybinds.values()}
     cooldowns = {v: 0 for v in keybinds.values()}
     window.fill("#000000")
-    current_level_index = 0
+    current_level_index: int = 0
     current_level = levelpack.level_list[current_level_index]
-    current_world_index = 0
+    current_world_index: int = 0
     current_world = current_level.world_list[current_world_index]
     object_list = [t for t in objects.object_name.values() if t not in objects.not_in_editor]
     current_object_index = 0
@@ -387,14 +387,14 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
             current_cursor_pos = (0, 0)
             current_level_index = current_level_index % len(levelpack.level_list) if current_level_index >= 0 else len(levelpack.level_list) - 1
             current_level = levelpack.level_list[current_level_index]
-            print(languages.current_language["editor.level.current.name"], current_level.name, sep=None)
+            print(languages.current_language["editor.level.current.name"], current_level.name, sep="")
             level_changed = False
         if world_changed:
             current_cursor_pos = (0, 0)
             current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
             current_world = current_level.world_list[current_world_index]
-            print(languages.current_language["editor.world.current.name"], current_world.name, sep=None)
-            print(languages.current_language["editor.world.current.inf_tier"], current_world.inf_tier, sep=None)
+            print(languages.current_language["editor.world.current.name"], current_world.name, sep="")
+            print(languages.current_language["editor.world.current.inf_tier"], current_world.inf_tier, sep="")
             world_changed = False
         current_object_index = current_object_index % len(object_list) if current_object_index >= 0 else len(object_list) - 1
         current_object_type = object_list[current_object_index]

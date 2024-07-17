@@ -1,10 +1,11 @@
 from typing import Optional
-import pygame
 import os
 import random
 
 import BabaMakeParabox.objects as objects
 import BabaMakeParabox.spaces as spaces
+
+import pygame
 
 DARK_GRAY = pygame.Color("#242424")
 LIGHT_GRAY = pygame.Color("#737373")

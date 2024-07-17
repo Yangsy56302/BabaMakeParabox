@@ -1,5 +1,4 @@
-from typing import Any, Optional
-import pygame
+from typing import Optional
 
 import BabaMakeParabox.basics as basics
 import BabaMakeParabox.objects as objects

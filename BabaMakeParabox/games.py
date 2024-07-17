@@ -47,7 +47,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
     window.fill("#000000")
     current_level_name = levelpack.main_level
     current_level = levelpack.get_exist_level(current_level_name)
-    current_world_index = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
+    current_world_index: int = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
     level_info = {"win": False, "selected_level": None, "new_levels": [], "transform_to": []}
     level_info_backup = {"win": False, "selected_level": None, "new_levels": [], "transform_to": []}
     history = [{"world_index": current_world_index, "level_name": current_level_name, "levelpack": copy.deepcopy(levelpack)}]
@@ -237,10 +237,11 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 round_num = 0
         current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
         if level_changed:
-            print(languages.current_language["game.level.current.name"], current_level.name, sep=None)
+            print(languages.current_language["game.level.current.name"], current_level.name, sep="")
             level_changed = False
         if world_changed:
-            print(languages.current_language["game.world.current.name"], current_level.world_list[current_world_index].name, sep=None)
+            print(languages.current_language["game.world.current.name"], current_level.world_list[current_world_index].name, sep="")
+            print(languages.current_language["game.world.current.inf_tier"], current_level.world_list[current_world_index].inf_tier, sep="")
             world_changed = False
         window.fill("#000000")
         window.blit(pygame.transform.scale(current_level.show_world(current_level.world_list[current_world_index], wiggle), (720, 720)), (0, 0))
