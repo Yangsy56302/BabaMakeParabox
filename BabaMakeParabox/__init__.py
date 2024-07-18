@@ -25,11 +25,11 @@ def logic(args: dict[str, Any]) -> None:
         if args.get("edit", False):
             default_new_world_settings = basics.options["default_new_world"]
             size = (default_new_world_settings["width"], default_new_world_settings["height"])
-            color = pygame.Color(default_new_world_settings["color"])
+            color = default_new_world_settings["color"]
             if args.get("input") != "":
                 filename: str = args["input"]
                 if os.path.isfile(os.path.join("levelpacks", filename + ".json")):
-                    with open(os.path.join("levelpacks", filename + ".json"), "r", encoding="ascii") as file:
+                    with open(os.path.join("levelpacks", filename + ".json"), "r", encoding="utf-8") as file:
                         levelpack = levelpacks.json_to_levelpack(json.load(file))
                 else:
                     world = worlds.world(filename, size, color=color)
@@ -42,12 +42,12 @@ def logic(args: dict[str, Any]) -> None:
             levelpack = edits.levelpack_editor(levelpack)
             if args.get("output") != "":
                 filename: str = args["output"]
-                with open(os.path.join("levelpacks", filename + ".json"), "w", encoding="ascii") as file:
+                with open(os.path.join("levelpacks", filename + ".json"), "w", encoding="utf-8") as file:
                     json.dump(levelpack.to_json(), file, indent=None if basics.options["compressed_json_output"] else 4)
             return
         elif args.get("play", False):
             filename: str = args["input"]
-            with open(os.path.join("levelpacks", filename + ".json"), "r", encoding="ascii") as file:
+            with open(os.path.join("levelpacks", filename + ".json"), "r", encoding="utf-8") as file:
                 levelpack = levelpacks.json_to_levelpack(json.load(file))
                 games.play(levelpack)
             return

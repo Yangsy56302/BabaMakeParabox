@@ -1,8 +1,6 @@
 from typing import Optional
 import os
-import random
 
-from BabaMakeParabox import basics
 from BabaMakeParabox import colors
 from BabaMakeParabox import objects
 from BabaMakeParabox import spaces

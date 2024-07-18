@@ -25,27 +25,15 @@ default_options = {
 
 os.makedirs("levelpacks", exist_ok=True)
 options_filename = "options.json"
-try:
-    file = open(options_filename, "r", encoding="ascii")
+options = copy.deepcopy(default_options)
+with open(options_filename, "r", encoding="utf-8") as file:
     options = json.load(file)
     updated_options = copy.deepcopy(default_options)
     updated_options.update(options)
     options = copy.deepcopy(updated_options)
-    file.close()
-except OSError as e:
-    file = open(options_filename, "w", encoding="ascii")
-    options = copy.deepcopy(default_options)
-    json.dump(options, file)
-    file.close()
-except json.JSONDecodeError as e:
-    file.close()
-    file = open(options_filename, "w", encoding="ascii")
-    options = copy.deepcopy(default_options)
-    json.dump(options, file)
-    file.close()
 
 def save_options(new_options) -> None:
-    file = open(options_filename, "w", encoding="ascii")
+    file = open(options_filename, "w", encoding="utf-8")
     json.dump(new_options, file, indent=None if options["compressed_json_output"] else 4)
     file.close()
 
