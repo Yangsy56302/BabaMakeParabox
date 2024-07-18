@@ -157,6 +157,7 @@
 | 2.81   | 2024.07.17 | Bug is Fix |
 | 2.82   | 2024.07.18 | Color is Number |
 | 2.9    | 2024.07.18 | Flag is End; Window is Scale; Game has Sound; FPS is not Hide |
+| 2.91   | 2024.07.18 | All is You |
 
 ## 报告漏洞和提出建议
 

@@ -28,7 +28,7 @@ class levelpack(object):
         return level[0]
     def set_level(self, level: levels.level) -> None:
         for i in range(len(self.level_list)):
-            if level.name == self.level_list[i].name:
+            if level == self.level_list[i]:
                 self.level_list[i] = level
                 return
         self.level_list.append(level)

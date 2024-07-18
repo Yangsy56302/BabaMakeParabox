@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 import math
 import uuid
 
@@ -36,6 +36,8 @@ class Object(object):
     def pos(self) -> None:
         del self.x
         del self.y
+    def set_sprite(self) -> None:
+        self.sprite_state = 0
     def new_prop(self, prop: type["Text"], negate: bool = False) -> None:
         if negate:
             if prop not in self.negate_properties:
@@ -72,8 +74,17 @@ class Object(object):
     def to_json(self) -> dict[str, Any]:
         return {"type": self.class_name, "position": [self.x, self.y], "orientation": spaces.orient_to_str(self.facing)} # type: ignore
 
+class Special(Object):
+    class_name: str = "Special"
+    def set_sprite(self) -> None:
+        self.sprite_state = 0
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 class Static(Object):
-    class_name: str = "Baba"
+    class_name: str = "Static"
     def set_sprite(self) -> None:
         self.sprite_state = 0
     def __str__(self) -> str:
@@ -82,7 +93,7 @@ class Static(Object):
         return repr(super())
 
 class Tiled(Object):
-    class_name: str = "Baba"
+    class_name: str = "Tiled"
     def set_sprite(self, connected: dict[spaces.Orient, bool]) -> None:
         self.sprite_state = (connected[spaces.D] * 0x1) | (connected[spaces.W] * 0x2) | (connected[spaces.A] * 0x4) | (connected[spaces.S] * 0x8)
     def __str__(self) -> str:
@@ -91,7 +102,7 @@ class Tiled(Object):
         return repr(super())
 
 class Animated(Object):
-    class_name: str = "Baba"
+    class_name: str = "Animated"
     def set_sprite(self, round_num: int) -> None:
         self.sprite_state = round_num % 4
     def __str__(self) -> str:
@@ -100,7 +111,7 @@ class Animated(Object):
         return repr(super())
 
 class Directional(Object):
-    class_name: str = "Baba"
+    class_name: str = "Directional"
     def set_sprite(self) -> None:
         self.sprite_state = int(math.log2(self.facing)) * 0x8
     def __str__(self) -> str:
@@ -109,7 +120,7 @@ class Directional(Object):
         return repr(super())
 
 class AnimatedDirectional(Object):
-    class_name: str = "Baba"
+    class_name: str = "AnimatedDirectional"
     def set_sprite(self, round_num: int) -> None:
         self.sprite_state = int(math.log2(self.facing)) * 0x8 | round_num % 4
     def __str__(self) -> str:
@@ -118,7 +129,7 @@ class AnimatedDirectional(Object):
         return repr(super())
 
 class Character(Object):
-    class_name: str = "Baba"
+    class_name: str = "Character"
     def set_sprite(self) -> None:
         self.sleeping = False
         if not self.sleeping:
@@ -342,7 +353,7 @@ class Cursor(Static):
     def __repr__(self) -> str:
         return repr(super())
 
-class Empty(Static):
+class Empty(Special):
     class_name: str = "Empty"
     sprite_name: str = "empty"
     def __str__(self) -> str:
@@ -350,7 +361,7 @@ class Empty(Static):
     def __repr__(self) -> str:
         return repr(super())
 
-class Level(Object):
+class Level(Special):
     class_name: str = "Level"
     sprite_name: str = "level"
     def __init__(self, pos: spaces.Coord, name: str, icon_name: str = "empty", icon_color: colors.ColorHex = colors.WHITE, facing: spaces.Orient = spaces.S) -> None:
@@ -368,7 +379,7 @@ class Level(Object):
         json_object.update({"icon": {"name": self.icon_name, "color": self.icon_color}}) # type: ignore
         return json_object # type: ignore
 
-class WorldPointer(Object):
+class WorldPointer(Special):
     class_name: str = "WorldContainer"
     def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = spaces.S) -> None:
         super().__init__(pos, facing)
@@ -395,7 +406,7 @@ class Clone(WorldPointer):
     def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = spaces.S) -> None:
         super().__init__(pos, name, inf_tier, facing)
 
-class Transform(Object):
+class Transform(Special):
     class_name: str = "Transform"
     def __init__(self, pos: spaces.Coord, info: dict[str, Any], facing: spaces.Orient = spaces.S) -> None:
         super().__init__(pos, facing)
@@ -409,7 +420,7 @@ class Transform(Object):
     def __repr__(self) -> str:
         return repr(super())
 
-class Text(Static):
+class Text(Special):
     class_name: str = "Text"
     def __str__(self) -> str:
         return str(super())
@@ -640,6 +651,14 @@ class FLAG(Noun):
 class CURSOR(Noun):
     class_name: str = "CURSOR"
     sprite_name: str = "text_cursor"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class ALL(Noun):
+    class_name: str = "ALL"
+    sprite_name: str = "text_all"
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -942,6 +961,7 @@ object_name: dict[str, type[Object]] = {
     "LOVE": LOVE,
     "FLAG": FLAG,
     "CURSOR": CURSOR,
+    "ALL": ALL,
     "EMPTY": EMPTY,
     "TEXT": TEXT,
     "LEVEL": LEVEL,
@@ -976,12 +996,21 @@ class NounsObjsDicts(object):
         self.pairs = {}
     def new_pair(self, noun: type[Noun], obj: type[Object]) -> None:
         self.pairs[noun] = obj
-    def get_obj(self, noun: type[Noun]) -> type[Object]:
+    def get_obj(self, noun: type[Noun]) -> Optional[type[Object]]:
+        for get_noun, get_object in self.pairs.items():
+            if issubclass(noun, get_noun):
+                return get_object
+    def get_exist_obj(self, noun: type[Noun]) -> type[Object]:
         for get_noun, get_object in self.pairs.items():
             if issubclass(noun, get_noun):
                 return get_object
         raise ValueError()
-    def get_noun(self, obj: type[Object]) -> type[Noun]:
+    def get_noun(self, obj: type[Object]) -> Optional[type[Noun]]:
+        pairs = {v: k for k, v in self.pairs.items()}
+        for get_object, get_noun in pairs.items():
+            if issubclass(obj, get_object):
+                return get_noun
+    def get_exist_noun(self, obj: type[Object]) -> type[Noun]:
         pairs = {v: k for k, v in self.pairs.items()}
         for get_object, get_noun in pairs.items():
             if issubclass(obj, get_object):
@@ -1022,5 +1051,6 @@ nouns_objs_dicts.new_pair(WORLD, World)
 nouns_objs_dicts.new_pair(CLONE, Clone)
 nouns_objs_dicts.new_pair(TEXT, Text)
 
-not_in_all: tuple[type[Object], ...] = (Text, Level, WorldPointer)
+not_in_all: tuple[type[Object], ...] = (Text, Empty, Level, WorldPointer)
+in_not_all: tuple[type[Object], ...] = (Text, Empty)
 not_in_editor: tuple[type[Object], ...] = (Empty, EMPTY, Text)

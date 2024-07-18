@@ -1,5 +1,6 @@
 from typing import Any, Optional
 import uuid
+import random
 
 from BabaMakeParabox import colors
 from BabaMakeParabox import spaces
@@ -32,11 +33,6 @@ class world(object):
     def out_of_range(self, coord: spaces.Coord) -> bool:
         return coord[0] < 0 or coord[1] < 0 or coord[0] >= self.width or coord[1] >= self.height
     def new_obj(self, obj: objects.Object) -> bool:
-        if isinstance(obj, objects.World):
-            for world_obj in self.get_objs_from_type(objects.World):
-                if obj.name == world_obj.name and obj.inf_tier == world_obj.inf_tier:
-                    self.object_list.append(objects.Clone(world_obj.pos, world_obj.name, world_obj.inf_tier, world_obj.facing))
-                    self.del_obj(world_obj.uuid)
         self.object_list.append(obj)
         return True
     def get_obj(self, uid: uuid.UUID) -> Optional[objects.Object]:
@@ -90,6 +86,21 @@ class world(object):
         return [o for o in self.object_list if isinstance(o, objects.Level)]
     def get_levels_from_pos(self, pos: spaces.Coord) -> list[objects.Level]:
         return [o for o in self.object_list if isinstance(o, objects.Level) and match_pos(o, pos)]
+    def repeated_world_to_clone(self) -> None:
+        world_objs = self.get_worlds()
+        to_clone_objs: list[objects.World] = []
+        for i in range(len(world_objs)):
+            for j in range(len(world_objs)):
+                if i == j:
+                    continue
+                if world_objs[i].name == world_objs[j].name and world_objs[i].inf_tier == world_objs[j].inf_tier:
+                    if world_objs[j] not in to_clone_objs:
+                        to_clone_objs.append(world_objs[j])
+        random.shuffle(to_clone_objs)
+        to_clone_objs = to_clone_objs[1:]
+        for to_clone in to_clone_objs:
+            self.new_obj(objects.Clone(to_clone.pos, to_clone.name, to_clone.inf_tier, to_clone.facing))
+            self.del_obj(to_clone.uuid)
     def get_rules_from_pos_and_orient(self, stage: Optional[type[objects.Text]], pos: spaces.Coord, orient: spaces.Orient) -> list[rules.Rule]:
         if stage == objects.Noun:
             matches = (objects.Noun, )
@@ -105,7 +116,7 @@ class world(object):
             next_stage = None
         text_objs = self.get_objs_from_pos_and_type(pos, objects.Text)
         word_objs = filter(lambda o: o.has_prop(objects.WORD) and match_pos(o, pos), self.object_list)
-        text_objs.extend(map(lambda o: objects.nouns_objs_dicts.get_noun(type(o))(o.pos), word_objs))
+        text_objs.extend(map(lambda o: objects.nouns_objs_dicts.get_exist_noun(type(o))(o.pos), word_objs))
         if len(text_objs) == 0:
             if stage is None:
                 return [[]]

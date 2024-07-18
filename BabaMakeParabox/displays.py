@@ -64,7 +64,10 @@ class Sprites(object):
             sprite_basename = sprite_name
             sprite_basename = sprite_basename[:sprite_basename.rfind("_")]
             sprite_basename = sprite_basename[:sprite_basename.rfind("_")]
-            self.sprites[sprite_name] = set_color_dark(sprite, self.sprite_colors.get(sprite_basename, colors.WHITE))
+            sprite_color = self.sprite_colors.get(sprite_basename)
+            if sprite_color is None:
+                sprite_color = colors.WHITE
+            self.sprites[sprite_name] = set_color_dark(sprite, sprite_color)
     def get(self, sprite_name: str, state: int, frame: int = 0) -> pygame.Surface:
         return self.sprites["_".join([sprite_name, str(state), str(frame)])]
 
@@ -140,6 +143,8 @@ sprite_colors["text_what"] = colors.WHITE
 sprite_colors["text_love"] = colors.PINK
 sprite_colors["text_flag"] = colors.LIGHT_YELLOW
 sprite_colors["text_cursor"] = colors.LIGHT_YELLOW
+sprite_colors["text_all"] = colors.WHITE
+sprite_colors["text_empty"] = colors.WHITE
 sprite_colors["text_level"] = colors.MAGENTA
 sprite_colors["text_world"] = colors.PINK
 sprite_colors["text_clone"] = colors.PINK

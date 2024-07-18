@@ -58,6 +58,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
     wiggle = 1
     freeze_time = -1
     milliseconds = 1000 // basics.options["fps"]
+    real_fps = basics.options["fps"]
     while True:
         frame += 1
         if frame >= basics.options["fpw"]:
@@ -177,9 +178,8 @@ def play(levelpack: levelpacks.levelpack) -> None:
                                 world.del_obj(level_obj.uuid)
             for level in levelpack.level_list:
                 for world in level.world_list:
-                    transform_objs = filter(lambda o: isinstance(o, objects.Transform), world.object_list)
-                    for transform_obj in transform_objs: # type: ignore
-                        transform_obj: objects.Transform
+                    transform_objs = world.get_objs_from_type(objects.Transform)
+                    for transform_obj in transform_objs:
                         if issubclass(transform_obj.from_type, objects.Level):
                             from_level = levelpack.get_exist_level(transform_obj.from_name)
                             if issubclass(transform_obj.to_type, objects.WorldPointer):
@@ -196,6 +196,9 @@ def play(levelpack: levelpacks.levelpack) -> None:
                                 new_obj = objects.Level(transform_obj.pos, from_world.name, icon_color=from_world.color, facing=transform_obj.facing)
                                 world.del_obj(transform_obj.uuid)
                                 world.new_obj(new_obj)
+            for level in levelpack.level_list:
+                for world in level.world_list:
+                    world.repeated_world_to_clone()
             levelpack.set_level(current_level)
             if level_info["win"]:
                 print(languages.current_language["game.level.win"])
@@ -226,7 +229,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
             level_changed = True
             world_changed = True
             if level_info_backup["win"]:
-                level = levelpack_backup.get_level(current_level.name)
+                level = copy.deepcopy(levelpack_backup.get_level(current_level.name))
                 if level is not None:
                     levelpack.set_level(level)
                 super_level_name = current_level.super_level
@@ -256,10 +259,11 @@ def play(levelpack: levelpacks.levelpack) -> None:
         window.fill("#000000")
         displays.set_pixel_size(window.get_size())
         window.blit(pygame.transform.scale(current_level.show_world(current_level.world_list[current_world_index], wiggle), (window.get_width(), window.get_height())), (0, 0))
-        real_fps = str(1000 // milliseconds)
+        real_fps = min(real_fps, (real_fps * (basics.options["fps"] - 1) + 1000 / milliseconds) / basics.options["fps"])
         if keys[keybinds["F1"]]:
-            for i in range(len(real_fps)):
-                window.blit(displays.sprites.get(f"text_{real_fps[i]}", 0, wiggle), (i * displays.sprite_size, 0))
+            real_fps_string = str(int(real_fps))
+            for i in range(len(real_fps_string)):
+                window.blit(displays.sprites.get(f"text_{real_fps_string[i]}", 0, wiggle), (i * displays.sprite_size, 0))
         pygame.display.flip()
         for key in cooldowns:
             if cooldowns[key] > 0:

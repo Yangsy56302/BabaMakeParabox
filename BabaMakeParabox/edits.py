@@ -88,6 +88,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
     wiggle = 1
     editor_running = True
     milliseconds = 1000 // basics.options["fps"]
+    real_fps = basics.options["fps"]
     while editor_running:
         frame += 1
         if frame >= basics.options["fpw"]:
@@ -412,10 +413,11 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                                                (displays.pixel_sprite_size, displays.pixel_sprite_size)),
                         (window.get_width() + (index % 5 * displays.pixel_sprite_size) - (displays.pixel_sprite_size * 5),
                          window.get_height() + (index // 5 * displays.pixel_sprite_size) - (displays.pixel_sprite_size * 2)))
-        real_fps = str(1000 // milliseconds)
+        real_fps = min(real_fps, (real_fps * (basics.options["fps"] - 1) + 1000 / milliseconds) / basics.options["fps"])
         if keys[keybinds["F1"]]:
-            for i in range(len(real_fps)):
-                window.blit(displays.sprites.get(f"text_{real_fps[i]}", 0, wiggle), (i * displays.sprite_size, 0))
+            real_fps_string = str(int(real_fps))
+            for i in range(len(real_fps_string)):
+                window.blit(displays.sprites.get(f"text_{real_fps_string[i]}", 0, wiggle), (i * displays.sprite_size, 0))
         pygame.display.flip()
         for key in cooldowns:
             if cooldowns[key] > 0:
