@@ -11,6 +11,17 @@ made separately by **Arvi Hempuli** and **Patrick Traynor**.
 **I DO NOT have the copyright of the game's textures.**
 If you have some informations about the right of use for the game's textures or something, please tell me.
 
+## How to download
+
+For [Github](https://github.com/Yangsy56302/BabaMakeParabox),
+Click the green button say **Code**, then click **Download ZIP**.
+
+For [Gitlab](https://gitlab.com/Yangsy56302/BabaMakeParabox),
+Click the blue button say **Code**, then click **zip**.
+
+For [Gitee](https://gitee.com/Yangsy56302/BabaMakeParabox),
+or if you are from China, [Click me for more info](readme_cn.md).
+
 ## How to run
 
 **This Game will run normally only if terminal window exists**

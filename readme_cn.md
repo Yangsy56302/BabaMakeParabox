@@ -11,6 +11,17 @@
 **我并未拥有游戏贴图的版权。**
 如果您有关于游戏贴图的使用权等权利的更多信息，请尽快联系我。
 
+## 如何下载
+
+对于大多数玩家，请转到[Gitlab](https://gitlab.com/Yangsy56302/BabaMakeParabox)，
+点击蓝色的**Code**按钮，找到**zip**字样并点击。
+
+如果您有[Gitee](https://gitee.com/Yangsy56302/BabaMakeParabox)账号，
+请点击橙色的**克隆/下载**按钮，然后点击弹出的新窗口里面的**下载**字样。
+
+不建议到[Github](https://github.com/Yangsy56302/BabaMakeParabox)上下载，
+因为其版本可能不是最新的。因此这里不提供Github的下载步骤，请自行查看[英文文档](readme.md)。
+
 ## 如何运行
 
 **游戏仅在终端窗口存在**
