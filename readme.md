@@ -48,6 +48,7 @@ If you need to make an exe, run `py2exe.bat` in the root folder.
 - Tab: Display gamerules.
 - Esc：Save level state and go back.
 - \- / =: Select world for camera to focus.
+- F1: Show FPS.
 
 ### How to win
 
@@ -91,6 +92,7 @@ please considering shift + enter, or cut, copy, and paste.
 - X: Cut all objects on cursor.
 - C: Copy all objects on cursor.
 - V: Paste all objects on cursor.
+- F1: Show FPS.
 - Close Pygame Window: Save and quit.
 - Close Terminal: Do not save, just quit.
 
@@ -154,6 +156,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 2.8    | 2024.07.16 | Baba and Keke and Me is Baba and You and Win |
 | 2.81   | 2024.07.17 | Bug is Fix |
 | 2.82   | 2024.07.18 | Color is Number |
+| 2.9    | 2024.07.18 | Flag is End; Window is Scale; Game has Sound; FPS is not Hide |
 
 ## Bug Reports and Suggestions
 

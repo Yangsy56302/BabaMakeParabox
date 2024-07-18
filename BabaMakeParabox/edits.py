@@ -26,7 +26,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
         for world in level.world_list:
             world.set_sprite_states(0)
     history = [copy.deepcopy(levelpack)]
-    window = pygame.display.set_mode((1280, 720))
+    window = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
     pygame.display.set_caption(f"Baba Make Parabox In-game Editor Version {basics.versions}")
     pygame.display.set_icon(pygame.image.load("BabaMakeParabox.png"))
     displays.sprites.update()
@@ -64,7 +64,8 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                 "LSHIFT": pygame.K_LSHIFT,
                 "RSHIFT": pygame.K_RSHIFT,
                 "LCTRL": pygame.K_LCTRL,
-                "RCTRL": pygame.K_RCTRL}
+                "RCTRL": pygame.K_RCTRL,
+                "F1": pygame.K_F1}
     keys = {v: False for v in keybinds.values()}
     cooldowns = {v: 0 for v in keybinds.values()}
     window.fill("#000000")
@@ -76,20 +77,17 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
     current_object_index = 0
     current_object_type = object_list[current_object_index]
     current_facing = spaces.S
+    current_object = displays.set_sprite_state(current_object_type((0, 0), current_facing))
     current_cursor_pos = (0, 0)
     current_clipboard = []
     object_type_shortcuts: dict[int, type[objects.Object]] = {k: objects.object_name[v] for k, v in enumerate(basics.options["object_type_shortcuts"])}
     level_changed = True
     world_changed = True
     yes = ["y", "Y", "yes", "Yes", "YES"]
-    window.fill("#000000")
-    window.blit(pygame.transform.scale(current_level.show_world(current_world, 1, cursor=current_cursor_pos), (720, 720)), (0, 0))
-    current_object = displays.set_sprite_state(current_object_type((0, 0), current_facing))
-    window.blit(pygame.transform.scale(displays.sprites.get(current_object_type.sprite_name, current_object.sprite_state, 1), (72, 72)), (1208, 0))
-    pygame.display.flip()
     frame = 0
     wiggle = 1
     editor_running = True
+    milliseconds = 1000 // basics.options["fps"]
     while editor_running:
         frame += 1
         if frame >= basics.options["fpw"]:
@@ -402,15 +400,25 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
         for world in current_level.world_list:
             world.set_sprite_states(0)
         window.fill("#000000")
-        window.blit(pygame.transform.scale(current_level.show_world(current_world, wiggle, cursor=current_cursor_pos), (720, 720)), (0, 0))
+        displays.set_pixel_size(window.get_size())
+        window.blit(pygame.transform.scale(current_level.show_world(current_world, wiggle, cursor=current_cursor_pos),
+                                           (window.get_height(), window.get_height() * current_world.height // current_world.width)), (0, 0))
         current_object = displays.set_sprite_state(current_object_type((0, 0), current_facing))
-        window.blit(pygame.transform.scale(displays.sprites.get(current_object_type.sprite_name, current_object.sprite_state, wiggle), (72, 72)), (1208, 0))
+        window.blit(pygame.transform.scale(displays.sprites.get(current_object_type.sprite_name, current_object.sprite_state, wiggle),
+                                           (displays.pixel_sprite_size, displays.pixel_sprite_size)), (window.get_width() - displays.pixel_sprite_size, 0))
         for index, obj_type in object_type_shortcuts.items():
             obj = displays.set_sprite_state(obj_type((0, 0), spaces.S))
-            window.blit(pygame.transform.scale(displays.sprites.get(obj_type.sprite_name, obj.sprite_state, wiggle), (72, 72)), (920 + (index % 5 * 72), 576 + (index // 5 * 72)))
+            window.blit(pygame.transform.scale(displays.sprites.get(obj_type.sprite_name, obj.sprite_state, wiggle),
+                                               (displays.pixel_sprite_size, displays.pixel_sprite_size)),
+                        (window.get_width() + (index % 5 * displays.pixel_sprite_size) - (displays.pixel_sprite_size * 5),
+                         window.get_height() + (index // 5 * displays.pixel_sprite_size) - (displays.pixel_sprite_size * 2)))
+        real_fps = str(1000 // milliseconds)
+        if keys[keybinds["F1"]]:
+            for i in range(len(real_fps)):
+                window.blit(displays.sprites.get(f"text_{real_fps[i]}", 0, wiggle), (i * displays.sprite_size, 0))
         pygame.display.flip()
         for key in cooldowns:
             if cooldowns[key] > 0:
                 cooldowns[key] -= 1
-        clock.tick(basics.options["fps"])
+        milliseconds = clock.tick(basics.options["fps"])
     return levelpack

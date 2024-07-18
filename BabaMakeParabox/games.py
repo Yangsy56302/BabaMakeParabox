@@ -3,6 +3,7 @@ import copy
 
 from BabaMakeParabox import basics
 from BabaMakeParabox import languages
+from BabaMakeParabox import sounds
 from BabaMakeParabox import spaces
 from BabaMakeParabox import objects
 from BabaMakeParabox import displays
@@ -24,7 +25,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
             world.set_sprite_states(0)
     levelpack_backup = copy.deepcopy(levelpack)
     round_num = 0
-    window = pygame.display.set_mode((720, 720))
+    window = pygame.display.set_mode((720, 720), pygame.RESIZABLE)
     pygame.display.set_caption(f"Baba Make Parabox Version {basics.versions}")
     pygame.display.set_icon(pygame.image.load("BabaMakeParabox.png"))
     displays.sprites.update()
@@ -40,23 +41,23 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 "ESCAPE": pygame.K_ESCAPE,
                 "-": pygame.K_MINUS,
                 "=": pygame.K_EQUALS,
-                " ": pygame.K_SPACE}
+                " ": pygame.K_SPACE,
+                "F1": pygame.K_F1}
     keys = {v: False for v in keybinds.values()}
     cooldowns = {v: 0 for v in keybinds.values()}
     window.fill("#000000")
     current_level_name = levelpack.main_level
     current_level = levelpack.get_exist_level(current_level_name)
     current_world_index: int = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
-    level_info = {"win": False, "selected_level": None, "new_levels": [], "transform_to": []}
-    level_info_backup = {"win": False, "selected_level": None, "new_levels": [], "transform_to": []}
+    level_info = {"win": False, "end": False, "selected_level": None, "new_levels": [], "transform_to": []}
+    level_info_backup = level_info.copy()
     history = [{"world_index": current_world_index, "level_name": current_level_name, "levelpack": copy.deepcopy(levelpack)}]
     level_changed = False
     world_changed = False
     frame = 1
     wiggle = 1
-    window.blit(pygame.transform.scale(current_level.show_world(current_level.world_list[current_world_index], 1), (720, 720)), (0, 0))
-    pygame.display.flip()
     freeze_time = -1
+    milliseconds = 1000 // basics.options["fps"]
     while True:
         frame += 1
         if frame >= basics.options["fpw"]:
@@ -121,13 +122,17 @@ def play(levelpack: levelpacks.levelpack) -> None:
                     round_num = 0
                 refresh = True
             elif keys[keybinds["R"]] and cooldowns[keybinds["R"]] == 0:
+                print(languages.current_language["game.levelpack.restart"])
+                sounds.play("restart")
                 levelpack = copy.deepcopy(levelpack_backup)
                 current_level_name = levelpack.main_level
                 current_level = levelpack.get_exist_level(current_level_name)
                 current_world_index = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
                 history = [{"world_index": current_world_index, "level_name": current_level_name, "levelpack": copy.deepcopy(levelpack)}]
-                level_info = {"win": False, "selected_level": None, "new_levels": [], "transform_to": []}
+                level_info = {"win": False, "end": False, "selected_level": None, "new_levels": [], "transform_to": []}
                 refresh = True
+                level_changed = True
+                world_changed = True
             elif keys[keybinds["TAB"]] and cooldowns[keybinds["TAB"]] == 0:
                 print(languages.current_language["game.levelpack.rule_list"])
                 for rule in levelpack.rule_list:
@@ -153,6 +158,8 @@ def play(levelpack: levelpacks.levelpack) -> None:
             if value and cooldowns[key] == 0:
                 cooldowns[key] = basics.options["input_cooldown"]
         if refresh:
+            for event in current_level.sound_events:
+                sounds.play(event)
             for new_level in level_info["new_levels"]:
                 levelpack.set_level(new_level)
             transform_success = False
@@ -195,6 +202,11 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 if freeze_time == -1:
                     level_info_backup = copy.deepcopy(level_info)
                     freeze_time = basics.options["fps"]
+            elif level_info["end"]:
+                print(languages.current_language["game.levelpack.end"])
+                if freeze_time == -1:
+                    level_info_backup = copy.deepcopy(level_info)
+                    freeze_time = basics.options["fps"]
             elif transform_success and len(level_info["transform_to"]) != 0:
                 print(languages.current_language["game.level.transform"])
                 if freeze_time == -1:
@@ -209,21 +221,20 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 for world in current_level.world_list:
                     world.object_list = list(filter(lambda o: not isinstance(o, objects.Empty), world.object_list))
                     world.set_sprite_states(round_num)
-            level_info = {"win": False, "selected_level": None, "new_levels": [], "transform_to": []}
+            level_info = {"win": False, "end": False, "selected_level": None, "new_levels": [], "transform_to": []}
         if freeze_time == 0:
             level_changed = True
             world_changed = True
             if level_info_backup["win"]:
-                if current_level.name == levelpack.main_level:
-                    return
                 level = levelpack_backup.get_level(current_level.name)
                 if level is not None:
                     levelpack.set_level(level)
-                if freeze_time == 0:
-                    super_level_name = current_level.super_level
-                    super_level = levelpack.get_level(super_level_name if super_level_name is not None else levelpack.main_level)
-                    current_level_name = super_level.name if super_level is not None else levelpack.main_level
-                    current_level = levelpack.get_exist_level(current_level_name)
+                super_level_name = current_level.super_level
+                super_level = levelpack.get_level(super_level_name if super_level_name is not None else levelpack.main_level)
+                current_level_name = super_level.name if super_level is not None else levelpack.main_level
+                current_level = levelpack.get_exist_level(current_level_name)
+            elif level_info_backup["end"]:
+                return
             elif len(level_info_backup["transform_to"]) != 0:
                 super_level_name = current_level.super_level
                 super_level = levelpack.get_level(super_level_name if super_level_name is not None else levelpack.main_level)
@@ -243,9 +254,14 @@ def play(levelpack: levelpacks.levelpack) -> None:
             print(languages.current_language["game.world.current.inf_tier"], current_level.world_list[current_world_index].inf_tier, sep="")
             world_changed = False
         window.fill("#000000")
-        window.blit(pygame.transform.scale(current_level.show_world(current_level.world_list[current_world_index], wiggle), (720, 720)), (0, 0))
+        displays.set_pixel_size(window.get_size())
+        window.blit(pygame.transform.scale(current_level.show_world(current_level.world_list[current_world_index], wiggle), (window.get_width(), window.get_height())), (0, 0))
+        real_fps = str(1000 // milliseconds)
+        if keys[keybinds["F1"]]:
+            for i in range(len(real_fps)):
+                window.blit(displays.sprites.get(f"text_{real_fps[i]}", 0, wiggle), (i * displays.sprite_size, 0))
         pygame.display.flip()
         for key in cooldowns:
             if cooldowns[key] > 0:
                 cooldowns[key] -= 1
-        clock.tick(basics.options["fps"])
+        milliseconds = clock.tick(basics.options["fps"])

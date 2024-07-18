@@ -7,6 +7,26 @@ from BabaMakeParabox import spaces
 
 import pygame
 
+pixel_size = 4
+sprite_size = 24
+pixel_sprite_size = pixel_size * sprite_size
+
+def set_pixel_size(window_size: spaces.Coord) -> None:
+    global pixel_size, sprite_size, pixel_sprite_size
+    if min(window_size) < 320:
+        pixel_size = 1
+    elif min(window_size) < 480:
+        pixel_size = 2
+    elif min(window_size) < 640:
+        pixel_size = 3
+    elif min(window_size) < 960:
+        pixel_size = 4
+    elif min(window_size) < 1280:
+        pixel_size = 6
+    else:
+        pixel_size = 8
+    pixel_sprite_size = pixel_size * sprite_size
+
 def set_alpha(surface: pygame.Surface, alpha: int) -> pygame.Surface:
     new_surface = surface.copy()
     new_surface.fill(pygame.Color(255, 255, 255, alpha), special_flags=pygame.BLEND_RGBA_MULT)
@@ -31,9 +51,6 @@ def set_color_light(surface: pygame.Surface, color: colors.ColorHex) -> pygame.S
     new_surface.fill("#FFFFFFFF")
     new_surface.blit(clr_surface, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
     return new_surface
-
-pixel_size = 6
-sprite_size = 24
 
 class Sprites(object):
     def __init__(self, sprite_colors: dict[str, colors.ColorHex]) -> None:
@@ -146,6 +163,8 @@ sprite_colors["text_shift"] = colors.LIGHT_GRAY_BLUE
 sprite_colors["text_tele"] = colors.LIGHTER_GRAY_BLUE
 sprite_colors["text_word"] = colors.WHITE
 sprite_colors["text_select"] = colors.LIGHT_YELLOW
+sprite_colors["text_end"] = colors.WHITE
+sprite_colors["text_done"] = colors.WHITE
 
 order = [objects.Cursor,
          objects.Operator,

@@ -837,6 +837,22 @@ class SELECT(Property):
     def __repr__(self) -> str:
         return repr(super())
 
+class END(Property):
+    class_name: str = "END"
+    sprite_name: str = "text_end"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class DONE(Property):
+    class_name: str = "DONE"
+    sprite_name: str = "text_done"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 def json_to_object(json_object: dict[str, Any]) -> Object: # oh hell no
     type_name: str = json_object["type"] # type: ignore
     object_type: type[Object] = object_name[type_name]
@@ -949,7 +965,9 @@ object_name: dict[str, type[Object]] = {
     "SHIFT": SHIFT,
     "TELE": TELE,
     "WORD": WORD,
-    "SELECT": SELECT
+    "SELECT": SELECT,
+    "END": END,
+    "DONE": DONE
 }
 
 class NounsObjsDicts(object):

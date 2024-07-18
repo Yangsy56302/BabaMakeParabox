@@ -19,6 +19,7 @@ class level(object):
         self.main_world_name: str = main_world_name if main_world_name is not None else world_list[0].name
         self.main_world_tier: int = main_world_tier if main_world_tier is not None else world_list[0].inf_tier
         self.rule_list: list[rules.Rule] = rule_list if rule_list is not None else rules.default_rule_list
+        self.sound_events: list[str] = []
     def __eq__(self, level: "level") -> bool:
         return self.name == level.name
     def __str__(self) -> str:
@@ -360,6 +361,8 @@ class level(object):
                 move_obj.pos = new_pos
                 move_obj.facing = new_facing
                 new_world.new_obj(move_obj)
+        if len(move_list) != 0 and "move" not in self.sound_events:
+            self.sound_events.append("move")
     def you(self, facing: spaces.PlayerOperation) -> None:
         if facing == spaces.O:
             return
@@ -381,6 +384,7 @@ class level(object):
                 for obj in select_objs:
                     levels.extend(world.get_levels_from_pos(obj.pos))
                     if len(levels) != 0:
+                        self.sound_events.append("level")
                         return levels[0].name
         else:
             for world in self.world_list:
@@ -444,9 +448,11 @@ class level(object):
                         tele_list.append((obj, other_tele_obj.pos))
         for obj, pos in tele_list:
             obj.pos = pos
+        if len(tele_list) != 0:
+            self.sound_events.append("tele")
     def sink(self) -> None:
+        delete_list = []
         for world in self.world_list:
-            delete_list = []
             sink_objs = filter(lambda o: objects.Object.has_prop(o, objects.SINK), world.object_list)
             for sink_obj in sink_objs:
                 for obj in world.object_list:
@@ -458,11 +464,13 @@ class level(object):
                                 delete_list.append(obj.uuid)
                                 delete_list.append(sink_obj.uuid)
                                 break
-            for uuid in delete_list:
-                world.del_obj(uuid)
+        for uuid in delete_list:
+            world.del_obj(uuid)
+        if len(delete_list) != 0:
+            self.sound_events.append("sink")
     def hot_and_melt(self) -> None:
+        delete_list = []
         for world in self.world_list:
-            delete_list = []
             hot_objs = filter(lambda o: objects.Object.has_prop(o, objects.DEFEAT), world.object_list)
             for hot_obj in hot_objs:
                 melt_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU) and worlds.match_pos(o, hot_obj.pos), world.object_list)
@@ -470,11 +478,13 @@ class level(object):
                     if self.same_float_prop(hot_obj, melt_obj):
                         if melt_obj.uuid not in delete_list:
                             delete_list.append(melt_obj.uuid)
-            for uuid in delete_list:
-                world.del_obj(uuid)
+        for uuid in delete_list:
+            world.del_obj(uuid)
+        if len(delete_list) != 0:
+            self.sound_events.append("melt")
     def defeat(self) -> None:
+        delete_list = []
         for world in self.world_list:
-            delete_list = []
             defeat_objs = filter(lambda o: objects.Object.has_prop(o, objects.DEFEAT), world.object_list)
             for defeat_obj in defeat_objs:
                 you_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU) and worlds.match_pos(o, defeat_obj.pos), world.object_list)
@@ -482,11 +492,13 @@ class level(object):
                     if self.same_float_prop(defeat_obj, you_obj):
                         if you_obj.uuid not in delete_list:
                             delete_list.append(you_obj.uuid)
-            for uuid in delete_list:
-                world.del_obj(uuid)
+        for uuid in delete_list:
+            world.del_obj(uuid)
+        if len(delete_list) != 0:
+            self.sound_events.append("defeat")
     def open_and_shut(self) -> None:
+        delete_list = []
         for world in self.world_list:
-            delete_list = []
             shut_objs = filter(lambda o: objects.Object.has_prop(o, objects.SHUT), world.object_list)
             for shut_obj in shut_objs:
                 open_objs = filter(lambda o: objects.Object.has_prop(o, objects.OPEN) and worlds.match_pos(o, shut_obj.pos), world.object_list)
@@ -495,8 +507,10 @@ class level(object):
                         delete_list.append(shut_obj.uuid)
                         delete_list.append(open_obj.uuid)
                         break
-            for uuid in delete_list:
-                world.del_obj(uuid)
+        for uuid in delete_list:
+            world.del_obj(uuid)
+        if len(delete_list) != 0:
+            self.sound_events.append("open")
     def transform(self) -> tuple[list["level"], list[objects.Object]]:
         new_levels: list[level] = []
         transform_to: list[objects.Object] = []
@@ -656,7 +670,7 @@ class level(object):
                 for obj in delete_object_list:
                     super_world.del_obj(obj.uuid)
         return (new_levels, transform_to)
-    def winned(self) -> bool:
+    def win(self) -> bool:
         for world in self.world_list:
             you_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU), world.object_list)
             win_objs = filter(lambda o: objects.Object.has_prop(o, objects.WIN), world.object_list)
@@ -665,9 +679,23 @@ class level(object):
                 for win_obj in win_objs:
                     if you_obj.pos == win_obj.pos:
                         if not ((you_obj in float_objs) ^ (win_obj in float_objs)):
+                            self.sound_events.append("win")
+                            return True
+        return False
+    def end(self) -> bool:
+        for world in self.world_list:
+            you_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU), world.object_list)
+            end_objs = filter(lambda o: objects.Object.has_prop(o, objects.END), world.object_list)
+            float_objs = filter(lambda o: objects.Object.has_prop(o, objects.FLOAT), world.object_list)
+            for you_obj in you_objs:
+                for end_obj in end_objs:
+                    if you_obj.pos == end_obj.pos:
+                        if not ((you_obj in float_objs) ^ (end_obj in float_objs)):
+                            self.sound_events.append("end")
                             return True
         return False
     def round(self, op: spaces.PlayerOperation) -> dict[str, Any]:
+        self.sound_events = []
         for world in self.world_list:
             for obj in world.object_list:
                 obj.moved = False
@@ -687,8 +715,9 @@ class level(object):
         self.defeat()
         self.open_and_shut()
         self.update_rules()
-        win = self.winned()
-        return {"win": win, "selected_level": selected_level, "new_levels": new_levels, "transform_to": transform_to}
+        win = self.win()
+        end = self.end()
+        return {"win": win, "end": end, "selected_level": selected_level, "new_levels": new_levels, "transform_to": transform_to}
     def show_world(self, world: worlds.world, frame: int, layer: int = 0, cursor: Optional[spaces.Coord] = None) -> pygame.Surface:
         if layer >= basics.options["world_display_recursion_depth"]:
             return displays.sprites.get("world", 0, frame).copy()
