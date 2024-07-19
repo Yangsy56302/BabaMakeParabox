@@ -159,6 +159,7 @@
 | 2.9    | 2024.07.18 | Flag is End; Window is Scale; Game has Sound; FPS is not Hide |
 | 2.91   | 2024.07.18 | All is You |
 | 3.0    | 2024.07.19 | Game is You |
+| 3.001  | 2024.07.19 | Game feeling not Sink and not Float is not Move; Game has Midi |
 
 ## 报告漏洞和提出建议
 

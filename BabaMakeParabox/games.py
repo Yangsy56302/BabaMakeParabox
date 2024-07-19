@@ -4,15 +4,7 @@ import copy
 import os
 import multiprocessing
 
-from BabaMakeParabox import basics
-from BabaMakeParabox import languages
-from BabaMakeParabox import sounds
-from BabaMakeParabox import spaces
-from BabaMakeParabox import objects
-from BabaMakeParabox import displays
-from BabaMakeParabox import levels
-from BabaMakeParabox import levelpacks
-from BabaMakeParabox import subgames
+from BabaMakeParabox import basics, languages, sounds, spaces, objects, displays, levels, levelpacks, subgames
 
 import pygame
 
@@ -56,8 +48,9 @@ def play(levelpack: levelpacks.levelpack) -> None:
     current_level_name = levelpack.main_level
     current_level = levelpack.get_exist_level(current_level_name)
     current_world_index: int = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
-    level_info = {"win": False, "end": False, "selected_level": None, "new_levels": [], "transform_to": [], "new_window_objects": []}
-    level_info_backup = level_info.copy()
+    default_level_info = {"win": False, "end": False, "selected_level": None, "new_levels": [], "transform_to": [], "pushing_game": False, "new_window_objects": []}
+    level_info = default_level_info.copy()
+    level_info_backup = default_level_info.copy()
     history = [{"world_index": current_world_index, "level_name": current_level_name, "levelpack": copy.deepcopy(levelpack)}]
     level_changed = False
     world_changed = False
@@ -67,6 +60,9 @@ def play(levelpack: levelpacks.levelpack) -> None:
     freeze_time = -1
     milliseconds = 1000 // basics.options["fps"]
     real_fps = basics.options["fps"]
+    if basics.options["bgm"]["enabled"]:
+        pygame.mixer.music.load(os.path.join("midi", basics.options["bgm"]["name"]))
+        pygame.mixer.music.play(-1)
     game_running = True
     while game_running:
         frame += 1
@@ -88,12 +84,16 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 level_info = current_level.round(spaces.W)
                 if objects.YOU in current_level.game_properties:
                     display_offset[1] -= window.get_width() // 16
+                if objects.PUSH in current_level.game_properties and level_info["pushing_game"]:
+                    display_offset[1] -= window.get_width() // 16
                 refresh = True
             elif keys[keybinds["S"]] and cooldowns[keybinds["S"]] == 0:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "levelpack": copy.deepcopy(levelpack)})
                 round_num += 1
                 level_info = current_level.round(spaces.S)
                 if objects.YOU in current_level.game_properties:
+                    display_offset[1] += window.get_width() // 16
+                if objects.PUSH in current_level.game_properties and level_info["pushing_game"]:
                     display_offset[1] += window.get_width() // 16
                 refresh = True
             elif keys[keybinds["A"]] and cooldowns[keybinds["A"]] == 0:
@@ -102,12 +102,16 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 level_info = current_level.round(spaces.A)
                 if objects.YOU in current_level.game_properties:
                     display_offset[0] -= window.get_height() // 16
+                if objects.PUSH in current_level.game_properties and level_info["pushing_game"]:
+                    display_offset[0] -= window.get_height() // 16
                 refresh = True
             elif keys[keybinds["D"]] and cooldowns[keybinds["D"]] == 0:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "levelpack": copy.deepcopy(levelpack)})
                 round_num += 1
                 level_info = current_level.round(spaces.D)
                 if objects.YOU in current_level.game_properties:
+                    display_offset[0] += window.get_height() // 16
+                if objects.PUSH in current_level.game_properties and level_info["pushing_game"]:
                     display_offset[0] += window.get_height() // 16
                 refresh = True
             elif keys[keybinds[" "]] and cooldowns[keybinds[" "]] == 0:
@@ -146,7 +150,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 current_level = levelpack.get_exist_level(current_level_name)
                 current_world_index = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
                 history = [{"world_index": current_world_index, "level_name": current_level_name, "levelpack": copy.deepcopy(levelpack)}]
-                level_info = {"win": False, "end": False, "selected_level": None, "new_levels": [], "transform_to": [], "new_window_objects": []}
+                level_info = default_level_info.copy()
                 display_offset = [0, 0]
                 refresh = True
                 level_changed = True
@@ -175,17 +179,12 @@ def play(levelpack: levelpacks.levelpack) -> None:
             if objects.SHIFT in current_level.game_properties:
                 display_offset[0] += displays.pixel_size
             if objects.SINK in current_level.game_properties:
-                display_offset_speed[1] += 3
-            if objects.FLOAT in current_level.game_properties:
-                display_offset_speed[1] += 2
-            if display_offset_speed[0] > 0:
-                display_offset_speed[0] = display_offset_speed[0] - 1
-            elif display_offset_speed[0] < 0:
-                display_offset_speed[0] = display_offset_speed[0] + 1
-            if display_offset_speed[1] > 0:
-                display_offset_speed[1] = display_offset_speed[1] - 1
-            elif display_offset_speed[1] < 0:
-                display_offset_speed[1] = display_offset_speed[1] + 1
+                display_offset_speed[1] += 1
+            elif objects.FLOAT in current_level.game_properties:
+                display_offset_speed[1] -= 1
+            else:
+                display_offset_speed[0] = display_offset_speed[0] // 2
+                display_offset_speed[1] = display_offset_speed[1] // 2
         else:
             freeze_time -= 1
         for key, value in keys.items():
@@ -293,7 +292,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 for world in current_level.world_list:
                     world.object_list = list(filter(lambda o: not isinstance(o, objects.Empty), world.object_list))
                     world.set_sprite_states(round_num)
-            level_info = {"win": False, "end": False, "selected_level": None, "new_levels": [], "transform_to": [], "new_window_objects": []}
+            level_info = default_level_info.copy()
         if freeze_time == 0:
             level_changed = True
             world_changed = True

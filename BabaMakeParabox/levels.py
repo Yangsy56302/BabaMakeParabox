@@ -1,12 +1,7 @@
 from typing import Any, Optional
 import random
 
-from BabaMakeParabox import basics
-from BabaMakeParabox import spaces
-from BabaMakeParabox import objects
-from BabaMakeParabox import rules
-from BabaMakeParabox import worlds
-from BabaMakeParabox import displays
+from BabaMakeParabox import basics, spaces, objects, rules, worlds, displays
 
 import pygame
 
@@ -122,6 +117,7 @@ class level(object):
             sub_world = self.get_exist_world(sub_world_obj.name, sub_world_obj.inf_tier)
             self.recursion_rules(sub_world, rule_list, passed)
     def update_strict_rules(self) -> None:
+        self.game_properties = []
         for world in self.world_list:
             for obj in world.object_list:
                 obj.clear_prop()
@@ -160,7 +156,6 @@ class level(object):
             world.strict_rule_list = basics.remove_same_elements(world.strict_rule_list)
             world.strict_rule_list = self.cancel_rules(world.strict_rule_list)
     def update_rules(self) -> None:
-        self.game_properties = []
         self.update_strict_rules()
         for world in self.world_list:
             for obj in world.object_list:
@@ -409,10 +404,11 @@ class level(object):
                 new_world.new_obj(move_obj)
         if len(move_list) != 0 and "move" not in self.sound_events:
             self.sound_events.append("move")
-    def you(self, facing: spaces.PlayerOperation) -> None:
+    def you(self, facing: spaces.PlayerOperation) -> bool:
         if facing == spaces.O:
-            return
+            return False
         move_list = []
+        pushing_game = False
         for world in self.world_list:
             you_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU), world.object_list)
             for obj in you_objs:
@@ -420,8 +416,11 @@ class level(object):
                 new_move_list = self.get_move_list(objects.YOU, world, obj, obj.facing) # type: ignore
                 if new_move_list is not None:
                     move_list.extend(new_move_list)
+                else:
+                    pushing_game = True
         move_list = basics.remove_same_elements(move_list)
         self.move_objs_from_move_list(move_list)
+        return pushing_game
     def select(self, facing: spaces.PlayerOperation) -> Optional[str]:
         if facing == spaces.O:
             for world in self.world_list:
@@ -440,7 +439,8 @@ class level(object):
                     if not world.out_of_range(new_pos):
                         obj.pos = new_pos
             return None
-    def move(self) -> None:
+    def move(self) -> bool:
+        pushing_game = False
         for world in self.world_list:
             move_objs = filter(lambda o: objects.Object.has_prop(o, objects.MOVE), world.object_list)
             for obj in move_objs:
@@ -453,10 +453,14 @@ class level(object):
                     new_move_list = self.get_move_list(objects.MOVE, world, obj, obj.facing)
                     if new_move_list is not None:
                         move_list = new_move_list
+                    else:
+                        pushing_game = True
                 move_list = basics.remove_same_elements(move_list)
                 self.move_objs_from_move_list(move_list)
-    def shift(self) -> None:
+        return pushing_game
+    def shift(self) -> bool:
         move_list = []
+        pushing_game = False
         for world in self.world_list:
             shift_objs = filter(lambda o: objects.Object.has_prop(o, objects.SHIFT), world.object_list)
             for shift_obj in shift_objs:
@@ -467,8 +471,11 @@ class level(object):
                         new_move_list = self.get_move_list(objects.SHIFT, world, obj, shift_obj.facing)
                         if new_move_list is not None:
                             move_list.extend(new_move_list)
+                        else:
+                            pushing_game = True
         move_list = basics.remove_same_elements(move_list)
         self.move_objs_from_move_list(move_list)
+        return pushing_game
     def tele(self) -> None:
         tele_list: list[tuple[objects.Object, spaces.Coord]] = []
         object_list = []
@@ -802,8 +809,8 @@ class level(object):
             for obj in world.object_list:
                 obj.moved = False
         self.update_rules()
-        self.you(op)
-        self.move()
+        pushing_game = self.you(op)
+        pushing_game |= self.move()
         self.update_rules()
         self.shift()
         self.update_rules()
@@ -820,7 +827,12 @@ class level(object):
         self.all_list_set()
         win = self.win()
         end = self.end()
-        return {"win": win, "end": end, "selected_level": selected_level, "new_levels": new_levels, "transform_to": transform_to, "new_window_objects": new_window_objects}
+        return {"win": win, "end": end,
+                "selected_level": selected_level,
+                "new_levels": new_levels,
+                "transform_to": transform_to,
+                "pushing_game": pushing_game,
+                "new_window_objects": new_window_objects}
     def show_world(self, world: worlds.world, frame: int, layer: int = 0, cursor: Optional[spaces.Coord] = None) -> pygame.Surface:
         if layer >= basics.options["world_display_recursion_depth"]:
             return displays.sprites.get("world", 0, frame).copy()

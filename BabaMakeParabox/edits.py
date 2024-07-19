@@ -1,15 +1,6 @@
 import copy
 
-from BabaMakeParabox import basics
-from BabaMakeParabox import languages
-from BabaMakeParabox import colors
-from BabaMakeParabox import spaces
-from BabaMakeParabox import objects
-from BabaMakeParabox import rules
-from BabaMakeParabox import worlds
-from BabaMakeParabox import displays
-from BabaMakeParabox import levels
-from BabaMakeParabox import levelpacks
+from BabaMakeParabox import basics, languages, colors, spaces, objects, rules, worlds, displays, levels, levelpacks
 
 import pygame
 

@@ -2,8 +2,7 @@ from typing import Any, Optional
 import math
 import uuid
 
-from BabaMakeParabox import colors
-from BabaMakeParabox import spaces
+from BabaMakeParabox import colors, spaces
 
 class Object(object):
     class_name: str = "Object"

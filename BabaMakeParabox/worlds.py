@@ -2,11 +2,7 @@ from typing import Any, Optional
 import uuid
 import random
 
-from BabaMakeParabox import colors
-from BabaMakeParabox import spaces
-from BabaMakeParabox import objects
-from BabaMakeParabox import rules
-from BabaMakeParabox import displays
+from BabaMakeParabox import colors, spaces, objects, rules, displays
 
 import pygame
 

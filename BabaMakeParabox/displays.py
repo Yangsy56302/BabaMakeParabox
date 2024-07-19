@@ -1,9 +1,7 @@
 from typing import Optional
 import os
 
-from BabaMakeParabox import colors
-from BabaMakeParabox import objects
-from BabaMakeParabox import spaces
+from BabaMakeParabox import colors, objects, spaces
 
 import pygame
 

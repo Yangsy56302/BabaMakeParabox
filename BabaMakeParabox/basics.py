@@ -1,15 +1,12 @@
-from typing import Callable
 import os
 import json
 import copy
-import functools
-import time
 
 import pygame
 
 pygame.init()
 
-versions = "2.91"
+versions = "3.001"
 
 default_options = {
     "lang": "id_FK",
@@ -23,7 +20,11 @@ default_options = {
         "height": 9,
         "color": 0x000000
     },
-    "object_type_shortcuts": ["Baba", "Wall", "Rock", "Flag", "Skull", "WORLD", "LEVEL", "IS", "YOU", "WIN"]
+    "object_type_shortcuts": ["Baba", "Wall", "Rock", "Flag", "Skull", "WORLD", "LEVEL", "IS", "YOU", "WIN"],
+    "bgm": {
+        "enabled": False,
+        "name": "rush_baba.mid"
+    }
 }
 
 os.makedirs("levelpacks", exist_ok=True)

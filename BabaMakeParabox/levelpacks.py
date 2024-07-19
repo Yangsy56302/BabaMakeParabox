@@ -1,9 +1,6 @@
 from typing import Any, Optional
 
-from BabaMakeParabox import basics
-from BabaMakeParabox import objects
-from BabaMakeParabox import rules
-from BabaMakeParabox import levels
+from BabaMakeParabox import basics, objects, rules, levels
 
 class levelpack(object):
     class_name: str = "levelpack"

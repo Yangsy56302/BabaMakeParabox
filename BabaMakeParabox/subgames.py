@@ -1,5 +1,4 @@
-from BabaMakeParabox import displays
-from BabaMakeParabox import objects
+from BabaMakeParabox import displays, objects
 
 import pygame
 
