@@ -57,9 +57,8 @@ class Sprites(object):
         self.sprite_colors = sprite_colors
     def update(self) -> None:
         self.sprites = {}
-        sprites_path = "sprites"
-        for filename in os.listdir(sprites_path):
-            sprite = pygame.image.load(os.path.join(sprites_path, filename)).convert_alpha()
+        for filename in os.listdir("sprites"):
+            sprite = pygame.image.load(os.path.join("sprites", filename)).convert_alpha()
             sprite_name = os.path.splitext(filename)[0]
             sprite_basename = sprite_name
             sprite_basename = sprite_basename[:sprite_basename.rfind("_")]

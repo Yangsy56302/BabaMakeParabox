@@ -1,5 +1,8 @@
 from typing import Any, Optional
+import random
 import copy
+import os
+import multiprocessing
 
 from BabaMakeParabox import basics
 from BabaMakeParabox import languages
@@ -9,6 +12,7 @@ from BabaMakeParabox import objects
 from BabaMakeParabox import displays
 from BabaMakeParabox import levels
 from BabaMakeParabox import levelpacks
+from BabaMakeParabox import subgames
 
 import pygame
 
@@ -24,8 +28,11 @@ def play(levelpack: levelpacks.levelpack) -> None:
         for world in level.world_list:
             world.set_sprite_states(0)
     levelpack_backup = copy.deepcopy(levelpack)
-    round_num = 0
+    multiprocessing.set_start_method("spawn")
+    subgame_pipes = []
     window = pygame.display.set_mode((720, 720), pygame.RESIZABLE)
+    display_offset = [0, 0]
+    display_offset_speed = [0, 0]
     pygame.display.set_caption(f"Baba Make Parabox Version {basics.versions}")
     pygame.display.set_icon(pygame.image.load("BabaMakeParabox.png"))
     displays.sprites.update()
@@ -49,24 +56,26 @@ def play(levelpack: levelpacks.levelpack) -> None:
     current_level_name = levelpack.main_level
     current_level = levelpack.get_exist_level(current_level_name)
     current_world_index: int = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
-    level_info = {"win": False, "end": False, "selected_level": None, "new_levels": [], "transform_to": []}
+    level_info = {"win": False, "end": False, "selected_level": None, "new_levels": [], "transform_to": [], "new_window_objects": []}
     level_info_backup = level_info.copy()
     history = [{"world_index": current_world_index, "level_name": current_level_name, "levelpack": copy.deepcopy(levelpack)}]
     level_changed = False
     world_changed = False
+    round_num = 0
     frame = 1
     wiggle = 1
     freeze_time = -1
     milliseconds = 1000 // basics.options["fps"]
     real_fps = basics.options["fps"]
-    while True:
+    game_running = True
+    while game_running:
         frame += 1
         if frame >= basics.options["fpw"]:
             frame = 0
             wiggle = wiggle % 3 + 1
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                return
+                game_running = False
             if event.type == pygame.KEYDOWN and event.key in keybinds.values():
                 keys[event.key] = True
             elif event.type == pygame.KEYUP and event.key in keybinds.values():
@@ -77,21 +86,29 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "levelpack": copy.deepcopy(levelpack)})
                 round_num += 1
                 level_info = current_level.round(spaces.W)
+                if objects.YOU in current_level.game_properties:
+                    display_offset[1] -= window.get_width() // 16
                 refresh = True
             elif keys[keybinds["S"]] and cooldowns[keybinds["S"]] == 0:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "levelpack": copy.deepcopy(levelpack)})
                 round_num += 1
                 level_info = current_level.round(spaces.S)
+                if objects.YOU in current_level.game_properties:
+                    display_offset[1] += window.get_width() // 16
                 refresh = True
             elif keys[keybinds["A"]] and cooldowns[keybinds["A"]] == 0:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "levelpack": copy.deepcopy(levelpack)})
                 round_num += 1
                 level_info = current_level.round(spaces.A)
+                if objects.YOU in current_level.game_properties:
+                    display_offset[0] -= window.get_height() // 16
                 refresh = True
             elif keys[keybinds["D"]] and cooldowns[keybinds["D"]] == 0:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "levelpack": copy.deepcopy(levelpack)})
                 round_num += 1
                 level_info = current_level.round(spaces.D)
+                if objects.YOU in current_level.game_properties:
+                    display_offset[0] += window.get_height() // 16
                 refresh = True
             elif keys[keybinds[" "]] and cooldowns[keybinds[" "]] == 0:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "levelpack": copy.deepcopy(levelpack)})
@@ -121,7 +138,6 @@ def play(levelpack: levelpacks.levelpack) -> None:
                     levelpack = data["levelpack"]
                     current_level = levelpack.get_exist_level(current_level_name)
                     round_num = 0
-                refresh = True
             elif keys[keybinds["R"]] and cooldowns[keybinds["R"]] == 0:
                 print(languages.current_language["game.levelpack.restart"])
                 sounds.play("restart")
@@ -130,7 +146,8 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 current_level = levelpack.get_exist_level(current_level_name)
                 current_world_index = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
                 history = [{"world_index": current_world_index, "level_name": current_level_name, "levelpack": copy.deepcopy(levelpack)}]
-                level_info = {"win": False, "end": False, "selected_level": None, "new_levels": [], "transform_to": []}
+                level_info = {"win": False, "end": False, "selected_level": None, "new_levels": [], "transform_to": [], "new_window_objects": []}
+                display_offset = [0, 0]
                 refresh = True
                 level_changed = True
                 world_changed = True
@@ -153,16 +170,68 @@ def play(levelpack: levelpacks.levelpack) -> None:
             elif keys[keybinds["="]] and cooldowns[keybinds["="]] == 0:
                 current_world_index += 1
                 world_changed = True
+            if objects.MOVE in current_level.game_properties:
+                display_offset[1] += displays.pixel_size
+            if objects.SHIFT in current_level.game_properties:
+                display_offset[0] += displays.pixel_size
+            if objects.SINK in current_level.game_properties:
+                display_offset_speed[1] += 3
+            if objects.FLOAT in current_level.game_properties:
+                display_offset_speed[1] += 2
+            if display_offset_speed[0] > 0:
+                display_offset_speed[0] = display_offset_speed[0] - 1
+            elif display_offset_speed[0] < 0:
+                display_offset_speed[0] = display_offset_speed[0] + 1
+            if display_offset_speed[1] > 0:
+                display_offset_speed[1] = display_offset_speed[1] - 1
+            elif display_offset_speed[1] < 0:
+                display_offset_speed[1] = display_offset_speed[1] + 1
         else:
             freeze_time -= 1
         for key, value in keys.items():
             if value and cooldowns[key] == 0:
                 cooldowns[key] = basics.options["input_cooldown"]
         if refresh:
+            if objects.STOP in current_level.game_properties:
+                basics.options["fps"] = 1
+                basics.options["fpw"] = 1
+                basics.options["input_cooldown"] = 1
+            if objects.WIN in current_level.game_properties:
+                sounds.play("win")
+                game_running = False
+            if objects.SHUT in current_level.game_properties:
+                sounds.play("defeat")
+                game_running = False
+            if objects.END in current_level.game_properties:
+                sounds.play("end")
+                game_running = False
+            if objects.DONE in current_level.game_properties:
+                sounds.play("done")
+                game_running = False
+            if objects.OPEN in current_level.game_properties:
+                if os.path.exists("BabaMakeParabox.exe"):
+                    os.system("start BabaMakeParabox.exe")
+                elif os.path.exists("BabaMakeParabox.py"):
+                    os.system("start python BabaMakeParabox.py")
+            if objects.HOT in current_level.game_properties and objects.MELT in current_level.game_properties:
+                sounds.play("melt")
+                game_running = False
+            if objects.YOU in current_level.game_properties and objects.DEFEAT in current_level.game_properties:
+                sounds.play("defeat")
+                game_running = False
+            if objects.TELE in current_level.game_properties:
+                sounds.play("tele")
+                display_offset = [random.randrange(window.get_width()), random.randrange(window.get_height())]
             for event in current_level.sound_events:
                 sounds.play(event)
             for new_level in level_info["new_levels"]:
                 levelpack.set_level(new_level)
+            for obj in level_info["new_window_objects"]:
+                pipe = multiprocessing.Pipe(False)
+                subgame_pipes.append(pipe[1])
+                kwargs = {"wps": basics.options["fps"] / basics.options["fpw"], "obj": obj}
+                process = multiprocessing.Process(target=subgames.new_window, args=(pipe[0], ), kwargs=kwargs)
+                process.start()
             transform_success = False
             if len(level_info["transform_to"]) != 0:
                 for level in levelpack.level_list:
@@ -224,7 +293,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 for world in current_level.world_list:
                     world.object_list = list(filter(lambda o: not isinstance(o, objects.Empty), world.object_list))
                     world.set_sprite_states(round_num)
-            level_info = {"win": False, "end": False, "selected_level": None, "new_levels": [], "transform_to": []}
+            level_info = {"win": False, "end": False, "selected_level": None, "new_levels": [], "transform_to": [], "new_window_objects": []}
         if freeze_time == 0:
             level_changed = True
             world_changed = True
@@ -237,7 +306,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 current_level_name = super_level.name if super_level is not None else levelpack.main_level
                 current_level = levelpack.get_exist_level(current_level_name)
             elif level_info_backup["end"]:
-                return
+                game_running = False
             elif len(level_info_backup["transform_to"]) != 0:
                 super_level_name = current_level.super_level
                 super_level = levelpack.get_level(super_level_name if super_level_name is not None else levelpack.main_level)
@@ -259,13 +328,27 @@ def play(levelpack: levelpacks.levelpack) -> None:
         window.fill("#000000")
         displays.set_pixel_size(window.get_size())
         window.blit(pygame.transform.scale(current_level.show_world(current_level.world_list[current_world_index], wiggle), (window.get_width(), window.get_height())), (0, 0))
-        real_fps = min(real_fps, (real_fps * (basics.options["fps"] - 1) + 1000 / milliseconds) / basics.options["fps"])
+        real_fps = min(1000 / milliseconds, (real_fps * (basics.options["fps"] - 1) + 1000 / milliseconds) / basics.options["fps"])
         if keys[keybinds["F1"]]:
             real_fps_string = str(int(real_fps))
             for i in range(len(real_fps_string)):
                 window.blit(displays.sprites.get(f"text_{real_fps_string[i]}", 0, wiggle), (i * displays.sprite_size, 0))
+        for obj_type in [o for o in map(objects.nouns_objs_dicts.get_obj, [t for t in current_level.game_properties if issubclass(t, objects.Noun)]) if o is not None]:
+            window.blit(pygame.transform.scale(displays.sprites.get(obj_type.sprite_name, 0, wiggle), window.get_size()), (0, 0))
+        display_offset[0] += display_offset_speed[0]
+        display_offset[1] += display_offset_speed[1]
+        display_offset[0] %= window.get_width()
+        display_offset[1] %= window.get_height()
+        if display_offset[0] != 0 or display_offset[1] != 0:
+            window_surface = pygame.display.get_surface().copy()
+            window.blit(window_surface, display_offset)
+            window.blit(window_surface, [display_offset[0] - window.get_width(), display_offset[1]])
+            window.blit(window_surface, [display_offset[0], display_offset[1] - window.get_height()])
+            window.blit(window_surface, [display_offset[0] - window.get_width(), display_offset[1] - window.get_height()])
         pygame.display.flip()
         for key in cooldowns:
             if cooldowns[key] > 0:
                 cooldowns[key] -= 1
         milliseconds = clock.tick(basics.options["fps"])
+    for pipe in subgame_pipes:
+        pipe.send(True)

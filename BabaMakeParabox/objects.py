@@ -399,12 +399,20 @@ class World(WorldPointer):
     sprite_name: str = "world"
     def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = spaces.S) -> None:
         super().__init__(pos, name, inf_tier, facing)
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
         
 class Clone(WorldPointer):
     class_name: str = "Clone"
     sprite_name: str = "clone"
     def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = spaces.S) -> None:
         super().__init__(pos, name, inf_tier, facing)
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
 
 class Transform(Special):
     class_name: str = "Transform"
@@ -415,6 +423,27 @@ class Transform(Special):
         if issubclass(self.from_type, WorldPointer):
             self.from_inf_tier: int = info["from"]["inf_tier"]
         self.to_type: type[Object] = info["to"]["type"]
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
+class Sprite(Special):
+    class_name: str = "Sprite"
+    def __init__(self, pos: spaces.Coord, sprite_name: str, facing: spaces.Orient = spaces.S) -> None:
+        super().__init__(pos, facing)
+        self.sprite_name: str = sprite_name
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+    def to_json(self) -> dict[str, Any]:
+        json_object = super().to_json()
+        json_object.update({"sprite": {"name": self.sprite_name}}) # type: ignore
+        return json_object # type: ignore
+
+class Game(Special):
+    class_name: str = "Game"
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -704,6 +733,14 @@ class CLONE(Noun):
     def __repr__(self) -> str:
         return repr(super())
 
+class GAME(Noun):
+    class_name: str = "GAME"
+    sprite_name: str = "text_game"
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 class IS(Operator):
     class_name: str = "IS"
     sprite_name: str = "text_is"
@@ -904,6 +941,10 @@ def json_to_object(json_object: dict[str, Any]) -> Object: # oh hell no
             return object_type(pos=tuple(json_object["position"]), # type: ignore
                                name=json_object["level"]["name"], # type: ignore
                                facing=spaces.str_to_orient(json_object["orientation"])) # type: ignore
+    elif issubclass(object_type, Sprite):
+        return object_type(pos=tuple(json_object["position"]), # type: ignore
+                           facing=spaces.str_to_orient(json_object["orientation"]),
+                           sprite_name=json_object["sprite"]["name"]) # type: ignore
     else:
         return object_type(pos=tuple(json_object["position"]), # type: ignore
                            facing=spaces.str_to_orient(json_object["orientation"])) # type: ignore
@@ -967,6 +1008,7 @@ object_name: dict[str, type[Object]] = {
     "LEVEL": LEVEL,
     "WORLD": WORLD,
     "CLONE": CLONE,
+    "GAME": GAME,
     "IS": IS,
     "NOT": NOT,
     "AND": AND,
@@ -1050,7 +1092,8 @@ nouns_objs_dicts.new_pair(LEVEL, Level)
 nouns_objs_dicts.new_pair(WORLD, World)
 nouns_objs_dicts.new_pair(CLONE, Clone)
 nouns_objs_dicts.new_pair(TEXT, Text)
+nouns_objs_dicts.new_pair(GAME, Game)
 
-not_in_all: tuple[type[Object], ...] = (Text, Empty, Level, WorldPointer)
-in_not_all: tuple[type[Object], ...] = (Text, Empty)
-not_in_editor: tuple[type[Object], ...] = (Empty, EMPTY, Text)
+not_in_all: tuple[type[Object], ...] = (Text, Empty, Level, WorldPointer, Game, Sprite)
+in_not_all: tuple[type[Object], ...] = (Text, Empty, Game, Sprite)
+not_in_editor: tuple[type[Object], ...] = (Empty, EMPTY, Text, Game, GAME, Sprite)

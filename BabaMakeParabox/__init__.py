@@ -72,11 +72,11 @@ def main() -> None:
             case 1:
                 basics.options.update({"fps": 5, "fpw": 1, "input_cooldown": 1, "world_display_recursion_depth": 1, "compressed_json_output": True})
             case 2:
-                basics.options.update({"fps": 15, "fpw": 3, "input_cooldown": 2, "world_display_recursion_depth": 2, "compressed_json_output": True})
+                basics.options.update({"fps": 15, "fpw": 3, "input_cooldown": 3, "world_display_recursion_depth": 2, "compressed_json_output": True})
             case 3:
-                basics.options.update({"fps": 30, "fpw": 5, "input_cooldown": 4, "world_display_recursion_depth": 3, "compressed_json_output": True})
+                basics.options.update({"fps": 30, "fpw": 5, "input_cooldown": 5, "world_display_recursion_depth": 3, "compressed_json_output": True})
             case 4:
-                basics.options.update({"fps": 60, "fpw": 10, "input_cooldown": 8, "world_display_recursion_depth": 4, "compressed_json_output": False})
+                basics.options.update({"fps": 60, "fpw": 10, "input_cooldown": 10, "world_display_recursion_depth": 4, "compressed_json_output": False})
         print(languages.current_language["main.change_options.done"])
     print(languages.current_language["main.play_or_edit"])
     play_or_edit = int(input(languages.current_language["input.number"]))

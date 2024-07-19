@@ -413,7 +413,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                                                (displays.pixel_sprite_size, displays.pixel_sprite_size)),
                         (window.get_width() + (index % 5 * displays.pixel_sprite_size) - (displays.pixel_sprite_size * 5),
                          window.get_height() + (index // 5 * displays.pixel_sprite_size) - (displays.pixel_sprite_size * 2)))
-        real_fps = min(real_fps, (real_fps * (basics.options["fps"] - 1) + 1000 / milliseconds) / basics.options["fps"])
+        real_fps = min(1000 / milliseconds, (real_fps * (basics.options["fps"] - 1) + 1000 / milliseconds) / basics.options["fps"])
         if keys[keybinds["F1"]]:
             real_fps_string = str(int(real_fps))
             for i in range(len(real_fps_string)):

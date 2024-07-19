@@ -19,6 +19,7 @@ class level(object):
         self.main_world_name: str = main_world_name if main_world_name is not None else world_list[0].name
         self.main_world_tier: int = main_world_tier if main_world_tier is not None else world_list[0].inf_tier
         self.rule_list: list[rules.Rule] = rule_list if rule_list is not None else rules.default_rule_list
+        self.game_properties: list[type[objects.Object]] = []
         self.all_list: list[type[objects.Object]] = []
         self.sound_events: list[str] = []
     def __eq__(self, level: "level") -> bool:
@@ -159,6 +160,7 @@ class level(object):
             world.strict_rule_list = basics.remove_same_elements(world.strict_rule_list)
             world.strict_rule_list = self.cancel_rules(world.strict_rule_list)
     def update_rules(self) -> None:
+        self.game_properties = []
         self.update_strict_rules()
         for world in self.world_list:
             for obj in world.object_list:
@@ -184,6 +186,9 @@ class level(object):
                                 for obj in [o for o in world.object_list if not isinstance(o, objects.not_in_all)]:
                                     obj.new_prop(objects.WORD, prop_negated_count % 2 == 1)
                     else:
+                        if obj_type == objects.Game:
+                            if not noun_negated:
+                                self.game_properties.append(objects.WORD)
                         if noun_negated:
                             for obj in [o for o in world.object_list if (not isinstance(o, objects.Special)) and not isinstance(o, obj_type)]:
                                 obj.new_prop(objects.WORD, prop_negated_count % 2 == 1)
@@ -212,6 +217,9 @@ class level(object):
                                 for obj in [o for o in world.object_list if not isinstance(o, objects.not_in_all)]:
                                     obj.new_prop(prop_type, prop_negated_count % 2 == 1)
                     else:
+                        if obj_type == objects.Game:
+                            if not noun_negated:
+                                self.game_properties.append(prop_type)
                         if noun_negated:
                             for obj in [o for o in world.object_list if (not isinstance(o, objects.Special)) and not isinstance(o, obj_type)]:
                                 obj.new_prop(prop_type, prop_negated_count % 2 == 1)
@@ -549,9 +557,10 @@ class level(object):
             world.del_obj(uuid)
         if len(delete_list) != 0:
             self.sound_events.append("open")
-    def transform(self) -> tuple[list["level"], list[objects.Object]]:
+    def transform(self) -> tuple[list["level"], list[objects.Object], list[objects.Object]]:
         new_levels: list[level] = []
         level_transform_to: list[objects.Object] = []
+        new_window_objects: list[objects.Object] = []
         for world in self.world_list:
             delete_object_list = []
             for old_obj in world.object_list: # type: ignore
@@ -579,6 +588,19 @@ class level(object):
                     for new_type in new_types:
                         if new_type in not_new_types:
                             pass
+                        elif issubclass(new_type, objects.Game):
+                            if issubclass(old_type, objects.Level):
+                                new_obj = objects.Sprite(old_obj.pos, objects.Level.sprite_name, facing=old_obj.facing)
+                                new_window_objects.append(new_obj)
+                            elif issubclass(old_type, objects.World):
+                                new_obj = objects.Sprite(old_obj.pos, objects.World.sprite_name, facing=old_obj.facing)
+                                new_window_objects.append(new_obj)
+                            elif issubclass(old_type, objects.Clone):
+                                new_obj = objects.Sprite(old_obj.pos, objects.Clone.sprite_name, facing=old_obj.facing)
+                                new_window_objects.append(new_obj)
+                            else:
+                                new_window_objects.append(old_obj)
+                            transform_success = True
                         elif issubclass(new_type, objects.Level):
                             if issubclass(old_type, objects.Level):
                                 pass
@@ -691,6 +713,10 @@ class level(object):
                         elif issubclass(new_type, objects.Clone):
                             info = {"from": {"type": objects.Level, "name": self.name}, "to": {"type": objects.Clone}}
                             level_transform_to.append(objects.Transform((0, 0), info))
+                        elif issubclass(new_type, objects.Game):
+                            level_transform_to.append(objects.Empty((0, 0)))
+                            new_obj = objects.Sprite((0, 0), objects.Level.sprite_name)
+                            new_window_objects.append(new_obj)
                         elif issubclass(new_type, objects.Text):
                             level_transform_to.append(objects.LEVEL((0, 0)))
                         else:
@@ -703,6 +729,10 @@ class level(object):
                             world_transform_to.append(objects.Level((0, 0), world.name))
                         elif issubclass(new_type, objects.Clone):
                             world_transform_to.append(objects.Clone((0, 0), world.name, world.inf_tier))
+                        elif issubclass(new_type, objects.Game):
+                            level_transform_to.append(objects.Empty((0, 0)))
+                            new_obj = objects.Sprite((0, 0), objects.World.sprite_name)
+                            new_window_objects.append(new_obj)
                         elif issubclass(new_type, objects.Text):
                             world_transform_to.append(objects.WORLD((0, 0)))
                         else:
@@ -715,6 +745,10 @@ class level(object):
                             clone_transform_to.append(objects.Level((0, 0), world.name))
                         elif issubclass(new_type, objects.World):
                             clone_transform_to.append(objects.World((0, 0), world.name, world.inf_tier))
+                        elif issubclass(new_type, objects.Game):
+                            level_transform_to.append(objects.Empty((0, 0)))
+                            new_obj = objects.Sprite((0, 0), objects.Clone.sprite_name)
+                            new_window_objects.append(new_obj)
                         elif issubclass(new_type, objects.Text):
                             clone_transform_to.append(objects.CLONE((0, 0)))
                         else:
@@ -737,7 +771,7 @@ class level(object):
                             super_world.new_obj(transform_obj)
             for obj in delete_special_object_list:
                 super_world.del_obj(obj.uuid)
-        return (new_levels, level_transform_to)
+        return (new_levels, level_transform_to, new_window_objects)
     def win(self) -> bool:
         for world in self.world_list:
             you_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU), world.object_list)
@@ -773,7 +807,7 @@ class level(object):
         self.update_rules()
         self.shift()
         self.update_rules()
-        new_levels, transform_to = self.transform()
+        new_levels, transform_to, new_window_objects = self.transform()
         self.update_rules()
         self.tele()
         selected_level = self.select(op)
@@ -786,7 +820,7 @@ class level(object):
         self.all_list_set()
         win = self.win()
         end = self.end()
-        return {"win": win, "end": end, "selected_level": selected_level, "new_levels": new_levels, "transform_to": transform_to}
+        return {"win": win, "end": end, "selected_level": selected_level, "new_levels": new_levels, "transform_to": transform_to, "new_window_objects": new_window_objects}
     def show_world(self, world: worlds.world, frame: int, layer: int = 0, cursor: Optional[spaces.Coord] = None) -> pygame.Surface:
         if layer >= basics.options["world_display_recursion_depth"]:
             return displays.sprites.get("world", 0, frame).copy()

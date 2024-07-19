@@ -1,3 +1,4 @@
 import BabaMakeParabox as bmp
 
-bmp.main()
+if __name__ == "__main__":
+    bmp.main()
