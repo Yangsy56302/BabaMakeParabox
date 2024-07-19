@@ -18,6 +18,8 @@ class world(object):
         self.height: int = size[1]
         self.color: colors.ColorHex = color if color is not None else colors.random_world_color()
         self.object_list: list[objects.Object] = []
+        self.object_pos_index: list[list[objects.Object]]
+        self.refresh_index()
         self.rule_list: list[rules.Rule] = []
         self.strict_rule_list: list[rules.Rule] = []
     def __eq__(self, world: "world") -> bool:
@@ -28,60 +30,76 @@ class world(object):
         return " ".join([self.class_name, self.name, str(self.inf_tier)])
     def out_of_range(self, coord: spaces.Coord) -> bool:
         return coord[0] < 0 or coord[1] < 0 or coord[0] >= self.width or coord[1] >= self.height
-    def new_obj(self, obj: objects.Object) -> bool:
+    def pos_to_index(self, pos) -> int:
+        return pos[1] * self.width + pos[0]
+    def pos_to_objs(self, pos) -> list[objects.Object]:
+        return self.object_pos_index[self.pos_to_index(pos)]
+    def refresh_index(self) -> None:
+        self.object_pos_index = [[] for _ in range(self.width * self.height)]
+        for obj in self.object_list:
+            self.pos_to_objs(obj.pos).append(obj)
+    def new_obj(self, obj: objects.Object) -> None:
         self.object_list.append(obj)
-        return True
+        self.pos_to_objs(obj.pos).append(obj)
     def get_obj(self, uid: uuid.UUID) -> Optional[objects.Object]:
         res = [o for o in self.object_list if uid == o.uuid]
         return res[0] if len(res) != 0 else None
-    def get_objs_from_pos_and_type[T: objects.Object](self, pos: spaces.Coord, obj_type: type[T]) -> list[T]:
-        return [o for o in self.object_list if isinstance(o, obj_type) and match_pos(o, pos)]
     def get_objs_from_pos(self, pos: spaces.Coord) -> list[objects.Object]:
-        return [o for o in self.object_list if match_pos(o, pos)]
+        if self.out_of_range(pos):
+            return []
+        return self.pos_to_objs(pos)
+    def get_objs_from_pos_and_type[T: objects.Object](self, pos: spaces.Coord, obj_type: type[T]) -> list[T]:
+        if self.out_of_range(pos):
+            return []
+        return [o for o in self.pos_to_objs(pos) if isinstance(o, obj_type)]
     def get_objs_from_type[T: objects.Object](self, obj_type: type[T]) -> list[T]:
         return [o for o in self.object_list if isinstance(o, obj_type)]
     def del_obj(self, uid: uuid.UUID) -> bool:
         for i in range(len(self.object_list)):
             if uid == self.object_list[i].uuid:
+                self.pos_to_objs(self.object_list[i].pos).remove(self.object_list[i])
                 self.object_list.pop(i)
                 return True
         return False
     def del_obj_from_pos_and_type(self, pos: spaces.Coord, obj_type: type) -> bool:
-        for i in range(len(self.object_list)):
-            if match_pos(self.object_list[i], pos) and isinstance(self.object_list[i], obj_type):
-                self.object_list.pop(i)
+        for obj in self.object_pos_index[self.pos_to_index(pos)]:
+            if isinstance(obj, obj_type):
+                self.object_list.remove(obj)
+                self.pos_to_objs(pos).remove(obj)
                 return True
         return False
     def del_objs_from_pos_and_type(self, pos: spaces.Coord, obj_type: type) -> bool:
-        old_length = len(self.object_list)
-        new_objects = filter(lambda o: not match_pos(o, pos) and isinstance(o, obj_type), self.object_list)
-        self.object_list = list(new_objects)
-        new_length = len(self.object_list)
-        return old_length - new_length > 0
+        del_objects = filter(lambda o: isinstance(o, obj_type), self.object_pos_index[self.pos_to_index(pos)])
+        deleted = False
+        for obj in del_objects:
+            deleted = True
+            self.object_list.remove(obj)
+            self.pos_to_objs(pos).remove(obj)
+        return deleted
     def del_objs_from_pos(self, pos: spaces.Coord) -> bool:
-        old_length = len(self.object_list)
-        new_objects = filter(lambda o: not match_pos(o, pos), self.object_list)
-        self.object_list = list(new_objects)
-        new_length = len(self.object_list)
-        return old_length - new_length > 0
-    def del_objs_from_type(self, obj_type: type[objects.Object]) -> bool:
-        old_length = len(self.object_list)
-        new_objects = filter(lambda o: not isinstance(o, obj_type), self.object_list)
-        self.object_list = list(new_objects)
-        new_length = len(self.object_list)
-        return old_length - new_length > 0
+        deleted = len(self.pos_to_objs(pos)) != 0
+        for obj in self.pos_to_objs(pos):
+            self.object_list.remove(obj)
+        self.pos_to_objs(pos).clear()
+        return deleted
     def get_worlds(self) -> list[objects.World]:
         return [o for o in self.object_list if isinstance(o, objects.World)]
     def get_worlds_from_pos(self, pos: spaces.Coord) -> list[objects.World]:
-        return [o for o in self.object_list if isinstance(o, objects.World) and match_pos(o, pos)]
+        if self.out_of_range(pos):
+            return []
+        return [o for o in self.pos_to_objs(pos) if isinstance(o, objects.World)]
     def get_clones(self) -> list[objects.Clone]:
         return [o for o in self.object_list if isinstance(o, objects.Clone)]
     def get_clones_from_pos(self, pos: spaces.Coord) -> list[objects.Clone]:
-        return [o for o in self.object_list if isinstance(o, objects.Clone) and match_pos(o, pos)]
+        if self.out_of_range(pos):
+            return []
+        return [o for o in self.pos_to_objs(pos) if isinstance(o, objects.Clone)]
     def get_levels(self) -> list[objects.Level]:
         return [o for o in self.object_list if isinstance(o, objects.Level)]
     def get_levels_from_pos(self, pos: spaces.Coord) -> list[objects.Level]:
-        return [o for o in self.object_list if isinstance(o, objects.Level) and match_pos(o, pos)]
+        if self.out_of_range(pos):
+            return []
+        return [o for o in self.pos_to_objs(pos) if isinstance(o, objects.Level)]
     def repeated_world_to_clone(self) -> None:
         world_objs = self.get_worlds()
         to_clone_objs: list[objects.World] = []

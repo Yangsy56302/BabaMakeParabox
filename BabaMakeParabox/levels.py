@@ -221,6 +221,16 @@ class level(object):
                         else:
                             for obj in [o for o in world.object_list if isinstance(o, obj_type)]:
                                 obj.new_prop(prop_type, prop_negated_count % 2 == 1)
+    def move_obj_between_worlds(self, old_world: worlds.world, obj: objects.Object, new_world: worlds.world, new_pos: spaces.Coord) -> None:
+        old_world.object_pos_index[old_world.pos_to_index(obj.pos)].remove(obj)
+        old_world.object_list.remove(obj)
+        obj.pos = new_pos
+        new_world.object_list.append(obj)
+        new_world.object_pos_index[new_world.pos_to_index(obj.pos)].append(obj)
+    def move_obj_in_world(self, world: worlds.world, obj: objects.Object, pos: spaces.Coord) -> None:
+        world.object_pos_index[world.pos_to_index(obj.pos)].remove(obj)
+        obj.pos = pos
+        world.object_pos_index[world.pos_to_index(obj.pos)].append(obj)
     def same_float_prop(self, obj_1: objects.Object, obj_2: objects.Object):
         return not (obj_1.has_prop(objects.FLOAT) ^ obj_2.has_prop(objects.FLOAT))
     def get_move_list(self, cause: type[objects.Property], world: worlds.world, obj: objects.Object, facing: spaces.Orient, pos: Optional[spaces.Coord] = None, pushed: Optional[list[objects.Object]] = None, passed: Optional[list[worlds.world]] = None, transnum: Optional[float] = None, depth: int = 0) -> Optional[list[tuple[objects.Object, worlds.world, spaces.Coord, spaces.Orient]]]:
@@ -395,13 +405,9 @@ class level(object):
                 if world.get_obj(move_obj.uuid) is not None:
                     old_world = world
             if old_world == new_world:
-                move_obj.pos = new_pos
-                move_obj.facing = new_facing
+                self.move_obj_in_world(old_world, move_obj, new_pos)
             else:
-                old_world.del_obj(move_obj.uuid)
-                move_obj.pos = new_pos
-                move_obj.facing = new_facing
-                new_world.new_obj(move_obj)
+                self.move_obj_between_worlds(old_world, move_obj, new_world, new_pos)
         if len(move_list) != 0 and "move" not in self.sound_events:
             self.sound_events.append("move")
     def you(self, facing: spaces.PlayerOperation) -> bool:
@@ -437,7 +443,7 @@ class level(object):
                 for obj in select_objs:
                     new_pos = spaces.pos_facing(obj.pos, facing) # type: ignore
                     if not world.out_of_range(new_pos):
-                        obj.pos = new_pos
+                        self.move_obj_in_world(world, obj, new_pos)
             return None
     def move(self) -> bool:
         pushing_game = False
@@ -477,7 +483,7 @@ class level(object):
         self.move_objs_from_move_list(move_list)
         return pushing_game
     def tele(self) -> None:
-        tele_list: list[tuple[objects.Object, spaces.Coord]] = []
+        tele_list: list[tuple[worlds.world, objects.Object, spaces.Coord]] = []
         object_list = []
         for world in self.world_list:
             object_list.extend(world.object_list)
@@ -498,9 +504,9 @@ class level(object):
                         continue
                     if self.same_float_prop(obj, tele_obj):
                         other_tele_obj = random.choice(other_tele_objs)
-                        tele_list.append((obj, other_tele_obj.pos))
-        for obj, pos in tele_list:
-            obj.pos = pos
+                        tele_list.append((world, obj, other_tele_obj.pos))
+        for world, obj, pos in tele_list:
+            self.move_obj_in_world(world, obj, pos)
         if len(tele_list) != 0:
             self.sound_events.append("tele")
     def sink(self) -> None:
@@ -508,15 +514,14 @@ class level(object):
         for world in self.world_list:
             sink_objs = filter(lambda o: objects.Object.has_prop(o, objects.SINK), world.object_list)
             for sink_obj in sink_objs:
-                for obj in world.object_list:
+                for obj in world.get_objs_from_pos(sink_obj.pos):
                     if obj == sink_obj:
                         continue
-                    if obj.pos == sink_obj.pos:
-                        if self.same_float_prop(obj, sink_obj):
-                            if obj.uuid not in delete_list and sink_obj.uuid not in delete_list:
-                                delete_list.append(obj.uuid)
-                                delete_list.append(sink_obj.uuid)
-                                break
+                    if self.same_float_prop(obj, sink_obj):
+                        if obj.uuid not in delete_list and sink_obj.uuid not in delete_list:
+                            delete_list.append(obj.uuid)
+                            delete_list.append(sink_obj.uuid)
+                            break
         for uuid in delete_list:
             world.del_obj(uuid)
         if len(delete_list) != 0:
@@ -526,7 +531,7 @@ class level(object):
         for world in self.world_list:
             hot_objs = filter(lambda o: objects.Object.has_prop(o, objects.DEFEAT), world.object_list)
             for hot_obj in hot_objs:
-                melt_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU) and worlds.match_pos(o, hot_obj.pos), world.object_list)
+                melt_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU), world.get_objs_from_pos(hot_obj.pos))
                 for melt_obj in melt_objs:
                     if self.same_float_prop(hot_obj, melt_obj):
                         if melt_obj.uuid not in delete_list:
@@ -540,7 +545,7 @@ class level(object):
         for world in self.world_list:
             defeat_objs = filter(lambda o: objects.Object.has_prop(o, objects.DEFEAT), world.object_list)
             for defeat_obj in defeat_objs:
-                you_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU) and worlds.match_pos(o, defeat_obj.pos), world.object_list)
+                you_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU), world.get_objs_from_pos(defeat_obj.pos))
                 for you_obj in you_objs:
                     if self.same_float_prop(defeat_obj, you_obj):
                         if you_obj.uuid not in delete_list:
@@ -554,7 +559,7 @@ class level(object):
         for world in self.world_list:
             shut_objs = filter(lambda o: objects.Object.has_prop(o, objects.SHUT), world.object_list)
             for shut_obj in shut_objs:
-                open_objs = filter(lambda o: objects.Object.has_prop(o, objects.OPEN) and worlds.match_pos(o, shut_obj.pos), world.object_list)
+                open_objs = filter(lambda o: objects.Object.has_prop(o, objects.OPEN), world.get_objs_from_pos(shut_obj.pos))
                 for open_obj in open_objs:
                     if shut_obj.uuid not in delete_list and open_obj.uuid not in delete_list:
                         delete_list.append(shut_obj.uuid)
