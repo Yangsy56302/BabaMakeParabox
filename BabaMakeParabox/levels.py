@@ -348,7 +348,7 @@ class level(object):
                             squeeze_list.extend(test_move_list)
                     if squeeze:
                         squeeze_list.append((obj, world, new_pos, facing))
-                    world.del_obj(temp_stop_object.uuid)
+                    world.del_obj(temp_stop_object)
         enter_world = False
         enter_list = []
         if len(worlds_that_cant_push) != 0 and not world.out_of_range(new_pos):
@@ -402,7 +402,7 @@ class level(object):
         for move_obj, new_world, new_pos, new_facing in move_list:
             move_obj.moved = True
             for world in self.world_list:
-                if world.get_obj(move_obj.uuid) is not None:
+                if move_obj in world.object_list:
                     old_world = world
             if old_world == new_world:
                 self.move_obj_in_world(old_world, move_obj, new_pos)
@@ -518,12 +518,12 @@ class level(object):
                     if obj == sink_obj:
                         continue
                     if self.same_float_prop(obj, sink_obj):
-                        if obj.uuid not in delete_list and sink_obj.uuid not in delete_list:
-                            delete_list.append(obj.uuid)
-                            delete_list.append(sink_obj.uuid)
+                        if obj not in delete_list and sink_obj not in delete_list:
+                            delete_list.append(obj)
+                            delete_list.append(sink_obj)
                             break
-        for uuid in delete_list:
-            world.del_obj(uuid)
+        for obj in delete_list:
+            world.del_obj(obj)
         if len(delete_list) != 0:
             self.sound_events.append("sink")
     def hot_and_melt(self) -> None:
@@ -534,10 +534,10 @@ class level(object):
                 melt_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU), world.get_objs_from_pos(hot_obj.pos))
                 for melt_obj in melt_objs:
                     if self.same_float_prop(hot_obj, melt_obj):
-                        if melt_obj.uuid not in delete_list:
-                            delete_list.append(melt_obj.uuid)
-        for uuid in delete_list:
-            world.del_obj(uuid)
+                        if melt_obj not in delete_list:
+                            delete_list.append(melt_obj)
+        for obj in delete_list:
+            world.del_obj(obj)
         if len(delete_list) != 0:
             self.sound_events.append("melt")
     def defeat(self) -> None:
@@ -548,10 +548,10 @@ class level(object):
                 you_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU), world.get_objs_from_pos(defeat_obj.pos))
                 for you_obj in you_objs:
                     if self.same_float_prop(defeat_obj, you_obj):
-                        if you_obj.uuid not in delete_list:
-                            delete_list.append(you_obj.uuid)
-        for uuid in delete_list:
-            world.del_obj(uuid)
+                        if you_obj not in delete_list:
+                            delete_list.append(you_obj)
+        for obj in delete_list:
+            world.del_obj(obj)
         if len(delete_list) != 0:
             self.sound_events.append("defeat")
     def open_and_shut(self) -> None:
@@ -561,12 +561,12 @@ class level(object):
             for shut_obj in shut_objs:
                 open_objs = filter(lambda o: objects.Object.has_prop(o, objects.OPEN), world.get_objs_from_pos(shut_obj.pos))
                 for open_obj in open_objs:
-                    if shut_obj.uuid not in delete_list and open_obj.uuid not in delete_list:
-                        delete_list.append(shut_obj.uuid)
-                        delete_list.append(open_obj.uuid)
+                    if shut_obj not in delete_list and open_obj not in delete_list:
+                        delete_list.append(shut_obj)
+                        delete_list.append(open_obj)
                         break
-        for uuid in delete_list:
-            world.del_obj(uuid)
+        for obj in delete_list:
+            world.del_obj(obj)
         if len(delete_list) != 0:
             self.sound_events.append("open")
     def transform(self) -> tuple[list["level"], list[objects.Object], list[objects.Object]]:
@@ -676,7 +676,7 @@ class level(object):
                 if transform_success:
                     delete_object_list.append(old_obj)
             for delete_obj in delete_object_list:
-                world.del_obj(delete_obj.uuid)
+                world.del_obj(delete_obj)
         for world in self.world_list:
             world_transform_to: list[objects.Object] = []
             clone_transform_to: list[objects.Object] = []
@@ -782,7 +782,7 @@ class level(object):
                             transform_obj.facing = clone_obj.facing
                             super_world.new_obj(transform_obj)
             for obj in delete_special_object_list:
-                super_world.del_obj(obj.uuid)
+                super_world.del_obj(obj)
         return (new_levels, level_transform_to, new_window_objects)
     def win(self) -> bool:
         for world in self.world_list:

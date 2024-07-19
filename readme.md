@@ -161,6 +161,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 3.0    | 2024.07.19 | Game is You |
 | 3.001  | 2024.07.19 | Game feeling not Sink and not Float is not Move; Game has Midi |
 | 3.002  | 2024.07.19 | All feeling Move is not Slow |
+| 3.003  | 2024.07.19 | Bug on Copy and Paste is Fix |
 
 ## Bug Reports and Suggestions
 

@@ -335,16 +335,19 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
         elif keys[keybinds["X"]] and cooldowns[keybinds["X"]] == 0:
             history.append(copy.deepcopy(levelpack))
             current_clipboard = current_world.get_objs_from_pos(current_cursor_pos)
+            current_clipboard = copy.deepcopy(current_clipboard)
+            list(map(objects.Object.reset_uuid, current_clipboard))
             current_world.del_objs_from_pos(current_cursor_pos)
         elif keys[keybinds["C"]] and cooldowns[keybinds["C"]] == 0:
             history.append(copy.deepcopy(levelpack))
             current_clipboard = current_world.get_objs_from_pos(current_cursor_pos)
+            current_clipboard = copy.deepcopy(current_clipboard)
+            list(map(objects.Object.reset_uuid, current_clipboard))
         elif keys[keybinds["V"]] and cooldowns[keybinds["V"]] == 0:
             history.append(copy.deepcopy(levelpack))
             for obj in current_clipboard:
-                new_obj = copy.deepcopy(obj)
-                new_obj.pos = current_cursor_pos
-                current_world.new_obj(new_obj)
+                obj.pos = current_cursor_pos
+                current_world.new_obj(obj)
                 if isinstance(obj, objects.WorldPointer):
                     name = obj.name
                     inf_tier = obj.inf_tier

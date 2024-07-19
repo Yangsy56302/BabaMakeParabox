@@ -41,9 +41,6 @@ class world(object):
     def new_obj(self, obj: objects.Object) -> None:
         self.object_list.append(obj)
         self.pos_to_objs(obj.pos).append(obj)
-    def get_obj(self, uid: uuid.UUID) -> Optional[objects.Object]:
-        res = [o for o in self.object_list if uid == o.uuid]
-        return res[0] if len(res) != 0 else None
     def get_objs_from_pos(self, pos: spaces.Coord) -> list[objects.Object]:
         if self.out_of_range(pos):
             return []
@@ -54,22 +51,18 @@ class world(object):
         return [o for o in self.pos_to_objs(pos) if isinstance(o, obj_type)]
     def get_objs_from_type[T: objects.Object](self, obj_type: type[T]) -> list[T]:
         return [o for o in self.object_list if isinstance(o, obj_type)]
-    def del_obj(self, uid: uuid.UUID) -> bool:
-        for i in range(len(self.object_list)):
-            if uid == self.object_list[i].uuid:
-                self.pos_to_objs(self.object_list[i].pos).remove(self.object_list[i])
-                self.object_list.pop(i)
-                return True
-        return False
+    def del_obj(self, obj: objects.Object) -> None:
+        self.pos_to_objs(obj.pos).remove(obj)
+        self.object_list.remove(obj)
     def del_obj_from_pos_and_type(self, pos: spaces.Coord, obj_type: type) -> bool:
-        for obj in self.object_pos_index[self.pos_to_index(pos)]:
+        for obj in self.pos_to_objs(pos):
             if isinstance(obj, obj_type):
                 self.object_list.remove(obj)
                 self.pos_to_objs(pos).remove(obj)
                 return True
         return False
     def del_objs_from_pos_and_type(self, pos: spaces.Coord, obj_type: type) -> bool:
-        del_objects = filter(lambda o: isinstance(o, obj_type), self.object_pos_index[self.pos_to_index(pos)])
+        del_objects = filter(lambda o: isinstance(o, obj_type), self.pos_to_objs(pos))
         deleted = False
         for obj in del_objects:
             deleted = True
@@ -80,7 +73,7 @@ class world(object):
         deleted = len(self.pos_to_objs(pos)) != 0
         for obj in self.pos_to_objs(pos):
             self.object_list.remove(obj)
-        self.pos_to_objs(pos).clear()
+        self.object_pos_index[self.pos_to_index(pos)].clear()
         return deleted
     def get_worlds(self) -> list[objects.World]:
         return [o for o in self.object_list if isinstance(o, objects.World)]
@@ -114,7 +107,7 @@ class world(object):
         to_clone_objs = to_clone_objs[1:]
         for to_clone in to_clone_objs:
             self.new_obj(objects.Clone(to_clone.pos, to_clone.name, to_clone.inf_tier, to_clone.facing))
-            self.del_obj(to_clone.uuid)
+            self.del_obj(to_clone)
     def get_rules_from_pos_and_orient(self, stage: Optional[type[objects.Text]], pos: spaces.Coord, orient: spaces.Orient) -> list[rules.Rule]:
         if stage == objects.Noun:
             matches = (objects.Noun, )
@@ -275,4 +268,5 @@ def json_to_world(json_object: dict[str, Any]) -> world: # oh hell no * 2
                       color=json_object["color"]) # type: ignore
     for obj in json_object["object_list"]: # type: ignore
         new_world.new_obj(objects.json_to_object(obj)) # type: ignore
+    new_world.refresh_index()
     return new_world

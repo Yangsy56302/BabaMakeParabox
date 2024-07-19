@@ -35,6 +35,8 @@ class Object(object):
     def pos(self) -> None:
         del self.x
         del self.y
+    def reset_uuid(self) -> None:
+        self.uuid = uuid.uuid4()
     def set_sprite(self) -> None:
         self.sprite_state = 0
     def new_prop(self, prop: type["Text"], negate: bool = False) -> None:
@@ -77,6 +79,8 @@ class Special(Object):
     class_name: str = "Special"
     def set_sprite(self) -> None:
         self.sprite_state = 0
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -86,6 +90,8 @@ class Static(Object):
     class_name: str = "Static"
     def set_sprite(self) -> None:
         self.sprite_state = 0
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -95,6 +101,8 @@ class Tiled(Object):
     class_name: str = "Tiled"
     def set_sprite(self, connected: dict[spaces.Orient, bool]) -> None:
         self.sprite_state = (connected[spaces.D] * 0x1) | (connected[spaces.W] * 0x2) | (connected[spaces.A] * 0x4) | (connected[spaces.S] * 0x8)
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -104,6 +112,8 @@ class Animated(Object):
     class_name: str = "Animated"
     def set_sprite(self, round_num: int) -> None:
         self.sprite_state = round_num % 4
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -113,6 +123,8 @@ class Directional(Object):
     class_name: str = "Directional"
     def set_sprite(self) -> None:
         self.sprite_state = int(math.log2(self.facing)) * 0x8
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -122,6 +134,8 @@ class AnimatedDirectional(Object):
     class_name: str = "AnimatedDirectional"
     def set_sprite(self, round_num: int) -> None:
         self.sprite_state = int(math.log2(self.facing)) * 0x8 | round_num % 4
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -139,6 +153,8 @@ class Character(Object):
                 self.sprite_state = int(math.log2(self.facing)) * 0x8 | (self.sprite_state & 0x3)
         else:
             self.sprite_state = int(math.log2(self.facing)) * 0x8 | 0x7
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -147,6 +163,8 @@ class Character(Object):
 class Baba(Character):
     class_name: str = "Baba"
     sprite_name: str = "baba"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -155,6 +173,8 @@ class Baba(Character):
 class Keke(Character):
     class_name: str = "Keke"
     sprite_name: str = "keke"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -163,6 +183,8 @@ class Keke(Character):
 class Me(Character):
     class_name: str = "Me"
     sprite_name: str = "me"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -171,6 +193,8 @@ class Me(Character):
 class Patrick(Directional):
     class_name: str = "Patrick"
     sprite_name: str = "patrick"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -179,6 +203,8 @@ class Patrick(Directional):
 class Skull(Directional):
     class_name: str = "Skull"
     sprite_name: str = "skull"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -187,6 +213,8 @@ class Skull(Directional):
 class Ghost(Directional):
     class_name: str = "Ghost"
     sprite_name: str = "ghost"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -195,6 +223,8 @@ class Ghost(Directional):
 class Wall(Tiled):
     class_name: str = "Wall"
     sprite_name: str = "wall"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -203,6 +233,8 @@ class Wall(Tiled):
 class Hedge(Tiled):
     class_name: str = "Hedge"
     sprite_name: str = "hedge"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -211,6 +243,8 @@ class Hedge(Tiled):
 class Ice(Tiled):
     class_name: str = "Ice"
     sprite_name: str = "ice"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -219,6 +253,8 @@ class Ice(Tiled):
 class Tile(Static):
     class_name: str = "Tile"
     sprite_name: str = "tile"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -227,6 +263,8 @@ class Tile(Static):
 class Grass(Tiled):
     class_name: str = "Grass"
     sprite_name: str = "grass"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -235,6 +273,8 @@ class Grass(Tiled):
 class Water(Tiled):
     class_name: str = "Water"
     sprite_name: str = "water"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -243,6 +283,8 @@ class Water(Tiled):
 class Lava(Tiled):
     class_name: str = "Lava"
     sprite_name: str = "lava"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -251,6 +293,8 @@ class Lava(Tiled):
 class Door(Static):
     class_name: str = "Door"
     sprite_name: str = "door"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -259,6 +303,8 @@ class Door(Static):
 class Key(Static):
     class_name: str = "Key"
     sprite_name: str = "key"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -267,6 +313,8 @@ class Key(Static):
 class Box(Static):
     class_name: str = "Box"
     sprite_name: str = "box"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -275,6 +323,8 @@ class Box(Static):
 class Rock(Static):
     class_name: str = "Rock"
     sprite_name: str = "rock"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -283,6 +333,8 @@ class Rock(Static):
 class Fruit(Static):
     class_name: str = "Fruit"
     sprite_name: str = "fruit"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -291,6 +343,8 @@ class Fruit(Static):
 class Belt(AnimatedDirectional):
     class_name: str = "Belt"
     sprite_name: str = "belt"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -299,6 +353,8 @@ class Belt(AnimatedDirectional):
 class Sun(Static):
     class_name: str = "Sun"
     sprite_name: str = "sun"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -307,6 +363,8 @@ class Sun(Static):
 class Moon(Static):
     class_name: str = "Moon"
     sprite_name: str = "moon"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -315,6 +373,8 @@ class Moon(Static):
 class Star(Static):
     class_name: str = "Star"
     sprite_name: str = "star"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -323,6 +383,8 @@ class Star(Static):
 class What(Static):
     class_name: str = "What"
     sprite_name: str = "what"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -331,6 +393,8 @@ class What(Static):
 class Love(Static):
     class_name: str = "Love"
     sprite_name: str = "love"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -339,6 +403,8 @@ class Love(Static):
 class Flag(Static):
     class_name: str = "Flag"
     sprite_name: str = "flag"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -347,6 +413,8 @@ class Flag(Static):
 class Cursor(Static):
     class_name: str = "Cursor"
     sprite_name: str = "cursor"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -355,6 +423,8 @@ class Cursor(Static):
 class Empty(Special):
     class_name: str = "Empty"
     sprite_name: str = "empty"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -368,6 +438,8 @@ class Level(Special):
         self.name: str = name
         self.icon_name: str = icon_name
         self.icon_color: colors.ColorHex = icon_color
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return " ".join([self.class_name, self.name])
     def __repr__(self) -> str:
@@ -384,6 +456,8 @@ class WorldPointer(Special):
         super().__init__(pos, facing)
         self.name: str = name
         self.inf_tier: int = inf_tier
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return " ".join([self.class_name, self.name, str(self.inf_tier)])
     def __repr__(self) -> str:
@@ -398,6 +472,8 @@ class World(WorldPointer):
     sprite_name: str = "world"
     def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = spaces.S) -> None:
         super().__init__(pos, name, inf_tier, facing)
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -408,6 +484,8 @@ class Clone(WorldPointer):
     sprite_name: str = "clone"
     def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = spaces.S) -> None:
         super().__init__(pos, name, inf_tier, facing)
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -422,6 +500,8 @@ class Transform(Special):
         if issubclass(self.from_type, WorldPointer):
             self.from_inf_tier: int = info["from"]["inf_tier"]
         self.to_type: type[Object] = info["to"]["type"]
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -432,6 +512,8 @@ class Sprite(Special):
     def __init__(self, pos: spaces.Coord, sprite_name: str, facing: spaces.Orient = spaces.S) -> None:
         super().__init__(pos, facing)
         self.sprite_name: str = sprite_name
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -443,6 +525,8 @@ class Sprite(Special):
 
 class Game(Special):
     class_name: str = "Game"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -450,6 +534,8 @@ class Game(Special):
 
 class Text(Special):
     class_name: str = "Text"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -457,6 +543,8 @@ class Text(Special):
 
 class Noun(Text):
     class_name: str = "Noun"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -464,6 +552,8 @@ class Noun(Text):
 
 class Operator(Text):
     class_name: str = "Operator"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -471,6 +561,8 @@ class Operator(Text):
 
 class Property(Text):
     class_name: str = "Property"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -479,6 +571,8 @@ class Property(Text):
 class BABA(Noun):
     class_name: str = "BABA"
     sprite_name: str = "text_baba"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -487,6 +581,8 @@ class BABA(Noun):
 class KEKE(Noun):
     class_name: str = "KEKE"
     sprite_name: str = "text_keke"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -495,6 +591,8 @@ class KEKE(Noun):
 class ME(Noun):
     class_name: str = "ME"
     sprite_name: str = "text_me"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -503,6 +601,8 @@ class ME(Noun):
 class PATRICK(Noun):
     class_name: str = "PATRICK"
     sprite_name: str = "text_patrick"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -511,6 +611,8 @@ class PATRICK(Noun):
 class SKULL(Noun):
     class_name: str = "SKULL"
     sprite_name: str = "text_skull"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -519,6 +621,8 @@ class SKULL(Noun):
 class GHOST(Noun):
     class_name: str = "GHOST"
     sprite_name: str = "text_ghost"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -527,6 +631,8 @@ class GHOST(Noun):
 class WALL(Noun):
     class_name: str = "WALL"
     sprite_name: str = "text_wall"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -535,6 +641,8 @@ class WALL(Noun):
 class HEDGE(Noun):
     class_name: str = "HEDGE"
     sprite_name: str = "text_hedge"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -543,6 +651,8 @@ class HEDGE(Noun):
 class ICE(Noun):
     class_name: str = "ICE"
     sprite_name: str = "text_ice"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -551,6 +661,8 @@ class ICE(Noun):
 class TILE(Noun):
     class_name: str = "TILE"
     sprite_name: str = "text_tile"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -559,6 +671,8 @@ class TILE(Noun):
 class GRASS(Noun):
     class_name: str = "GRASS"
     sprite_name: str = "text_grass"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -567,6 +681,8 @@ class GRASS(Noun):
 class WATER(Noun):
     class_name: str = "WATER"
     sprite_name: str = "text_water"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -575,6 +691,8 @@ class WATER(Noun):
 class LAVA(Noun):
     class_name: str = "LAVA"
     sprite_name: str = "text_lava"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -583,6 +701,8 @@ class LAVA(Noun):
 class DOOR(Noun):
     class_name: str = "DOOR"
     sprite_name: str = "text_door"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -591,6 +711,8 @@ class DOOR(Noun):
 class KEY(Noun):
     class_name: str = "KEY"
     sprite_name: str = "text_key"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -599,6 +721,8 @@ class KEY(Noun):
 class BOX(Noun):
     class_name: str = "BOX"
     sprite_name: str = "text_box"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -607,6 +731,8 @@ class BOX(Noun):
 class ROCK(Noun):
     class_name: str = "ROCK"
     sprite_name: str = "text_rock"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -615,6 +741,8 @@ class ROCK(Noun):
 class FRUIT(Noun):
     class_name: str = "FRUIT"
     sprite_name: str = "text_fruit"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -623,6 +751,8 @@ class FRUIT(Noun):
 class BELT(Noun):
     class_name: str = "BELT"
     sprite_name: str = "text_belt"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -631,6 +761,8 @@ class BELT(Noun):
 class SUN(Noun):
     class_name: str = "SUN"
     sprite_name: str = "text_sun"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -639,6 +771,8 @@ class SUN(Noun):
 class MOON(Noun):
     class_name: str = "MOON"
     sprite_name: str = "text_moon"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -647,6 +781,8 @@ class MOON(Noun):
 class STAR(Noun):
     class_name: str = "STAR"
     sprite_name: str = "text_star"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -655,6 +791,8 @@ class STAR(Noun):
 class WHAT(Noun):
     class_name: str = "WHAT"
     sprite_name: str = "text_what"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -663,6 +801,8 @@ class WHAT(Noun):
 class LOVE(Noun):
     class_name: str = "LOVE"
     sprite_name: str = "text_love"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -671,6 +811,8 @@ class LOVE(Noun):
 class FLAG(Noun):
     class_name: str = "FLAG"
     sprite_name: str = "text_flag"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -679,6 +821,8 @@ class FLAG(Noun):
 class CURSOR(Noun):
     class_name: str = "CURSOR"
     sprite_name: str = "text_cursor"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -687,6 +831,8 @@ class CURSOR(Noun):
 class ALL(Noun):
     class_name: str = "ALL"
     sprite_name: str = "text_all"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -695,6 +841,8 @@ class ALL(Noun):
 class EMPTY(Noun):
     class_name: str = "EMPTY"
     sprite_name: str = "text_empty"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -703,6 +851,8 @@ class EMPTY(Noun):
 class TEXT(Noun):
     class_name: str = "TEXT"
     sprite_name: str = "text_text"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -711,6 +861,8 @@ class TEXT(Noun):
 class LEVEL(Noun):
     class_name: str = "LEVEL"
     sprite_name: str = "text_level"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -719,6 +871,8 @@ class LEVEL(Noun):
 class WORLD(Noun):
     class_name: str = "WORLD"
     sprite_name: str = "text_world"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -727,6 +881,8 @@ class WORLD(Noun):
 class CLONE(Noun):
     class_name: str = "CLONE"
     sprite_name: str = "text_clone"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -735,6 +891,8 @@ class CLONE(Noun):
 class GAME(Noun):
     class_name: str = "GAME"
     sprite_name: str = "text_game"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -743,6 +901,8 @@ class GAME(Noun):
 class IS(Operator):
     class_name: str = "IS"
     sprite_name: str = "text_is"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -751,6 +911,8 @@ class IS(Operator):
 class NOT(Text):
     class_name: str = "NOT"
     sprite_name: str = "text_not"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -759,6 +921,8 @@ class NOT(Text):
 class AND(Text):
     class_name: str = "AND"
     sprite_name: str = "text_and"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -767,6 +931,8 @@ class AND(Text):
 class YOU(Property):
     class_name: str = "YOU"
     sprite_name: str = "text_you"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -775,6 +941,8 @@ class YOU(Property):
 class MOVE(Property):
     class_name: str = "MOVE"
     sprite_name: str = "text_move"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -783,6 +951,8 @@ class MOVE(Property):
 class STOP(Property):
     class_name: str = "STOP"
     sprite_name: str = "text_stop"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -791,6 +961,8 @@ class STOP(Property):
 class PUSH(Property):
     class_name: str = "PUSH"
     sprite_name: str = "text_push"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -799,6 +971,8 @@ class PUSH(Property):
 class SINK(Property):
     class_name: str = "SINK"
     sprite_name: str = "text_sink"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -807,6 +981,8 @@ class SINK(Property):
 class FLOAT(Property):
     class_name: str = "FLOAT"
     sprite_name: str = "text_float"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -815,6 +991,8 @@ class FLOAT(Property):
 class OPEN(Property):
     class_name: str = "OPEN"
     sprite_name: str = "text_open"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -823,6 +1001,8 @@ class OPEN(Property):
 class SHUT(Property):
     class_name: str = "SHUT"
     sprite_name: str = "text_shut"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -831,6 +1011,8 @@ class SHUT(Property):
 class HOT(Property):
     class_name: str = "HOT"
     sprite_name: str = "text_hot"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -839,6 +1021,8 @@ class HOT(Property):
 class MELT(Property):
     class_name: str = "MELT"
     sprite_name: str = "text_melt"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -847,6 +1031,8 @@ class MELT(Property):
 class WIN(Property):
     class_name: str = "WIN"
     sprite_name: str = "text_win"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -855,6 +1041,8 @@ class WIN(Property):
 class DEFEAT(Property):
     class_name: str = "DEFEAT"
     sprite_name: str = "text_defeat"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -863,6 +1051,8 @@ class DEFEAT(Property):
 class SHIFT(Property):
     class_name: str = "SHIFT"
     sprite_name: str = "text_shift"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -871,6 +1061,8 @@ class SHIFT(Property):
 class TELE(Property):
     class_name: str = "TELE"
     sprite_name: str = "text_tele"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -879,6 +1071,8 @@ class TELE(Property):
 class WORD(Property):
     class_name: str = "WORD"
     sprite_name: str = "text_word"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -887,6 +1081,8 @@ class WORD(Property):
 class SELECT(Property):
     class_name: str = "SELECT"
     sprite_name: str = "text_select"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -895,6 +1091,8 @@ class SELECT(Property):
 class END(Property):
     class_name: str = "END"
     sprite_name: str = "text_end"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
@@ -903,6 +1101,8 @@ class END(Property):
 class DONE(Property):
     class_name: str = "DONE"
     sprite_name: str = "text_done"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
     def __str__(self) -> str:
         return str(super())
     def __repr__(self) -> str:
