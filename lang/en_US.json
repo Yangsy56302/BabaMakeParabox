@@ -21,7 +21,7 @@
     "game.level.transform": "This level has been transformed into something...",
     "game.level.enter": "You entered a level.",
     "game.levelpack.rule_list": "Levelpack's global rule list: ",
-    "game.world.rule_list": "World's local rule list: ",
+    "game.world.rule_list": "World's rule list: ",
     "game.world.current.name": "Current world's name: ",
     "game.world.current.inf_tier": "Current world's infinite tier: ",
     "editor.levelpack.rule_list": "Levelpack's global rule list: ",
