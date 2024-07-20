@@ -61,17 +61,6 @@ class Object(object):
     def to_json(self) -> dict[str, Any]:
         return {"type": self.class_name, "position": [self.x, self.y], "orientation": spaces.orient_to_str(self.facing)} # type: ignore
 
-class Special(Object):
-    class_name: str = "Special"
-    def set_sprite(self) -> None:
-        self.sprite_state = 0
-    def __eq__(self, obj: "Object") -> bool:
-        return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
-
 class Static(Object):
     class_name: str = "Static"
     def set_sprite(self) -> None:
@@ -406,7 +395,7 @@ class Cursor(Static):
     def __repr__(self) -> str:
         return repr(super())
 
-class Empty(Special):
+class Empty(Object):
     class_name: str = "Empty"
     sprite_name: str = "empty"
     def __eq__(self, obj: "Object") -> bool:
@@ -416,7 +405,7 @@ class Empty(Special):
     def __repr__(self) -> str:
         return repr(super())
 
-class Level(Special):
+class Level(Object):
     class_name: str = "Level"
     sprite_name: str = "level"
     def __init__(self, pos: spaces.Coord, name: str, icon_name: str = "empty", icon_color: colors.ColorHex = colors.WHITE, facing: spaces.Orient = spaces.S) -> None:
@@ -436,7 +425,7 @@ class Level(Special):
         json_object.update({"icon": {"name": self.icon_name, "color": self.icon_color}}) # type: ignore
         return json_object # type: ignore
 
-class WorldPointer(Special):
+class WorldPointer(Object):
     class_name: str = "WorldContainer"
     def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = spaces.S) -> None:
         super().__init__(pos, facing)
@@ -477,7 +466,7 @@ class Clone(WorldPointer):
     def __repr__(self) -> str:
         return repr(super())
 
-class Transform(Special):
+class Transform(Object):
     class_name: str = "Transform"
     def __init__(self, pos: spaces.Coord, info: dict[str, Any], facing: spaces.Orient = spaces.S) -> None:
         super().__init__(pos, facing)
@@ -493,7 +482,7 @@ class Transform(Special):
     def __repr__(self) -> str:
         return repr(super())
 
-class Sprite(Special):
+class Sprite(Object):
     class_name: str = "Sprite"
     def __init__(self, pos: spaces.Coord, sprite_name: str, facing: spaces.Orient = spaces.S) -> None:
         super().__init__(pos, facing)
@@ -509,7 +498,7 @@ class Sprite(Special):
         json_object.update({"sprite": {"name": self.sprite_name}}) # type: ignore
         return json_object # type: ignore
 
-class Game(Special):
+class Game(Object):
     class_name: str = "Game"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
@@ -518,7 +507,7 @@ class Game(Special):
     def __repr__(self) -> str:
         return repr(super())
 
-class Text(Special):
+class Text(Object):
     class_name: str = "Text"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
