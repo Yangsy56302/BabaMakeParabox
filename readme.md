@@ -163,6 +163,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 3.002  | 2024.07.19 | All feeling Move is not Slow |
 | 3.003  | 2024.07.19 | Bug on Copy and Paste is Fix |
 | 3.01   | 2024.07.20 | Text is Word |
+| 3.011  | 2024.07.20 | Rule is Atom |
 
 ## Bug Reports and Suggestions
 

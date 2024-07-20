@@ -122,7 +122,7 @@ class world(object):
             matches = ()
             next_stage = None
         text_objs = self.get_objs_from_pos_and_type(pos, objects.Text)
-        word_objs = filter(lambda o: o.has_prop(objects.WORD) and match_pos(o, pos), self.object_list)
+        word_objs = filter(lambda o: o.has_prop(objects.WORD), self.get_objs_from_pos(pos))
         text_objs.extend(map(lambda o: objects.nouns_objs_dicts.get_exist_noun(type(o))(o.pos), word_objs))
         if len(text_objs) == 0:
             if stage is None:

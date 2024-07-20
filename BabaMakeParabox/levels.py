@@ -65,28 +65,21 @@ class level(object):
                 if noun_type is not None and noun_type not in self.all_list and not in_all:
                     self.all_list.append(noun_type)
     def cancel_rules(self, rule_list: list[rules.Rule]) -> list[rules.Rule]:
-        rule_level_list: dict[int, list[rules.Rule]] = {}
+        rule_tier_dict: dict[int, list[rules.Rule]] = {}
         for rule in rule_list:
-            is_passed = False
-            not_noun_count = 0
-            not_prop_count = 0
-            for obj_type in rule:
-                if obj_type == objects.NOT:
-                    if not is_passed:
-                        not_noun_count += 1
-                    else:
-                        not_prop_count += 1
-                if obj_type == objects.IS:
-                    is_passed = True
-            rule_level_list[not_prop_count] = rule_level_list.get(not_prop_count, []) + [rule]
+            for noun_negated, noun_type, prop_negated_count, prop_type in rules.analysis_rule(rule):
+                rule_tier_dict.setdefault(prop_negated_count, [])
+                rule_tier_dict[prop_negated_count].append(rule)
+        passed: list[tuple[bool, type[objects.Object], type[objects.Object]]] = []
+        new_passed: list[tuple[bool, type[objects.Object], type[objects.Object]]] = []
         new_rule_list: list[rules.Rule] = []
-        passed: list[tuple[tuple[bool, type[objects.Text]], type[objects.Text]]] = []
-        for _, rule_list in sorted(rule_level_list.items(), key=lambda i: i[0], reverse=True):
+        for rule_tier, rule_list in sorted(list(rule_tier_dict.items()), key=lambda p: p[0], reverse=True):
             for rule in rule_list:
                 for noun_negated, noun_type, prop_negated_count, prop_type in rules.analysis_rule(rule):
-                    if ((noun_negated, noun_type), prop_type) not in passed:
+                    if (noun_negated, noun_type, prop_type) not in passed:
                         new_rule_list.append(rule)
-                        passed.append(((noun_negated, noun_type), prop_type))
+                        new_passed.append((noun_negated, noun_type, prop_type))
+            passed.extend(new_passed)
         return new_rule_list
     def recursion_rules(self, world: worlds.world, rule_list: Optional[list[rules.Rule]] = None, passed: Optional[list[worlds.world]] = None) -> None:
         passed = passed if passed is not None else []
@@ -121,7 +114,7 @@ class level(object):
         for world in self.world_list:
             for obj in world.object_list:
                 obj.clear_prop()
-            world.strict_rule_list = world.get_rules()
+            world.strict_rule_list = rules.to_atom_rules(world.get_rules())
         for world in self.world_list:
             self.recursion_strict_rules(world)
             world.strict_rule_list.extend([r for r in self.rule_list if r[-1] is objects.WORD])
@@ -150,7 +143,7 @@ class level(object):
                             for obj in [o for o in world.object_list if isinstance(o, obj_type)]:
                                 obj.new_prop(objects.WORD, prop_negated_count % 2 == 1)
         for world in self.world_list:
-            world.strict_rule_list = world.get_rules()
+            world.strict_rule_list = rules.to_atom_rules(world.get_rules())
             for obj in world.object_list:
                 obj.clear_prop()
         for world in self.world_list:
@@ -162,7 +155,7 @@ class level(object):
         for world in self.world_list:
             for obj in world.object_list:
                 obj.clear_prop()
-            world.rule_list = world.get_rules()
+            world.rule_list = rules.to_atom_rules(world.get_rules())
         for world in self.world_list:
             self.recursion_rules(world)
             world.rule_list.extend([r for r in self.rule_list if r[-1] is objects.WORD])
@@ -194,7 +187,7 @@ class level(object):
                             for obj in [o for o in world.object_list if isinstance(o, obj_type)]:
                                 obj.new_prop(objects.WORD, prop_negated_count % 2 == 1)
         for world in self.world_list:
-            world.rule_list = world.get_rules()
+            world.rule_list = rules.to_atom_rules(world.get_rules())
             for obj in world.object_list:
                 obj.clear_prop()
         for world in self.world_list:
