@@ -181,6 +181,8 @@ def play(levelpack: levelpacks.levelpack) -> None:
             elif keys[keybinds["="]] and cooldowns[keybinds["="]] == 0:
                 current_world_index += 1
                 world_changed = True
+            if objects.STOP in current_level.game_properties:
+                wiggle = 1
             if objects.SHIFT in current_level.game_properties:
                 display_offset[0] += window.get_width() / basics.options["fps"]
             if objects.MOVE in current_level.game_properties:
@@ -198,10 +200,6 @@ def play(levelpack: levelpacks.levelpack) -> None:
             if value and cooldowns[key] == 0:
                 cooldowns[key] = basics.options["input_cooldown"]
         if refresh:
-            if objects.STOP in current_level.game_properties:
-                basics.options["fps"] = 1
-                basics.options["fpw"] = 1
-                basics.options["input_cooldown"] = 1
             if objects.WIN in current_level.game_properties:
                 sounds.play("win")
                 game_running = False
@@ -340,6 +338,10 @@ def play(levelpack: levelpacks.levelpack) -> None:
             real_fps_string = str(int(real_fps))
             for i in range(len(real_fps_string)):
                 window.blit(displays.sprites.get(f"text_{real_fps_string[i]}", 0, wiggle), (i * displays.sprite_size, 0))
+        if len([t for t in current_level.game_properties if issubclass(t, objects.Noun)]) != 0:
+            transparent_black_background = pygame.Surface(window.get_size(), pygame.SRCALPHA)
+            transparent_black_background.fill("#00000088")
+            window.blit(transparent_black_background, (0, 0))
         for obj_type in [o for o in map(objects.nouns_objs_dicts.get_obj, [t for t in current_level.game_properties if issubclass(t, objects.Noun)]) if o is not None]:
             window.blit(pygame.transform.scale(displays.sprites.get(obj_type.sprite_name, 0, wiggle), window.get_size()), (0, 0))
         if abs(display_offset_speed[0]) > window.get_width() / basics.options["fps"] * 4:
