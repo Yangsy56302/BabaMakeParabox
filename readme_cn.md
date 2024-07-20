@@ -165,6 +165,7 @@
 | 3.01   | 2024.07.20 | Text is Word |
 | 3.011  | 2024.07.20 | Rule is Atom |
 | 3.012  | 2024.07.20 | Game feeling Stop is not Wiggle |
+| 3.02   | 2024.07.20 | not Baba is not You |
 
 ## 报告漏洞和提出建议
 

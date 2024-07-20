@@ -12,8 +12,7 @@ class Object(object):
         self.x: int = pos[0]
         self.y: int = pos[1]
         self.facing: spaces.Orient = facing
-        self.properties: list[type["Text"]] = []
-        self.negate_properties: list[type["Text"]] = []
+        self.properties: list[tuple[type["Text"], int]] = []
         self.moved: bool = False
         self.sprite_state: int = 0
     def __eq__(self, obj: "Object") -> bool:
@@ -39,38 +38,25 @@ class Object(object):
         self.uuid = uuid.uuid4()
     def set_sprite(self) -> None:
         self.sprite_state = 0
-    def new_prop(self, prop: type["Text"], negate: bool = False) -> None:
-        if negate:
-            if prop not in self.negate_properties:
-                self.negate_properties.append(prop)
-        else:
-            if prop not in self.properties:
-                self.properties.append(prop)
-    def del_prop(self, prop: type["Text"], negate: bool = False) -> None:
-        if negate:
-            if prop in self.negate_properties:
-                self.negate_properties.remove(prop)
-        else:
-            if prop in self.properties:
-                self.properties.remove(prop)
+    def new_prop(self, prop: type["Text"], negated_count: int = 0) -> None:
+        del_props = []
+        for old_prop, old_negated_count in self.properties:
+            if old_prop == prop:
+                if old_negated_count > negated_count:
+                    return
+                del_props.append((old_prop, old_negated_count))
+        for old_prop, old_negated_count in del_props:
+            self.properties.remove((old_prop, old_negated_count))
+        self.properties.append((prop, negated_count))
+    def del_prop(self, prop: type["Text"], negated_count: int = 0) -> None:
+        if (prop, negated_count) in self.properties:
+            self.properties.remove((prop, negated_count))
     def has_prop(self, prop: type["Text"], negate: bool = False) -> bool:
-        if negate:
-            return prop in self.negate_properties
-        else:
-            return prop in self.properties
-    def has_props(self, props: list[type["Text"]], negate: bool = False) -> bool:
-        if negate:
-            for prop in props:
-                if prop not in self.negate_properties:
-                    return False
-            return True
-        else:
-            for prop in props:
-                if prop not in self.properties:
-                    return False
-            return True
-    def clear_prop(self, negate: bool = False) -> None:
-        self.negate_properties = []
+        for get_prop, get_negated_count in self.properties:
+            if get_prop == prop and get_negated_count % 2 == int(negate):
+                return True
+        return False
+    def clear_prop(self) -> None:
         self.properties = []
     def to_json(self) -> dict[str, Any]:
         return {"type": self.class_name, "position": [self.x, self.y], "orientation": spaces.orient_to_str(self.facing)} # type: ignore
