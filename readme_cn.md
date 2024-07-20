@@ -162,6 +162,7 @@
 | 3.001  | 2024.07.19 | Game feeling not Sink and not Float is not Move; Game has Midi |
 | 3.002  | 2024.07.19 | All feeling Move is not Slow |
 | 3.003  | 2024.07.19 | Bug on Copy and Paste is Fix |
+| 3.01   | 2024.07.20 | Text is Word |
 
 ## 报告漏洞和提出建议
 

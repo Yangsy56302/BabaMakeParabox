@@ -127,6 +127,7 @@ class level(object):
             world.strict_rule_list.extend([r for r in self.rule_list if r[-1] is objects.WORD])
             world.strict_rule_list = basics.remove_same_elements(world.strict_rule_list)
             world.strict_rule_list = self.cancel_rules(world.strict_rule_list)
+            world.strict_rule_list = basics.remove_same_elements(world.strict_rule_list)
         for world in self.world_list:
             for word_rule in basics.remove_same_elements(world.strict_rule_list):
                 for noun_negated, noun_type, prop_negated_count, prop_type in rules.analysis_rule(word_rule):
@@ -155,6 +156,7 @@ class level(object):
         for world in self.world_list:
             world.strict_rule_list = basics.remove_same_elements(world.strict_rule_list)
             world.strict_rule_list = self.cancel_rules(world.strict_rule_list)
+            world.strict_rule_list = basics.remove_same_elements(world.strict_rule_list)
     def update_rules(self) -> None:
         self.update_strict_rules()
         for world in self.world_list:
@@ -166,6 +168,7 @@ class level(object):
             world.rule_list.extend([r for r in self.rule_list if r[-1] is objects.WORD])
             world.rule_list = basics.remove_same_elements(world.rule_list)
             world.rule_list = self.cancel_rules(world.rule_list)
+            world.rule_list = basics.remove_same_elements(world.rule_list)
         for world in self.world_list:
             for word_rule in basics.remove_same_elements(world.rule_list):
                 for noun_negated, noun_type, prop_negated_count, prop_type in rules.analysis_rule(word_rule):
@@ -199,6 +202,7 @@ class level(object):
             world.rule_list.extend(self.rule_list)
             world.rule_list = basics.remove_same_elements(world.rule_list)
             world.rule_list = self.cancel_rules(world.rule_list)
+            world.rule_list = basics.remove_same_elements(world.rule_list)
         for world in self.world_list:
             for prop_rule in world.rule_list:
                 for noun_negated, noun_type, prop_negated_count, prop_type in rules.analysis_rule(prop_rule):
@@ -586,8 +590,6 @@ class level(object):
                     if maybe_not_new_type is not None:
                         not_new_types.append(maybe_not_new_type)
                 transform_success = False
-                if old_type in not_new_types:
-                    transform_success = True
                 old_type_is_old_type = False
                 for old_property in old_obj.properties:
                     if issubclass(old_property, objects.Noun):
@@ -598,7 +600,14 @@ class level(object):
                         all_nouns = [t for t in self.all_list if t not in not_new_types]
                         new_types.extend([t for t in map(objects.nouns_objs_dicts.get_obj, all_nouns) if t is not None]) # type: ignore
                     for new_type in new_types:
-                        if new_type in not_new_types:
+                        pass_other_transform = False
+                        for not_new_type in not_new_types:
+                            if issubclass(new_type, not_new_type):
+                                if issubclass(old_type, not_new_type):
+                                    transform_success = True
+                                else:
+                                    pass_other_transform = True
+                        if pass_other_transform:
                             pass
                         elif issubclass(new_type, objects.Game):
                             if issubclass(old_type, objects.Level):
@@ -808,6 +817,16 @@ class level(object):
                             self.sound_events.append("end")
                             return True
         return False
+    def done(self) -> None:
+        delete_list = []
+        for world in self.world_list:
+            for obj in world.object_list:
+                if obj.has_prop(objects.DONE):
+                    delete_list.append(obj)
+        for obj in delete_list:
+            world.del_obj(obj)
+        if len(delete_list) != 0:
+            self.sound_events.append("done")
     def round(self, op: spaces.PlayerOperation) -> dict[str, Any]:
         self.sound_events = []
         for world in self.world_list:
@@ -824,6 +843,7 @@ class level(object):
         self.tele()
         selected_level = self.select(op)
         self.update_rules()
+        self.done()
         self.sink()
         self.hot_and_melt()
         self.defeat()
@@ -838,6 +858,12 @@ class level(object):
                 "transform_to": transform_to,
                 "pushing_game": pushing_game,
                 "new_window_objects": new_window_objects}
+    def have_you(self) -> bool:
+        for world in self.world_list:
+            for obj in world.object_list:
+                if obj.has_prop(objects.YOU):
+                    return True
+        return False
     def show_world(self, world: worlds.world, frame: int, layer: int = 0, cursor: Optional[spaces.Coord] = None) -> pygame.Surface:
         if layer >= basics.options["world_display_recursion_depth"]:
             return displays.sprites.get("world", 0, frame).copy()
