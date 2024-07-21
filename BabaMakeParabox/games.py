@@ -67,7 +67,6 @@ def play(levelpack: levelpacks.levelpack) -> None:
     real_fps = basics.options["fps"]
     if basics.options["bgm"]["enabled"]:
         pygame.mixer.music.load(os.path.join("midi", basics.options["bgm"]["name"]))
-        pygame.mixer.music.set_volume(0.75)
         pygame.mixer.music.play(-1)
     game_running = True
     while game_running:
@@ -333,7 +332,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
             print(languages.current_language["game.world.current.name"], current_level.world_list[current_world_index].name, sep="")
             print(languages.current_language["game.world.current.inf_tier"], current_level.world_list[current_world_index].inf_tier, sep="")
             world_changed = False
-        pygame.mixer.music.set_volume(0.75 if current_level.have_you() else 0.25)
+        pygame.mixer.music.set_volume(1.0 if current_level.have_you() else 0.5)
         window.fill("#000000")
         displays.set_pixel_size(window.get_size())
         window.blit(pygame.transform.scale(current_level.show_world(current_level.world_list[current_world_index], wiggle), (window.get_width(), window.get_height())), (0, 0))
