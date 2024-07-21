@@ -112,22 +112,22 @@ class world(object):
         if stage == "Noun":
             first_matches = ()
             then_matches = (objects.Noun, )
-            next_stages = ("AndNoun", "InfixNoun", "Operator")
+            next_stages = ("AndNoun", "InfixText", "Operator")
             rule_can_be_done = False
         elif stage == "AndNoun":
             first_matches = (objects.AND, )
             then_matches = (objects.Noun, )
-            next_stages = ("AndNoun", "InfixNoun", "Operator")
+            next_stages = ("AndNoun", "InfixText", "Operator")
             rule_can_be_done = False
-        elif stage == "InfixNoun":
+        elif stage == "InfixText":
             first_matches = (objects.Infix, )
-            then_matches = (objects.Noun, )
-            next_stages = ("AndNoun", "AndInfixNoun", "Operator")
+            then_matches = (objects.Noun, objects.Property)
+            next_stages = ("AndNoun", "AndInfixText", "Operator")
             rule_can_be_done = False
-        elif stage == "AndInfixNoun":
+        elif stage == "AndInfixText":
             first_matches = (objects.AND, objects.Infix)
-            then_matches = (objects.Noun, )
-            next_stages = ("AndNoun", "AndInfixNoun", "Operator")
+            then_matches = (objects.Noun, objects.Property)
+            next_stages = ("AndNoun", "AndInfixText", "Operator")
             rule_can_be_done = False
         elif stage == "Operator":
             first_matches = ()
@@ -145,7 +145,7 @@ class world(object):
             next_stages = ("AndProperty", )
             rule_can_be_done = True
         not_rules: list[rules.Rule] = []
-        if stage in ("Noun", "AndNoun", "InfixNoun", "AndInfixNoun", "Property", "AndProperty"):
+        if stage in ("Noun", "AndNoun", "InfixText", "AndInfixText", "Property", "AndProperty"):
             not_objs = self.get_objs_from_pos_and_type(pos, objects.NOT)
             if len(not_objs) != 0:
                 not_rules = self.get_rules_from_pos_and_orient(stage, spaces.pos_facing(pos, orient), orient)
@@ -174,7 +174,7 @@ class world(object):
         not_then_matched: list[objects.Text] = []
         not_remain_rules: list[rules.Rule] = []
         not_after_first_len = 0
-        if stage in ("Noun", "AndNoun", "InfixNoun", "AndInfixNoun", "Property", "AndProperty"):
+        if stage in ("Noun", "AndNoun", "InfixText", "AndInfixText", "Property", "AndProperty"):
             while True:
                 not_objs = self.get_objs_from_pos_and_type(new_pos, objects.NOT)
                 if len(not_objs) == 0:

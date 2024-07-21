@@ -41,7 +41,7 @@ class Object(object):
     def new_prop(self, prop: type["Text"], negated_count: int = 0) -> None:
         del_props = []
         for old_prop, old_negated_count in self.properties:
-            if old_prop == prop:
+            if prop == old_prop:
                 if old_negated_count > negated_count:
                     return
                 del_props.append((old_prop, old_negated_count))
@@ -892,6 +892,16 @@ class ON(Infix):
     def __repr__(self) -> str:
         return repr(super())
 
+class FEELING(Infix):
+    class_name: str = "FEELING"
+    sprite_name: str = "text_feeling"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 class IS(Operator):
     class_name: str = "IS"
     sprite_name: str = "text_is"
@@ -1203,6 +1213,7 @@ object_name: dict[str, type[Object]] = {
     "CLONE": CLONE,
     "GAME": GAME,
     "ON": ON,
+    "FEELING": FEELING,
     "IS": IS,
     "NOT": NOT,
     "AND": AND,

@@ -1,8 +1,9 @@
 from typing import Any, Optional
+import multiprocessing
 import random
 import copy
+import uuid
 import os
-import multiprocessing
 
 from BabaMakeParabox import basics, languages, sounds, spaces, objects, displays, levels, levelpacks, subgames
 
@@ -16,9 +17,12 @@ def play(levelpack: levelpacks.levelpack) -> None:
             str_list.append(obj_type.class_name)
         print(" ".join(str_list))
     for level in levelpack.level_list:
-        level.update_rules()
+        old_prop_dict: dict[uuid.UUID, list[tuple[type[objects.Text], int]]] = {}
         for world in level.world_list:
             world.set_sprite_states(0)
+            for obj in world.object_list:
+                old_prop_dict[obj.uuid] = [t for t in obj.properties]
+        level.update_rules(old_prop_dict)
     levelpack_backup = copy.deepcopy(levelpack)
     multiprocessing.set_start_method("spawn")
     subgame_pipes = []

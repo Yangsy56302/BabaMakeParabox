@@ -1,5 +1,6 @@
 from typing import Any, Optional
 import random
+import uuid
 
 from BabaMakeParabox import basics, spaces, objects, rules, worlds, displays
 
@@ -63,13 +64,13 @@ class level(object):
                 noun_type = objects.nouns_objs_dicts.get_noun(type(obj))
                 if noun_type is not None and noun_type not in self.all_list:
                     self.all_list.append(noun_type)
-    def meet_infix_conditions(self, world: worlds.world, obj: objects.Object, infix_info_list: list[rules.InfixInfo]) -> bool:
+    def meet_infix_conditions(self, world: worlds.world, obj: objects.Object, infix_info_list: list[rules.InfixInfo], old_feeling: Optional[list[tuple[type[objects.Text], int]]] = None) -> bool:
         return_value = True
         for infix_info in infix_info_list:
             meet_infix_condition = True
             if infix_info[1] == objects.ON:
                 match_type = objects.nouns_objs_dicts.get_obj(infix_info[3]) # type: ignore
-                if infix_info[2] == True:
+                if infix_info[2]:
                     if match_type is not None:
                         for new_match_type in [o for o in self.all_list if (not issubclass(o, objects.not_in_all)) and not issubclass(o, match_type)]:
                             match_objs = world.get_objs_from_pos_and_type(obj.pos, new_match_type)
@@ -100,23 +101,19 @@ class level(object):
                                     match_objs.remove(obj)
                                 if len(match_objs) == 0:
                                     meet_infix_condition = False
+            elif infix_info[1] == objects.FEELING:
+                if old_feeling is None:
+                    meet_infix_condition = False
+                else:
+                    match_prop: type[objects.Property] = infix_info[3] # type: ignore
+                    if infix_info[2]:
+                        if match_prop not in [t[0] for t in old_feeling if t[1] % 2 == 1]:
+                            meet_infix_condition = False
+                    else:
+                        if match_prop not in [t[0] for t in old_feeling if t[1] % 2 == 0]:
+                            meet_infix_condition = False
             return_value = return_value and (meet_infix_condition if not infix_info[0] else not meet_infix_condition)
         return return_value
-    def cancel_rules(self, rule_list: list[rules.Rule]) -> list[rules.Rule]:
-        rule_tier_dict: dict[int, list[rules.Rule]] = {}
-        for rule in rule_list:
-            for noun_negated, noun_type, infix_list, oper_type, prop_negated_count, prop_type in rules.analysis_rule(rule):
-                rule_tier_dict.setdefault(prop_negated_count, [])
-                rule_tier_dict[prop_negated_count].append(rule)
-        passed: list[tuple[bool, type[objects.Object], type[objects.Object]]] = []
-        new_rule_list: list[rules.Rule] = []
-        for rule_tier, rule_list in sorted(list(rule_tier_dict.items()), key=lambda p: p[0], reverse=True):
-            for rule in rule_list:
-                for noun_negated, noun_type, infix_list, oper_type, prop_negated_count, prop_type in rules.analysis_rule(rule):
-                    if (noun_negated, noun_type, prop_type) not in passed:
-                        new_rule_list.append(rule)
-                        passed.append((noun_negated, noun_type, prop_type))
-        return new_rule_list
     def recursion_rules(self, world: worlds.world, rule_list: Optional[list[rules.Rule]] = None, passed: Optional[list[worlds.world]] = None) -> None:
         passed = passed if passed is not None else []
         if world in passed:
@@ -146,6 +143,8 @@ class level(object):
             sub_world = self.get_exist_world(sub_world_obj.name, sub_world_obj.inf_tier)
             self.recursion_rules(sub_world, rule_list, passed)
     def update_strict_rules(self) -> None:
+        pass
+    def update_rules(self, old_prop_dict: dict[uuid.UUID, list[tuple[type[objects.Text], int]]]) -> None:
         self.game_properties = []
         for world in self.world_list:
             for obj in world.object_list:
@@ -154,8 +153,6 @@ class level(object):
         for world in self.world_list:
             self.recursion_strict_rules(world)
             world.strict_rule_list.extend([r for r in self.rule_list if r[-1] is objects.WORD])
-            world.strict_rule_list = basics.remove_same_elements(world.strict_rule_list)
-            world.strict_rule_list = self.cancel_rules(world.strict_rule_list)
             world.strict_rule_list = basics.remove_same_elements(world.strict_rule_list)
         for world in self.world_list:
             for word_rule in basics.remove_same_elements(world.strict_rule_list):
@@ -168,104 +165,61 @@ class level(object):
                             if noun_negated:
                                 for obj in [o for o in world.object_list if isinstance(o, objects.in_not_all)]:
                                     if self.meet_infix_conditions(world, obj, infix_list):
-                                        obj.new_prop(objects.WORD, prop_negated_count % 2 == 1)
+                                        obj.new_prop(objects.WORD, prop_negated_count)
                             else:
                                 for obj in [o for o in world.object_list if not isinstance(o, objects.not_in_all)]:
                                     if self.meet_infix_conditions(world, obj, infix_list):
-                                        obj.new_prop(objects.WORD, prop_negated_count % 2 == 1)
+                                        obj.new_prop(objects.WORD, prop_negated_count)
                     else:
                         if noun_negated:
                             for obj in [o for o in world.object_list if (not isinstance(o, objects.not_in_all)) and not isinstance(o, obj_type)]:
                                 if self.meet_infix_conditions(world, obj, infix_list):
-                                    obj.new_prop(objects.WORD, prop_negated_count % 2 == 1)
+                                    obj.new_prop(objects.WORD, prop_negated_count)
                         else:
                             for obj in world.get_objs_from_type(obj_type):
                                 if self.meet_infix_conditions(world, obj, infix_list):
-                                    obj.new_prop(objects.WORD, prop_negated_count % 2 == 1)
+                                    obj.new_prop(objects.WORD, prop_negated_count)
         for world in self.world_list:
             world.strict_rule_list = rules.to_atom_rules(world.get_rules())
+            world.rule_list = world.strict_rule_list[:]
+            world.strict_rule_list = basics.remove_same_elements(world.strict_rule_list)
             for obj in world.object_list:
                 obj.clear_prop()
-        for world in self.world_list:
-            world.strict_rule_list = basics.remove_same_elements(world.strict_rule_list)
-            world.strict_rule_list = self.cancel_rules(world.strict_rule_list)
-            world.strict_rule_list = basics.remove_same_elements(world.strict_rule_list)
-    def update_rules(self) -> None:
-        self.update_strict_rules()
-        for world in self.world_list:
-            for obj in world.object_list:
-                obj.clear_prop()
-            world.rule_list = rules.to_atom_rules(world.get_rules())
         for world in self.world_list:
             self.recursion_rules(world)
             world.rule_list.extend([r for r in self.rule_list if r[-1] is objects.WORD])
-            world.rule_list = basics.remove_same_elements(world.rule_list)
-            world.rule_list = self.cancel_rules(world.rule_list)
-            world.rule_list = basics.remove_same_elements(world.rule_list)
-        for world in self.world_list:
-            for word_rule in basics.remove_same_elements(world.rule_list):
-                for noun_negated, noun_type, infix_list, oper_type, prop_negated_count, prop_type in rules.analysis_rule(word_rule):
-                    if prop_type != objects.WORD:
-                        continue
-                    obj_type = objects.nouns_objs_dicts.get_obj(noun_type)
-                    if obj_type is None:
-                        if noun_type == objects.ALL:
-                            if noun_negated:
-                                for obj in [o for o in world.object_list if isinstance(o, objects.in_not_all)]:
-                                    if self.meet_infix_conditions(world, obj, infix_list):
-                                        obj.new_prop(objects.WORD, prop_negated_count % 2 == 1)
-                            else:
-                                for obj in [o for o in world.object_list if not isinstance(o, objects.not_in_all)]:
-                                    if self.meet_infix_conditions(world, obj, infix_list):
-                                        obj.new_prop(objects.WORD, prop_negated_count % 2 == 1)
-                    else:
-                        if obj_type == objects.Game:
-                            if not noun_negated:
-                                self.game_properties.append(objects.WORD)
-                        if noun_negated:
-                            for obj in [o for o in world.object_list if (not isinstance(o, objects.not_in_all)) and not isinstance(o, obj_type)]:
-                                if self.meet_infix_conditions(world, obj, infix_list):
-                                    obj.new_prop(objects.WORD, prop_negated_count % 2 == 1)
-                        else:
-                            for obj in world.get_objs_from_type(obj_type):
-                                if self.meet_infix_conditions(world, obj, infix_list):
-                                    obj.new_prop(objects.WORD, prop_negated_count % 2 == 1)
-        for world in self.world_list:
-            world.rule_list = rules.to_atom_rules(world.get_rules())
-            for obj in world.object_list:
-                obj.clear_prop()
-        for world in self.world_list:
-            self.recursion_rules(world)
             world.rule_list.extend(self.rule_list)
             world.rule_list = basics.remove_same_elements(world.rule_list)
-            world.rule_list = self.cancel_rules(world.rule_list)
-            world.rule_list = basics.remove_same_elements(world.rule_list)
+        new_prop_list: list[tuple[objects.Object, tuple[type[objects.Text], int]]] = []
         for world in self.world_list:
-            for prop_rule in world.rule_list:
-                for noun_negated, noun_type, infix_list, oper_type, prop_negated_count, prop_type in rules.analysis_rule(prop_rule):
+            for rule in world.rule_list:
+                for noun_negated, noun_type, infix_list, oper_type, prop_negated_count, prop_type in rules.analysis_rule(rule):
                     obj_type = objects.nouns_objs_dicts.get_obj(noun_type)
                     if obj_type is None:
                         if noun_type == objects.ALL:
                             if noun_negated:
                                 for obj in [o for o in world.object_list if isinstance(o, objects.in_not_all)]:
-                                    if self.meet_infix_conditions(world, obj, infix_list):
-                                        obj.new_prop(prop_type, prop_negated_count % 2 == 1)
+                                    if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)):
+                                        new_prop_list.append((obj, (prop_type, prop_negated_count)))
                             else:
                                 for obj in [o for o in world.object_list if not isinstance(o, objects.not_in_all)]:
-                                    if self.meet_infix_conditions(world, obj, infix_list):
-                                        obj.new_prop(prop_type, prop_negated_count % 2 == 1)
+                                    if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)):
+                                        new_prop_list.append((obj, (prop_type, prop_negated_count)))
                     else:
                         if obj_type == objects.Game:
-                            if not noun_negated:
+                            if not noun_negated and len(infix_list) == 0:
                                 self.game_properties.append(prop_type)
                         if noun_negated:
                             for obj in [o for o in world.object_list if (not isinstance(o, objects.not_in_all)) and not isinstance(o, obj_type)]:
-                                if self.meet_infix_conditions(world, obj, infix_list):
-                                    obj.new_prop(prop_type, prop_negated_count % 2 == 1)
+                                if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)):
+                                    new_prop_list.append((obj, (prop_type, prop_negated_count)))
                         else:
                             for obj in world.get_objs_from_type(obj_type):
-                                if self.meet_infix_conditions(world, obj, infix_list):
-                                    obj.new_prop(prop_type, prop_negated_count % 2 == 1)
+                                if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)):
+                                    new_prop_list.append((obj, (prop_type, prop_negated_count)))
+        for obj, prop in new_prop_list:
+            prop_type, prop_negated_count = prop
+            obj.new_prop(prop_type, prop_negated_count)
     def move_obj_between_worlds(self, old_world: worlds.world, obj: objects.Object, new_world: worlds.world, new_pos: spaces.Coord) -> None:
         old_world.object_pos_index[old_world.pos_to_index(obj.pos)].remove(obj)
         old_world.object_list.remove(obj)
@@ -870,26 +824,28 @@ class level(object):
             self.sound_events.append("done")
     def round(self, op: spaces.PlayerOperation) -> dict[str, Any]:
         self.sound_events = []
+        old_prop_dict: dict[uuid.UUID, list[tuple[type[objects.Text], int]]] = {}
         for world in self.world_list:
             for obj in world.object_list:
+                old_prop_dict[obj.uuid] = [t for t in obj.properties]
                 obj.moved = False
-        self.update_rules()
+        self.update_rules(old_prop_dict)
         pushing_game = self.you(op)
         pushing_game |= self.move()
-        self.update_rules()
+        self.update_rules(old_prop_dict)
         self.shift()
-        self.update_rules()
+        self.update_rules(old_prop_dict)
         new_levels, transform_to, new_window_objects = self.transform()
-        self.update_rules()
+        self.update_rules(old_prop_dict)
         self.tele()
         selected_level = self.select(op)
-        self.update_rules()
+        self.update_rules(old_prop_dict)
         self.done()
         self.sink()
         self.hot_and_melt()
         self.defeat()
         self.open_and_shut()
-        self.update_rules()
+        self.update_rules(old_prop_dict)
         self.all_list_set()
         win = self.win()
         end = self.end()

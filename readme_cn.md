@@ -167,6 +167,7 @@
 | 3.012  | 2024.07.20 | Game feeling Stop is not Wiggle |
 | 3.02   | 2024.07.20 | not Baba is not You |
 | 3.1    | 2024.07.20 | Flag on Rock is Win |
+| 3.11   | 2024.07.20 | Rock feeling Push is not Push |
 
 ## 报告漏洞和提出建议
 
