@@ -1,11 +1,10 @@
 from typing import Any, Optional
-import multiprocessing
 import random
 import copy
 import uuid
 import os
 
-from BabaMakeParabox import basics, languages, sounds, spaces, objects, displays, levels, levelpacks, subgames
+from BabaMakeParabox import basics, languages, sounds, spaces, objects, displays, levels, levelpacks
 
 import pygame
 
@@ -24,7 +23,6 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 old_prop_dict[obj.uuid] = [t for t in obj.properties]
         level.update_rules(old_prop_dict)
     levelpack_backup = copy.deepcopy(levelpack)
-    multiprocessing.set_start_method("spawn")
     subgame_pipes = []
     window = pygame.display.set_mode((720, 720), pygame.RESIZABLE)
     display_offset = [0.0, 0.0]
@@ -233,12 +231,12 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 sounds.play(event)
             for new_level in level_info["new_levels"]:
                 levelpack.set_level(new_level)
-            for obj in level_info["new_window_objects"]:
-                pipe = multiprocessing.Pipe(False)
-                subgame_pipes.append(pipe[1])
-                kwargs = {"wps": basics.options["fps"] / basics.options["fpw"], "obj": obj}
-                process = multiprocessing.Process(target=subgames.new_window, args=(pipe[0], ), kwargs=kwargs)
-                process.start()
+            for obj_type in level_info["new_window_objects"]:
+                obj_type: type[objects.Object]
+                if os.path.exists("SubabaMakeParabox.exe"):
+                    os.system(f"start SubabaMakeParabox.exe {obj_type.class_name}")
+                elif os.path.exists("SubabaMakeParabox.py"):
+                    os.system(f"start /b python SubabaMakeParabox.py {obj_type.class_name}")
             transform_success = False
             if len(level_info["transform_to"]) != 0:
                 for level in levelpack.level_list:

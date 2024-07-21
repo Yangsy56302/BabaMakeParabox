@@ -1,5 +1,5 @@
 __pycache__/
 temp/
+/*.spec
 /.vscode/
-/BabaMakeParabox.spec
 /options.json

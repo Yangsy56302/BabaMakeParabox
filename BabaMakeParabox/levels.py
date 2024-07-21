@@ -569,10 +569,10 @@ class level(object):
             world.del_obj(obj)
         if len(delete_list) != 0:
             self.sound_events.append("open")
-    def transform(self) -> tuple[list["level"], list[objects.Object], list[objects.Object]]:
+    def transform(self) -> tuple[list["level"], list[objects.Object], list[type[objects.Object]]]:
         new_levels: list[level] = []
         level_transform_to: list[objects.Object] = []
-        new_window_objects: list[objects.Object] = []
+        new_window_objects: list[type[objects.Object]] = []
         for world in self.world_list:
             delete_object_list = []
             for old_obj in world.object_list: # type: ignore
@@ -606,16 +606,13 @@ class level(object):
                             pass
                         elif issubclass(new_type, objects.Game):
                             if issubclass(old_type, objects.Level):
-                                new_obj = objects.Sprite(old_obj.pos, objects.Level.sprite_name, facing=old_obj.facing)
-                                new_window_objects.append(new_obj)
+                                new_window_objects.append(objects.LEVEL)
                             elif issubclass(old_type, objects.World):
-                                new_obj = objects.Sprite(old_obj.pos, objects.World.sprite_name, facing=old_obj.facing)
-                                new_window_objects.append(new_obj)
+                                new_window_objects.append(objects.WORLD)
                             elif issubclass(old_type, objects.Clone):
-                                new_obj = objects.Sprite(old_obj.pos, objects.Clone.sprite_name, facing=old_obj.facing)
-                                new_window_objects.append(new_obj)
+                                new_window_objects.append(objects.CLONE)
                             else:
-                                new_window_objects.append(old_obj)
+                                new_window_objects.append(old_type)
                             transform_success = True
                         elif issubclass(new_type, objects.Level):
                             if issubclass(old_type, objects.Level):
@@ -731,8 +728,7 @@ class level(object):
                             level_transform_to.append(objects.Transform((0, 0), info))
                         elif issubclass(new_type, objects.Game):
                             level_transform_to.append(objects.Empty((0, 0)))
-                            new_obj = objects.Sprite((0, 0), objects.Level.sprite_name)
-                            new_window_objects.append(new_obj)
+                            new_window_objects.append(objects.LEVEL)
                         elif issubclass(new_type, objects.Text):
                             level_transform_to.append(objects.LEVEL((0, 0)))
                         else:
@@ -747,8 +743,7 @@ class level(object):
                             world_transform_to.append(objects.Clone((0, 0), world.name, world.inf_tier))
                         elif issubclass(new_type, objects.Game):
                             level_transform_to.append(objects.Empty((0, 0)))
-                            new_obj = objects.Sprite((0, 0), objects.World.sprite_name)
-                            new_window_objects.append(new_obj)
+                            new_window_objects.append(objects.WORLD)
                         elif issubclass(new_type, objects.Text):
                             world_transform_to.append(objects.WORLD((0, 0)))
                         else:
@@ -763,8 +758,7 @@ class level(object):
                             clone_transform_to.append(objects.World((0, 0), world.name, world.inf_tier))
                         elif issubclass(new_type, objects.Game):
                             level_transform_to.append(objects.Empty((0, 0)))
-                            new_obj = objects.Sprite((0, 0), objects.Clone.sprite_name)
-                            new_window_objects.append(new_obj)
+                            new_window_objects.append(objects.CLONE)
                         elif issubclass(new_type, objects.Text):
                             clone_transform_to.append(objects.CLONE((0, 0)))
                         else:

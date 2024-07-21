@@ -2,26 +2,18 @@ from BabaMakeParabox import displays, objects
 
 import pygame
 
-window_size = (192, 192)
-
-def new_window(pipe, wps: float, obj: objects.Object) -> None:
+def sub(objs_type_name: str) -> None:
     pygame.init()
+    window_size = (192, 192)
     window = pygame.display.set_mode(window_size)
-    pygame.display.set_caption(obj.sprite_name)
+    pygame.display.set_caption(objs_type_name)
     displays.sprites.update()
-    sprites = list(map(lambda i: displays.sprites.get(obj.sprite_name, obj.sprite_state, i), range(1, 4)))
+    sprites = list(map(lambda i: displays.sprites.get(objects.object_name[objs_type_name].sprite_name, 0, i), range(1, 4)))
     pygame.display.set_icon(sprites[0])
     clock = pygame.time.Clock()
     wiggle = 0
     game_running = True
     while game_running:
-        try:
-            if pipe.poll():
-                if pipe.recv():
-                    pygame.quit()
-                    game_running = False
-        except BrokenPipeError:
-            game_running = False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game_running = False
@@ -29,5 +21,5 @@ def new_window(pipe, wps: float, obj: objects.Object) -> None:
         window.blit(pygame.transform.scale(sprites[wiggle], window_size), (0, 0))
         pygame.display.flip()
         wiggle = (wiggle + 1) % 3
-        clock.tick(wps)
+        clock.tick(3)
     pygame.quit()
