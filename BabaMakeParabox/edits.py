@@ -12,8 +12,6 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
             str_list.append(obj_type.class_name)
         print(" ".join(str_list))
     for level in levelpack.level_list:
-        level.rule_list = levelpack.rule_list
-        level.update_rules()
         for world in level.world_list:
             world.set_sprite_states(0)
     history = [copy.deepcopy(levelpack)]
