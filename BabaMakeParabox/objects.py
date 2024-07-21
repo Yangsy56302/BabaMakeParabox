@@ -525,6 +525,15 @@ class Noun(Text):
     def __repr__(self) -> str:
         return repr(super())
 
+class Infix(Text):
+    class_name: str = "Infix"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 class Operator(Text):
     class_name: str = "Operator"
     def __eq__(self, obj: "Object") -> bool:
@@ -873,6 +882,16 @@ class GAME(Noun):
     def __repr__(self) -> str:
         return repr(super())
 
+class ON(Infix):
+    class_name: str = "ON"
+    sprite_name: str = "text_on"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
+    def __str__(self) -> str:
+        return str(super())
+    def __repr__(self) -> str:
+        return repr(super())
+
 class IS(Operator):
     class_name: str = "IS"
     sprite_name: str = "text_is"
@@ -1183,6 +1202,7 @@ object_name: dict[str, type[Object]] = {
     "WORLD": WORLD,
     "CLONE": CLONE,
     "GAME": GAME,
+    "ON": ON,
     "IS": IS,
     "NOT": NOT,
     "AND": AND,
@@ -1268,6 +1288,6 @@ nouns_objs_dicts.new_pair(CLONE, Clone)
 nouns_objs_dicts.new_pair(TEXT, Text)
 nouns_objs_dicts.new_pair(GAME, Game)
 
-not_in_all: tuple[type[Object], ...] = (Text, Empty, Level, WorldPointer, Game, Sprite)
-in_not_all: tuple[type[Object], ...] = (Text, Empty, Game, Sprite)
-not_in_editor: tuple[type[Object], ...] = (Empty, EMPTY, Text, Game, GAME, Sprite)
+not_in_all: tuple[type[Object], ...] = (Text, Empty, Level, WorldPointer, Transform, Sprite, Game)
+in_not_all: tuple[type[Object], ...] = (Text, Empty, Transform, Sprite, Game)
+not_in_editor: tuple[type[Object], ...] = (Empty, EMPTY, Text, Transform, Sprite, Game, GAME)

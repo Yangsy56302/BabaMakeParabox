@@ -2,9 +2,6 @@ from BabaMakeParabox import objects
 
 Rule = list[type[objects.Text]]
 
-basic_rule_types = [[objects.Noun, objects.IS, objects.Property],
-                    [objects.Noun, objects.IS, objects.Noun]]
-
 def to_atom_rules(rule_list: list[Rule]) -> list[Rule]:
     return_value: list[Rule] = []
     for rule in rule_list:
@@ -12,7 +9,8 @@ def to_atom_rules(rule_list: list[Rule]) -> list[Rule]:
         and_indexes = []
         for i in range(len(raw_and_indexes)):
             if raw_and_indexes[i] == True:
-                and_indexes.append(i)
+                if not issubclass(rule[i + 1], objects.Infix):
+                    and_indexes.append(i)
         oper_index = list(map(lambda t: issubclass(t, objects.Operator), rule)).index(True)
         noun_list: list[list[type[objects.Text]]] = [[]]
         prop_list: list[list[type[objects.Text]]] = [[]]
@@ -36,15 +34,40 @@ def to_atom_rules(rule_list: list[Rule]) -> list[Rule]:
                 return_value.append(noun + oper + prop)
     return return_value
 
-def analysis_rule(atom_rule: Rule) -> list[tuple[bool, type[objects.Noun], int, type[objects.Text]]]:
+InfixInfo = tuple[bool, type[objects.Infix], bool, type[objects.Text]]
+
+def analysis_rule(atom_rule: Rule) -> list[tuple[bool, type[objects.Noun], list[InfixInfo], type[objects.Operator], int, type[objects.Text]]]:
     return_value = []
     noun_index = list(map(lambda t: issubclass(t, objects.Noun), atom_rule)).index(True)
     noun_type: type[objects.Noun] = atom_rule[noun_index] # type: ignore
     noun_negated = atom_rule[:noun_index].count(objects.NOT) % 2 == 1
-    prop_index = list(map(lambda t: issubclass(t, (objects.Noun, objects.Property)), atom_rule[noun_index + 2:])).index(True)
-    prop_type: type[objects.Text] = atom_rule[prop_index + noun_index + 2] # type: ignore
-    prop_negated_count = atom_rule[noun_index:].count(objects.NOT)
-    return_value.append((noun_negated, noun_type, prop_negated_count, prop_type))
+    oper_index = list(map(lambda t: issubclass(t, objects.Operator), atom_rule)).index(True)
+    oper_type: type[objects.Text] = atom_rule[oper_index] # type: ignore
+    prop_index = list(map(lambda t: issubclass(t, (objects.Noun, objects.Property)), atom_rule[oper_index:])).index(True)
+    prop_type: type[objects.Text] = atom_rule[prop_index + oper_index] # type: ignore
+    prop_negated_count = atom_rule[oper_index:].count(objects.NOT)
+    infix_info_list = []
+    infix_slice = atom_rule[noun_index + 1:oper_index]
+    current_negated = False
+    current_infix_type = objects.Infix
+    current_infix_negated = False
+    current_infix_noun = objects.Object
+    current_infix_noun_negated = False
+    for obj_type in infix_slice:
+        if issubclass(obj_type, objects.Infix):
+            current_infix_type = obj_type
+            current_infix_negated = current_negated
+            current_negated = False
+        elif issubclass(obj_type, objects.NOT):
+            current_negated = not current_negated
+        elif issubclass(obj_type, objects.AND):
+            pass
+        else:
+            current_infix_noun = obj_type
+            current_infix_noun_negated = current_negated
+            current_negated = False
+            infix_info_list.append((current_infix_negated, current_infix_type, current_infix_noun_negated, current_infix_noun))
+    return_value.append((noun_negated, noun_type, infix_info_list, oper_type, prop_negated_count, prop_type))
     return return_value
 
 default_rule_list: list[Rule] = []

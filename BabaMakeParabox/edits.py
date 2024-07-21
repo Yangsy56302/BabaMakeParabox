@@ -346,6 +346,8 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
             list(map(objects.Object.reset_uuid, current_clipboard))
         elif keys[keybinds["V"]] and cooldowns[keybinds["V"]] == 0:
             history.append(copy.deepcopy(levelpack))
+            current_clipboard = copy.deepcopy(current_clipboard)
+            list(map(objects.Object.reset_uuid, current_clipboard))
             for obj in current_clipboard:
                 obj.pos = current_cursor_pos
                 current_world.new_obj(obj)

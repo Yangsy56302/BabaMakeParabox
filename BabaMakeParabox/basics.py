@@ -6,7 +6,7 @@ import pygame
 
 pygame.init()
 
-versions = "3.02"
+versions = "3.1"
 
 default_options = {
     "lang": "id_FK",

@@ -108,94 +108,146 @@ class world(object):
         for to_clone in to_clone_objs:
             self.new_obj(objects.Clone(to_clone.pos, to_clone.name, to_clone.inf_tier, to_clone.facing))
             self.del_obj(to_clone)
-    def get_rules_from_pos_and_orient(self, stage: Optional[type[objects.Text]], pos: spaces.Coord, orient: spaces.Orient) -> list[rules.Rule]:
-        if stage == objects.Noun:
-            matches = (objects.Noun, )
-            next_stage = objects.Operator
-        elif stage == objects.Operator:
-            matches = (objects.Operator, )
-            next_stage = objects.Property
-        elif stage == objects.Property:
-            matches = (objects.Noun, objects.Property)
-            next_stage = None
-        elif stage is None:
-            matches = ()
-            next_stage = None
-        text_objs = self.get_objs_from_pos_and_type(pos, objects.Text)
-        word_objs = filter(lambda o: o.has_prop(objects.WORD), self.get_objs_from_pos(pos))
-        text_objs.extend(map(lambda o: objects.nouns_objs_dicts.get_exist_noun(type(o))(o.pos), word_objs))
-        if len(text_objs) == 0:
-            if stage is None:
-                return [[]]
-            return []
-        obj_types: list[type[objects.Text]] = []
-        if stage is not None:
-            for obj in text_objs:
-                if isinstance(obj, matches):
-                    obj_types.append(type(obj))
-        remain_rules = self.get_rules_from_pos_and_orient(next_stage, spaces.pos_facing(pos, orient), orient)
-        remain_not_rules = []
-        not_objs = self.get_objs_from_pos_and_type(pos, objects.NOT)
-        if len(not_objs) != 0 and stage in (objects.Noun, objects.Property):
-            remain_not_rules = self.get_rules_from_pos_and_orient(stage, spaces.pos_facing(pos, orient), orient)
-        and_objs = self.get_objs_from_pos_and_type(pos, objects.AND)
-        remain_and_rules = []
-        if len(and_objs) != 0 and stage in (objects.Operator, None):
-            if stage == objects.Operator:
-                remain_and_rules = self.get_rules_from_pos_and_orient(objects.Noun, spaces.pos_facing(pos, orient), orient)
-            else:
-                remain_and_rules = self.get_rules_from_pos_and_orient(objects.Property, spaces.pos_facing(pos, orient), orient)
-        return_rules: list[rules.Rule] = []
-        if remain_rules != []:
-            for remain_rule in remain_rules:
-                for obj_type in obj_types:
-                    return_rules.append([obj_type] + remain_rule)
-        if remain_not_rules != []:
-            for remain_not_rule in remain_not_rules:
-                return_rules.append([objects.NOT] + remain_not_rule)
-                if remain_not_rule in return_rules:
-                    return_rules.remove(remain_not_rule)
-        if remain_and_rules != []:
-            for remain_and_rule in remain_and_rules:
-                return_rules.append([objects.AND] + remain_and_rule)
-                if remain_and_rule in return_rules:
-                    return_rules.remove(remain_and_rule)
-        if len(return_rules) == 0:
-            if stage is None:
-                return [[]]
-            return []
-        return return_rules
+    def get_rules_from_pos_and_orient(self, stage: Optional[str], pos: spaces.Coord, orient: spaces.Orient) -> list[rules.Rule]:
+        if stage == "Noun":
+            first_matches = ()
+            then_matches = (objects.Noun, )
+            next_stages = ("AndNoun", "InfixNoun", "Operator")
+            rule_can_be_done = False
+        elif stage == "AndNoun":
+            first_matches = (objects.AND, )
+            then_matches = (objects.Noun, )
+            next_stages = ("AndNoun", "InfixNoun", "Operator")
+            rule_can_be_done = False
+        elif stage == "InfixNoun":
+            first_matches = (objects.Infix, )
+            then_matches = (objects.Noun, )
+            next_stages = ("AndNoun", "AndInfixNoun", "Operator")
+            rule_can_be_done = False
+        elif stage == "AndInfixNoun":
+            first_matches = (objects.AND, objects.Infix)
+            then_matches = (objects.Noun, )
+            next_stages = ("AndNoun", "AndInfixNoun", "Operator")
+            rule_can_be_done = False
+        elif stage == "Operator":
+            first_matches = ()
+            then_matches = (objects.Operator, )
+            next_stages = ("Property", )
+            rule_can_be_done = False
+        elif stage == "Property":
+            first_matches = ()
+            then_matches = (objects.Noun, objects.Property)
+            next_stages = ("AndProperty", )
+            rule_can_be_done = False
+        elif stage == "AndProperty":
+            first_matches = (objects.AND, )
+            then_matches = (objects.Noun, objects.Property)
+            next_stages = ("AndProperty", )
+            rule_can_be_done = True
+        not_rules: list[rules.Rule] = []
+        if stage in ("Noun", "AndNoun", "InfixNoun", "AndInfixNoun", "Property", "AndProperty"):
+            not_objs = self.get_objs_from_pos_and_type(pos, objects.NOT)
+            if len(not_objs) != 0:
+                not_rules = self.get_rules_from_pos_and_orient(stage, spaces.pos_facing(pos, orient), orient)
+                not_rules = [[objects.NOT] + r for r in not_rules if len(r) != 0]
+        new_pos = pos
+        first_matched_list: list[list[objects.Text]] = []
+        for first_match in first_matches:
+            text_objs = self.get_objs_from_pos_and_type(new_pos, objects.Text)
+            word_objs = filter(lambda o: o.has_prop(objects.WORD), self.get_objs_from_pos(new_pos))
+            text_objs.extend(map(lambda o: objects.nouns_objs_dicts.get_exist_noun(type(o))(new_pos), word_objs))
+            first_matched = [o for o in text_objs if isinstance(o, first_match)]
+            if len(first_matched) == 0 and len(not_rules) == 0:
+                return [[]] if rule_can_be_done else []
+            first_matched_list.append(first_matched) # type: ignore
+            new_pos = spaces.pos_facing(new_pos, orient)
+        text_objs = self.get_objs_from_pos_and_type(new_pos, objects.Text)
+        word_objs = filter(lambda o: o.has_prop(objects.WORD), self.get_objs_from_pos(new_pos))
+        text_objs.extend(map(lambda o: objects.nouns_objs_dicts.get_exist_noun(type(o))(new_pos), word_objs))
+        then_matched: list[objects.Text] = []
+        if len(text_objs) == 0 and len(not_rules) == 0:
+            return [[]] if rule_can_be_done else []
+        then_matched = [o for o in text_objs if isinstance(o, then_matches)]
+        remain_rules: list[rules.Rule] = []
+        for next_stage in next_stages:
+            remain_rules.extend(self.get_rules_from_pos_and_orient(next_stage, spaces.pos_facing(new_pos, orient), orient))
+        not_then_matched: list[objects.Text] = []
+        not_remain_rules: list[rules.Rule] = []
+        not_after_first_len = 0
+        if stage in ("Noun", "AndNoun", "InfixNoun", "AndInfixNoun", "Property", "AndProperty"):
+            while True:
+                not_objs = self.get_objs_from_pos_and_type(new_pos, objects.NOT)
+                if len(not_objs) == 0:
+                    break
+                not_after_first_len += 1
+                new_pos = spaces.pos_facing(new_pos, orient)
+            text_objs = self.get_objs_from_pos_and_type(new_pos, objects.Text)
+            word_objs = filter(lambda o: o.has_prop(objects.WORD), self.get_objs_from_pos(new_pos))
+            text_objs.extend(map(lambda o: objects.nouns_objs_dicts.get_exist_noun(type(o))(new_pos), word_objs))
+            if len(text_objs) != 0:
+                not_then_matched = [o for o in text_objs if isinstance(o, then_matches)]
+            for next_stage in next_stages:
+                not_remain_rules.extend(self.get_rules_from_pos_and_orient(next_stage, spaces.pos_facing(new_pos, orient), orient))
+        if len(then_matched) == 0 and len(not_then_matched) == 0 and len(not_rules) == 0:
+            return [[]] if rule_can_be_done else []
+        return_rules: list[rules.Rule] = [[]]
+        new_return_rules: list[rules.Rule] = []
+        if len(first_matched_list) != 0:
+            for matches in first_matched_list:
+                for match in matches:
+                    for rule in return_rules:
+                        new_return_rules.append(rule + [type(match)])
+            return_rules = new_return_rules[:]
+        not_return_rules = []
+        if not_after_first_len != 0:
+            not_new_return_rules = []
+            for match in not_then_matched:
+                for rule in return_rules:
+                    not_new_return_rules.append(rule + [objects.NOT for _ in range(not_after_first_len)] + [type(match)])
+            not_return_rules = not_new_return_rules[:]
+        new_return_rules = []
+        for match in then_matched:
+            for rule in return_rules:
+                new_return_rules.append(rule + [type(match)])
+        return_rules = new_return_rules[:]
+        new_return_rules = []
+        for remain_rule in remain_rules:
+            for return_rule in return_rules:
+                new_return_rules.append(return_rule + remain_rule)
+        for not_remain_rule in not_remain_rules:
+            for not_return_rule in not_return_rules:
+                new_return_rules.append(not_return_rule + not_remain_rule)
+        if len(not_rules) != 0:
+            new_return_rules.extend(not_rules)
+        return new_return_rules
     def get_rules(self) -> list[rules.Rule]:
         rule_list: list[rules.Rule] = []
         x_rule_dict: dict[int, list[rules.Rule]] = {}
         y_rule_dict: dict[int, list[rules.Rule]] = {}
-        for rule_type in rules.basic_rule_types:
-            for x in range(self.width):
-                for y in range(self.height - len(rule_type) + 1):
-                    y_rule_dict.setdefault(y, [])
-                    new_rule_list = self.get_rules_from_pos_and_orient(objects.Noun, (x, y), spaces.S)
-                    if new_rule_list is not None:
-                        for rule_index in range(len(new_rule_list)):
-                            part_of_old_rule = False
-                            for old_y, old_rule_list in y_rule_dict.items():
-                                old_rule_list_test = list(map(lambda r: list(r[y - old_y:]), old_rule_list))
-                                if list(new_rule_list[rule_index]) in old_rule_list_test:
-                                    part_of_old_rule = True
-                            if not part_of_old_rule:
-                                y_rule_dict[y].append(new_rule_list[rule_index])
+        for x in range(self.width):
             for y in range(self.height):
-                for x in range(self.width - len(rule_type) + 1):
-                    x_rule_dict.setdefault(x, [])
-                    new_rule_list = self.get_rules_from_pos_and_orient(objects.Noun, (x, y), spaces.D)
-                    if new_rule_list is not None:
-                        for rule_index in range(len(new_rule_list)):
-                            part_of_old_rule = False
-                            for old_x, old_rule_list in x_rule_dict.items():
-                                old_rule_list_test = list(map(lambda r: list(r[x - old_x:]), old_rule_list))
-                                if list(new_rule_list[rule_index]) in old_rule_list_test:
-                                    part_of_old_rule = True
-                            if not part_of_old_rule:
-                                x_rule_dict[x].append(new_rule_list[rule_index])
+                x_rule_dict.setdefault(x, [])
+                new_rule_list = self.get_rules_from_pos_and_orient("Noun", (x, y), spaces.D)
+                if new_rule_list is not None:
+                    for rule_index in range(len(new_rule_list)):
+                        part_of_old_rule = False
+                        for old_x, old_rule_list in x_rule_dict.items():
+                            old_rule_list_test = list(map(lambda r: list(r[x - old_x:]), old_rule_list))
+                            if list(new_rule_list[rule_index]) in old_rule_list_test:
+                                part_of_old_rule = True
+                        if not part_of_old_rule:
+                            x_rule_dict[x].append(new_rule_list[rule_index])
+                y_rule_dict.setdefault(y, [])
+                new_rule_list = self.get_rules_from_pos_and_orient("Noun", (x, y), spaces.S)
+                if new_rule_list is not None:
+                    for rule_index in range(len(new_rule_list)):
+                        part_of_old_rule = False
+                        for old_y, old_rule_list in y_rule_dict.items():
+                            old_rule_list_test = list(map(lambda r: list(r[y - old_y:]), old_rule_list))
+                            if list(new_rule_list[rule_index]) in old_rule_list_test:
+                                part_of_old_rule = True
+                        if not part_of_old_rule:
+                            y_rule_dict[y].append(new_rule_list[rule_index])
         for x_rule_list in x_rule_dict.values():
             rule_list.extend(x_rule_list)
         for y_rule_list in y_rule_dict.values():
