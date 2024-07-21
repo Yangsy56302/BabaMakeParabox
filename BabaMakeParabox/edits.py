@@ -5,7 +5,7 @@ from BabaMakeParabox import basics, languages, colors, spaces, objects, rules, w
 import pygame
 
 def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
-    print("Global Rule List:")
+    print(languages.current_language["game.levelpack.rule_list"]) 
     for rule in levelpack.rule_list:
         str_list = []
         for obj_type in rule:
