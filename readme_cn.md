@@ -166,6 +166,7 @@
 | 3.011  | 2024.07.20 | Rule is Atom |
 | 3.012  | 2024.07.20 | Game feeling Stop is not Wiggle |
 | 3.02   | 2024.07.20 | not Baba is not You |
+| 3.1    | 2024.07.20 | Flag on Rock is Win |
 
 ## 报告漏洞和提出建议
 
