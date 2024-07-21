@@ -1301,4 +1301,4 @@ nouns_objs_dicts.new_pair(GAME, Game)
 
 not_in_all: tuple[type[Object], ...] = (Text, Empty, Level, WorldPointer, Transform, Sprite, Game)
 in_not_all: tuple[type[Object], ...] = (Text, Empty, Transform, Sprite, Game)
-not_in_editor: tuple[type[Object], ...] = (Empty, EMPTY, Text, Transform, Sprite, Game, GAME)
+not_in_editor: tuple[type[Object], ...] = (Empty, EMPTY, Text, Transform, Sprite, Game)
