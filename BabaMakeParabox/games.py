@@ -4,7 +4,7 @@ import copy
 import uuid
 import os
 
-from BabaMakeParabox import basics, languages, sounds, spaces, objects, displays, levels, levelpacks
+from BabaMakeParabox import basics, languages, sounds, spaces, objects, displays, worlds, levels, levelpacks
 
 import pygame
 
@@ -49,8 +49,9 @@ def play(levelpack: levelpacks.levelpack) -> None:
     cooldowns = {v: 0 for v in keybinds.values()}
     window.fill("#000000")
     current_level_name = levelpack.main_level
-    current_level = levelpack.get_exist_level(current_level_name)
+    current_level: levels.level = levelpack.get_exist_level(current_level_name)
     current_world_index: int = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
+    current_world: worlds.world = current_level.world_list[current_world_index]
     default_level_info = {"win": False, "end": False, "selected_level": None, "new_levels": [], "transform_to": [], "pushing_game": False, "new_window_objects": []}
     level_info = default_level_info.copy()
     level_info_backup = default_level_info.copy()
@@ -86,36 +87,36 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 round_num += 1
                 level_info = current_level.round(spaces.W)
                 if objects.YOU in current_level.game_properties:
-                    display_offset[1] -= window.get_height() / current_level.world_list[current_world_index].width
+                    display_offset[1] -= window.get_height() / current_world.width
                 if objects.PUSH in current_level.game_properties and level_info["pushing_game"]:
-                    display_offset[1] -= window.get_height() / current_level.world_list[current_world_index].width
+                    display_offset[1] -= window.get_height() / current_world.width
                 refresh = True
             elif keys[keybinds["S"]] and cooldowns[keybinds["S"]] == 0:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "level_info": level_info, "levelpack": copy.deepcopy(levelpack)})
                 round_num += 1
                 level_info = current_level.round(spaces.S)
                 if objects.YOU in current_level.game_properties:
-                    display_offset[1] += window.get_height() / current_level.world_list[current_world_index].width
+                    display_offset[1] += window.get_height() / current_world.width
                 if objects.PUSH in current_level.game_properties and level_info["pushing_game"]:
-                    display_offset[1] += window.get_height() / current_level.world_list[current_world_index].width
+                    display_offset[1] += window.get_height() / current_world.width
                 refresh = True
             elif keys[keybinds["A"]] and cooldowns[keybinds["A"]] == 0:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "level_info": level_info, "levelpack": copy.deepcopy(levelpack)})
                 round_num += 1
                 level_info = current_level.round(spaces.A)
                 if objects.YOU in current_level.game_properties:
-                    display_offset[0] -= window.get_width() / current_level.world_list[current_world_index].height
+                    display_offset[0] -= window.get_width() / current_world.height
                 if objects.PUSH in current_level.game_properties and level_info["pushing_game"]:
-                    display_offset[0] -= window.get_width() / current_level.world_list[current_world_index].height
+                    display_offset[0] -= window.get_width() / current_world.height
                 refresh = True
             elif keys[keybinds["D"]] and cooldowns[keybinds["D"]] == 0:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "level_info": level_info, "levelpack": copy.deepcopy(levelpack)})
                 round_num += 1
                 level_info = current_level.round(spaces.D)
                 if objects.YOU in current_level.game_properties:
-                    display_offset[0] += window.get_width() / current_level.world_list[current_world_index].height
+                    display_offset[0] += window.get_width() / current_world.height
                 if objects.PUSH in current_level.game_properties and level_info["pushing_game"]:
-                    display_offset[0] += window.get_width() / current_level.world_list[current_world_index].height
+                    display_offset[0] += window.get_width() / current_world.height
                 refresh = True
             elif keys[keybinds[" "]] and cooldowns[keybinds[" "]] == 0:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "level_info": level_info, "levelpack": copy.deepcopy(levelpack)})
@@ -127,6 +128,8 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 current_level_name = current_level.super_level if current_level.super_level is not None else levelpack.main_level
                 current_level = levelpack.get_exist_level(current_level_name)
                 current_world_index = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
+                current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
+                current_world = current_level.world_list[current_world_index]
                 level_changed = True
                 world_changed = True
                 refresh = True
@@ -138,6 +141,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                     level_info = data["level_info"]
                     levelpack = data["levelpack"]
                     current_level = levelpack.get_exist_level(current_level_name)
+                    current_world = current_level.world_list[current_world_index]
                     round_num -= 1
                     refresh = True
                 elif len(history) == 1:
@@ -147,6 +151,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                     level_info = data["level_info"]
                     levelpack = data["levelpack"]
                     current_level = levelpack.get_exist_level(current_level_name)
+                    current_world = current_level.world_list[current_world_index]
                     round_num = 0
                     refresh = True
             elif keys[keybinds["R"]] and cooldowns[keybinds["R"]] == 0:
@@ -156,6 +161,8 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 current_level_name = levelpack.main_level
                 current_level = levelpack.get_exist_level(current_level_name)
                 current_world_index = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
+                current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
+                current_world = current_level.world_list[current_world_index]
                 history = [{"world_index": current_world_index, "level_name": current_level_name, "level_info": default_level_info, "levelpack": copy.deepcopy(levelpack)}]
                 level_info = default_level_info.copy()
                 display_offset = [0.0, 0.0]
@@ -171,16 +178,20 @@ def play(levelpack: levelpacks.levelpack) -> None:
                         str_list.append(obj_type.class_name)
                     print(" ".join(str_list))
                 print(languages.current_language["game.world.rule_list"])
-                for rule in current_level.world_list[current_world_index].rule_list:
+                for rule in current_world.rule_list:
                     str_list = []
                     for obj_type in rule:
                         str_list.append(obj_type.class_name)
                     print(" ".join(str_list))
             elif keys[keybinds["-"]] and cooldowns[keybinds["-"]] == 0:
                 current_world_index -= 1
+                current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
+                current_world = current_level.world_list[current_world_index]
                 world_changed = True
             elif keys[keybinds["="]] and cooldowns[keybinds["="]] == 0:
                 current_world_index += 1
+                current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
+                current_world = current_level.world_list[current_world_index]
                 world_changed = True
             if objects.STOP in current_level.game_properties:
                 wiggle = 1
@@ -310,6 +321,8 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 super_level = levelpack.get_level(super_level_name if super_level_name is not None else levelpack.main_level)
                 current_level_name = super_level.name if super_level is not None else levelpack.main_level
                 current_level = levelpack.get_exist_level(current_level_name)
+                current_world_index = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
+                current_world = current_level.world_list[current_world_index]
             elif level_info_backup["end"]:
                 game_running = False
             elif len(level_info_backup["transform_to"]) != 0:
@@ -317,23 +330,27 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 super_level = levelpack.get_level(super_level_name if super_level_name is not None else levelpack.main_level)
                 current_level_name = super_level.name if super_level is not None else levelpack.main_level
                 current_level = levelpack.get_exist_level(current_level_name)
+                current_world_index = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
+                current_world = current_level.world_list[current_world_index]
             elif level_info_backup["selected_level"] is not None:
                 current_level_name = level_info_backup["selected_level"]
                 current_level = levelpack.get_exist_level(current_level_name)
                 current_world_index = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
+                current_world = current_level.world_list[current_world_index]
                 round_num = 0
-        current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
         if level_changed:
             print(languages.current_language["game.level.current.name"], current_level.name, sep="")
             level_changed = False
         if world_changed:
-            print(languages.current_language["game.world.current.name"], current_level.world_list[current_world_index].name, sep="")
-            print(languages.current_language["game.world.current.inf_tier"], current_level.world_list[current_world_index].inf_tier, sep="")
+            print(languages.current_language["game.world.current.name"], current_world.name, sep="")
+            print(languages.current_language["game.world.current.inf_tier"], current_world.inf_tier, sep="")
             world_changed = False
         pygame.mixer.music.set_volume(1.0 if current_level.have_you() else 0.5)
         window.fill("#000000")
         displays.set_pixel_size(window.get_size())
-        window.blit(pygame.transform.scale(current_level.show_world(current_level.world_list[current_world_index], wiggle), (window.get_width(), window.get_height())), (0, 0))
+        world_display_size = (int(min(window.get_size()) * min(1, current_world.width / current_world.height)), int(min(window.get_size()) * min(1, current_world.height / current_world.width)))
+        world_display_pos = ((window.get_width() - world_display_size[0]) // 2, (window.get_height() - world_display_size[1]) // 2)
+        window.blit(pygame.transform.scale(current_level.show_world(current_world, wiggle), world_display_size), world_display_pos)
         real_fps = min(1000 / milliseconds, (real_fps * (basics.options["fps"] - 1) + 1000 / milliseconds) / basics.options["fps"])
         if keys[keybinds["F1"]]:
             real_fps_string = str(int(real_fps))

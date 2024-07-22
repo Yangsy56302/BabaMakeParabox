@@ -30,14 +30,14 @@ def set_alpha(surface: pygame.Surface, alpha: int) -> pygame.Surface:
     new_surface.fill(pygame.Color(255, 255, 255, alpha), special_flags=pygame.BLEND_RGBA_MULT)
     return new_surface
 
-def set_color_dark(surface: pygame.Surface, color: colors.ColorHex) -> pygame.Surface:
+def set_surface_color_dark(surface: pygame.Surface, color: colors.ColorHex) -> pygame.Surface:
     r, g, b = colors.hex_to_rgb(color)
     new_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
     new_surface.fill(pygame.Color(r, g, b, 255))
     new_surface.blit(surface, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
     return new_surface
 
-def set_color_light(surface: pygame.Surface, color: colors.ColorHex) -> pygame.Surface:
+def set_surface_color_light(surface: pygame.Surface, color: colors.ColorHex) -> pygame.Surface:
     r, g, b = colors.hex_to_rgb(color)
     clr_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
     clr_surface.fill(pygame.Color(255 - r, 255 - g, 255 - b, 255))
@@ -64,7 +64,7 @@ class Sprites(object):
             sprite_color = self.sprite_colors.get(sprite_basename)
             if sprite_color is None:
                 sprite_color = colors.WHITE
-            self.sprites[sprite_name] = set_color_dark(sprite, sprite_color)
+            self.sprites[sprite_name] = set_surface_color_dark(sprite, sprite_color)
     def get(self, sprite_name: str, state: int, frame: int = 0) -> pygame.Surface:
         return self.sprites["_".join([sprite_name, str(state), str(frame)])]
 

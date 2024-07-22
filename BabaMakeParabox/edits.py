@@ -398,7 +398,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
         window.fill("#000000")
         displays.set_pixel_size(window.get_size())
         window.blit(pygame.transform.scale(current_level.show_world(current_world, wiggle, cursor=current_cursor_pos),
-                                           (window.get_height(), window.get_height() * current_world.height // current_world.width)), (0, 0))
+                                           (window.get_height() * current_world.width // current_world.height, window.get_height())), (0, 0))
         current_object = displays.set_sprite_state(current_object_type((0, 0), current_facing))
         window.blit(pygame.transform.scale(displays.sprites.get(current_object_type.sprite_name, current_object.sprite_state, wiggle),
                                            (displays.pixel_sprite_size, displays.pixel_sprite_size)), (window.get_width() - displays.pixel_sprite_size, 0))

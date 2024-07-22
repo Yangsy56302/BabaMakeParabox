@@ -97,3 +97,7 @@ def random_hue() -> ColorHex:
 def random_world_color() -> ColorHex:
     r, g, b = hex_to_rgb(random_hue())
     return rgb_to_hex(r // 16, g // 16, b // 16)
+
+def to_background_color(color: ColorHex) -> ColorHex:
+    r, g, b = hex_to_rgb(color)
+    return rgb_to_hex(r // 4, g // 4, b // 4)

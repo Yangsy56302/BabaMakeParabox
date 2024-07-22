@@ -2,7 +2,7 @@ from typing import Any, Optional
 import random
 import uuid
 
-from BabaMakeParabox import basics, spaces, objects, rules, worlds, displays
+from BabaMakeParabox import basics, colors, spaces, objects, rules, worlds, displays
 
 import pygame
 
@@ -615,9 +615,10 @@ class level(object):
                                 world.new_obj(new_obj)
                                 transform_success = True
                             else:
-                                new_world = worlds.world(old_obj.uuid.hex, (1, 1), 0, 0x000000)
+                                world_color = colors.to_background_color(displays.sprite_colors[old_obj.sprite_name])
+                                new_world = worlds.world(old_obj.uuid.hex, (3, 3), 0, world_color)
                                 new_levels.append(level(old_obj.uuid.hex, [new_world], self.name, rule_list=self.rule_list))
-                                new_world.new_obj(old_type((0, 0)))
+                                new_world.new_obj(old_type((1, 1)))
                                 new_obj = objects.Level(old_obj.pos, old_obj.uuid.hex, facing=old_obj.facing)
                                 world.new_obj(new_obj)
                                 transform_success = True
@@ -634,8 +635,9 @@ class level(object):
                                 world.new_obj(objects.World(old_obj.pos, old_obj.name, old_obj.inf_tier, old_obj.facing))
                                 transform_success = True
                             else:
-                                new_world = worlds.world(old_obj.uuid.hex, (1, 1), 0, 0x000000)
-                                new_world.new_obj(old_type((0, 0), old_obj.facing)) # type: ignore
+                                world_color = colors.to_background_color(displays.sprite_colors[old_obj.sprite_name])
+                                new_world = worlds.world(old_obj.uuid.hex, (3, 3), 0, world_color)
+                                new_world.new_obj(old_type((1, 1), old_obj.facing)) # type: ignore
                                 self.set_world(new_world)
                                 world.new_obj(objects.World(old_obj.pos, old_obj.uuid.hex, 0, old_obj.facing))
                                 transform_success = True
@@ -652,8 +654,9 @@ class level(object):
                                 world.new_obj(objects.Clone(old_obj.pos, old_obj.name, old_obj.inf_tier, old_obj.facing))
                                 transform_success = True
                             else:
-                                new_world = worlds.world(old_obj.uuid.hex, (1, 1), 0, 0x000000)
-                                new_world.new_obj(old_type((0, 0), old_obj.facing)) # type: ignore
+                                world_color = colors.to_background_color(displays.sprite_colors[old_obj.sprite_name])
+                                new_world = worlds.world(old_obj.uuid.hex, (3, 3), 0, world_color)
+                                new_world.new_obj(old_type((1, 1), old_obj.facing)) # type: ignore
                                 self.set_world(new_world)
                                 world.new_obj(objects.Clone(old_obj.pos, old_obj.uuid.hex, 0, old_obj.facing))
                                 transform_success = True
@@ -859,7 +862,7 @@ class level(object):
                 obj_world = self.get_world(obj.name, obj.inf_tier)
                 if obj_world is not None:
                     obj_surface = self.show_world(obj_world, frame, layer + 1)
-                    obj_surface = displays.set_color_dark(obj_surface, 0xCCCCCC)
+                    obj_surface = displays.set_surface_color_dark(obj_surface, 0xCCCCCC)
                 else:
                     obj_surface = displays.sprites.get("level", 0, frame).copy()
                 surface_pos = (obj.x * pixel_sprite_size, obj.y * pixel_sprite_size)
@@ -868,14 +871,14 @@ class level(object):
                 obj_world = self.get_world(obj.name, obj.inf_tier)
                 if obj_world is not None:
                     obj_surface = self.show_world(obj_world, frame, layer + 1)
-                    obj_surface = displays.set_color_light(obj_surface, 0x444444)
+                    obj_surface = displays.set_surface_color_light(obj_surface, 0x444444)
                 else:
                     obj_surface = displays.sprites.get("clone", 0, frame).copy()
                 surface_pos = (obj.x * pixel_sprite_size, obj.y * pixel_sprite_size)
                 obj_surface_list.append((surface_pos, obj_surface, obj))
             elif isinstance(obj, objects.Level):
-                obj_surface = displays.set_color_dark(displays.sprites.get(obj.sprite_name, obj.sprite_state, frame).copy(), obj.icon_color)
-                icon_surface = displays.set_color_light(displays.sprites.get(obj.icon_name, 0, frame).copy(), 0xFFFFFF)
+                obj_surface = displays.set_surface_color_dark(displays.sprites.get(obj.sprite_name, obj.sprite_state, frame).copy(), obj.icon_color)
+                icon_surface = displays.set_surface_color_light(displays.sprites.get(obj.icon_name, 0, frame).copy(), 0xFFFFFF)
                 icon_surface_pos = ((obj_surface.get_width() - icon_surface.get_width()) * displays.pixel_size // 2,
                                     (obj_surface.get_height() - icon_surface.get_width()) * displays.pixel_size // 2)
                 obj_surface.blit(icon_surface, icon_surface_pos)
@@ -900,7 +903,7 @@ class level(object):
                    cursor[1] * pixel_sprite_size - (surface.get_height() - displays.sprite_size) * displays.pixel_size // 2)
             world_surface.blit(pygame.transform.scale(surface, (displays.pixel_size * surface.get_width(), displays.pixel_size * surface.get_height())), pos)
         world_background = pygame.Surface(world_surface.get_size(), pygame.SRCALPHA)
-        world_background.fill(pygame.Color(world.color))
+        world_background.fill(pygame.Color(*colors.hex_to_rgb(world.color)))
         world_background.blit(world_surface, (0, 0))
         world_surface = world_background
         if world.inf_tier > 0:
