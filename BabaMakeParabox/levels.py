@@ -242,12 +242,10 @@ class level(object):
         passed = passed[:] if passed is not None else []
         pos = pos if pos is not None else obj.pos
         new_pos = spaces.pos_facing(pos, facing)
-        simple_push = True
         exit_world = False
         exit_list = []
         if world.out_of_range(new_pos):
             exit_world = True
-            simple_push = False
             # infinite exit
             if world in passed:
                 return_value = self.find_super_world(world.name, world.inf_tier + 1)
@@ -275,53 +273,48 @@ class level(object):
                         exit_world = False
                     else:
                         exit_list.extend(new_move_list)
-        # stop wall & shut door
-        stop_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.STOP) and not objects.Object.has_prop(o, objects.PUSH), world.get_objs_from_pos(new_pos)))
-        move_list = []
-        can_move = True
-        if len(stop_objects) != 0 and not world.out_of_range(new_pos):
-            simple_push = False
-            if obj.has_prop(objects.OPEN):
-                for stop_object in stop_objects:
-                    if stop_object.has_prop(objects.SHUT):
-                        return [(obj, world, new_pos, facing)]
-            for stop_object in stop_objects:
-                obj_can_move = False
-                if issubclass(cause, objects.YOU) and stop_object.has_prop(objects.YOU):
-                    if obj.has_prop(objects.YOU) and not obj.has_prop(objects.STOP):
-                        obj_can_move = True
-                    else:
-                        pushed.append(obj)
-                        new_move_list = self.get_move_list(cause, world, stop_object, facing, pushed=pushed, depth=depth)
-                        pushed.pop()
-                        if new_move_list is not None:
-                            obj_can_move = True
-                            move_list.extend(new_move_list)
-                if not obj_can_move:
-                    can_move = False
         # push
-        push_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.PUSH), world.get_objs_from_pos(new_pos)))
-        you_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.YOU), world.get_objs_from_pos(new_pos)))
+        push_objects = [o for o in world.get_objs_from_pos(new_pos) if o.has_prop(objects.PUSH)]
+        you_objects = [o for o in world.get_objs_from_pos(new_pos) if o.has_prop(objects.YOU)]
         if not issubclass(cause, objects.YOU):
             push_objects.extend(you_objects)
-        worlds_that_cant_push: list[objects.WorldPointer] = []
+        objects_that_cant_push: list[objects.Object] = []
         push = False
         push_list = []
         if len(push_objects) != 0 and not world.out_of_range(new_pos):
             push = True
-            simple_push = False
             for push_object in push_objects:
                 pushed.append(obj)
                 new_move_list = self.get_move_list(cause, world, push_object, facing, pushed=pushed, depth=depth)
                 pushed.pop()
                 if new_move_list is None:
-                    if isinstance(push_object, objects.WorldPointer):
-                        worlds_that_cant_push.append(push_object)
+                    objects_that_cant_push.append(push_object)
                     push = False
                     break
                 else:
                     push_list.extend(new_move_list)
             push_list.append((obj, world, new_pos, facing))
+        # stop wall & shut door
+        not_stop_list = []
+        simple = False
+        if not world.out_of_range(new_pos):
+            stop_objects = [o for o in world.get_objs_from_pos(new_pos) if o.has_prop(objects.STOP) and not o.has_prop(objects.PUSH)]
+            stop_objects.extend(objects_that_cant_push)
+            if len(stop_objects) != 0:
+                if obj.has_prop(objects.OPEN):
+                    simple = True
+                    for stop_object in stop_objects:
+                        if not stop_object.has_prop(objects.SHUT):
+                            simple = False
+                elif obj.has_prop(objects.SHUT):
+                    simple = True
+                    for stop_object in stop_objects:
+                        if not stop_object.has_prop(objects.OPEN):
+                            simple = False
+            else:
+                simple = True
+        if simple:
+            not_stop_list.append((obj, world, new_pos, facing))
         # squeeze
         squeeze = False
         squeeze_list = []
@@ -331,7 +324,6 @@ class level(object):
                 new_push_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.PUSH), world.get_objs_from_pos(new_pos)))
                 if len(new_push_objects) != 0:
                     squeeze = True
-                    simple_push = False
                     temp_stop_object = objects.STOP(spaces.pos_facing(pos, spaces.swap_orientation(facing)))
                     temp_stop_object.new_prop(objects.STOP)
                     world.new_obj(temp_stop_object)
@@ -350,9 +342,9 @@ class level(object):
                     world.del_obj(temp_stop_object)
         enter_world = False
         enter_list = []
+        worlds_that_cant_push = [o for o in objects_that_cant_push if isinstance(o, objects.WorldPointer)]
         if len(worlds_that_cant_push) != 0 and not world.out_of_range(new_pos):
             enter_world = True
-            simple_push = False
             for world_object in worlds_that_cant_push:
                 sub_world = self.get_world(world_object.name, world_object.inf_tier)
                 if sub_world is None:
@@ -383,19 +375,17 @@ class level(object):
                         enter_world = False
                         break
         if exit_world:
-            move_list = exit_list
+            return basics.remove_same_elements(exit_list)
         elif push:
-            move_list = push_list
+            return basics.remove_same_elements(push_list)
         elif enter_world:
-            move_list = enter_list
+            return basics.remove_same_elements(enter_list)
         elif squeeze:
-            move_list = squeeze_list
-        if not can_move:
+            return basics.remove_same_elements(squeeze_list)
+        elif simple:
+            return basics.remove_same_elements(not_stop_list)
+        else:
             return None
-        if exit_world or push or enter_world or squeeze:
-            return basics.remove_same_elements(move_list)
-        if simple_push:
-            return [(obj, world, new_pos, facing)] 
     def move_objs_from_move_list(self, move_list: list[tuple[objects.Object, worlds.world, spaces.Coord, spaces.Orient]]) -> None:
         move_list = basics.remove_same_elements(move_list)
         for move_obj, new_world, new_pos, new_facing in move_list:
@@ -563,7 +553,8 @@ class level(object):
                 for open_obj in open_objs:
                     if shut_obj not in delete_list and open_obj not in delete_list:
                         delete_list.append(shut_obj)
-                        delete_list.append(open_obj)
+                        if shut_obj != open_obj:
+                            delete_list.append(open_obj)
                         break
         for obj in delete_list:
             world.del_obj(obj)

@@ -1,0 +1,246 @@
+{
+    "name": "open",
+    "level_list": [
+        {
+            "name": "open",
+            "world_list": [
+                {
+                    "name": "open",
+                    "infinite_tier": 0,
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "color": 0,
+                    "object_list": [
+                        {
+                            "type": "BABA",
+                            "position": [
+                                1,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                2,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "YOU",
+                            "position": [
+                                3,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Baba",
+                            "position": [
+                                1,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "WALL",
+                            "position": [
+                                5,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                6,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                7,
+                                6
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                5,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                6,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "SUN",
+                            "position": [
+                                5,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "MOON",
+                            "position": [
+                                7,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "MOON",
+                            "position": [
+                                1,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                2,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "SHUT",
+                            "position": [
+                                3,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "STOP",
+                            "position": [
+                                7,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "PUSH",
+                            "position": [
+                                5,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "OPEN",
+                            "position": [
+                                7,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Sun",
+                            "position": [
+                                3,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Sun",
+                            "position": [
+                                3,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Sun",
+                            "position": [
+                                1,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Moon",
+                            "position": [
+                                3,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Moon",
+                            "position": [
+                                5,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Wall",
+                            "position": [
+                                5,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Moon",
+                            "position": [
+                                3,
+                                5
+                            ],
+                            "orientation": "S"
+                        }
+                    ]
+                }
+            ],
+            "super_level": null,
+            "main_world": {
+                "name": "open",
+                "infinite_tier": 0
+            }
+        }
+    ],
+    "main_level": "open",
+    "rule_list": [
+        [
+            "CURSOR",
+            "IS",
+            "SELECT"
+        ],
+        [
+            "TEXT",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "WORLD",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "CLONE",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "LEVEL",
+            "IS",
+            "STOP"
+        ]
+    ]
+}
