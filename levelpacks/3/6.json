@@ -1,0 +1,98 @@
+{
+    "name": "6",
+    "level_list": [
+        {
+            "name": "6",
+            "world_list": [
+                {
+                    "name": "6",
+                    "infinite_tier": 0,
+                    "size": [
+                        7,
+                        3
+                    ],
+                    "color": 0,
+                    "object_list": [
+                        {
+                            "type": "BABA",
+                            "position": [
+                                1,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                2,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "YOU",
+                            "position": [
+                                3,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Baba",
+                            "position": [
+                                5,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "World",
+                            "position": [
+                                4,
+                                1
+                            ],
+                            "orientation": "S",
+                            "world": {
+                                "name": "6",
+                                "infinite_tier": 0
+                            }
+                        }
+                    ]
+                }
+            ],
+            "super_level": null,
+            "main_world": {
+                "name": "6",
+                "infinite_tier": 0
+            }
+        }
+    ],
+    "main_level": "6",
+    "rule_list": [
+        [
+            "CURSOR",
+            "IS",
+            "SELECT"
+        ],
+        [
+            "TEXT",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "WORLD",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "CLONE",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "LEVEL",
+            "IS",
+            "STOP"
+        ]
+    ]
+}

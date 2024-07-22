@@ -142,8 +142,6 @@ class level(object):
         for sub_world_obj in sub_world_objs:
             sub_world = self.get_exist_world(sub_world_obj.name, sub_world_obj.inf_tier)
             self.recursion_rules(sub_world, rule_list, passed)
-    def update_strict_rules(self) -> None:
-        pass
     def update_rules(self, old_prop_dict: dict[uuid.UUID, list[tuple[type[objects.Text], int]]]) -> None:
         self.game_properties = []
         for world in self.world_list:
@@ -778,25 +776,23 @@ class level(object):
         return (new_levels, level_transform_to, new_window_objects)
     def win(self) -> bool:
         for world in self.world_list:
-            you_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU), world.object_list)
-            win_objs = filter(lambda o: objects.Object.has_prop(o, objects.WIN), world.object_list)
-            float_objs = filter(lambda o: objects.Object.has_prop(o, objects.FLOAT), world.object_list)
+            you_objs = [o for o in world.object_list if o.has_prop(objects.YOU)]
+            win_objs = [o for o in world.object_list if o.has_prop(objects.WIN)]
             for you_obj in you_objs:
                 for win_obj in win_objs:
                     if you_obj.pos == win_obj.pos:
-                        if not ((you_obj in float_objs) ^ (win_obj in float_objs)):
+                        if self.same_float_prop(you_obj, win_obj):
                             self.sound_events.append("win")
                             return True
         return False
     def end(self) -> bool:
         for world in self.world_list:
-            you_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU), world.object_list)
-            end_objs = filter(lambda o: objects.Object.has_prop(o, objects.END), world.object_list)
-            float_objs = filter(lambda o: objects.Object.has_prop(o, objects.FLOAT), world.object_list)
+            you_objs = [o for o in world.object_list if o.has_prop(objects.YOU)]
+            end_objs = [o for o in world.object_list if o.has_prop(objects.END)]
             for you_obj in you_objs:
                 for end_obj in end_objs:
                     if you_obj.pos == end_obj.pos:
-                        if not ((you_obj in float_objs) ^ (end_obj in float_objs)):
+                        if self.same_float_prop(you_obj, end_obj):
                             self.sound_events.append("end")
                             return True
         return False

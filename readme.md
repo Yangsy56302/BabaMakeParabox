@@ -190,6 +190,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 3.111  | 2024.07.21 | Bug on Game feeling Object is Fix |
 | 3.112  | 2024.07.22 | Bug on All feeling Shut and Open is Fix |
 | 3.12   | 2024.07.22 | Width is not Height |
+| 3.121  | 2024.07.22 | Bug on Flag feeling Win is Fix |
 
 ## Bug Reports and Suggestions
 

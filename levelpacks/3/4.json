@@ -1,0 +1,110 @@
+{
+    "name": "4",
+    "level_list": [
+        {
+            "name": "4",
+            "world_list": [
+                {
+                    "name": "4",
+                    "infinite_tier": 0,
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "color": 0,
+                    "object_list": [
+                        {
+                            "type": "BABA",
+                            "position": [
+                                3,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "GAME",
+                            "position": [
+                                3,
+                                6
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                4,
+                                6
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                4,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "YOU",
+                            "position": [
+                                5,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "YOU",
+                            "position": [
+                                5,
+                                6
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Baba",
+                            "position": [
+                                4,
+                                4
+                            ],
+                            "orientation": "S"
+                        }
+                    ]
+                }
+            ],
+            "super_level": null,
+            "main_world": {
+                "name": "4",
+                "infinite_tier": 0
+            }
+        }
+    ],
+    "main_level": "4",
+    "rule_list": [
+        [
+            "CURSOR",
+            "IS",
+            "SELECT"
+        ],
+        [
+            "TEXT",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "WORLD",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "CLONE",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "LEVEL",
+            "IS",
+            "STOP"
+        ]
+    ]
+}

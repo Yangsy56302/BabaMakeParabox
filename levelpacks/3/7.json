@@ -1,0 +1,182 @@
+{
+    "name": "7",
+    "level_list": [
+        {
+            "name": "7",
+            "world_list": [
+                {
+                    "name": "7",
+                    "infinite_tier": 0,
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "color": 0,
+                    "object_list": [
+                        {
+                            "type": "BABA",
+                            "position": [
+                                1,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                1,
+                                6
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "YOU",
+                            "position": [
+                                1,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "NOT",
+                            "position": [
+                                3,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "NOT",
+                            "position": [
+                                3,
+                                6
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "NOT",
+                            "position": [
+                                3,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "NOT",
+                            "position": [
+                                4,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "NOT",
+                            "position": [
+                                4,
+                                6
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "NOT",
+                            "position": [
+                                4,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "NOT",
+                            "position": [
+                                5,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "NOT",
+                            "position": [
+                                5,
+                                6
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "NOT",
+                            "position": [
+                                5,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Baba",
+                            "position": [
+                                4,
+                                2
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "BABA",
+                            "position": [
+                                7,
+                                5
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                7,
+                                6
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "YOU",
+                            "position": [
+                                7,
+                                7
+                            ],
+                            "orientation": "S"
+                        }
+                    ]
+                }
+            ],
+            "super_level": null,
+            "main_world": {
+                "name": "7",
+                "infinite_tier": 0
+            }
+        }
+    ],
+    "main_level": "7",
+    "rule_list": [
+        [
+            "CURSOR",
+            "IS",
+            "SELECT"
+        ],
+        [
+            "TEXT",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "WORLD",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "CLONE",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "LEVEL",
+            "IS",
+            "STOP"
+        ]
+    ]
+}
