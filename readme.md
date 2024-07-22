@@ -11,7 +11,9 @@ made separately by **Arvi Hempuli** and **Patrick Traynor**.
 **I DO NOT have the copyright of the game's textures.**
 If you have some informations about the right of use for the game's textures or something, please tell me.
 
-## How to download
+The game's prototype was born at 2024.05.15, UTC+0 04:12:15 (or UTC+8 12:12:15).
+
+## How to Download
 
 For [Github](https://github.com/Yangsy56302/BabaMakeParabox),
 Click the green button say **Code**, then click **Download ZIP**.
@@ -22,7 +24,7 @@ Click the blue button say **Code**, then click **zip**.
 For [Gitee](https://gitee.com/Yangsy56302/BabaMakeParabox),
 or if you are from China, [Click me for more info](readme_cn.md).
 
-## How to run
+## How to Run
 
 **This Game will run normally only if terminal window exists**
 **and no text is selected in terminal window.**
@@ -35,11 +37,12 @@ If you want to run the source code, download These Things:
 - **Pygame**: Run `pip install -U pygame` in Terminal or something similar to Terminal
 - **PyInstaller** **_(optional, if you need exe)_**: Run `pip install -U pyinstaller` in Terminal too
 
-Run `BabaMakeParabox.exe` (or `python BabaMakeParabox.py`, if you have code and python etc.) to start the game.
+Start `BabaMakeParabox.exe`, then follow the terminal messages to start the game.
+(or run `python BabaMakeParabox.py`, if you have code and python etc.)
 
 If you need to make an exe, run `py2exe.bat` in the root folder.
 
-### How to control
+### How to Control
 
 - WSAD: You / Cursor move.
 - Space: You wait for something / Cursor select a level to play.
@@ -50,7 +53,7 @@ If you need to make an exe, run `py2exe.bat` in the root folder.
 - \- / =: Select world for camera to focus.
 - F1: Show FPS.
 
-### How to win
+### How to Win
 
 Please remember:
 
@@ -60,14 +63,18 @@ Please remember:
 4. Sometimes you need to create a paradox;
 5. Sometimes you need to transform the levels and the worlds into each other.
 
-## How to make a custom world
+### About Special Nouns / Objects
+
+...
+
+## How to Make a Custom World
 
 **Important: as default, the levels / worlds / clones that placed**
 **are pointed to the levels / worlds / clones that where the camera is.**
 If you want to put levels / worlds / clones inside other levels / worlds,
 please considering shift + enter, or cut, copy, and paste.
 
-### How to control
+### How to Control
 
 - WSAD: Move cursor.
 - Shift + WSAD: Change orientation.
@@ -102,9 +109,21 @@ During that time, the game window will freeze because the program is waiting for
 
 ## Misc
 
+### Feature List
+
+- For all `NOT` before a property-like text, they negate other "weaker" rules first before negate itself.
+- `FEELING` only try once per round for avoiding halting problem.
+- `TEXT IS WORD` will make every text object also acts like `TEXT`.
+    - This will usually cause the rule right above can also be identified as `TEXT IS TEXT`.
+
+### Not Implemented Yet
+
+- In level / world range: `LEVEL IS YOU`，`WORLD IS DEFEAT`, etc.
+- Complex grammar about `GAME`.
+
 ### Bug List
 
-- `MOVE` overwrite `STOP` when moving.
+- A lot of `MOVE` problems because recursive movement system incomplete.
 
 ### About options.json
 
@@ -116,7 +135,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 
 | Number |    Time    | Informations |
 |--------|------------|--------------|
-| 1.0    | 2024.07.05 | Initialized. |
+| 1.0    | 2024.07.05 | Game is Init |
 | 1.1    | 2024.07.06 | Keke is Move; Game is Undo and Restart; Baba make Levels |
 | 1.11   | 2024.07.06 | Level is Previous and Next |
 | 1.2    | 2024.07.06 | Flag is Win; Game is EXE |
