@@ -166,10 +166,10 @@
 | 3.011  | 2024.07.20 | Rule is Atom |
 | 3.012  | 2024.07.20 | Game feeling Stop is not Wiggle |
 | 3.02   | 2024.07.20 | not Baba is not You |
-| 3.1    | 2024.07.20 | Flag on Rock is Win |
-| 3.11   | 2024.07.20 | Rock feeling Push is not Push |
-| 3.111  | 2024.07.20 | Bug on Game feeling Object is Fix |
-| 3.112  | 2024.07.20 | Bug on All feeling Shut and Open is Fix |
+| 3.1    | 2024.07.21 | Flag on Rock is Win |
+| 3.11   | 2024.07.21 | Rock feeling Push is not Push |
+| 3.111  | 2024.07.21 | Bug on Game feeling Object is Fix |
+| 3.112  | 2024.07.22 | Bug on All feeling Shut and Open is Fix |
 
 ## 报告漏洞和提出建议
 
