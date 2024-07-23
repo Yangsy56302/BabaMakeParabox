@@ -15,7 +15,8 @@ class level(object):
         self.main_world_name: str = main_world_name if main_world_name is not None else world_list[0].name
         self.main_world_tier: int = main_world_tier if main_world_tier is not None else world_list[0].inf_tier
         self.rule_list: list[rules.Rule] = rule_list if rule_list is not None else rules.default_rule_list
-        self.game_properties: list[type[objects.Object]] = []
+        self.game_properties: list[tuple[type[objects.Object], int]] = []
+        self.properties: list[tuple[type[objects.Object], int]] = []
         self.all_list: list[type[objects.Object]] = []
         self.sound_events: list[str] = []
     def __eq__(self, level: "level") -> bool:
@@ -24,6 +25,24 @@ class level(object):
         return self.class_name
     def __repr__(self) -> str:
         return self.class_name
+    def new_prop(self, prop: type[objects.Text], negated_count: int = 0) -> None:
+        del_props = []
+        for old_prop, old_negated_count in self.properties:
+            if prop == old_prop:
+                if old_negated_count > negated_count:
+                    return
+                del_props.append((old_prop, old_negated_count))
+        for old_prop, old_negated_count in del_props:
+            self.properties.remove((old_prop, old_negated_count))
+        self.properties.append((prop, negated_count))
+    def del_prop(self, prop: type[objects.Text], negated_count: int = 0) -> None:
+        if (prop, negated_count) in self.properties:
+            self.properties.remove((prop, negated_count))
+    def has_prop(self, prop: type[objects.Text], negate: bool = False) -> bool:
+        for get_prop, get_negated_count in self.properties:
+            if get_prop == prop and get_negated_count % 2 == int(negate):
+                return True
+        return False
     def find_rules(self, *match_rule: Optional[type[objects.Text]]) -> list[rules.Rule]:
         found_rules = []
         for rule in self.rule_list:
@@ -144,7 +163,9 @@ class level(object):
             self.recursion_rules(sub_world, rule_list, passed)
     def update_rules(self, old_prop_dict: dict[uuid.UUID, list[tuple[type[objects.Text], int]]]) -> None:
         self.game_properties = []
+        self.properties = []
         for world in self.world_list:
+            world.properties = []
             for obj in world.object_list:
                 obj.clear_prop()
             world.strict_rule_list = rules.to_atom_rules(world.get_rules())
@@ -206,7 +227,21 @@ class level(object):
                     else:
                         if obj_type == objects.Game:
                             if not noun_negated and len(infix_list) == 0:
-                                self.game_properties.append(prop_type)
+                                del_props = []
+                                for old_prop_type, old_prop_negated_count in self.game_properties:
+                                    if prop_type == old_prop_type:
+                                        if old_prop_negated_count > prop_negated_count:
+                                            return
+                                        del_props.append((old_prop_type, old_prop_negated_count))
+                                for old_prop_type, old_prop_negated_count in del_props:
+                                    self.game_properties.remove((old_prop_type, old_prop_negated_count))
+                                self.game_properties.append((prop_type, prop_negated_count))
+                        elif obj_type == objects.Level:
+                            if not noun_negated and len(infix_list) == 0:
+                                self.new_prop(prop_type, prop_negated_count)
+                        elif obj_type == objects.World:
+                            if not noun_negated and len(infix_list) == 0:
+                                world.new_prop(prop_type, prop_negated_count)
                         if noun_negated:
                             for obj in [o for o in world.object_list if (not isinstance(o, objects.not_in_all)) and not isinstance(o, obj_type)]:
                                 if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)):
@@ -404,7 +439,15 @@ class level(object):
         move_list = []
         pushing_game = False
         for world in self.world_list:
-            you_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU), world.object_list)
+            if world.has_prop(objects.YOU) or self.has_prop(objects.YOU):
+                for obj in world.object_list:
+                    new_move_list = self.get_move_list(objects.MOVE, world, obj, spaces.S)
+                    if new_move_list is not None:
+                        move_list.extend(new_move_list)
+                    else:
+                        pushing_game = True
+                continue
+            you_objs = [o for o in world.object_list if o.has_prop(objects.YOU)]
             for obj in you_objs:
                 obj.facing = facing # type: ignore
                 new_move_list = self.get_move_list(objects.YOU, world, obj, obj.facing) # type: ignore
@@ -418,7 +461,7 @@ class level(object):
     def select(self, facing: spaces.PlayerOperation) -> Optional[str]:
         if facing == spaces.O:
             for world in self.world_list:
-                select_objs = filter(lambda o: objects.Object.has_prop(o, objects.SELECT), world.object_list)
+                select_objs = [o for o in world.object_list if o.has_prop(objects.SELECT)]
                 levels: list[objects.Level] = []
                 for obj in select_objs:
                     levels.extend(world.get_levels_from_pos(obj.pos))
@@ -427,7 +470,7 @@ class level(object):
                         return levels[0].name
         else:
             for world in self.world_list:
-                select_objs = filter(lambda o: objects.Object.has_prop(o, objects.SELECT), world.object_list)
+                select_objs = [o for o in world.object_list if o.has_prop(objects.SELECT)]
                 for obj in select_objs:
                     new_pos = spaces.pos_facing(obj.pos, facing) # type: ignore
                     if not world.out_of_range(new_pos):
@@ -436,7 +479,16 @@ class level(object):
     def move(self) -> bool:
         pushing_game = False
         for world in self.world_list:
-            move_objs = filter(lambda o: objects.Object.has_prop(o, objects.MOVE), world.object_list)
+            if world.has_prop(objects.MOVE) or self.has_prop(objects.MOVE):
+                for obj in world.object_list:
+                    if not obj.has_prop(objects.FLOAT):
+                        new_move_list = self.get_move_list(objects.MOVE, world, obj, spaces.S)
+                        if new_move_list is not None:
+                            move_list.extend(new_move_list)
+                        else:
+                            pushing_game = True
+                continue
+            move_objs = [o for o in world.object_list if o.has_prop(objects.MOVE)]
             for obj in move_objs:
                 move_list = []
                 new_move_list = self.get_move_list(objects.MOVE, world, obj, obj.facing)
@@ -456,7 +508,16 @@ class level(object):
         move_list = []
         pushing_game = False
         for world in self.world_list:
-            shift_objs = filter(lambda o: objects.Object.has_prop(o, objects.SHIFT), world.object_list)
+            if world.has_prop(objects.SHIFT) or self.has_prop(objects.SHIFT):
+                for obj in world.object_list:
+                    if not obj.has_prop(objects.FLOAT):
+                        new_move_list = self.get_move_list(objects.SHIFT, world, obj, spaces.D)
+                        if new_move_list is not None:
+                            move_list.extend(new_move_list)
+                        else:
+                            pushing_game = True
+                continue
+            shift_objs = [o for o in world.object_list if o.has_prop(objects.SHIFT)]
             for shift_obj in shift_objs:
                 for obj in world.get_objs_from_pos(shift_obj.pos):
                     if obj == shift_obj:
@@ -471,36 +532,45 @@ class level(object):
         self.move_objs_from_move_list(move_list)
         return pushing_game
     def tele(self) -> None:
-        tele_list: list[tuple[worlds.world, objects.Object, spaces.Coord]] = []
-        object_list = []
+        if self.has_prop(objects.TELE):
+            pass
         for world in self.world_list:
-            object_list.extend(world.object_list)
-        tele_objs = filter(lambda o: objects.Object.has_prop(o, objects.TELE), object_list)
-        tele_obj_types: dict[type[objects.Object], list[objects.Object]] = {}
+            if world.has_prop(objects.TELE):
+                pass
+        tele_list: list[tuple[worlds.world, objects.Object, worlds.world, spaces.Coord]] = []
+        object_list: list[tuple[worlds.world, objects.Object]] = []
+        for world in self.world_list:
+            object_list.extend([(world, o) for o in world.object_list])
+        tele_objs = [t for t in object_list if t[1].has_prop(objects.TELE)]
+        tele_obj_types: dict[type[objects.Object], list[tuple[worlds.world, objects.Object]]] = {}
         for obj_type in objects.nouns_objs_dicts.pairs.values():
             for tele_obj in tele_objs:
-                if isinstance(tele_obj, obj_type):
+                if isinstance(tele_obj[1], obj_type):
                     tele_obj_types[obj_type] = tele_obj_types.get(obj_type, []) + [tele_obj]
-        for tele_objs in tele_obj_types.values():
-            if len(tele_objs) <= 1:
+        for new_tele_objs in tele_obj_types.values():
+            if len(new_tele_objs) <= 1:
                 continue
-            for tele_obj in tele_objs:
-                other_tele_objs = tele_objs[:]
-                other_tele_objs.remove(tele_obj)
+            for tele_world, tele_obj in new_tele_objs:
+                other_tele_objs = new_tele_objs[:]
+                other_tele_objs.remove((tele_world, tele_obj))
                 for obj in world.get_objs_from_pos(tele_obj.pos):
                     if obj == tele_obj:
                         continue
                     if self.same_float_prop(obj, tele_obj):
-                        other_tele_obj = random.choice(other_tele_objs)
-                        tele_list.append((world, obj, other_tele_obj.pos))
-        for world, obj, pos in tele_list:
-            self.move_obj_in_world(world, obj, pos)
+                        other_tele_world, other_tele_obj = random.choice(other_tele_objs)
+                        tele_list.append((world, obj, other_tele_world, other_tele_obj.pos))
+        for old_world, obj, new_world, pos in tele_list:
+            self.move_obj_between_worlds(old_world, obj, new_world, pos)
         if len(tele_list) != 0:
             self.sound_events.append("tele")
     def sink(self) -> None:
         delete_list = []
         for world in self.world_list:
-            sink_objs = filter(lambda o: objects.Object.has_prop(o, objects.SINK), world.object_list)
+            sink_objs = [o for o in world.object_list if o.has_prop(objects.SINK)]
+            if world.has_prop(objects.SINK) or self.has_prop(objects.SINK):
+                for obj in world.object_list:
+                    if not obj.has_prop(objects.FLOAT):
+                        delete_list.append(obj)
             for sink_obj in sink_objs:
                 for obj in world.get_objs_from_pos(sink_obj.pos):
                     if obj == sink_obj:
@@ -517,10 +587,20 @@ class level(object):
     def hot_and_melt(self) -> None:
         delete_list = []
         for world in self.world_list:
-            hot_objs = filter(lambda o: objects.Object.has_prop(o, objects.DEFEAT), world.object_list)
-            for hot_obj in hot_objs:
-                melt_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU), world.get_objs_from_pos(hot_obj.pos))
+            melt_objs = [o for o in world.object_list if o.has_prop(objects.MELT)]
+            hot_objs = [o for o in world.object_list if o.has_prop(objects.HOT)]
+            if len(hot_objs) != 0 and (world.has_prop(objects.MELT) or self.has_prop(objects.MELT)):
                 for melt_obj in melt_objs:
+                    if not melt_obj.has_prop(objects.FLOAT):
+                        delete_list.extend(world.object_list)
+                continue
+            if len(melt_objs) != 0 and (world.has_prop(objects.HOT) or self.has_prop(objects.HOT)):
+                for melt_obj in melt_objs:
+                    if not melt_obj.has_prop(objects.FLOAT):
+                        delete_list.append(melt_obj)
+                continue
+            for melt_obj in melt_objs:
+                for hot_obj in hot_objs:
                     if self.same_float_prop(hot_obj, melt_obj):
                         if melt_obj not in delete_list:
                             delete_list.append(melt_obj)
@@ -531,11 +611,18 @@ class level(object):
     def defeat(self) -> None:
         delete_list = []
         for world in self.world_list:
-            defeat_objs = filter(lambda o: objects.Object.has_prop(o, objects.DEFEAT), world.object_list)
-            for defeat_obj in defeat_objs:
-                you_objs = filter(lambda o: objects.Object.has_prop(o, objects.YOU), world.get_objs_from_pos(defeat_obj.pos))
-                for you_obj in you_objs:
-                    if self.same_float_prop(defeat_obj, you_obj):
+            you_objs = [o for o in world.object_list if o.has_prop(objects.YOU)]
+            defeat_objs = [o for o in world.object_list if o.has_prop(objects.DEFEAT)]
+            if len(defeat_objs) != 0 and (world.has_prop(objects.YOU) or self.has_prop(objects.YOU)):
+                delete_list.extend(world.object_list)
+                continue
+            for you_obj in you_objs:
+                if world.has_prop(objects.DEFEAT) or self.has_prop(objects.DEFEAT):
+                    if you_obj not in delete_list:
+                        delete_list.append(you_obj)
+                        continue
+                for defeat_obj in defeat_objs:
+                    if self.same_float_prop(defeat_obj, you_obj) or world.has_prop(objects.DEFEAT) or self.has_prop(objects.DEFEAT):
                         if you_obj not in delete_list:
                             delete_list.append(you_obj)
         for obj in delete_list:
@@ -545,10 +632,16 @@ class level(object):
     def open_and_shut(self) -> None:
         delete_list = []
         for world in self.world_list:
-            shut_objs = filter(lambda o: objects.Object.has_prop(o, objects.SHUT), world.object_list)
-            for shut_obj in shut_objs:
-                open_objs = filter(lambda o: objects.Object.has_prop(o, objects.OPEN), world.get_objs_from_pos(shut_obj.pos))
-                for open_obj in open_objs:
+            shut_objs = [o for o in world.object_list if o.has_prop(objects.SHUT)]
+            open_objs = [o for o in world.object_list if o.has_prop(objects.OPEN)]
+            if len(open_objs) != 0 and (world.has_prop(objects.SHUT) or self.has_prop(objects.SHUT)):
+                delete_list.extend(world.object_list)
+                continue
+            if len(shut_objs) != 0 and (world.has_prop(objects.OPEN) or self.has_prop(objects.OPEN)):
+                delete_list.extend(world.object_list)
+                continue
+            for open_obj in open_objs:
+                for shut_obj in shut_objs:
                     if shut_obj not in delete_list and open_obj not in delete_list:
                         delete_list.append(shut_obj)
                         if shut_obj != open_obj:
@@ -779,6 +872,10 @@ class level(object):
             you_objs = [o for o in world.object_list if o.has_prop(objects.YOU)]
             win_objs = [o for o in world.object_list if o.has_prop(objects.WIN)]
             for you_obj in you_objs:
+                if world.has_prop(objects.WIN) or self.has_prop(objects.WIN):
+                    if not you_obj.has_prop(objects.FLOAT):
+                        self.sound_events.append("win")
+                        return True
                 for win_obj in win_objs:
                     if you_obj.pos == win_obj.pos:
                         if self.same_float_prop(you_obj, win_obj):
@@ -790,6 +887,10 @@ class level(object):
             you_objs = [o for o in world.object_list if o.has_prop(objects.YOU)]
             end_objs = [o for o in world.object_list if o.has_prop(objects.END)]
             for you_obj in you_objs:
+                if world.has_prop(objects.END) or self.has_prop(objects.END):
+                    if not you_obj.has_prop(objects.FLOAT):
+                        self.sound_events.append("end")
+                        return True
                 for end_obj in end_objs:
                     if you_obj.pos == end_obj.pos:
                         if self.same_float_prop(you_obj, end_obj):
@@ -799,6 +900,8 @@ class level(object):
     def done(self) -> None:
         delete_list = []
         for world in self.world_list:
+            if world.has_prop(objects.DONE) or self.has_prop(objects.DONE):
+                delete_list.extend(world.object_list)
             for obj in world.object_list:
                 if obj.has_prop(objects.DONE):
                     delete_list.append(obj)
@@ -817,7 +920,7 @@ class level(object):
         pushing_game = self.you(op)
         pushing_game |= self.move()
         self.update_rules(old_prop_dict)
-        self.shift()
+        pushing_game |= self.shift()
         self.update_rules(old_prop_dict)
         new_levels, transform_to, new_window_objects = self.transform()
         self.update_rules(old_prop_dict)

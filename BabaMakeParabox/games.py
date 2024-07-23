@@ -193,17 +193,23 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
                 current_world = current_level.world_list[current_world_index]
                 world_changed = True
-            if objects.STOP in current_level.game_properties:
-                wiggle = 1
-            if objects.SHIFT in current_level.game_properties:
-                display_offset[0] += window.get_width() / basics.options["fps"]
-            if objects.MOVE in current_level.game_properties:
-                display_offset[1] += window.get_height() / (4 * basics.options["fps"])
-            if objects.SINK in current_level.game_properties:
-                display_offset_speed[1] += window.get_height() / (16 * basics.options["fps"])
-            elif objects.FLOAT in current_level.game_properties:
-                display_offset_speed[1] -= window.get_height() / (64 * basics.options["fps"])
-            else:
+            offset_used = False
+            for prop, prop_negated_count in current_level.game_properties:
+                if prop_negated_count % 2 == 1:
+                    continue
+                if prop == objects.STOP:
+                    wiggle = 1
+                elif prop == objects.SHIFT:
+                    display_offset[0] += window.get_width() / basics.options["fps"]
+                elif prop == objects.MOVE:
+                    display_offset[1] += window.get_height() / (4 * basics.options["fps"])
+                elif prop == objects.SINK:
+                    display_offset_speed[1] += window.get_height() / (16 * basics.options["fps"])
+                    offset_used = True
+                elif prop == objects.FLOAT:
+                    display_offset_speed[1] -= window.get_height() / (64 * basics.options["fps"])
+                    offset_used = True
+            if not offset_used:
                 display_offset_speed[0] = display_offset_speed[0] / 2
                 display_offset_speed[1] = display_offset_speed[1] / 2
         else:
@@ -212,32 +218,47 @@ def play(levelpack: levelpacks.levelpack) -> None:
             if value and cooldowns[key] == 0:
                 cooldowns[key] = basics.options["input_cooldown"]
         if refresh:
-            if objects.WIN in current_level.game_properties:
-                sounds.play("win")
-                game_running = False
-            if objects.SHUT in current_level.game_properties:
-                sounds.play("defeat")
-                game_running = False
-            if objects.END in current_level.game_properties:
-                sounds.play("end")
-                game_running = False
-            if objects.DONE in current_level.game_properties:
-                sounds.play("done")
-                game_running = False
-            if objects.OPEN in current_level.game_properties:
-                if os.path.exists("BabaMakeParabox.exe"):
-                    os.system("start BabaMakeParabox.exe")
-                elif os.path.exists("BabaMakeParabox.py"):
-                    os.system("start python BabaMakeParabox.py")
-            if objects.HOT in current_level.game_properties and objects.MELT in current_level.game_properties:
+            game_is_hot = False
+            game_is_melt = False
+            game_is_you = False
+            game_is_defeat = False
+            for prop, prop_negated_count in current_level.game_properties:
+                if prop_negated_count % 2 == 1:
+                    continue
+                if prop == objects.WIN:
+                    sounds.play("win")
+                    game_running = False
+                elif prop == objects.SHUT:
+                    sounds.play("defeat")
+                    game_running = False
+                elif prop == objects.END:
+                    sounds.play("end")
+                    game_running = False
+                elif prop == objects.DONE:
+                    sounds.play("done")
+                    game_running = False
+                elif prop == objects.OPEN:
+                    if os.path.exists("BabaMakeParabox.exe"):
+                        os.system("start BabaMakeParabox.exe")
+                    elif os.path.exists("BabaMakeParabox.py"):
+                        os.system("start python BabaMakeParabox.py")
+                elif prop == objects.HOT:
+                    game_is_hot = True
+                elif prop == objects.MELT:
+                    game_is_melt = True
+                elif prop == objects.YOU:
+                    game_is_you = True
+                elif prop == objects.DEFEAT:
+                    game_is_defeat = True
+                elif prop == objects.TELE:
+                    sounds.play("tele")
+                    display_offset = [float(random.randrange(window.get_width())), float(random.randrange(window.get_height()))]
+            if game_is_hot and game_is_melt:
                 sounds.play("melt")
                 game_running = False
-            if objects.YOU in current_level.game_properties and objects.DEFEAT in current_level.game_properties:
+            if game_is_you and game_is_defeat:
                 sounds.play("defeat")
                 game_running = False
-            if objects.TELE in current_level.game_properties:
-                sounds.play("tele")
-                display_offset = [float(random.randrange(window.get_width())), float(random.randrange(window.get_height()))]
             for event in current_level.sound_events:
                 sounds.play(event)
             for new_level in level_info["new_levels"]:
@@ -346,22 +367,28 @@ def play(levelpack: levelpacks.levelpack) -> None:
             print(languages.current_language["game.world.current.inf_tier"], current_world.inf_tier, sep="")
             world_changed = False
         pygame.mixer.music.set_volume(1.0 if current_level.have_you() else 0.5)
+        # world
         window.fill("#000000")
         displays.set_pixel_size(window.get_size())
         world_display_size = (int(min(window.get_size()) * min(1, current_world.width / current_world.height)), int(min(window.get_size()) * min(1, current_world.height / current_world.width)))
         world_display_pos = ((window.get_width() - world_display_size[0]) // 2, (window.get_height() - world_display_size[1]) // 2)
         window.blit(pygame.transform.scale(current_level.show_world(current_world, wiggle), world_display_size), world_display_pos)
+        # fps
         real_fps = min(1000 / milliseconds, (real_fps * (basics.options["fps"] - 1) + 1000 / milliseconds) / basics.options["fps"])
         if keys[keybinds["F1"]]:
             real_fps_string = str(int(real_fps))
             for i in range(len(real_fps_string)):
                 window.blit(displays.sprites.get(f"text_{real_fps_string[i]}", 0, wiggle), (i * displays.sprite_size, 0))
-        if len([t for t in current_level.game_properties if issubclass(t, objects.Noun)]) != 0:
+        # game is baba
+        game_transform_to = [t[0] for t in current_level.game_properties if issubclass(t[0], objects.Noun) and t[1] % 2 == 0]
+        if len(game_transform_to) != 0:
             transparent_black_background = pygame.Surface(window.get_size(), pygame.SRCALPHA)
             transparent_black_background.fill("#00000088")
             window.blit(transparent_black_background, (0, 0))
-        for obj_type in [o for o in map(objects.nouns_objs_dicts.get_obj, [t for t in current_level.game_properties if issubclass(t, objects.Noun)]) if o is not None]:
+        game_transform_to = [o for o in map(objects.nouns_objs_dicts.get_obj, game_transform_to) if o is not None] # type: ignore
+        for obj_type in game_transform_to:
             window.blit(pygame.transform.scale(displays.sprites.get(obj_type.sprite_name, 0, wiggle), window.get_size()), (0, 0))
+        # offset
         if abs(display_offset_speed[0]) > window.get_width() / basics.options["fps"] * 4:
             symbol = 1 if display_offset_speed[0] > 0 else -1
             display_offset_speed[0] = window.get_width() / basics.options["fps"] * symbol * 4
