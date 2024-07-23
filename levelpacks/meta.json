@@ -1,0 +1,186 @@
+{
+    "name": "meta",
+    "level_list": [
+        {
+            "name": "meta",
+            "world_list": [
+                {
+                    "name": "meta",
+                    "infinite_tier": 0,
+                    "size": [
+                        9,
+                        9
+                    ],
+                    "color": 0,
+                    "object_list": [
+                        {
+                            "type": "BABA",
+                            "position": [
+                                1,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                2,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "YOU",
+                            "position": [
+                                3,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "Baba",
+                            "position": [
+                                1,
+                                3
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "WORLD",
+                            "position": [
+                                5,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                6,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "META",
+                            "position": [
+                                3,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "AND",
+                            "position": [
+                                5,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "WIN",
+                            "position": [
+                                7,
+                                1
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "FLOAT",
+                            "position": [
+                                7,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "NOT",
+                            "position": [
+                                1,
+                                7
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "World",
+                            "position": [
+                                1,
+                                5
+                            ],
+                            "orientation": "S",
+                            "world": {
+                                "name": "meta",
+                                "infinite_tier": 0
+                            }
+                        },
+                        {
+                            "type": "WORLD",
+                            "position": [
+                                3,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "IS",
+                            "position": [
+                                4,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "NOT",
+                            "position": [
+                                5,
+                                4
+                            ],
+                            "orientation": "S"
+                        },
+                        {
+                            "type": "PUSH",
+                            "position": [
+                                6,
+                                4
+                            ],
+                            "orientation": "S"
+                        }
+                    ]
+                }
+            ],
+            "super_level": null,
+            "main_world": {
+                "name": "meta",
+                "infinite_tier": 0
+            }
+        }
+    ],
+    "main_level": "meta",
+    "rule_list": [
+        [
+            "CURSOR",
+            "IS",
+            "SELECT"
+        ],
+        [
+            "TEXT",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "WORLD",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "CLONE",
+            "IS",
+            "PUSH"
+        ],
+        [
+            "LEVEL",
+            "IS",
+            "STOP"
+        ]
+    ]
+}

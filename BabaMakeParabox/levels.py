@@ -78,6 +78,14 @@ class level(object):
                 noun_type = objects.nouns_objs_dicts.get_noun(type(obj))
                 if noun_type is not None and noun_type not in self.all_list:
                     self.all_list.append(noun_type)
+    def meet_prefix_conditions(self, world: worlds.world, obj: objects.Object, prefix_info_list: list[rules.PrefixInfo], is_meta: bool = False) -> bool:
+        return_value = True
+        for prefix_info in prefix_info_list:
+            meet_prefix_condition = True
+            if prefix_info[1] == objects.META:
+                meet_prefix_condition = is_meta
+            return_value = return_value and (meet_prefix_condition if not prefix_info[0] else not meet_prefix_condition)
+        return return_value
     def meet_infix_conditions(self, world: worlds.world, obj: objects.Object, infix_info_list: list[rules.InfixInfo], old_feeling: Optional[list[tuple[type[objects.Text], int]]] = None) -> bool:
         return_value = True
         for infix_info in infix_info_list:
@@ -170,7 +178,7 @@ class level(object):
             world.strict_rule_list = basics.remove_same_elements(world.strict_rule_list)
         for world in self.world_list:
             for word_rule in basics.remove_same_elements(world.strict_rule_list):
-                for noun_negated, noun_type, infix_list, oper_type, prop_negated_count, prop_type in rules.analysis_rule(word_rule):
+                for prefix_list, noun_negated, noun_type, infix_list, oper_type, prop_negated_count, prop_type in rules.analysis_rule(word_rule):
                     if prop_type != objects.WORD:
                         continue
                     obj_type = objects.nouns_objs_dicts.get_obj(noun_type)
@@ -178,20 +186,20 @@ class level(object):
                         if noun_type == objects.ALL:
                             if noun_negated:
                                 for obj in [o for o in world.object_list if isinstance(o, objects.in_not_all)]:
-                                    if self.meet_infix_conditions(world, obj, infix_list):
+                                    if self.meet_infix_conditions(world, obj, infix_list) and self.meet_prefix_conditions(world, obj, prefix_list):
                                         obj.new_prop(objects.WORD, prop_negated_count)
                             else:
                                 for obj in [o for o in world.object_list if not isinstance(o, objects.not_in_all)]:
-                                    if self.meet_infix_conditions(world, obj, infix_list):
+                                    if self.meet_infix_conditions(world, obj, infix_list) and self.meet_prefix_conditions(world, obj, prefix_list):
                                         obj.new_prop(objects.WORD, prop_negated_count)
                     else:
                         if noun_negated:
                             for obj in [o for o in world.object_list if (not isinstance(o, objects.not_in_all)) and not isinstance(o, obj_type)]:
-                                if self.meet_infix_conditions(world, obj, infix_list):
+                                if self.meet_infix_conditions(world, obj, infix_list) and self.meet_prefix_conditions(world, obj, prefix_list):
                                     obj.new_prop(objects.WORD, prop_negated_count)
                         else:
                             for obj in world.get_objs_from_type(obj_type):
-                                if self.meet_infix_conditions(world, obj, infix_list):
+                                if self.meet_infix_conditions(world, obj, infix_list) and self.meet_prefix_conditions(world, obj, prefix_list):
                                     obj.new_prop(objects.WORD, prop_negated_count)
         for world in self.world_list:
             world.strict_rule_list = rules.to_atom_rules(world.get_rules())
@@ -207,21 +215,21 @@ class level(object):
         new_prop_list: list[tuple[objects.Object, tuple[type[objects.Text], int]]] = []
         for world in self.world_list:
             for rule in world.rule_list:
-                for noun_negated, noun_type, infix_list, oper_type, prop_negated_count, prop_type in rules.analysis_rule(rule):
+                for prefix_list, noun_negated, noun_type, infix_list, oper_type, prop_negated_count, prop_type in rules.analysis_rule(rule):
                     obj_type = objects.nouns_objs_dicts.get_obj(noun_type)
                     if obj_type is None:
                         if noun_type == objects.ALL:
                             if noun_negated:
                                 for obj in [o for o in world.object_list if isinstance(o, objects.in_not_all)]:
-                                    if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)):
+                                    if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
                                         new_prop_list.append((obj, (prop_type, prop_negated_count)))
                             else:
                                 for obj in [o for o in world.object_list if not isinstance(o, objects.not_in_all)]:
-                                    if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)):
+                                    if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
                                         new_prop_list.append((obj, (prop_type, prop_negated_count)))
                     else:
                         if obj_type == objects.Game:
-                            if not noun_negated and len(infix_list) == 0:
+                            if (not noun_negated) and len(infix_list) == 0 and self.meet_prefix_conditions(world, objects.Object((0, 0)), prefix_list, True):
                                 del_props = []
                                 for old_prop_type, old_prop_negated_count in self.game_properties:
                                     if prop_type == old_prop_type:
@@ -232,18 +240,18 @@ class level(object):
                                     self.game_properties.remove((old_prop_type, old_prop_negated_count))
                                 self.game_properties.append((prop_type, prop_negated_count))
                         elif obj_type == objects.Level:
-                            if not noun_negated and len(infix_list) == 0:
+                            if (not noun_negated) and len(infix_list) == 0 and self.meet_prefix_conditions(world, objects.Object((0, 0)), prefix_list, True):
                                 self.new_prop(prop_type, prop_negated_count)
                         elif obj_type == objects.World:
-                            if not noun_negated and len(infix_list) == 0:
+                            if (not noun_negated) and len(infix_list) == 0 and self.meet_prefix_conditions(world, objects.Object((0, 0)), prefix_list, True):
                                 world.new_prop(prop_type, prop_negated_count)
                         if noun_negated:
                             for obj in [o for o in world.object_list if (not isinstance(o, objects.not_in_all)) and not isinstance(o, obj_type)]:
-                                if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)):
+                                if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
                                     new_prop_list.append((obj, (prop_type, prop_negated_count)))
                         else:
                             for obj in world.get_objs_from_type(obj_type):
-                                if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)):
+                                if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
                                     new_prop_list.append((obj, (prop_type, prop_negated_count)))
         for obj, prop in new_prop_list:
             prop_type, prop_negated_count = prop
@@ -764,7 +772,7 @@ class level(object):
             old_type_is_old_type_list: list[type[objects.Object]] = []
             old_type_is_not_old_type_list: list[type[objects.Object]] = []
             for rule in world.strict_rule_list:
-                for old_negated, old_type, infix_list, oper_type, new_negated_count, new_type in rules.analysis_rule(rule):
+                for prefix_list, old_negated, old_type, infix_list, oper_type, new_negated_count, new_type in rules.analysis_rule(rule):
                     new_negated = new_negated_count % 2 == 1
                     special_not_new_types: dict[type[objects.Object], list[type[objects.Object]]] = {}
                     if issubclass(old_type, (objects.Level, objects.World, objects.Clone)):
@@ -779,7 +787,7 @@ class level(object):
             special_new_types[objects.World] = []
             special_new_types[objects.Clone] = []
             for rule in world.strict_rule_list:
-                for old_negated, old_type, infix_list, oper_type, new_negated_count, new_type in rules.analysis_rule(rule):
+                for prefix_list, old_negated, old_type, infix_list, oper_type, new_negated_count, new_type in rules.analysis_rule(rule):
                     if issubclass(old_type, (objects.Level, objects.World, objects.Clone)):
                         if old_type in old_type_is_old_type_list:
                             continue

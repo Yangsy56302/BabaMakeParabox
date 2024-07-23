@@ -353,6 +353,11 @@ class Noun(Text):
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
 
+class Prefix(Text):
+    typename: str = "Prefix"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
+
 class Infix(Text):
     typename: str = "Infix"
     def __eq__(self, obj: "Object") -> bool:
@@ -563,6 +568,12 @@ class CLONE(Noun):
 class GAME(Noun):
     typename: str = "GAME"
     sprite_name: str = "text_game"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
+
+class META(Prefix):
+    typename: str = "META"
+    sprite_name: str = "text_meta"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
 
@@ -804,6 +815,7 @@ object_name: dict[str, type[Object]] = {
     "WORLD": WORLD,
     "CLONE": CLONE,
     "GAME": GAME,
+    "META": META,
     "ON": ON,
     "FEELING": FEELING,
     "IS": IS,

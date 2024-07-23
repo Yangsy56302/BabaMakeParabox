@@ -147,6 +147,7 @@ sprite_colors["text_level"] = colors.MAGENTA
 sprite_colors["text_world"] = colors.LIGHT_GRAY_BLUE
 sprite_colors["text_clone"] = colors.LIGHTER_GRAY_BLUE
 sprite_colors["text_game"] = colors.LIGHT_RED
+sprite_colors["text_meta"] = colors.MAGENTA
 sprite_colors["text_on"] = colors.WHITE
 sprite_colors["text_feeling"] = colors.WHITE
 sprite_colors["text_is"] = colors.WHITE

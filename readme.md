@@ -195,6 +195,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 3.13   | 2024.07.23 | World is Sink; Text is Float |
 | 3.131  | 2024.07.23 | Change is Small |
 | 3.132  | 2024.07.23 | Game has Music |
+| 3.14   | 2024.07.23 | not meta World is Push |
 
 ## Bug Reports and Suggestions
 
