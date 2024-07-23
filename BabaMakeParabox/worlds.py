@@ -15,27 +15,45 @@ class world(object):
         self.color: colors.ColorHex = color if color is not None else colors.random_world_color()
         self.object_list: list[objects.Object] = []
         self.object_pos_index: list[list[objects.Object]]
-        self.properties: list[tuple[type[objects.Object], int]] = []
+        self.world_properties: list[tuple[type[objects.Object], int]] = []
+        self.clone_properties: list[tuple[type[objects.Object], int]] = []
         self.rule_list: list[rules.Rule] = []
-        self.strict_rule_list: list[rules.Rule] = []
         self.refresh_index()
     def __eq__(self, world: "world") -> bool:
         return self.name == world.name and self.inf_tier == world.inf_tier
-    def new_prop(self, prop: type[objects.Text], negated_count: int = 0) -> None:
+    def new_world_prop(self, prop: type[objects.Text], negated_count: int = 0) -> None:
         del_props = []
-        for old_prop, old_negated_count in self.properties:
+        for old_prop, old_negated_count in self.world_properties:
             if prop == old_prop:
                 if old_negated_count > negated_count:
                     return
                 del_props.append((old_prop, old_negated_count))
         for old_prop, old_negated_count in del_props:
-            self.properties.remove((old_prop, old_negated_count))
-        self.properties.append((prop, negated_count))
-    def del_prop(self, prop: type[objects.Text], negated_count: int = 0) -> None:
-        if (prop, negated_count) in self.properties:
-            self.properties.remove((prop, negated_count))
-    def has_prop(self, prop: type[objects.Text], negate: bool = False) -> bool:
-        for get_prop, get_negated_count in self.properties:
+            self.world_properties.remove((old_prop, old_negated_count))
+        self.world_properties.append((prop, negated_count))
+    def del_world_prop(self, prop: type[objects.Text], negated_count: int = 0) -> None:
+        if (prop, negated_count) in self.world_properties:
+            self.world_properties.remove((prop, negated_count))
+    def has_world_prop(self, prop: type[objects.Text], negate: bool = False) -> bool:
+        for get_prop, get_negated_count in self.world_properties:
+            if get_prop == prop and get_negated_count % 2 == int(negate):
+                return True
+        return False
+    def new_clone_prop(self, prop: type[objects.Text], negated_count: int = 0) -> None:
+        del_props = []
+        for old_prop, old_negated_count in self.clone_properties:
+            if prop == old_prop:
+                if old_negated_count > negated_count:
+                    return
+                del_props.append((old_prop, old_negated_count))
+        for old_prop, old_negated_count in del_props:
+            self.clone_properties.remove((old_prop, old_negated_count))
+        self.clone_properties.append((prop, negated_count))
+    def del_clone_prop(self, prop: type[objects.Text], negated_count: int = 0) -> None:
+        if (prop, negated_count) in self.clone_properties:
+            self.clone_properties.remove((prop, negated_count))
+    def has_clone_prop(self, prop: type[objects.Text], negate: bool = False) -> bool:
+        for get_prop, get_negated_count in self.clone_properties:
             if get_prop == prop and get_negated_count % 2 == int(negate):
                 return True
         return False

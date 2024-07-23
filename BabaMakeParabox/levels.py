@@ -150,35 +150,23 @@ class level(object):
         for sub_world_obj in sub_world_objs:
             sub_world = self.get_exist_world(sub_world_obj.name, sub_world_obj.inf_tier)
             self.recursion_rules(sub_world, rule_list, passed)
-    def recursion_strict_rules(self, world: worlds.world, rule_list: Optional[list[rules.Rule]] = None, passed: Optional[list[worlds.world]] = None) -> None:
-        passed = passed if passed is not None else []
-        if world in passed:
-            return
-        passed.append(world)
-        rule_list = rule_list if rule_list is not None else []
-        world.strict_rule_list.extend(rule_list)
-        rule_list = world.strict_rule_list
-        sub_world_objs = world.get_worlds()
-        if len(sub_world_objs) == 0:
-            return
-        for sub_world_obj in sub_world_objs:
-            sub_world = self.get_exist_world(sub_world_obj.name, sub_world_obj.inf_tier)
-            self.recursion_rules(sub_world, rule_list, passed)
     def update_rules(self, old_prop_dict: dict[uuid.UUID, list[tuple[type[objects.Text], int]]]) -> None:
         self.game_properties = []
         self.properties = []
         for world in self.world_list:
-            world.properties = []
+            world.world_properties = []
             for obj in world.object_list:
                 obj.clear_prop()
-            world.strict_rule_list = rules.to_atom_rules(world.get_rules())
         for world in self.world_list:
-            self.recursion_strict_rules(world)
-            world.strict_rule_list.extend([r for r in self.rule_list if r[-1] is objects.WORD])
-            world.strict_rule_list = basics.remove_same_elements(world.strict_rule_list)
+            self.recursion_rules(world)
         for world in self.world_list:
-            for word_rule in basics.remove_same_elements(world.strict_rule_list):
-                for prefix_list, noun_negated, noun_type, infix_list, oper_type, prop_negated_count, prop_type in rules.analysis_rule(word_rule):
+            world.rule_list = rules.to_atom_rules(world.get_rules())
+            world.rule_list.extend(rules.to_atom_rules(self.rule_list))
+            world.rule_list = basics.remove_same_elements(world.rule_list)
+        new_prop_list: list[tuple[objects.Object, tuple[type[objects.Text], int]]] = []
+        for world in self.world_list:
+            for rule in world.rule_list:
+                for prefix_list, noun_negated, noun_type, infix_list, oper_type, prop_negated_count, prop_type in rules.analysis_rule(rule):
                     if prop_type != objects.WORD:
                         continue
                     obj_type = objects.nouns_objs_dicts.get_obj(noun_type)
@@ -186,33 +174,35 @@ class level(object):
                         if noun_type == objects.ALL:
                             if noun_negated:
                                 for obj in [o for o in world.object_list if isinstance(o, objects.in_not_all)]:
-                                    if self.meet_infix_conditions(world, obj, infix_list) and self.meet_prefix_conditions(world, obj, prefix_list):
-                                        obj.new_prop(objects.WORD, prop_negated_count)
+                                    if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
+                                        new_prop_list.append((obj, (objects.WORD, prop_negated_count)))
                             else:
                                 for obj in [o for o in world.object_list if not isinstance(o, objects.not_in_all)]:
-                                    if self.meet_infix_conditions(world, obj, infix_list) and self.meet_prefix_conditions(world, obj, prefix_list):
-                                        obj.new_prop(objects.WORD, prop_negated_count)
+                                    if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
+                                        new_prop_list.append((obj, (objects.WORD, prop_negated_count)))
                     else:
                         if noun_negated:
                             for obj in [o for o in world.object_list if (not isinstance(o, objects.not_in_all)) and not isinstance(o, obj_type)]:
-                                if self.meet_infix_conditions(world, obj, infix_list) and self.meet_prefix_conditions(world, obj, prefix_list):
-                                    obj.new_prop(objects.WORD, prop_negated_count)
+                                if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
+                                    new_prop_list.append((obj, (objects.WORD, prop_negated_count)))
                         else:
                             for obj in world.get_objs_from_type(obj_type):
-                                if self.meet_infix_conditions(world, obj, infix_list) and self.meet_prefix_conditions(world, obj, prefix_list):
-                                    obj.new_prop(objects.WORD, prop_negated_count)
+                                if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
+                                    new_prop_list.append((obj, (objects.WORD, prop_negated_count)))
+        for obj, prop in new_prop_list:
+            prop_type, prop_negated_count = prop
+            obj.new_prop(prop_type, prop_negated_count)
         for world in self.world_list:
-            world.strict_rule_list = rules.to_atom_rules(world.get_rules())
-            world.rule_list = world.strict_rule_list[:]
-            world.strict_rule_list = basics.remove_same_elements(world.strict_rule_list)
+            world.world_properties = []
+            world.rule_list = rules.to_atom_rules(world.get_rules())
             for obj in world.object_list:
                 obj.clear_prop()
         for world in self.world_list:
             self.recursion_rules(world)
-            world.rule_list.extend([r for r in self.rule_list if r[-1] is objects.WORD])
-            world.rule_list.extend(self.rule_list)
+        for world in self.world_list:
+            world.rule_list.extend(rules.to_atom_rules(self.rule_list))
             world.rule_list = basics.remove_same_elements(world.rule_list)
-        new_prop_list: list[tuple[objects.Object, tuple[type[objects.Text], int]]] = []
+        new_prop_list = []
         for world in self.world_list:
             for rule in world.rule_list:
                 for prefix_list, noun_negated, noun_type, infix_list, oper_type, prop_negated_count, prop_type in rules.analysis_rule(rule):
@@ -244,7 +234,10 @@ class level(object):
                                 self.new_prop(prop_type, prop_negated_count)
                         elif obj_type == objects.World:
                             if (not noun_negated) and len(infix_list) == 0 and self.meet_prefix_conditions(world, objects.Object((0, 0)), prefix_list, True):
-                                world.new_prop(prop_type, prop_negated_count)
+                                world.new_world_prop(prop_type, prop_negated_count)
+                        elif obj_type == objects.Clone:
+                            if (not noun_negated) and len(infix_list) == 0 and self.meet_prefix_conditions(world, objects.Object((0, 0)), prefix_list, True):
+                                world.new_clone_prop(prop_type, prop_negated_count)
                         if noun_negated:
                             for obj in [o for o in world.object_list if (not isinstance(o, objects.not_in_all)) and not isinstance(o, obj_type)]:
                                 if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
@@ -442,7 +435,7 @@ class level(object):
         move_list = []
         pushing_game = False
         for world in self.world_list:
-            if world.has_prop(objects.YOU) or self.has_prop(objects.YOU):
+            if world.has_world_prop(objects.YOU) or self.has_prop(objects.YOU):
                 for obj in world.object_list:
                     new_move_list = self.get_move_list(objects.MOVE, world, obj, spaces.S)
                     if new_move_list is not None:
@@ -482,7 +475,7 @@ class level(object):
     def move(self) -> bool:
         pushing_game = False
         for world in self.world_list:
-            if world.has_prop(objects.MOVE) or self.has_prop(objects.MOVE):
+            if world.has_world_prop(objects.MOVE) or self.has_prop(objects.MOVE):
                 for obj in world.object_list:
                     if not obj.has_prop(objects.FLOAT):
                         new_move_list = self.get_move_list(objects.MOVE, world, obj, spaces.S)
@@ -511,7 +504,7 @@ class level(object):
         move_list = []
         pushing_game = False
         for world in self.world_list:
-            if world.has_prop(objects.SHIFT) or self.has_prop(objects.SHIFT):
+            if world.has_world_prop(objects.SHIFT) or self.has_prop(objects.SHIFT):
                 for obj in world.object_list:
                     if not obj.has_prop(objects.FLOAT):
                         new_move_list = self.get_move_list(objects.SHIFT, world, obj, spaces.D)
@@ -538,7 +531,7 @@ class level(object):
         if self.has_prop(objects.TELE):
             pass
         for world in self.world_list:
-            if world.has_prop(objects.TELE):
+            if world.has_world_prop(objects.TELE):
                 pass
         tele_list: list[tuple[worlds.world, objects.Object, worlds.world, spaces.Coord]] = []
         object_list: list[tuple[worlds.world, objects.Object]] = []
@@ -570,7 +563,7 @@ class level(object):
         delete_list = []
         for world in self.world_list:
             sink_objs = [o for o in world.object_list if o.has_prop(objects.SINK)]
-            if world.has_prop(objects.SINK) or self.has_prop(objects.SINK):
+            if world.has_world_prop(objects.SINK) or self.has_prop(objects.SINK):
                 for obj in world.object_list:
                     if not obj.has_prop(objects.FLOAT):
                         delete_list.append(obj)
@@ -592,12 +585,12 @@ class level(object):
         for world in self.world_list:
             melt_objs = [o for o in world.object_list if o.has_prop(objects.MELT)]
             hot_objs = [o for o in world.object_list if o.has_prop(objects.HOT)]
-            if len(hot_objs) != 0 and (world.has_prop(objects.MELT) or self.has_prop(objects.MELT)):
+            if len(hot_objs) != 0 and (world.has_world_prop(objects.MELT) or self.has_prop(objects.MELT)):
                 for melt_obj in melt_objs:
                     if not melt_obj.has_prop(objects.FLOAT):
                         delete_list.extend(world.object_list)
                 continue
-            if len(melt_objs) != 0 and (world.has_prop(objects.HOT) or self.has_prop(objects.HOT)):
+            if len(melt_objs) != 0 and (world.has_world_prop(objects.HOT) or self.has_prop(objects.HOT)):
                 for melt_obj in melt_objs:
                     if not melt_obj.has_prop(objects.FLOAT):
                         delete_list.append(melt_obj)
@@ -616,16 +609,16 @@ class level(object):
         for world in self.world_list:
             you_objs = [o for o in world.object_list if o.has_prop(objects.YOU)]
             defeat_objs = [o for o in world.object_list if o.has_prop(objects.DEFEAT)]
-            if len(defeat_objs) != 0 and (world.has_prop(objects.YOU) or self.has_prop(objects.YOU)):
+            if len(defeat_objs) != 0 and (world.has_world_prop(objects.YOU) or self.has_prop(objects.YOU)):
                 delete_list.extend(world.object_list)
                 continue
             for you_obj in you_objs:
-                if world.has_prop(objects.DEFEAT) or self.has_prop(objects.DEFEAT):
+                if world.has_world_prop(objects.DEFEAT) or self.has_prop(objects.DEFEAT):
                     if you_obj not in delete_list:
                         delete_list.append(you_obj)
                         continue
                 for defeat_obj in defeat_objs:
-                    if self.same_float_prop(defeat_obj, you_obj) or world.has_prop(objects.DEFEAT) or self.has_prop(objects.DEFEAT):
+                    if self.same_float_prop(defeat_obj, you_obj) or world.has_world_prop(objects.DEFEAT) or self.has_prop(objects.DEFEAT):
                         if you_obj not in delete_list:
                             delete_list.append(you_obj)
         for obj in delete_list:
@@ -637,10 +630,10 @@ class level(object):
         for world in self.world_list:
             shut_objs = [o for o in world.object_list if o.has_prop(objects.SHUT)]
             open_objs = [o for o in world.object_list if o.has_prop(objects.OPEN)]
-            if len(open_objs) != 0 and (world.has_prop(objects.SHUT) or self.has_prop(objects.SHUT)):
+            if len(open_objs) != 0 and (world.has_world_prop(objects.SHUT) or self.has_prop(objects.SHUT)):
                 delete_list.extend(world.object_list)
                 continue
-            if len(shut_objs) != 0 and (world.has_prop(objects.OPEN) or self.has_prop(objects.OPEN)):
+            if len(shut_objs) != 0 and (world.has_world_prop(objects.OPEN) or self.has_prop(objects.OPEN)):
                 delete_list.extend(world.object_list)
                 continue
             for open_obj in open_objs:
@@ -656,7 +649,6 @@ class level(object):
             self.sound_events.append("open")
     def transform(self) -> tuple[list["level"], list[objects.Object], list[type[objects.Object]]]:
         new_levels: list[level] = []
-        level_transform_to: list[objects.Object] = []
         new_window_objects: list[type[objects.Object]] = []
         for world in self.world_list:
             delete_object_list = []
@@ -766,116 +758,137 @@ class level(object):
                     delete_object_list.append(old_obj)
             for delete_obj in delete_object_list:
                 world.del_obj(delete_obj)
+        transform_to: dict[type[objects.Object], list[objects.Object]] = {}
+        special_new_types: dict[type[objects.Object], list[type[objects.Object]]] = {}
+        special_not_new_types: dict[type[objects.Object], list[type[objects.Object]]] = {}
+        special_new_types[objects.Level] = []
+        special_not_new_types[objects.Level] = []
+        transform_to[objects.Level] = []
+        for prop_type, prop_negated_count in self.properties:
+            if not issubclass(prop_type, objects.Noun):
+                continue
+            if issubclass(prop_type, objects.ALL):
+                if prop_negated_count % 2 == 0:
+                    special_new_types[objects.Level].extend(objects.in_not_all)
+                else:
+                    special_not_new_types[objects.Level].extend(objects.in_not_all)
+            else:
+                new_type = objects.nouns_objs_dicts.get_exist_obj(prop_type)
+                if prop_negated_count % 2 == 0:
+                    special_new_types[objects.Level].append(new_type)
+                else:
+                    special_not_new_types[objects.Level].append(new_type)
         for world in self.world_list:
-            world_transform_to: list[objects.Object] = []
-            clone_transform_to: list[objects.Object] = []
-            old_type_is_old_type_list: list[type[objects.Object]] = []
-            old_type_is_not_old_type_list: list[type[objects.Object]] = []
-            for rule in world.strict_rule_list:
-                for prefix_list, old_negated, old_type, infix_list, oper_type, new_negated_count, new_type in rules.analysis_rule(rule):
-                    new_negated = new_negated_count % 2 == 1
-                    special_not_new_types: dict[type[objects.Object], list[type[objects.Object]]] = {}
-                    if issubclass(old_type, (objects.Level, objects.World, objects.Clone)):
-                        if new_negated and not old_negated:
-                            special_not_new_types[old_type] = special_not_new_types.get(old_type, []) + [new_type]
-                            if issubclass(new_type, old_type):
-                                old_type_is_not_old_type_list.append(old_type)
-                        elif (not new_negated) and (not old_negated) and issubclass(new_type, old_type):
-                            old_type_is_old_type_list.append(old_type)
-            special_new_types: dict[type[objects.Object], list[type[objects.Object]]] = {}
-            special_new_types[objects.Level] = []
-            special_new_types[objects.World] = []
-            special_new_types[objects.Clone] = []
-            for rule in world.strict_rule_list:
-                for prefix_list, old_negated, old_type, infix_list, oper_type, new_negated_count, new_type in rules.analysis_rule(rule):
-                    if issubclass(old_type, (objects.Level, objects.World, objects.Clone)):
-                        if old_type in old_type_is_old_type_list:
-                            continue
-                        if issubclass(new_type, objects.Noun):
-                            if issubclass(new_type, objects.ALL):
-                                special_new_types[old_type].extend([t for t in self.all_list if t not in special_not_new_types])
-                            elif new_type not in special_not_new_types:
-                                special_new_types[old_type].append(new_type)
+            for old_type in (objects.World, objects.Clone):
+                special_new_types[old_type] = []
+                special_not_new_types[old_type] = []
+                transform_to[old_type] = []
+            for prop_type, prop_negated_count in world.world_properties:
+                if not issubclass(prop_type, objects.Noun):
+                    continue
+                if issubclass(prop_type, objects.ALL):
+                    if prop_negated_count % 2 == 0:
+                        special_new_types[objects.World].extend(objects.in_not_all)
+                    else:
+                        special_not_new_types[objects.World].extend(objects.in_not_all)
+                else:
+                    new_type = objects.nouns_objs_dicts.get_exist_obj(prop_type)
+                    if prop_negated_count % 2 == 0:
+                        special_new_types[objects.World].append(new_type)
+                    else:
+                        special_not_new_types[objects.World].append(new_type)
+            for prop_type, prop_negated_count in world.clone_properties:
+                if not issubclass(prop_type, objects.Noun):
+                    continue
+                if issubclass(prop_type, objects.ALL):
+                    if prop_negated_count % 2 == 0:
+                        special_new_types[objects.Clone].extend(objects.in_not_all)
+                    else:
+                        special_not_new_types[objects.Clone].extend(objects.in_not_all)
+                else:
+                    new_type = objects.nouns_objs_dicts.get_exist_obj(prop_type)
+                    if prop_negated_count % 2 == 0:
+                        special_new_types[objects.Clone].append(new_type)
+                    else:
+                        special_not_new_types[objects.Clone].append(new_type)
             for old_type in (objects.Level, objects.World, objects.Clone):
-                if old_type in old_type_is_not_old_type_list:
-                    if issubclass(old_type, objects.Level):
-                        level_transform_to.append(objects.Empty((0, 0)))
-                    elif issubclass(old_type, objects.World):
-                        world_transform_to.append(objects.Empty((0, 0)))
-                    elif issubclass(old_type, objects.Clone):
-                        clone_transform_to.append(objects.Empty((0, 0)))
+                if old_type in special_not_new_types[old_type]:
+                    transform_to[old_type].append(objects.Empty((0, 0)))
                 for new_type in special_new_types[old_type]:
                     if issubclass(old_type, objects.Level):
                         if issubclass(new_type, objects.Level):
-                            continue
+                            transform_to[objects.Level] = []
+                            break
                         elif issubclass(new_type, objects.World):
                             info = {"from": {"type": objects.Level, "name": self.name}, "to": {"type": objects.World}}
-                            level_transform_to.append(objects.Transform((0, 0), info))
+                            transform_to[objects.Level].append(objects.Transform((0, 0), info))
                         elif issubclass(new_type, objects.Clone):
                             info = {"from": {"type": objects.Level, "name": self.name}, "to": {"type": objects.Clone}}
-                            level_transform_to.append(objects.Transform((0, 0), info))
+                            transform_to[objects.Level].append(objects.Transform((0, 0), info))
                         elif issubclass(new_type, objects.Game):
-                            level_transform_to.append(objects.Empty((0, 0)))
+                            transform_to[objects.Level].append(objects.Empty((0, 0)))
                             new_window_objects.append(objects.LEVEL)
                         elif issubclass(new_type, objects.Text):
-                            level_transform_to.append(objects.LEVEL((0, 0)))
+                            transform_to[objects.Level].append(objects.LEVEL((0, 0)))
                         else:
-                            level_transform_to.append(new_type((0, 0)))
+                            transform_to[objects.Level].append(new_type((0, 0)))
                     elif issubclass(old_type, objects.World):
                         if issubclass(new_type, objects.World):
-                            continue
+                            transform_to[objects.World] = []
+                            break
                         elif issubclass(new_type, objects.Level):
                             new_levels.append(level(world.name, self.world_list, self.name, world.name, world.inf_tier, self.rule_list))
-                            world_transform_to.append(objects.Level((0, 0), world.name))
+                            transform_to[objects.World].append(objects.Level((0, 0), world.name))
                         elif issubclass(new_type, objects.Clone):
-                            world_transform_to.append(objects.Clone((0, 0), world.name, world.inf_tier))
+                            transform_to[objects.World].append(objects.Clone((0, 0), world.name, world.inf_tier))
                         elif issubclass(new_type, objects.Game):
-                            level_transform_to.append(objects.Empty((0, 0)))
+                            transform_to[objects.World].append(objects.Empty((0, 0)))
                             new_window_objects.append(objects.WORLD)
                         elif issubclass(new_type, objects.Text):
-                            world_transform_to.append(objects.WORLD((0, 0)))
+                            transform_to[objects.World].append(objects.WORLD((0, 0)))
                         else:
-                            world_transform_to.append(new_type((0, 0))) # type: ignore
+                            transform_to[objects.World].append(new_type((0, 0))) # type: ignore
                     elif issubclass(old_type, objects.Clone):
                         if issubclass(new_type, objects.Clone):
-                            continue
+                            transform_to[objects.Clone] = []
+                            break
                         elif issubclass(new_type, objects.Level):
                             new_levels.append(level(world.name, self.world_list, self.name, world.name, world.inf_tier, self.rule_list))
-                            clone_transform_to.append(objects.Level((0, 0), world.name))
+                            transform_to[objects.Clone].append(objects.Level((0, 0), world.name))
                         elif issubclass(new_type, objects.World):
-                            clone_transform_to.append(objects.World((0, 0), world.name, world.inf_tier))
+                            transform_to[objects.Clone].append(objects.World((0, 0), world.name, world.inf_tier))
                         elif issubclass(new_type, objects.Game):
-                            level_transform_to.append(objects.Empty((0, 0)))
+                            transform_to[objects.Clone].append(objects.Empty((0, 0)))
                             new_window_objects.append(objects.CLONE)
                         elif issubclass(new_type, objects.Text):
-                            clone_transform_to.append(objects.CLONE((0, 0)))
+                            transform_to[objects.Clone].append(objects.CLONE((0, 0)))
                         else:
-                            clone_transform_to.append(new_type((0, 0))) # type: ignore
+                            transform_to[objects.Clone].append(new_type((0, 0))) # type: ignore
             delete_special_object_list: list[objects.Object] = []
             for super_world in self.world_list:
-                if len(world_transform_to) != 0:
+                if len(transform_to[objects.World]) != 0:
                     for world_obj in filter(lambda o: o.name == world.name and o.inf_tier == world.inf_tier, super_world.get_worlds()):
                         delete_special_object_list.append(world_obj)
-                        for transform_obj in world_transform_to:
+                        for transform_obj in transform_to[objects.World]:
                             transform_obj.pos = world_obj.pos
                             transform_obj.facing = world_obj.facing
                             super_world.new_obj(transform_obj)
-                if len(clone_transform_to) != 0:
+                if len(transform_to[objects.Clone]) != 0:
                     for clone_obj in filter(lambda o: o.name == world.name and o.inf_tier == world.inf_tier, super_world.get_clones()):
                         delete_special_object_list.append(clone_obj)
-                        for transform_obj in clone_transform_to:
+                        for transform_obj in transform_to[objects.Clone]:
                             transform_obj.pos = clone_obj.pos
                             transform_obj.facing = clone_obj.facing
                             super_world.new_obj(transform_obj)
             for obj in delete_special_object_list:
                 super_world.del_obj(obj)
-        return (new_levels, level_transform_to, new_window_objects)
+        return (new_levels, transform_to[objects.Level], new_window_objects)
     def win(self) -> bool:
         for world in self.world_list:
             you_objs = [o for o in world.object_list if o.has_prop(objects.YOU)]
             win_objs = [o for o in world.object_list if o.has_prop(objects.WIN)]
             for you_obj in you_objs:
-                if world.has_prop(objects.WIN) or self.has_prop(objects.WIN):
+                if world.has_world_prop(objects.WIN) or self.has_prop(objects.WIN):
                     if not you_obj.has_prop(objects.FLOAT):
                         self.sound_events.append("win")
                         return True
@@ -890,7 +903,7 @@ class level(object):
             you_objs = [o for o in world.object_list if o.has_prop(objects.YOU)]
             end_objs = [o for o in world.object_list if o.has_prop(objects.END)]
             for you_obj in you_objs:
-                if world.has_prop(objects.END) or self.has_prop(objects.END):
+                if world.has_world_prop(objects.END) or self.has_prop(objects.END):
                     if not you_obj.has_prop(objects.FLOAT):
                         self.sound_events.append("end")
                         return True
@@ -903,7 +916,7 @@ class level(object):
     def done(self) -> None:
         delete_list = []
         for world in self.world_list:
-            if world.has_prop(objects.DONE) or self.has_prop(objects.DONE):
+            if world.has_world_prop(objects.DONE) or self.has_prop(objects.DONE):
                 delete_list.extend(world.object_list)
             for obj in world.object_list:
                 if obj.has_prop(objects.DONE):
