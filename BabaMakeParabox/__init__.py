@@ -57,8 +57,7 @@ def main() -> None:
     change_options = input(languages.current_language["input.string"]) != ""
     if change_options:
         print(languages.current_language["main.change_options.fps"])
-        computer_level = int(input(languages.current_language["input.number"]))
-        match computer_level:
+        match int(input(languages.current_language["input.number"])):
             case 1:
                 basics.options.update({"fps": 5, "fpw": 1, "input_cooldown": 1, "world_display_recursion_depth": 1, "compressed_json_output": True})
             case 2:
@@ -67,6 +66,10 @@ def main() -> None:
                 basics.options.update({"fps": 30, "fpw": 5, "input_cooldown": 5, "world_display_recursion_depth": 3, "compressed_json_output": False})
             case 4:
                 basics.options.update({"fps": 60, "fpw": 10, "input_cooldown": 10, "world_display_recursion_depth": 4, "compressed_json_output": False})
+        if input(languages.current_language["main.change_options.bgm"]) in languages.yes:
+            basics.options.update({"bgm": {"enabled": True, "name": "rush_baba.mid"}})
+        else:
+            basics.options.update({"bgm": {"enabled": False, "name": "rush_baba.mid"}})
         print(languages.current_language["main.change_options.done"])
     print(languages.current_language["main.play_or_edit"])
     play_or_edit = int(input(languages.current_language["input.number"]))

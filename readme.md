@@ -38,9 +38,10 @@ If you want to run the source code, download These Things:
 - **PyInstaller** **_(optional, if you need exe)_**: Run `pip install -U pyinstaller` in Terminal too
 
 Start `BabaMakeParabox.exe`, then follow the terminal messages to start the game.
+Please make sure you have a levelpack file, if not, you can [make one](#how-to-make-a-custom-levelpack).
 (or run `python BabaMakeParabox.py`, if you have code and python etc.)
 
-If you need to make an exe, run `py2exe.bat` in the root folder.
+If you need to make an exe, run `py2exe.bat`.
 
 ### How to Control
 
@@ -67,12 +68,7 @@ Please remember:
 
 ...
 
-## How to Make a Custom World
-
-**Important: as default, the levels / worlds / clones that placed**
-**are pointed to the levels / worlds / clones that where the camera is.**
-If you want to put levels / worlds / clones inside other levels / worlds,
-please considering shift + enter, or cut, copy, and paste.
+## How to Make a Custom Levelpack
 
 ### How to Control
 
@@ -103,9 +99,14 @@ please considering shift + enter, or cut, copy, and paste.
 - Close Pygame Window: Save and quit.
 - Close Terminal: Do not save, just quit.
 
-Note: Key descriptions with \* means you need to
-input some informations on terminal after pressing this key.
+**Important: Key descriptions with \* means you need to**
+**input some informations on terminal after pressing this key.**
 During that time, the game window will freeze because the program is waiting for inputs.
+
+**Important: as default, the levels / worlds / clones that placed**
+**are pointed to the levels / worlds / clones that where the camera is.**
+If you want to put levels / worlds / clones inside other levels / worlds,
+please considering shift + enter, or cut, copy, and paste.
 
 ## Misc
 
@@ -193,6 +194,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 3.121  | 2024.07.22 | Bug on Flag feeling Win is Fix |
 | 3.13   | 2024.07.23 | World is Sink; Text is Float |
 | 3.131  | 2024.07.23 | Change is Small |
+| 3.132  | 2024.07.23 | Game has Music |
 
 ## Bug Reports and Suggestions
 

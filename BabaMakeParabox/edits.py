@@ -73,7 +73,6 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
     object_type_shortcuts: dict[int, type[objects.Object]] = {k: objects.object_name[v] for k, v in enumerate(basics.options["object_type_shortcuts"])}
     level_changed = True
     world_changed = True
-    yes = ["y", "Y", "yes", "Yes", "YES"]
     frame = 0
     wiggle = 1
     editor_running = True
@@ -212,7 +211,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                 current_world.new_obj(current_object_type(current_cursor_pos, current_facing))
         elif keys[keybinds["BACKSLASH"]] and cooldowns[keybinds["BACKSLASH"]] == 0:
             if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
-                if input(languages.current_language["editor.level.new"]) in yes:
+                if input(languages.current_language["editor.level.new"]) in languages.yes:
                     history.append(copy.deepcopy(levelpack))
                     level_name = input(languages.current_language["editor.level.new.name"])
                     super_level = input(languages.current_language["editor.level.new.super_level.name"])
@@ -234,7 +233,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                     level_changed = True
                     world_changed = True
             else:
-                if input(languages.current_language["editor.world.new"]) in yes:
+                if input(languages.current_language["editor.world.new"]) in languages.yes:
                     history.append(copy.deepcopy(levelpack))
                     name = input(languages.current_language["editor.world.new.name"])
                     width = input(languages.current_language["editor.world.new.width"])
@@ -251,14 +250,14 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                     world_changed = True
         elif keys[keybinds["DELETE"]] and cooldowns[keybinds["DELETE"]] == 0:
             if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
-                if input(languages.current_language["editor.level.delete"]) in yes:
+                if input(languages.current_language["editor.level.delete"]) in languages.yes:
                     levelpack.level_list.pop(current_level_index)
                     current_level_index -= 1
                     current_world_index = 0
                     level_changed = True
                     world_changed = True
             else:
-                if input(languages.current_language["editor.world.delete"]) in yes:
+                if input(languages.current_language["editor.world.delete"]) in languages.yes:
                     current_level.world_list.pop(current_world_index)
                     current_world_index -= 1
                     world_changed = True

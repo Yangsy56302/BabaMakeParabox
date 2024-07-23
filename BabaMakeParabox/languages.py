@@ -14,3 +14,6 @@ current_language = language_dict[basics.options["lang"] if basics.options["lang"
 def set_current_language(name: str) -> None:
     global current_language
     current_language = language_dict.get(name, language_dict["en_US"])
+
+yes = ["y", "Y", "yes", "Yes", "YES"]
+no = ["n", "N", "no", "No", "NO"]
