@@ -3,7 +3,6 @@ from typing import Any, Optional
 from BabaMakeParabox import basics, objects, rules, levels
 
 class levelpack(object):
-    class_name: str = "levelpack"
     def __init__(self, name: str, level_list: list[levels.level], main_level: Optional[str] = None, rule_list: Optional[list[rules.Rule]] = None) -> None:
         self.name: str = name
         self.level_list: list[levels.level] = list(level_list)
@@ -13,10 +12,6 @@ class levelpack(object):
             for level in self.level_list:
                 level.rule_list.extend(self.rule_list)
                 level.rule_list = basics.remove_same_elements(level.rule_list)
-    def __str__(self) -> str:
-        return self.class_name
-    def __repr__(self) -> str:
-        return self.class_name
     def get_level(self, name: str) -> Optional[levels.level]:
         level = list(filter(lambda l: name == l.name, self.level_list))
         return level[0] if len(level) != 0 else None

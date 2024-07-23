@@ -2,13 +2,13 @@ from BabaMakeParabox import displays, objects
 
 import pygame
 
-def sub(objs_type_name: str) -> None:
+def sub(typename: str) -> None:
     pygame.init()
     window_size = (192, 192)
     window = pygame.display.set_mode(window_size)
-    pygame.display.set_caption(objs_type_name)
+    pygame.display.set_caption(typename)
     displays.sprites.update()
-    sprites = list(map(lambda i: displays.sprites.get(objects.object_name[objs_type_name].sprite_name, 0, i), range(1, 4)))
+    sprites = list(map(lambda i: displays.sprites.get(objects.object_name[typename].sprite_name, 0, i), range(1, 4)))
     pygame.display.set_icon(sprites[0])
     clock = pygame.time.Clock()
     wiggle = 0

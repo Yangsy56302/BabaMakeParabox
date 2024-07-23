@@ -9,7 +9,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
     for rule in levelpack.rule_list:
         str_list = []
         for obj_type in rule:
-            str_list.append(obj_type.class_name)
+            str_list.append(obj_type.typename)
         print(" ".join(str_list))
     for level in levelpack.level_list:
         for world in level.world_list:
@@ -294,7 +294,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
             for rule in levelpack.rule_list:
                 str_list = []
                 for obj_type in rule:
-                    str_list.append(obj_type.class_name)
+                    str_list.append(obj_type.typename)
                 print(" ".join(str_list))
         elif keys[keybinds["T"]] and cooldowns[keybinds["T"]] == 0:
             if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:

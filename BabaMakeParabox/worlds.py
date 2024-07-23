@@ -1,16 +1,12 @@
 from typing import Any, Optional
-import uuid
 import random
 
 from BabaMakeParabox import colors, spaces, objects, rules, displays
-
-import pygame
 
 def match_pos(obj: objects.Object, pos: spaces.Coord) -> bool:
     return obj.pos == pos
 
 class world(object):
-    class_name: str = "world"
     def __init__(self, name: str, size: tuple[int, int], inf_tier: int = 0, color: Optional[colors.ColorHex] = None) -> None:
         self.name: str = name
         self.inf_tier: int = inf_tier
@@ -25,10 +21,6 @@ class world(object):
         self.refresh_index()
     def __eq__(self, world: "world") -> bool:
         return self.name == world.name and self.inf_tier == world.inf_tier
-    def __str__(self) -> str:
-        return " ".join([self.class_name, self.name, str(self.inf_tier)])
-    def __repr__(self) -> str:
-        return " ".join([self.class_name, self.name, str(self.inf_tier)])
     def new_prop(self, prop: type[objects.Text], negated_count: int = 0) -> None:
         del_props = []
         for old_prop, old_negated_count in self.properties:

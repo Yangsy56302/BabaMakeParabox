@@ -158,7 +158,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 2.13   | 2024.07.12 | Esc is Out |
 | 2.2    | 2024.07.12 | World feeling Push and Options is Better |
 | 2.21   | 2024.07.12 | Bug is Fix; Patrick is You |
-| 2.22   | 2024.07.12 | Changes is Small |
+| 2.22   | 2024.07.12 | Change is Small |
 | 2.3    | 2024.07.13 | Baba is not You; Rule is Recursion |
 | 2.31   | 2024.07.14 | Baba is More and You |
 | 2.4    | 2024.07.14 | not Baba is You; Level is Baba |
@@ -192,6 +192,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 3.12   | 2024.07.22 | Width is not Height |
 | 3.121  | 2024.07.22 | Bug on Flag feeling Win is Fix |
 | 3.13   | 2024.07.23 | World is Sink; Text is Float |
+| 3.131  | 2024.07.23 | Change is Small |
 
 ## Bug Reports and Suggestions
 

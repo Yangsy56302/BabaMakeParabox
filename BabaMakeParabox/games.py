@@ -13,7 +13,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
     for rule in levelpack.rule_list:
         str_list = []
         for obj_type in rule:
-            str_list.append(obj_type.class_name)
+            str_list.append(obj_type.typename)
         print(" ".join(str_list))
     for level in levelpack.level_list:
         old_prop_dict: dict[uuid.UUID, list[tuple[type[objects.Text], int]]] = {}
@@ -175,13 +175,13 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 for rule in levelpack.rule_list:
                     str_list = []
                     for obj_type in rule:
-                        str_list.append(obj_type.class_name)
+                        str_list.append(obj_type.typename)
                     print(" ".join(str_list))
                 print(languages.current_language["game.world.rule_list"])
                 for rule in current_world.rule_list:
                     str_list = []
                     for obj_type in rule:
-                        str_list.append(obj_type.class_name)
+                        str_list.append(obj_type.typename)
                     print(" ".join(str_list))
             elif keys[keybinds["-"]] and cooldowns[keybinds["-"]] == 0:
                 current_world_index -= 1
@@ -266,9 +266,9 @@ def play(levelpack: levelpacks.levelpack) -> None:
             for obj_type in level_info["new_window_objects"]:
                 obj_type: type[objects.Object]
                 if os.path.exists("SubabaMakeParabox.exe"):
-                    os.system(f"start SubabaMakeParabox.exe {obj_type.class_name}")
+                    os.system(f"start SubabaMakeParabox.exe {obj_type.typename}")
                 elif os.path.exists("SubabaMakeParabox.py"):
-                    os.system(f"start /b python SubabaMakeParabox.py {obj_type.class_name}")
+                    os.system(f"start /b python SubabaMakeParabox.py {obj_type.typename}")
             transform_success = False
             if len(level_info["transform_to"]) != 0:
                 for level in levelpack.level_list:

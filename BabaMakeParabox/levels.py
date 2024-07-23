@@ -7,7 +7,6 @@ from BabaMakeParabox import basics, colors, spaces, objects, rules, worlds, disp
 import pygame
 
 class level(object):
-    class_name: str = "level"
     def __init__(self, name: str, world_list: list[worlds.world], super_level: Optional[str] = None, main_world_name: Optional[str] = None, main_world_tier: Optional[int] = None, rule_list: Optional[list[rules.Rule]] = None) -> None:
         self.name: str = name
         self.world_list: list[worlds.world] = list(world_list)
@@ -21,10 +20,6 @@ class level(object):
         self.sound_events: list[str] = []
     def __eq__(self, level: "level") -> bool:
         return self.name == level.name
-    def __str__(self) -> str:
-        return self.class_name
-    def __repr__(self) -> str:
-        return self.class_name
     def new_prop(self, prop: type[objects.Text], negated_count: int = 0) -> None:
         del_props = []
         for old_prop, old_negated_count in self.properties:

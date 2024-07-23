@@ -5,7 +5,7 @@ import uuid
 from BabaMakeParabox import colors, spaces
 
 class Object(object):
-    class_name: str = "Object"
+    typename: str = "Object"
     sprite_name: str
     def __init__(self, pos: spaces.Coord, facing: spaces.Orient = spaces.S) -> None:
         self.uuid: uuid.UUID = uuid.uuid4()
@@ -17,10 +17,6 @@ class Object(object):
         self.sprite_state: int = 0
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return self.class_name
-    def __repr__(self) -> str:
-        return self.class_name
     @property
     def pos(self) -> spaces.Coord:
         return (self.x, self.y)
@@ -59,65 +55,45 @@ class Object(object):
     def clear_prop(self) -> None:
         self.properties = []
     def to_json(self) -> dict[str, Any]:
-        return {"type": self.class_name, "position": [self.x, self.y], "orientation": spaces.orient_to_str(self.facing)} # type: ignore
+        return {"type": self.typename, "position": [self.x, self.y], "orientation": spaces.orient_to_str(self.facing)} # type: ignore
 
 class Static(Object):
-    class_name: str = "Static"
+    typename: str = "Static"
     def set_sprite(self) -> None:
         self.sprite_state = 0
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Tiled(Object):
-    class_name: str = "Tiled"
+    typename: str = "Tiled"
     def set_sprite(self, connected: dict[spaces.Orient, bool]) -> None:
         self.sprite_state = (connected[spaces.D] * 0x1) | (connected[spaces.W] * 0x2) | (connected[spaces.A] * 0x4) | (connected[spaces.S] * 0x8)
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Animated(Object):
-    class_name: str = "Animated"
+    typename: str = "Animated"
     def set_sprite(self, round_num: int) -> None:
         self.sprite_state = round_num % 4
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Directional(Object):
-    class_name: str = "Directional"
+    typename: str = "Directional"
     def set_sprite(self) -> None:
         self.sprite_state = int(math.log2(self.facing)) * 0x8
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class AnimatedDirectional(Object):
-    class_name: str = "AnimatedDirectional"
+    typename: str = "AnimatedDirectional"
     def set_sprite(self, round_num: int) -> None:
         self.sprite_state = int(math.log2(self.facing)) * 0x8 | round_num % 4
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Character(Object):
-    class_name: str = "Character"
+    typename: str = "Character"
     def set_sprite(self) -> None:
         self.sleeping = False
         if not self.sleeping:
@@ -130,283 +106,171 @@ class Character(Object):
             self.sprite_state = int(math.log2(self.facing)) * 0x8 | 0x7
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Baba(Character):
-    class_name: str = "Baba"
+    typename: str = "Baba"
     sprite_name: str = "baba"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Keke(Character):
-    class_name: str = "Keke"
+    typename: str = "Keke"
     sprite_name: str = "keke"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Me(Character):
-    class_name: str = "Me"
+    typename: str = "Me"
     sprite_name: str = "me"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Patrick(Directional):
-    class_name: str = "Patrick"
+    typename: str = "Patrick"
     sprite_name: str = "patrick"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Skull(Directional):
-    class_name: str = "Skull"
+    typename: str = "Skull"
     sprite_name: str = "skull"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Ghost(Directional):
-    class_name: str = "Ghost"
+    typename: str = "Ghost"
     sprite_name: str = "ghost"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Wall(Tiled):
-    class_name: str = "Wall"
+    typename: str = "Wall"
     sprite_name: str = "wall"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Hedge(Tiled):
-    class_name: str = "Hedge"
+    typename: str = "Hedge"
     sprite_name: str = "hedge"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Ice(Tiled):
-    class_name: str = "Ice"
+    typename: str = "Ice"
     sprite_name: str = "ice"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Tile(Static):
-    class_name: str = "Tile"
+    typename: str = "Tile"
     sprite_name: str = "tile"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Grass(Tiled):
-    class_name: str = "Grass"
+    typename: str = "Grass"
     sprite_name: str = "grass"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Water(Tiled):
-    class_name: str = "Water"
+    typename: str = "Water"
     sprite_name: str = "water"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Lava(Tiled):
-    class_name: str = "Lava"
+    typename: str = "Lava"
     sprite_name: str = "lava"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Door(Static):
-    class_name: str = "Door"
+    typename: str = "Door"
     sprite_name: str = "door"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Key(Static):
-    class_name: str = "Key"
+    typename: str = "Key"
     sprite_name: str = "key"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Box(Static):
-    class_name: str = "Box"
+    typename: str = "Box"
     sprite_name: str = "box"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Rock(Static):
-    class_name: str = "Rock"
+    typename: str = "Rock"
     sprite_name: str = "rock"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Fruit(Static):
-    class_name: str = "Fruit"
+    typename: str = "Fruit"
     sprite_name: str = "fruit"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Belt(AnimatedDirectional):
-    class_name: str = "Belt"
+    typename: str = "Belt"
     sprite_name: str = "belt"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Sun(Static):
-    class_name: str = "Sun"
+    typename: str = "Sun"
     sprite_name: str = "sun"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Moon(Static):
-    class_name: str = "Moon"
+    typename: str = "Moon"
     sprite_name: str = "moon"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Star(Static):
-    class_name: str = "Star"
+    typename: str = "Star"
     sprite_name: str = "star"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class What(Static):
-    class_name: str = "What"
+    typename: str = "What"
     sprite_name: str = "what"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Love(Static):
-    class_name: str = "Love"
+    typename: str = "Love"
     sprite_name: str = "love"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Flag(Static):
-    class_name: str = "Flag"
+    typename: str = "Flag"
     sprite_name: str = "flag"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Cursor(Static):
-    class_name: str = "Cursor"
+    typename: str = "Cursor"
     sprite_name: str = "cursor"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Empty(Object):
-    class_name: str = "Empty"
+    typename: str = "Empty"
     sprite_name: str = "empty"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Level(Object):
-    class_name: str = "Level"
+    typename: str = "Level"
     sprite_name: str = "level"
     def __init__(self, pos: spaces.Coord, name: str, icon_name: str = "empty", icon_color: colors.ColorHex = colors.WHITE, facing: spaces.Orient = spaces.S) -> None:
         super().__init__(pos, facing)
@@ -415,10 +279,6 @@ class Level(Object):
         self.icon_color: colors.ColorHex = icon_color
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return " ".join([self.class_name, self.name])
-    def __repr__(self) -> str:
-        return " ".join([self.class_name, self.name])
     def to_json(self) -> dict[str, Any]:
         json_object = super().to_json()
         json_object.update({"level": {"name": self.name}}) # type: ignore
@@ -426,48 +286,36 @@ class Level(Object):
         return json_object # type: ignore
 
 class WorldPointer(Object):
-    class_name: str = "WorldContainer"
+    typename: str = "WorldContainer"
     def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = spaces.S) -> None:
         super().__init__(pos, facing)
         self.name: str = name
         self.inf_tier: int = inf_tier
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return " ".join([self.class_name, self.name, str(self.inf_tier)])
-    def __repr__(self) -> str:
-        return " ".join([self.class_name, self.name, str(self.inf_tier)])
     def to_json(self) -> dict[str, Any]:
         json_object = super().to_json()
         json_object.update({"world": {"name": self.name, "infinite_tier": self.inf_tier}}) # type: ignore
         return json_object # type: ignore
 
 class World(WorldPointer):
-    class_name: str = "World"
+    typename: str = "World"
     sprite_name: str = "world"
     def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = spaces.S) -> None:
         super().__init__(pos, name, inf_tier, facing)
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
         
 class Clone(WorldPointer):
-    class_name: str = "Clone"
+    typename: str = "Clone"
     sprite_name: str = "clone"
     def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = spaces.S) -> None:
         super().__init__(pos, name, inf_tier, facing)
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Transform(Object):
-    class_name: str = "Transform"
+    typename: str = "Transform"
     def __init__(self, pos: spaces.Coord, info: dict[str, Any], facing: spaces.Orient = spaces.S) -> None:
         super().__init__(pos, facing)
         self.from_type: type[Object] = info["from"]["type"]
@@ -477,644 +325,388 @@ class Transform(Object):
         self.to_type: type[Object] = info["to"]["type"]
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Sprite(Object):
-    class_name: str = "Sprite"
+    typename: str = "Sprite"
     def __init__(self, pos: spaces.Coord, sprite_name: str, facing: spaces.Orient = spaces.S) -> None:
         super().__init__(pos, facing)
         self.sprite_name: str = sprite_name
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
     def to_json(self) -> dict[str, Any]:
         json_object = super().to_json()
         json_object.update({"sprite": {"name": self.sprite_name}}) # type: ignore
         return json_object # type: ignore
 
 class Game(Object):
-    class_name: str = "Game"
+    typename: str = "Game"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Text(Object):
-    class_name: str = "Text"
+    typename: str = "Text"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Noun(Text):
-    class_name: str = "Noun"
+    typename: str = "Noun"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Infix(Text):
-    class_name: str = "Infix"
+    typename: str = "Infix"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Operator(Text):
-    class_name: str = "Operator"
+    typename: str = "Operator"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class Property(Text):
-    class_name: str = "Property"
+    typename: str = "Property"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class BABA(Noun):
-    class_name: str = "BABA"
+    typename: str = "BABA"
     sprite_name: str = "text_baba"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class KEKE(Noun):
-    class_name: str = "KEKE"
+    typename: str = "KEKE"
     sprite_name: str = "text_keke"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class ME(Noun):
-    class_name: str = "ME"
+    typename: str = "ME"
     sprite_name: str = "text_me"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class PATRICK(Noun):
-    class_name: str = "PATRICK"
+    typename: str = "PATRICK"
     sprite_name: str = "text_patrick"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class SKULL(Noun):
-    class_name: str = "SKULL"
+    typename: str = "SKULL"
     sprite_name: str = "text_skull"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class GHOST(Noun):
-    class_name: str = "GHOST"
+    typename: str = "GHOST"
     sprite_name: str = "text_ghost"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class WALL(Noun):
-    class_name: str = "WALL"
+    typename: str = "WALL"
     sprite_name: str = "text_wall"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class HEDGE(Noun):
-    class_name: str = "HEDGE"
+    typename: str = "HEDGE"
     sprite_name: str = "text_hedge"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class ICE(Noun):
-    class_name: str = "ICE"
+    typename: str = "ICE"
     sprite_name: str = "text_ice"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class TILE(Noun):
-    class_name: str = "TILE"
+    typename: str = "TILE"
     sprite_name: str = "text_tile"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class GRASS(Noun):
-    class_name: str = "GRASS"
+    typename: str = "GRASS"
     sprite_name: str = "text_grass"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class WATER(Noun):
-    class_name: str = "WATER"
+    typename: str = "WATER"
     sprite_name: str = "text_water"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class LAVA(Noun):
-    class_name: str = "LAVA"
+    typename: str = "LAVA"
     sprite_name: str = "text_lava"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class DOOR(Noun):
-    class_name: str = "DOOR"
+    typename: str = "DOOR"
     sprite_name: str = "text_door"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class KEY(Noun):
-    class_name: str = "KEY"
+    typename: str = "KEY"
     sprite_name: str = "text_key"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class BOX(Noun):
-    class_name: str = "BOX"
+    typename: str = "BOX"
     sprite_name: str = "text_box"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class ROCK(Noun):
-    class_name: str = "ROCK"
+    typename: str = "ROCK"
     sprite_name: str = "text_rock"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class FRUIT(Noun):
-    class_name: str = "FRUIT"
+    typename: str = "FRUIT"
     sprite_name: str = "text_fruit"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class BELT(Noun):
-    class_name: str = "BELT"
+    typename: str = "BELT"
     sprite_name: str = "text_belt"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class SUN(Noun):
-    class_name: str = "SUN"
+    typename: str = "SUN"
     sprite_name: str = "text_sun"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class MOON(Noun):
-    class_name: str = "MOON"
+    typename: str = "MOON"
     sprite_name: str = "text_moon"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class STAR(Noun):
-    class_name: str = "STAR"
+    typename: str = "STAR"
     sprite_name: str = "text_star"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class WHAT(Noun):
-    class_name: str = "WHAT"
+    typename: str = "WHAT"
     sprite_name: str = "text_what"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class LOVE(Noun):
-    class_name: str = "LOVE"
+    typename: str = "LOVE"
     sprite_name: str = "text_love"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class FLAG(Noun):
-    class_name: str = "FLAG"
+    typename: str = "FLAG"
     sprite_name: str = "text_flag"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class CURSOR(Noun):
-    class_name: str = "CURSOR"
+    typename: str = "CURSOR"
     sprite_name: str = "text_cursor"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class ALL(Noun):
-    class_name: str = "ALL"
+    typename: str = "ALL"
     sprite_name: str = "text_all"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class EMPTY(Noun):
-    class_name: str = "EMPTY"
+    typename: str = "EMPTY"
     sprite_name: str = "text_empty"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class TEXT(Noun):
-    class_name: str = "TEXT"
+    typename: str = "TEXT"
     sprite_name: str = "text_text"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class LEVEL(Noun):
-    class_name: str = "LEVEL"
+    typename: str = "LEVEL"
     sprite_name: str = "text_level"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class WORLD(Noun):
-    class_name: str = "WORLD"
+    typename: str = "WORLD"
     sprite_name: str = "text_world"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class CLONE(Noun):
-    class_name: str = "CLONE"
+    typename: str = "CLONE"
     sprite_name: str = "text_clone"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class GAME(Noun):
-    class_name: str = "GAME"
+    typename: str = "GAME"
     sprite_name: str = "text_game"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class ON(Infix):
-    class_name: str = "ON"
+    typename: str = "ON"
     sprite_name: str = "text_on"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class FEELING(Infix):
-    class_name: str = "FEELING"
+    typename: str = "FEELING"
     sprite_name: str = "text_feeling"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class IS(Operator):
-    class_name: str = "IS"
+    typename: str = "IS"
     sprite_name: str = "text_is"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class NOT(Text):
-    class_name: str = "NOT"
+    typename: str = "NOT"
     sprite_name: str = "text_not"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class AND(Text):
-    class_name: str = "AND"
+    typename: str = "AND"
     sprite_name: str = "text_and"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class YOU(Property):
-    class_name: str = "YOU"
+    typename: str = "YOU"
     sprite_name: str = "text_you"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class MOVE(Property):
-    class_name: str = "MOVE"
+    typename: str = "MOVE"
     sprite_name: str = "text_move"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class STOP(Property):
-    class_name: str = "STOP"
+    typename: str = "STOP"
     sprite_name: str = "text_stop"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class PUSH(Property):
-    class_name: str = "PUSH"
+    typename: str = "PUSH"
     sprite_name: str = "text_push"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class SINK(Property):
-    class_name: str = "SINK"
+    typename: str = "SINK"
     sprite_name: str = "text_sink"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class FLOAT(Property):
-    class_name: str = "FLOAT"
+    typename: str = "FLOAT"
     sprite_name: str = "text_float"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class OPEN(Property):
-    class_name: str = "OPEN"
+    typename: str = "OPEN"
     sprite_name: str = "text_open"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class SHUT(Property):
-    class_name: str = "SHUT"
+    typename: str = "SHUT"
     sprite_name: str = "text_shut"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class HOT(Property):
-    class_name: str = "HOT"
+    typename: str = "HOT"
     sprite_name: str = "text_hot"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class MELT(Property):
-    class_name: str = "MELT"
+    typename: str = "MELT"
     sprite_name: str = "text_melt"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class WIN(Property):
-    class_name: str = "WIN"
+    typename: str = "WIN"
     sprite_name: str = "text_win"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class DEFEAT(Property):
-    class_name: str = "DEFEAT"
+    typename: str = "DEFEAT"
     sprite_name: str = "text_defeat"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class SHIFT(Property):
-    class_name: str = "SHIFT"
+    typename: str = "SHIFT"
     sprite_name: str = "text_shift"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class TELE(Property):
-    class_name: str = "TELE"
+    typename: str = "TELE"
     sprite_name: str = "text_tele"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class WORD(Property):
-    class_name: str = "WORD"
+    typename: str = "WORD"
     sprite_name: str = "text_word"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class SELECT(Property):
-    class_name: str = "SELECT"
+    typename: str = "SELECT"
     sprite_name: str = "text_select"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class END(Property):
-    class_name: str = "END"
+    typename: str = "END"
     sprite_name: str = "text_end"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 class DONE(Property):
-    class_name: str = "DONE"
+    typename: str = "DONE"
     sprite_name: str = "text_done"
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
-    def __str__(self) -> str:
-        return str(super())
-    def __repr__(self) -> str:
-        return repr(super())
 
 def json_to_object(json_object: dict[str, Any]) -> Object: # oh hell no
-    type_name: str = json_object["type"] # type: ignore
-    object_type: type[Object] = object_name[type_name]
+    typename: str = json_object["type"] # type: ignore
+    object_type: type[Object] = object_name[typename]
     if issubclass(object_type, WorldPointer):
         if json_object.get("world") is not None:
             return object_type(pos=tuple(json_object["position"]), # type: ignore
