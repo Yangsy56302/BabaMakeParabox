@@ -153,9 +153,11 @@
 - Q / E：选择物体
 - Tab：切换物体和名词
 - 0 ~ 9：从调色板选择物体
-- Shift + 0 ~ Shift + 9：设置调色板的物体为当前选择的物体
+- Ctrl + 0 ~ Ctrl + 9：设置调色板的物体为当前选择的物体
 - Enter：在光标上放置物体
 - Shift + Enter：在光标上放置物体 \*
+- Ctrl + Enter：强制在光标上放置物体
+- Ctrl + Shift + Enter：强制在光标上放置物体 \*
 - Backspace：删除光标上的物体
 - \- / =：选择摄像机所在的世界
 - Shift + \- / =：选择摄像机所在的关卡
@@ -277,6 +279,7 @@
 | 3.142  | 2024.07.24 | Bug on Infix is Fix |
 | 3.15   | 2024.07.24 | Baba near Keke is Me |
 | 3.151  | 2024.07.24 | Bug feeling Shut and Open is Fix |
+| 3.16   | 2024.07.24 | Control is not Continue |
 
 ## 报告漏洞和提出建议
 

@@ -77,9 +77,11 @@ Please remember:
 - Q / E: Select object.
 - Tab: Switch object / noun.
 - 0 ~ 9: Select object from palette.
-- Shift + 0 ~ Shift + 9: Set palette from selected object.
-- Enter: Place object on cursor by default.
-- Shift + Enter: Place object on cursor with details. \*
+- Ctrl + 0 ~ Ctrl + 9: Set palette from selected object.
+- Enter: Place object on cursor.
+- Shift + Enter: Place object on cursor. \*
+- Ctrl + Enter: Force to place object on cursor.
+- Ctrl + Shift + Enter: Force to place object on cursor. \*
 - Backspace: Destroy all objects on cursor.
 - \- / =: Select world for camera to focus.
 - Shift + \- / Shift + =: Select level for camera to focus.
@@ -200,6 +202,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 3.142  | 2024.07.24 | Bug on Infix is Fix |
 | 3.15   | 2024.07.24 | Baba near Keke is Me |
 | 3.151  | 2024.07.24 | Bug feeling Shut and Open is Fix |
+| 3.16   | 2024.07.24 | Control is not Continue |
 
 ## Bug Reports and Suggestions
 

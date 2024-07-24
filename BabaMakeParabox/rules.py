@@ -92,7 +92,7 @@ default_rule_list: list[Rule] = []
 default_rule_list.append([objects.CURSOR, objects.IS, objects.SELECT])
 default_rule_list.append([objects.TEXT, objects.IS, objects.PUSH])
 default_rule_list.append([objects.NOT, objects.META, objects.WORLD, objects.IS, objects.PUSH])
-default_rule_list.append([objects.CLONE, objects.IS, objects.PUSH])
+default_rule_list.append([objects.NOT, objects.META, objects.CLONE, objects.IS, objects.PUSH])
 default_rule_list.append([objects.NOT, objects.META, objects.LEVEL, objects.IS, objects.STOP])
 
 advanced_rule_list: list[Rule] = []

@@ -33,20 +33,19 @@ def play(levelpack: levelpacks.levelpack) -> None:
     pygame.key.set_repeat()
     pygame.key.stop_text_input()
     clock = pygame.time.Clock()
-    keybinds = {"W": pygame.K_w,
-                "A": pygame.K_a,
-                "S": pygame.K_s,
-                "D": pygame.K_d,
-                "Z": pygame.K_z,
-                "R": pygame.K_r,
-                "TAB": pygame.K_TAB,
-                "ESCAPE": pygame.K_ESCAPE,
-                "-": pygame.K_MINUS,
-                "=": pygame.K_EQUALS,
-                " ": pygame.K_SPACE,
-                "F1": pygame.K_F1}
+    keybinds = {pygame.K_w: "W",
+                pygame.K_a: "A",
+                pygame.K_s: "S",
+                pygame.K_d: "D",
+                pygame.K_z: "Z",
+                pygame.K_r: "R",
+                pygame.K_TAB: "TAB",
+                pygame.K_ESCAPE: "ESCAPE",
+                pygame.K_MINUS: "-",
+                pygame.K_EQUALS: "=",
+                pygame.K_SPACE: " ",
+                pygame.K_F1: "F1"}
     keys = {v: False for v in keybinds.values()}
-    cooldowns = {v: 0 for v in keybinds.values()}
     window.fill("#000000")
     current_level_name = levelpack.main_level
     current_level: levels.level = levelpack.get_exist_level(current_level_name)
@@ -73,16 +72,17 @@ def play(levelpack: levelpacks.levelpack) -> None:
         if frame >= basics.options["fpw"]:
             frame = 0
             wiggle = wiggle % 3 + 1
+        for key in keybinds.values():
+            keys[key] = False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game_running = False
-            if event.type == pygame.KEYDOWN and event.key in keybinds.values():
-                keys[event.key] = True
-            elif event.type == pygame.KEYUP and event.key in keybinds.values():
-                keys[event.key] = False
+            if event.type == pygame.KEYDOWN:
+                if event.key in keybinds.keys():
+                    keys[keybinds[event.key]] = True
         refresh = False
         if freeze_time == -1:
-            if keys[keybinds["W"]] and cooldowns[keybinds["W"]] == 0:
+            if keys["W"]:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "level_info": level_info, "levelpack": copy.deepcopy(levelpack)})
                 round_num += 1
                 level_info = current_level.round(spaces.W)
@@ -91,7 +91,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 if objects.PUSH in current_level.game_properties and level_info["pushing_game"]:
                     display_offset[1] -= window.get_height() / current_world.width
                 refresh = True
-            elif keys[keybinds["S"]] and cooldowns[keybinds["S"]] == 0:
+            elif keys["S"]:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "level_info": level_info, "levelpack": copy.deepcopy(levelpack)})
                 round_num += 1
                 level_info = current_level.round(spaces.S)
@@ -100,7 +100,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 if objects.PUSH in current_level.game_properties and level_info["pushing_game"]:
                     display_offset[1] += window.get_height() / current_world.width
                 refresh = True
-            elif keys[keybinds["A"]] and cooldowns[keybinds["A"]] == 0:
+            elif keys["A"]:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "level_info": level_info, "levelpack": copy.deepcopy(levelpack)})
                 round_num += 1
                 level_info = current_level.round(spaces.A)
@@ -109,7 +109,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 if objects.PUSH in current_level.game_properties and level_info["pushing_game"]:
                     display_offset[0] -= window.get_width() / current_world.height
                 refresh = True
-            elif keys[keybinds["D"]] and cooldowns[keybinds["D"]] == 0:
+            elif keys["D"]:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "level_info": level_info, "levelpack": copy.deepcopy(levelpack)})
                 round_num += 1
                 level_info = current_level.round(spaces.D)
@@ -118,12 +118,12 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 if objects.PUSH in current_level.game_properties and level_info["pushing_game"]:
                     display_offset[0] += window.get_width() / current_world.height
                 refresh = True
-            elif keys[keybinds[" "]] and cooldowns[keybinds[" "]] == 0:
+            elif keys[" "]:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "level_info": level_info, "levelpack": copy.deepcopy(levelpack)})
                 round_num += 1
                 level_info = current_level.round(spaces.O)
                 refresh = True
-            elif keys[keybinds["ESCAPE"]] and cooldowns[keybinds["ESCAPE"]] == 0:
+            elif keys["ESCAPE"]:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "level_info": level_info, "levelpack": copy.deepcopy(levelpack)})
                 current_level_name = current_level.super_level if current_level.super_level is not None else levelpack.main_level
                 current_level = levelpack.get_exist_level(current_level_name)
@@ -133,7 +133,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 level_changed = True
                 world_changed = True
                 refresh = True
-            elif keys[keybinds["Z"]] and cooldowns[keybinds["Z"]] == 0:
+            elif keys["Z"]:
                 if len(history) > 1:
                     data = copy.deepcopy(history.pop())
                     current_world_index = data["world_index"]
@@ -154,7 +154,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                     current_world = current_level.world_list[current_world_index]
                     round_num = 0
                     refresh = True
-            elif keys[keybinds["R"]] and cooldowns[keybinds["R"]] == 0:
+            elif keys["R"]:
                 print(languages.current_language["game.levelpack.restart"])
                 sounds.play("restart")
                 levelpack = copy.deepcopy(levelpack_backup)
@@ -170,7 +170,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 refresh = True
                 level_changed = True
                 world_changed = True
-            elif keys[keybinds["TAB"]] and cooldowns[keybinds["TAB"]] == 0:
+            elif keys["TAB"]:
                 print(languages.current_language["game.levelpack.rule_list"])
                 for rule in levelpack.rule_list:
                     str_list = []
@@ -183,12 +183,12 @@ def play(levelpack: levelpacks.levelpack) -> None:
                     for obj_type in rule:
                         str_list.append(obj_type.typename)
                     print(" ".join(str_list))
-            elif keys[keybinds["-"]] and cooldowns[keybinds["-"]] == 0:
+            elif keys["-"]:
                 current_world_index -= 1
                 current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
                 current_world = current_level.world_list[current_world_index]
                 world_changed = True
-            elif keys[keybinds["="]] and cooldowns[keybinds["="]] == 0:
+            elif keys["="]:
                 current_world_index += 1
                 current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
                 current_world = current_level.world_list[current_world_index]
@@ -214,9 +214,6 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 display_offset_speed[1] = display_offset_speed[1] / 2
         else:
             freeze_time -= 1
-        for key, value in keys.items():
-            if value and cooldowns[key] == 0:
-                cooldowns[key] = basics.options["input_cooldown"]
         if refresh:
             game_is_hot = False
             game_is_melt = False
@@ -375,7 +372,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
         window.blit(pygame.transform.scale(current_level.show_world(current_world, wiggle), world_display_size), world_display_pos)
         # fps
         real_fps = min(1000 / milliseconds, (real_fps * (basics.options["fps"] - 1) + 1000 / milliseconds) / basics.options["fps"])
-        if keys[keybinds["F1"]]:
+        if keys["F1"]:
             real_fps_string = str(int(real_fps))
             for i in range(len(real_fps_string)):
                 window.blit(displays.sprites.get(f"text_{real_fps_string[i]}", 0, wiggle), (i * displays.sprite_size, 0))
@@ -406,9 +403,4 @@ def play(levelpack: levelpacks.levelpack) -> None:
             window.blit(window_surface, [int(display_offset[0]), int(display_offset[1] - window.get_height())])
             window.blit(window_surface, [int(display_offset[0] - window.get_width()), int(display_offset[1] - window.get_height())])
         pygame.display.flip()
-        for key in cooldowns:
-            if cooldowns[key] > 0:
-                cooldowns[key] -= 1
         milliseconds = clock.tick(basics.options["fps"])
-    for pipe in subgame_pipes:
-        pipe.send(True)
