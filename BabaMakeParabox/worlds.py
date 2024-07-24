@@ -251,12 +251,26 @@ class world(object):
             not_new_return_rules = []
             for match in not_then_matched:
                 for rule in return_rules:
-                    not_new_return_rules.append(rule + [objects.NOT for _ in range(not_after_first_len)] + [type(match)])
+                    if stage in ("InfixText", "AndInfixText"):
+                        if rule[-1] == objects.FEELING: # prop infix
+                            if isinstance(match, objects.Property):
+                                not_new_return_rules.append(rule + [objects.NOT for _ in range(not_after_first_len)] + [type(match)])
+                        elif isinstance(match, objects.Noun): # noun infix
+                            not_new_return_rules.append(rule + [objects.NOT for _ in range(not_after_first_len)] + [type(match)])
+                    else:
+                        not_new_return_rules.append(rule + [objects.NOT for _ in range(not_after_first_len)] + [type(match)])
             not_return_rules = not_new_return_rules[:]
         new_return_rules = []
         for match in then_matched:
             for rule in return_rules:
-                new_return_rules.append(rule + [type(match)])
+                if stage in ("InfixText", "AndInfixText"):
+                    if rule[-1] == objects.FEELING: # prop infix
+                        if isinstance(match, objects.Property):
+                            new_return_rules.append(rule + [objects.NOT for _ in range(not_after_first_len)] + [type(match)])
+                    elif isinstance(match, objects.Noun): # noun infix
+                        new_return_rules.append(rule + [objects.NOT for _ in range(not_after_first_len)] + [type(match)])
+                else:
+                    new_return_rules.append(rule + [type(match)])
         return_rules = new_return_rules[:]
         new_return_rules = []
         for remain_rule in remain_rules:
