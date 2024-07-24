@@ -45,8 +45,8 @@ def str_to_orient(direction: str) -> Orient:
         case _:
             raise ValueError()
 
-def pos_facing(pos: Coord, facing: Orient) -> Coord:
-    match facing:
+def pos_facing(pos: Coord, orient: Orient) -> Coord:
+    match orient:
         case 0x2:
             return (pos[0], pos[1] - 1)
         case 0x4:

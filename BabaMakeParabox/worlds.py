@@ -135,7 +135,7 @@ class world(object):
         random.shuffle(to_clone_objs)
         to_clone_objs = to_clone_objs[1:]
         for to_clone in to_clone_objs:
-            self.new_obj(objects.Clone(to_clone.pos, to_clone.name, to_clone.inf_tier, to_clone.facing))
+            self.new_obj(objects.Clone(to_clone.pos, to_clone.name, to_clone.inf_tier, to_clone.orient))
             self.del_obj(to_clone)
     def get_rules_from_pos_and_orient(self, stage: Optional[str], pos: spaces.Coord, orient: spaces.Orient) -> list[rules.Rule]:
         if stage == "Prefix":

@@ -7,11 +7,11 @@ from BabaMakeParabox import colors, spaces
 class Object(object):
     typename: str = "Object"
     sprite_name: str
-    def __init__(self, pos: spaces.Coord, facing: spaces.Orient = spaces.S) -> None:
+    def __init__(self, pos: spaces.Coord, orient: spaces.Orient = spaces.S) -> None:
         self.uuid: uuid.UUID = uuid.uuid4()
         self.x: int = pos[0]
         self.y: int = pos[1]
-        self.facing: spaces.Orient = facing
+        self.orient: spaces.Orient = orient
         self.properties: list[tuple[type["Text"], int]] = []
         self.moved: bool = False
         self.sprite_state: int = 0
@@ -55,7 +55,7 @@ class Object(object):
     def clear_prop(self) -> None:
         self.properties = []
     def to_json(self) -> dict[str, Any]:
-        return {"type": self.typename, "position": [self.x, self.y], "orientation": spaces.orient_to_str(self.facing)} # type: ignore
+        return {"type": self.typename, "position": [self.x, self.y], "orientation": spaces.orient_to_str(self.orient)} # type: ignore
 
 class Static(Object):
     typename: str = "Static"
@@ -81,14 +81,14 @@ class Animated(Object):
 class Directional(Object):
     typename: str = "Directional"
     def set_sprite(self) -> None:
-        self.sprite_state = int(math.log2(self.facing)) * 0x8
+        self.sprite_state = int(math.log2(self.orient)) * 0x8
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
 
 class AnimatedDirectional(Object):
     typename: str = "AnimatedDirectional"
     def set_sprite(self, round_num: int) -> None:
-        self.sprite_state = int(math.log2(self.facing)) * 0x8 | round_num % 4
+        self.sprite_state = int(math.log2(self.orient)) * 0x8 | round_num % 4
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
 
@@ -99,11 +99,11 @@ class Character(Object):
         if not self.sleeping:
             if self.moved:
                 temp_state = (self.sprite_state & 0x3) + 1 if (self.sprite_state & 0x3) != 0x3 else 0x0
-                self.sprite_state = int(math.log2(self.facing)) * 0x8 | temp_state
+                self.sprite_state = int(math.log2(self.orient)) * 0x8 | temp_state
             else:
-                self.sprite_state = int(math.log2(self.facing)) * 0x8 | (self.sprite_state & 0x3)
+                self.sprite_state = int(math.log2(self.orient)) * 0x8 | (self.sprite_state & 0x3)
         else:
-            self.sprite_state = int(math.log2(self.facing)) * 0x8 | 0x7
+            self.sprite_state = int(math.log2(self.orient)) * 0x8 | 0x7
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
 
@@ -272,8 +272,8 @@ class Empty(Object):
 class Level(Object):
     typename: str = "Level"
     sprite_name: str = "level"
-    def __init__(self, pos: spaces.Coord, name: str, icon_name: str = "empty", icon_color: colors.ColorHex = colors.WHITE, facing: spaces.Orient = spaces.S) -> None:
-        super().__init__(pos, facing)
+    def __init__(self, pos: spaces.Coord, name: str, icon_name: str = "empty", icon_color: colors.ColorHex = colors.WHITE, orient: spaces.Orient = spaces.S) -> None:
+        super().__init__(pos, orient)
         self.name: str = name
         self.icon_name: str = icon_name
         self.icon_color: colors.ColorHex = icon_color
@@ -287,8 +287,8 @@ class Level(Object):
 
 class WorldPointer(Object):
     typename: str = "WorldContainer"
-    def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = spaces.S) -> None:
-        super().__init__(pos, facing)
+    def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, orient: spaces.Orient = spaces.S) -> None:
+        super().__init__(pos, orient)
         self.name: str = name
         self.inf_tier: int = inf_tier
     def __eq__(self, obj: "Object") -> bool:
@@ -301,23 +301,23 @@ class WorldPointer(Object):
 class World(WorldPointer):
     typename: str = "World"
     sprite_name: str = "world"
-    def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = spaces.S) -> None:
-        super().__init__(pos, name, inf_tier, facing)
+    def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, orient: spaces.Orient = spaces.S) -> None:
+        super().__init__(pos, name, inf_tier, orient)
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
         
 class Clone(WorldPointer):
     typename: str = "Clone"
     sprite_name: str = "clone"
-    def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, facing: spaces.Orient = spaces.S) -> None:
-        super().__init__(pos, name, inf_tier, facing)
+    def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, orient: spaces.Orient = spaces.S) -> None:
+        super().__init__(pos, name, inf_tier, orient)
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
 
 class Transform(Object):
     typename: str = "Transform"
-    def __init__(self, pos: spaces.Coord, info: dict[str, Any], facing: spaces.Orient = spaces.S) -> None:
-        super().__init__(pos, facing)
+    def __init__(self, pos: spaces.Coord, info: dict[str, Any], orient: spaces.Orient = spaces.S) -> None:
+        super().__init__(pos, orient)
         self.from_type: type[Object] = info["from"]["type"]
         self.from_name: str = info["from"]["name"]
         if issubclass(self.from_type, WorldPointer):
@@ -328,8 +328,8 @@ class Transform(Object):
 
 class Sprite(Object):
     typename: str = "Sprite"
-    def __init__(self, pos: spaces.Coord, sprite_name: str, facing: spaces.Orient = spaces.S) -> None:
-        super().__init__(pos, facing)
+    def __init__(self, pos: spaces.Coord, sprite_name: str, orient: spaces.Orient = spaces.S) -> None:
+        super().__init__(pos, orient)
         self.sprite_name: str = sprite_name
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
@@ -583,6 +583,18 @@ class ON(Infix):
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
 
+class NEAR(Infix):
+    typename: str = "NEAR"
+    sprite_name: str = "text_near"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
+
+class NEXTTO(Infix):
+    typename: str = "NEXTTO"
+    sprite_name: str = "text_nextto"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
+
 class FEELING(Infix):
     typename: str = "FEELING"
     sprite_name: str = "text_feeling"
@@ -723,12 +735,12 @@ def json_to_object(json_object: dict[str, Any]) -> Object: # oh hell no
             return object_type(pos=tuple(json_object["position"]), # type: ignore
                             name=json_object["world"]["name"], # type: ignore
                             inf_tier=json_object["world"]["infinite_tier"], # type: ignore
-                            facing=spaces.str_to_orient(json_object["orientation"])) # type: ignore
+                            orient=spaces.str_to_orient(json_object["orientation"])) # type: ignore
         else:
             return object_type(pos=tuple(json_object["position"]), # type: ignore
                             name=json_object["level"]["name"], # type: ignore
                             inf_tier=json_object["level"]["infinite_tier"], # type: ignore
-                            facing=spaces.str_to_orient(json_object["orientation"])) # type: ignore
+                            orient=spaces.str_to_orient(json_object["orientation"])) # type: ignore
     elif object_type == Level:
         if json_object.get("icon") is not None:
             if isinstance(json_object["icon"]["color"], int):
@@ -736,24 +748,24 @@ def json_to_object(json_object: dict[str, Any]) -> Object: # oh hell no
                                    name=json_object["level"]["name"], # type: ignore
                                    icon_name=json_object["icon"]["name"], # type: ignore
                                    icon_color=json_object["icon"]["color"], # type: ignore
-                                   facing=spaces.str_to_orient(json_object["orientation"])) # type: ignore
+                                   orient=spaces.str_to_orient(json_object["orientation"])) # type: ignore
             else:
                 return object_type(pos=tuple(json_object["position"]), # type: ignore
                                    name=json_object["level"]["name"], # type: ignore
                                    icon_name=json_object["icon"]["name"], # type: ignore
                                    icon_color=colors.rgb_to_hex(*json_object["icon"]["color"]), # type: ignore
-                                   facing=spaces.str_to_orient(json_object["orientation"])) # type: ignore
+                                   orient=spaces.str_to_orient(json_object["orientation"])) # type: ignore
         else:
             return object_type(pos=tuple(json_object["position"]), # type: ignore
                                name=json_object["level"]["name"], # type: ignore
-                               facing=spaces.str_to_orient(json_object["orientation"])) # type: ignore
+                               orient=spaces.str_to_orient(json_object["orientation"])) # type: ignore
     elif issubclass(object_type, Sprite):
         return object_type(pos=tuple(json_object["position"]), # type: ignore
-                           facing=spaces.str_to_orient(json_object["orientation"]),
+                           orient=spaces.str_to_orient(json_object["orientation"]),
                            sprite_name=json_object["sprite"]["name"]) # type: ignore
     else:
         return object_type(pos=tuple(json_object["position"]), # type: ignore
-                           facing=spaces.str_to_orient(json_object["orientation"])) # type: ignore
+                           orient=spaces.str_to_orient(json_object["orientation"])) # type: ignore
 
 object_name: dict[str, type[Object]] = {
     "Baba": Baba,
@@ -817,6 +829,8 @@ object_name: dict[str, type[Object]] = {
     "GAME": GAME,
     "META": META,
     "ON": ON,
+    "NEAR": NEAR,
+    "NEXTTO": NEXTTO,
     "FEELING": FEELING,
     "IS": IS,
     "NOT": NOT,

@@ -91,34 +91,49 @@ class level(object):
         for infix_info in infix_info_list:
             meet_infix_condition = True
             if infix_info[1] == objects.ON:
+                find_range = [(obj.x, obj.y)]
+            elif infix_info[1] == objects.NEAR:
+                find_range = [(obj.x - 1, obj.y - 1), (obj.x, obj.y - 1), (obj.x + 1, obj.y - 1),
+                              (obj.x - 1, obj.y), (obj.x, obj.y), (obj.x + 1, obj.y),
+                              (obj.x - 1, obj.y + 1), (obj.x, obj.y + 1), (obj.x + 1, obj.y + 1)]
+            elif infix_info[1] == objects.NEXTTO:
+                find_range = [(obj.x, obj.y - 1), (obj.x - 1, obj.y), (obj.x + 1, obj.y), (obj.x, obj.y + 1)]
+            if infix_info[1] in (objects.ON, objects.NEAR, objects.NEXTTO):
                 match_type = objects.nouns_objs_dicts.get_obj(infix_info[3]) # type: ignore
-                if infix_info[2]:
-                    if match_type is not None:
+                if match_type is not None:
+                    if infix_info[2]:
                         for new_match_type in [o for o in self.all_list if (not issubclass(o, objects.not_in_all)) and not issubclass(o, match_type)]:
-                            match_objs = world.get_objs_from_pos_and_type(obj.pos, new_match_type)
+                            match_objs = []
+                            for pos in find_range:
+                                match_objs.extend(world.get_objs_from_pos_and_type(pos, new_match_type))
                             if obj in match_objs:
                                 match_objs.remove(obj)
                             if len(match_objs) == 0:
                                 meet_infix_condition = False
                     else:
-                        if match_type == objects.ALL:
-                            for new_match_type in [o for o in self.all_list if issubclass(o, objects.in_not_all)]:
-                                match_objs = world.get_objs_from_pos_and_type(obj.pos, new_match_type)
-                                if obj in match_objs:
-                                    match_objs.remove(obj)
-                                if len(match_objs) == 0:
-                                    meet_infix_condition = False
-                else:
-                    if match_type is not None:
-                        match_objs = world.get_objs_from_pos_and_type(obj.pos, match_type)
+                        match_objs = []
+                        for pos in find_range:
+                            match_objs.extend(world.get_objs_from_pos_and_type(pos, match_type))
                         if obj in match_objs:
                             match_objs.remove(obj)
                         if len(match_objs) == 0:
                             meet_infix_condition = False
-                    else:
-                        if match_type == objects.ALL:
+                else:
+                    if match_type == objects.ALL:
+                        if infix_info[2]:
+                            for new_match_type in [o for o in self.all_list if issubclass(o, objects.in_not_all)]:
+                                match_objs = []
+                                for pos in find_range:
+                                    match_objs.extend(world.get_objs_from_pos_and_type(pos, new_match_type))
+                                if obj in match_objs:
+                                    match_objs.remove(obj)
+                                if len(match_objs) == 0:
+                                    meet_infix_condition = False
+                        else:
                             for new_match_type in [o for o in self.all_list if not issubclass(o, objects.not_in_all)]:
-                                match_objs = world.get_objs_from_pos_and_type(obj.pos, new_match_type)
+                                match_objs = []
+                                for pos in find_range:
+                                    match_objs.extend(world.get_objs_from_pos_and_type(pos, new_match_type))
                                 if obj in match_objs:
                                     match_objs.remove(obj)
                                 if len(match_objs) == 0:
@@ -261,7 +276,7 @@ class level(object):
         world.object_pos_index[world.pos_to_index(obj.pos)].append(obj)
     def same_float_prop(self, obj_1: objects.Object, obj_2: objects.Object):
         return not (obj_1.has_prop(objects.FLOAT) ^ obj_2.has_prop(objects.FLOAT))
-    def get_move_list(self, cause: type[objects.Property], world: worlds.world, obj: objects.Object, facing: spaces.Orient, pos: Optional[spaces.Coord] = None, pushed: Optional[list[objects.Object]] = None, passed: Optional[list[worlds.world]] = None, transnum: Optional[float] = None, depth: int = 0) -> Optional[list[tuple[objects.Object, worlds.world, spaces.Coord, spaces.Orient]]]:
+    def get_move_list(self, cause: type[objects.Property], world: worlds.world, obj: objects.Object, orient: spaces.Orient, pos: Optional[spaces.Coord] = None, pushed: Optional[list[objects.Object]] = None, passed: Optional[list[worlds.world]] = None, transnum: Optional[float] = None, depth: int = 0) -> Optional[list[tuple[objects.Object, worlds.world, spaces.Coord, spaces.Orient]]]:
         if depth > 128:
             return None
         depth += 1
@@ -270,7 +285,7 @@ class level(object):
             return None
         passed = passed[:] if passed is not None else []
         pos = pos if pos is not None else obj.pos
-        new_pos = spaces.pos_facing(pos, facing)
+        new_pos = spaces.pos_facing(pos, orient)
         exit_world = False
         exit_list = []
         if world.out_of_range(new_pos):
@@ -282,8 +297,8 @@ class level(object):
                     exit_world = False
                 else:
                     super_world, world_obj = return_value
-                    new_transnum = super_world.transnum_to_bigger_transnum(transnum, world_obj.pos, facing) if transnum is not None else world.pos_to_transnum(obj.pos, facing)
-                    new_move_list = self.get_move_list(cause, super_world, obj, facing, world_obj.pos, pushed, passed, new_transnum, depth)
+                    new_transnum = super_world.transnum_to_bigger_transnum(transnum, world_obj.pos, orient) if transnum is not None else world.pos_to_transnum(obj.pos, orient)
+                    new_move_list = self.get_move_list(cause, super_world, obj, orient, world_obj.pos, pushed, passed, new_transnum, depth)
                     if new_move_list is None:
                         exit_world = False
                     else:
@@ -295,9 +310,9 @@ class level(object):
                     exit_world = False
                 else:
                     super_world, world_obj = return_value
-                    new_transnum = super_world.transnum_to_bigger_transnum(transnum, world_obj.pos, facing) if transnum is not None else world.pos_to_transnum(obj.pos, facing)
+                    new_transnum = super_world.transnum_to_bigger_transnum(transnum, world_obj.pos, orient) if transnum is not None else world.pos_to_transnum(obj.pos, orient)
                     passed.append(world)
-                    new_move_list = self.get_move_list(cause, super_world, obj, facing, world_obj.pos, pushed, passed, new_transnum, depth)
+                    new_move_list = self.get_move_list(cause, super_world, obj, orient, world_obj.pos, pushed, passed, new_transnum, depth)
                     if new_move_list is None:
                         exit_world = False
                     else:
@@ -314,7 +329,7 @@ class level(object):
             push = True
             for push_object in push_objects:
                 pushed.append(obj)
-                new_move_list = self.get_move_list(cause, world, push_object, facing, pushed=pushed, depth=depth)
+                new_move_list = self.get_move_list(cause, world, push_object, orient, pushed=pushed, depth=depth)
                 pushed.pop()
                 if new_move_list is None:
                     objects_that_cant_push.append(push_object)
@@ -322,7 +337,7 @@ class level(object):
                     break
                 else:
                     push_list.extend(new_move_list)
-            push_list.append((obj, world, new_pos, facing))
+            push_list.append((obj, world, new_pos, orient))
         # stop wall & shut door
         not_stop_list = []
         simple = False
@@ -343,7 +358,7 @@ class level(object):
             else:
                 simple = True
         if simple:
-            not_stop_list.append((obj, world, new_pos, facing))
+            not_stop_list.append((obj, world, new_pos, orient))
         # squeeze
         squeeze = False
         squeeze_list = []
@@ -353,13 +368,13 @@ class level(object):
                 new_push_objects = list(filter(lambda o: objects.Object.has_prop(o, objects.PUSH), world.get_objs_from_pos(new_pos)))
                 if len(new_push_objects) != 0:
                     squeeze = True
-                    temp_stop_object = objects.STOP(spaces.pos_facing(pos, spaces.swap_orientation(facing)))
+                    temp_stop_object = objects.STOP(spaces.pos_facing(pos, spaces.swap_orientation(orient)))
                     temp_stop_object.new_prop(objects.STOP)
                     world.new_obj(temp_stop_object)
                     for new_push_object in new_push_objects:
-                        input_pos = sub_world.default_input_position(facing)
+                        input_pos = sub_world.default_input_position(orient)
                         pushed.append(obj)
-                        test_move_list = self.get_move_list(cause, sub_world, new_push_object, spaces.swap_orientation(facing), input_pos, pushed=pushed, depth=depth)
+                        test_move_list = self.get_move_list(cause, sub_world, new_push_object, spaces.swap_orientation(orient), input_pos, pushed=pushed, depth=depth)
                         pushed.pop()
                         if test_move_list is None:
                             squeeze = False
@@ -367,7 +382,7 @@ class level(object):
                         else:
                             squeeze_list.extend(test_move_list)
                     if squeeze:
-                        squeeze_list.append((obj, world, new_pos, facing))
+                        squeeze_list.append((obj, world, new_pos, orient))
                     world.del_obj(temp_stop_object)
         enter_world = False
         enter_list = []
@@ -386,18 +401,18 @@ class level(object):
                         sub_sub_world = self.get_world(sub_world.name, sub_world.inf_tier - 1)
                         if sub_sub_world is not None:
                             new_transnum = 0.5
-                            input_pos = sub_sub_world.default_input_position(spaces.swap_orientation(facing))
+                            input_pos = sub_sub_world.default_input_position(spaces.swap_orientation(orient))
                             passed.append(world)
-                            new_move_list = self.get_move_list(cause, sub_sub_world, obj, facing, input_pos, pushed, passed, new_transnum, depth)
+                            new_move_list = self.get_move_list(cause, sub_sub_world, obj, orient, input_pos, pushed, passed, new_transnum, depth)
                         else:
                             enter_world = False
                             break
                     # enter
                     else:
-                        new_transnum = world.transnum_to_smaller_transnum(transnum, world_object.pos, spaces.swap_orientation(facing)) if transnum is not None else 0.5
-                        input_pos = sub_world.transnum_to_pos(transnum, spaces.swap_orientation(facing)) if transnum is not None else sub_world.default_input_position(spaces.swap_orientation(facing))
+                        new_transnum = world.transnum_to_smaller_transnum(transnum, world_object.pos, spaces.swap_orientation(orient)) if transnum is not None else 0.5
+                        input_pos = sub_world.transnum_to_pos(transnum, spaces.swap_orientation(orient)) if transnum is not None else sub_world.default_input_position(spaces.swap_orientation(orient))
                         passed.append(world)
-                        new_move_list = self.get_move_list(cause, sub_world, obj, facing, input_pos, pushed, passed, new_transnum, depth)
+                        new_move_list = self.get_move_list(cause, sub_world, obj, orient, input_pos, pushed, passed, new_transnum, depth)
                     if new_move_list is not None:
                         enter_list.extend(new_move_list)
                     else:
@@ -417,7 +432,7 @@ class level(object):
             return None
     def move_objs_from_move_list(self, move_list: list[tuple[objects.Object, worlds.world, spaces.Coord, spaces.Orient]]) -> None:
         move_list = basics.remove_same_elements(move_list)
-        for move_obj, new_world, new_pos, new_facing in move_list:
+        for move_obj, new_world, new_pos, new_orient in move_list:
             move_obj.moved = True
             for world in self.world_list:
                 if move_obj in world.object_list:
@@ -426,11 +441,11 @@ class level(object):
                 self.move_obj_in_world(old_world, move_obj, new_pos)
             else:
                 self.move_obj_between_worlds(old_world, move_obj, new_world, new_pos)
-            move_obj.facing = new_facing
+            move_obj.orient = new_orient
         if len(move_list) != 0 and "move" not in self.sound_events:
             self.sound_events.append("move")
-    def you(self, facing: spaces.PlayerOperation) -> bool:
-        if facing == spaces.O:
+    def you(self, orient: spaces.PlayerOperation) -> bool:
+        if orient == spaces.O:
             return False
         move_list = []
         pushing_game = False
@@ -445,8 +460,8 @@ class level(object):
                 continue
             you_objs = [o for o in world.object_list if o.has_prop(objects.YOU)]
             for obj in you_objs:
-                obj.facing = facing # type: ignore
-                new_move_list = self.get_move_list(objects.YOU, world, obj, obj.facing) # type: ignore
+                obj.orient = orient # type: ignore
+                new_move_list = self.get_move_list(objects.YOU, world, obj, obj.orient) # type: ignore
                 if new_move_list is not None:
                     move_list.extend(new_move_list)
                 else:
@@ -454,8 +469,8 @@ class level(object):
         move_list = basics.remove_same_elements(move_list)
         self.move_objs_from_move_list(move_list)
         return pushing_game
-    def select(self, facing: spaces.PlayerOperation) -> Optional[str]:
-        if facing == spaces.O:
+    def select(self, orient: spaces.PlayerOperation) -> Optional[str]:
+        if orient == spaces.O:
             for world in self.world_list:
                 select_objs = [o for o in world.object_list if o.has_prop(objects.SELECT)]
                 levels: list[objects.Level] = []
@@ -468,7 +483,7 @@ class level(object):
             for world in self.world_list:
                 select_objs = [o for o in world.object_list if o.has_prop(objects.SELECT)]
                 for obj in select_objs:
-                    new_pos = spaces.pos_facing(obj.pos, facing) # type: ignore
+                    new_pos = spaces.pos_facing(obj.pos, orient) # type: ignore
                     if not world.out_of_range(new_pos):
                         self.move_obj_in_world(world, obj, new_pos)
             return None
@@ -487,12 +502,12 @@ class level(object):
             move_objs = [o for o in world.object_list if o.has_prop(objects.MOVE)]
             for obj in move_objs:
                 move_list = []
-                new_move_list = self.get_move_list(objects.MOVE, world, obj, obj.facing)
+                new_move_list = self.get_move_list(objects.MOVE, world, obj, obj.orient)
                 if new_move_list is not None:
                     move_list = new_move_list
                 else:
-                    obj.facing = spaces.swap_orientation(obj.facing)
-                    new_move_list = self.get_move_list(objects.MOVE, world, obj, obj.facing)
+                    obj.orient = spaces.swap_orientation(obj.orient)
+                    new_move_list = self.get_move_list(objects.MOVE, world, obj, obj.orient)
                     if new_move_list is not None:
                         move_list = new_move_list
                     else:
@@ -519,7 +534,7 @@ class level(object):
                     if obj == shift_obj:
                         continue
                     if self.same_float_prop(obj, shift_obj):
-                        new_move_list = self.get_move_list(objects.SHIFT, world, obj, shift_obj.facing)
+                        new_move_list = self.get_move_list(objects.SHIFT, world, obj, shift_obj.orient)
                         if new_move_list is not None:
                             move_list.extend(new_move_list)
                         else:
@@ -697,7 +712,7 @@ class level(object):
                             elif issubclass(old_type, objects.WorldPointer):
                                 old_obj: objects.WorldPointer # type: ignore
                                 new_levels.append(level(old_obj.name, self.world_list, self.name, old_obj.name, old_obj.inf_tier, self.rule_list))
-                                new_obj = objects.Level(old_obj.pos, old_obj.name, facing=old_obj.facing)
+                                new_obj = objects.Level(old_obj.pos, old_obj.name, orient=old_obj.orient)
                                 world.new_obj(new_obj)
                                 transform_success = True
                             else:
@@ -705,7 +720,7 @@ class level(object):
                                 new_world = worlds.world(old_obj.uuid.hex, (3, 3), 0, world_color)
                                 new_levels.append(level(old_obj.uuid.hex, [new_world], self.name, rule_list=self.rule_list))
                                 new_world.new_obj(old_type((1, 1)))
-                                new_obj = objects.Level(old_obj.pos, old_obj.uuid.hex, facing=old_obj.facing)
+                                new_obj = objects.Level(old_obj.pos, old_obj.uuid.hex, orient=old_obj.orient)
                                 world.new_obj(new_obj)
                                 transform_success = True
                         elif issubclass(new_type, objects.World):
@@ -714,18 +729,18 @@ class level(object):
                             elif issubclass(old_type, objects.Level):
                                 old_obj: objects.Level # type: ignore
                                 info = {"from": {"type": objects.Level, "name": old_obj.name}, "to": {"type": new_type}}
-                                world.new_obj(objects.Transform(old_obj.pos, info, old_obj.facing))
+                                world.new_obj(objects.Transform(old_obj.pos, info, old_obj.orient))
                                 transform_success = True
                             elif issubclass(old_type, objects.Clone):
                                 old_obj: objects.Clone # type: ignore
-                                world.new_obj(objects.World(old_obj.pos, old_obj.name, old_obj.inf_tier, old_obj.facing))
+                                world.new_obj(objects.World(old_obj.pos, old_obj.name, old_obj.inf_tier, old_obj.orient))
                                 transform_success = True
                             else:
                                 world_color = colors.to_background_color(displays.sprite_colors[old_obj.sprite_name])
                                 new_world = worlds.world(old_obj.uuid.hex, (3, 3), 0, world_color)
-                                new_world.new_obj(old_type((1, 1), old_obj.facing)) # type: ignore
+                                new_world.new_obj(old_type((1, 1), old_obj.orient)) # type: ignore
                                 self.set_world(new_world)
-                                world.new_obj(objects.World(old_obj.pos, old_obj.uuid.hex, 0, old_obj.facing))
+                                world.new_obj(objects.World(old_obj.pos, old_obj.uuid.hex, 0, old_obj.orient))
                                 transform_success = True
                         elif issubclass(new_type, objects.Clone):
                             if issubclass(old_type, objects.Clone):
@@ -733,26 +748,26 @@ class level(object):
                             elif issubclass(old_type, objects.Level):
                                 old_obj: objects.Level # type: ignore
                                 info = {"from": {"type": objects.Level, "name": old_obj.name}, "to": {"type": new_type}}
-                                world.new_obj(objects.Transform(old_obj.pos, info, old_obj.facing))
+                                world.new_obj(objects.Transform(old_obj.pos, info, old_obj.orient))
                                 transform_success = True
                             elif issubclass(old_type, objects.World):
                                 old_obj: objects.World # type: ignore
-                                world.new_obj(objects.Clone(old_obj.pos, old_obj.name, old_obj.inf_tier, old_obj.facing))
+                                world.new_obj(objects.Clone(old_obj.pos, old_obj.name, old_obj.inf_tier, old_obj.orient))
                                 transform_success = True
                             else:
                                 world_color = colors.to_background_color(displays.sprite_colors[old_obj.sprite_name])
                                 new_world = worlds.world(old_obj.uuid.hex, (3, 3), 0, world_color)
-                                new_world.new_obj(old_type((1, 1), old_obj.facing)) # type: ignore
+                                new_world.new_obj(old_type((1, 1), old_obj.orient)) # type: ignore
                                 self.set_world(new_world)
-                                world.new_obj(objects.Clone(old_obj.pos, old_obj.uuid.hex, 0, old_obj.facing))
+                                world.new_obj(objects.Clone(old_obj.pos, old_obj.uuid.hex, 0, old_obj.orient))
                                 transform_success = True
                         elif issubclass(new_type, objects.Text) and not issubclass(old_type, objects.Text):
                             transform_success = True
-                            new_obj = objects.nouns_objs_dicts.get_exist_noun(old_type)(old_obj.pos, old_obj.facing)
+                            new_obj = objects.nouns_objs_dicts.get_exist_noun(old_type)(old_obj.pos, old_obj.orient)
                             world.new_obj(new_obj)
                         else:
                             transform_success = True
-                            new_obj = new_type(old_obj.pos, old_obj.facing)
+                            new_obj = new_type(old_obj.pos, old_obj.orient)
                             world.new_obj(new_obj)
                 if transform_success:
                     delete_object_list.append(old_obj)
@@ -871,14 +886,14 @@ class level(object):
                         delete_special_object_list.append(world_obj)
                         for transform_obj in transform_to[objects.World]:
                             transform_obj.pos = world_obj.pos
-                            transform_obj.facing = world_obj.facing
+                            transform_obj.orient = world_obj.orient
                             super_world.new_obj(transform_obj)
                 if len(transform_to[objects.Clone]) != 0:
                     for clone_obj in filter(lambda o: o.name == world.name and o.inf_tier == world.inf_tier, super_world.get_clones()):
                         delete_special_object_list.append(clone_obj)
                         for transform_obj in transform_to[objects.Clone]:
                             transform_obj.pos = clone_obj.pos
-                            transform_obj.facing = clone_obj.facing
+                            transform_obj.orient = clone_obj.orient
                             super_world.new_obj(transform_obj)
             for obj in delete_special_object_list:
                 super_world.del_obj(obj)

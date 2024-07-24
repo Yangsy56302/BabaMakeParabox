@@ -66,8 +66,8 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
     object_list = [t for t in objects.object_name.values() if t not in objects.not_in_editor]
     current_object_index = 0
     current_object_type = object_list[current_object_index]
-    current_facing = spaces.S
-    current_object = displays.set_sprite_state(current_object_type((0, 0), current_facing))
+    current_orient = spaces.S
+    current_object = displays.set_sprite_state(current_object_type((0, 0), current_orient))
     current_cursor_pos = (0, 0)
     current_clipboard = []
     object_type_shortcuts: dict[int, type[objects.Object]] = {k: objects.object_name[v] for k, v in enumerate(basics.options["object_type_shortcuts"])}
@@ -92,28 +92,28 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                 keys[event.key] = False
         if keys[keybinds["W"]] and cooldowns[keybinds["W"]] == 0:
             if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
-                current_facing = spaces.W
+                current_orient = spaces.W
             else:
                 new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.W)
                 if not current_world.out_of_range(new_cursor_pos):
                     current_cursor_pos = new_cursor_pos
         elif keys[keybinds["S"]] and cooldowns[keybinds["S"]] == 0:
             if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
-                current_facing = spaces.S
+                current_orient = spaces.S
             else:
                 new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.S)
                 if not current_world.out_of_range(new_cursor_pos):
                     current_cursor_pos = new_cursor_pos
         elif keys[keybinds["A"]] and cooldowns[keybinds["A"]] == 0:
             if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
-                current_facing = spaces.A
+                current_orient = spaces.A
             else:
                 new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.A)
                 if not current_world.out_of_range(new_cursor_pos):
                     current_cursor_pos = new_cursor_pos
         elif keys[keybinds["D"]] and cooldowns[keybinds["D"]] == 0:
             if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
-                current_facing = spaces.D
+                current_orient = spaces.D
             else:
                 new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.D)
                 if not current_world.out_of_range(new_cursor_pos):
@@ -196,7 +196,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                     name = current_level.name
                     icon_name = "empty"
                     icon_color = colors.WHITE
-                current_world.new_obj(current_object_type(current_cursor_pos, name, icon_name, icon_color, current_facing))
+                current_world.new_obj(current_object_type(current_cursor_pos, name, icon_name, icon_color, current_orient))
             elif issubclass(current_object_type, objects.WorldPointer):
                 if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
                     name = input(languages.current_language["editor.world.new.name"])
@@ -206,9 +206,9 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                 else:
                     name = current_world.name
                     inf_tier = current_world.inf_tier
-                current_world.new_obj(current_object_type(current_cursor_pos, name, inf_tier, current_facing))
+                current_world.new_obj(current_object_type(current_cursor_pos, name, inf_tier, current_orient))
             else:
-                current_world.new_obj(current_object_type(current_cursor_pos, current_facing))
+                current_world.new_obj(current_object_type(current_cursor_pos, current_orient))
         elif keys[keybinds["BACKSLASH"]] and cooldowns[keybinds["BACKSLASH"]] == 0:
             if keys[keybinds["LSHIFT"]] or keys[keybinds["RSHIFT"]]:
                 if input(languages.current_language["editor.level.new"]) in languages.yes:
@@ -398,7 +398,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
         displays.set_pixel_size(window.get_size())
         window.blit(pygame.transform.scale(current_level.show_world(current_world, wiggle, cursor=current_cursor_pos),
                                            (window.get_height() * current_world.width // current_world.height, window.get_height())), (0, 0))
-        current_object = displays.set_sprite_state(current_object_type((0, 0), current_facing))
+        current_object = displays.set_sprite_state(current_object_type((0, 0), current_orient))
         window.blit(pygame.transform.scale(displays.sprites.get(current_object_type.sprite_name, current_object.sprite_state, wiggle),
                                            (displays.pixel_sprite_size, displays.pixel_sprite_size)), (window.get_width() - displays.pixel_sprite_size, 0))
         for index, obj_type in object_type_shortcuts.items():

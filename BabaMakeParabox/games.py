@@ -279,7 +279,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                                 for obj in level_info["transform_to"]:
                                     obj: objects.Object
                                     obj.pos = level_obj.pos
-                                    obj.facing = level_obj.facing
+                                    obj.orient = level_obj.orient
                                     world.new_obj(obj)
                                 world.del_obj(level_obj)
             for level in levelpack.level_list:
@@ -291,7 +291,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                             if issubclass(transform_obj.to_type, objects.WorldPointer):
                                 for new_world in from_level.world_list:
                                     level.set_world(new_world)
-                                new_obj = transform_obj.to_type(transform_obj.pos, from_level.main_world_name, from_level.main_world_tier, transform_obj.facing)
+                                new_obj = transform_obj.to_type(transform_obj.pos, from_level.main_world_name, from_level.main_world_tier, transform_obj.orient)
                                 world.del_obj(transform_obj)
                                 world.new_obj(new_obj)
                         elif issubclass(transform_obj.from_type, objects.WorldPointer):
@@ -299,7 +299,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                             if issubclass(transform_obj.to_type, objects.Level):
                                 new_level = levels.level(from_world.name, level.world_list, level.name, transform_obj.from_name, transform_obj.from_inf_tier, level.rule_list)
                                 levelpack.set_level(new_level)
-                                new_obj = objects.Level(transform_obj.pos, from_world.name, icon_color=from_world.color, facing=transform_obj.facing)
+                                new_obj = objects.Level(transform_obj.pos, from_world.name, icon_color=from_world.color, orient=transform_obj.orient)
                                 world.del_obj(transform_obj)
                                 world.new_obj(new_obj)
             for level in levelpack.level_list:
