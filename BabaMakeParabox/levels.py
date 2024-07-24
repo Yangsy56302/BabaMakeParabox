@@ -586,11 +586,12 @@ class level(object):
                 for obj in world.get_objs_from_pos(sink_obj.pos):
                     if obj == sink_obj:
                         continue
-                    if self.same_float_prop(obj, sink_obj):
-                        if obj not in delete_list and sink_obj not in delete_list:
-                            delete_list.append(obj)
-                            delete_list.append(sink_obj)
-                            break
+                    if obj.pos == sink_obj.pos:
+                        if self.same_float_prop(obj, sink_obj):
+                            if obj not in delete_list and sink_obj not in delete_list:
+                                delete_list.append(obj)
+                                delete_list.append(sink_obj)
+                                break
         for obj in delete_list:
             world.del_obj(obj)
         if len(delete_list) != 0:
@@ -610,11 +611,12 @@ class level(object):
                     if not melt_obj.has_prop(objects.FLOAT):
                         delete_list.append(melt_obj)
                 continue
-            for melt_obj in melt_objs:
-                for hot_obj in hot_objs:
-                    if self.same_float_prop(hot_obj, melt_obj):
-                        if melt_obj not in delete_list:
-                            delete_list.append(melt_obj)
+            for hot_obj in hot_objs:
+                for melt_obj in melt_objs:
+                    if hot_obj.pos == melt_obj.pos:
+                        if self.same_float_prop(hot_obj, melt_obj):
+                            if melt_obj not in delete_list:
+                                delete_list.append(melt_obj)
         for obj in delete_list:
             world.del_obj(obj)
         if len(delete_list) != 0:
@@ -633,9 +635,10 @@ class level(object):
                         delete_list.append(you_obj)
                         continue
                 for defeat_obj in defeat_objs:
-                    if self.same_float_prop(defeat_obj, you_obj) or world.has_world_prop(objects.DEFEAT) or self.has_prop(objects.DEFEAT):
-                        if you_obj not in delete_list:
-                            delete_list.append(you_obj)
+                    if you_obj.pos == defeat_obj.pos:
+                        if self.same_float_prop(defeat_obj, you_obj):
+                            if you_obj not in delete_list:
+                                delete_list.append(you_obj)
         for obj in delete_list:
             world.del_obj(obj)
         if len(delete_list) != 0:
@@ -653,11 +656,12 @@ class level(object):
                 continue
             for open_obj in open_objs:
                 for shut_obj in shut_objs:
-                    if shut_obj not in delete_list and open_obj not in delete_list:
-                        delete_list.append(shut_obj)
-                        if shut_obj != open_obj:
-                            delete_list.append(open_obj)
-                        break
+                    if shut_obj.pos == open_obj.pos:
+                        if shut_obj not in delete_list and open_obj not in delete_list:
+                            delete_list.append(shut_obj)
+                            if shut_obj != open_obj:
+                                delete_list.append(open_obj)
+                            break
         for obj in delete_list:
             world.del_obj(obj)
         if len(delete_list) != 0:

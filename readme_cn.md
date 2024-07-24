@@ -276,6 +276,7 @@
 | 3.141  | 2024.07.23 | meta Level is World |
 | 3.142  | 2024.07.24 | Bug on Infix is Fix |
 | 3.15   | 2024.07.24 | Baba near Keke is Me |
+| 3.151  | 2024.07.24 | Bug feeling Shut and Open is Fix |
 
 ## 报告漏洞和提出建议
 
