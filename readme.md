@@ -31,17 +31,12 @@ or if you are from China, [Click me for more info](readme_cn.md).
 If the game freeze, please confirm you are not
 selecting any text in terminal before you report this to me.
 
-If you want to run the source code, download These Things:
-- **Python** **_(latest)_**: [Link](https://www.python.org/downloads/)
-- **PIP**: Should install with Python
-- **Pygame**: Run `pip install -U pygame` in Terminal or something similar to Terminal
-- **PyInstaller** **_(optional, if you need exe)_**: Run `pip install -U pyinstaller` in Terminal too
+For Windows users, if you need to make an exe for yourself, run `windows.bat`.
+For GNU/Linux users, run `.sh` with your distro name first.
 
-Start `BabaMakeParabox.exe`, then follow the terminal messages to start the game.
+Start `BabaMakeParabox.bat` or `BabaMakeParabox.sh` depends on your current operating system,
+then follow the terminal messages to start the game.
 Please make sure you have a levelpack file, if not, you can [make one](#how-to-make-a-custom-levelpack).
-(or run `python BabaMakeParabox.py`, if you have code and python etc.)
-
-If you need to make an exe, run `py2exe.bat`.
 
 ### How to Control
 

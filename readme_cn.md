@@ -31,17 +31,12 @@
 如果游戏卡死，请先确保您
 没有在终端内选中任何文字，再向我汇报游戏漏洞。
 
-如果您想运行源代码，下载这些软件：
-- **Python** *（最新版）*：[链接](https://www.python.org/downloads/)
-- **PIP**：应该会与Python一起安装
-- **Pygame**：在终端或类似终端的地方运行`pip install -U pygame`
-- **PyInstaller** *（可选，仅制作EXE用）*：类似上面，运行`pip install -U pyinstaller`
+对于Windows用户，如果您需要自己将代码打包成EXE，请运行`windows.bat`。
+对于使用GNU/Linux系统的用户，请先运行对应发行版的`.sh`文件。
 
-打开`BabaMakeParabox.exe`，然后按照终端指示开始游戏。
+打开`BabaMakeParabox.bat`或者`BabaMakeParabox.sh`（取决于您使用的操作系统），
+然后按照终端指示开始游戏。
 请确保您已经准备好了关卡包文件，若没有，可以选择[制作一个](#如何制作关卡包)。
-（或者在终端运行`python BabaMakeParabox.py`，如果您准备好了源代码和必备软件）
-
-如果您需要将代码打包成EXE，运行`py2exe.bat`。
 
 ### 如何控制
 

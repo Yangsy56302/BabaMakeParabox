@@ -1,20 +1,21 @@
 import os
 import json
 import copy
+import platform
 
 import pygame
 
 pygame.init()
 
-versions = "3.16"
+versions = "3.161"
 
 default_options = {
     "lang": "id_FK",
     "fps": 30,
     "fpw": 5,
-    "input_cooldown": 4,
+    "input_cooldown": 5,
     "world_display_recursion_depth": 3,
-    "compressed_json_output": True,
+    "compressed_json_output": False,
     "default_new_world": {
         "width": 9,
         "height": 9,
@@ -26,6 +27,10 @@ default_options = {
         "name": "rush_baba.mid"
     }
 }
+
+current_os = platform.system()
+windows = "Windows"
+linux = "Linux"
 
 os.makedirs("levelpacks", exist_ok=True)
 options_filename = "options.json"

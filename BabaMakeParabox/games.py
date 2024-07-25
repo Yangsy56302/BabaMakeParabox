@@ -23,7 +23,6 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 old_prop_dict[obj.uuid] = [t for t in obj.properties]
         level.update_rules(old_prop_dict)
     levelpack_backup = copy.deepcopy(levelpack)
-    subgame_pipes = []
     window = pygame.display.set_mode((720, 720), pygame.RESIZABLE)
     display_offset = [0.0, 0.0]
     display_offset_speed = [0.0, 0.0]
@@ -63,7 +62,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
     freeze_time = -1
     milliseconds = 1000 // basics.options["fps"]
     real_fps = basics.options["fps"]
-    if basics.options["bgm"]["enabled"]:
+    if basics.options["bgm"]["enabled"] and basics.current_os == basics.windows:
         pygame.mixer.music.load(os.path.join("midi", basics.options["bgm"]["name"]))
         pygame.mixer.music.play(-1)
     game_running = True
@@ -235,10 +234,13 @@ def play(levelpack: levelpacks.levelpack) -> None:
                     sounds.play("done")
                     game_running = False
                 elif prop == objects.OPEN:
-                    if os.path.exists("BabaMakeParabox.exe"):
-                        os.system("start BabaMakeParabox.exe")
-                    elif os.path.exists("BabaMakeParabox.py"):
-                        os.system("start python BabaMakeParabox.py")
+                    if basics.current_os == basics.windows:
+                        if os.path.exists("BabaMakeParabox.exe"):
+                                os.system("start BabaMakeParabox.exe")
+                        elif os.path.exists("BabaMakeParabox.py"):
+                            os.system("start python BabaMakeParabox.py")
+                    elif basics.current_os == basics.linux:
+                        os.system("python ./BabaMakeParabox.py &")
                 elif prop == objects.HOT:
                     game_is_hot = True
                 elif prop == objects.MELT:
@@ -262,10 +264,13 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 levelpack.set_level(new_level)
             for obj_type in level_info["new_window_objects"]:
                 obj_type: type[objects.Object]
-                if os.path.exists("SubabaMakeParabox.exe"):
-                    os.system(f"start SubabaMakeParabox.exe {obj_type.typename}")
-                elif os.path.exists("SubabaMakeParabox.py"):
-                    os.system(f"start /b python SubabaMakeParabox.py {obj_type.typename}")
+                if basics.current_os == basics.windows:
+                    if os.path.exists("SubabaMakeParabox.exe"):
+                        os.system(f"start SubabaMakeParabox.exe {obj_type.typename}")
+                    elif os.path.exists("SubabaMakeParabox.py"):
+                        os.system(f"start /b python SubabaMakeParabox.py {obj_type.typename}")
+                elif basics.current_os == basics.linux:
+                    os.system(f"python ./SubabaMakeParabox.py {obj_type.typename} &")
             transform_success = False
             if len(level_info["transform_to"]) != 0:
                 for level in levelpack.level_list:
