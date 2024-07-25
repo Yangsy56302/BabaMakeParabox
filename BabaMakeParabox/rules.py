@@ -5,33 +5,41 @@ Rule = list[type[objects.Text]]
 def to_atom_rules(rule_list: list[Rule]) -> list[Rule]:
     return_value: list[Rule] = []
     for rule in rule_list:
-        raw_and_indexes = list(map(lambda t: issubclass(t, objects.AND), rule))
-        and_indexes = []
-        for i in range(len(raw_and_indexes)):
-            if raw_and_indexes[i] == True:
-                if not issubclass(rule[i + 1], objects.Infix):
-                    and_indexes.append(i)
-        oper_index = list(map(lambda t: issubclass(t, objects.Operator), rule)).index(True)
         noun_list: list[list[type[objects.Text]]] = [[]]
         prop_list: list[list[type[objects.Text]]] = [[]]
-        first_stage = True
-        for i in range(len(rule)):
-            if first_stage:
-                if i == oper_index:
-                    first_stage = False
-                elif i in and_indexes:
+        current_oper = objects.IS
+        stage = objects.Noun
+        for text_type in rule:
+            if stage == objects.Noun:
+                if issubclass(text_type, objects.Operator):
+                    stage = objects.Property
+                    current_oper = text_type
+                if issubclass(text_type, objects.Infix):
+                    stage = objects.Infix
+                    noun_list = [l + [text_type] for l in noun_list]
+                elif issubclass(text_type, objects.AND):
                     noun_list.append([])
                 else:
-                    noun_list[-1].append(rule[i])
-            else:
-                if i in and_indexes:
-                    prop_list.append([])
+                    noun_list[-1].append(text_type)
+            elif stage == objects.Infix:
+                if issubclass(text_type, objects.Operator):
+                    stage = objects.Property
+                    current_oper = text_type
                 else:
-                    prop_list[-1].append(rule[i])
-        oper = [rule[oper_index]]
+                    noun_list = [l + [text_type] for l in noun_list]
+            elif stage == objects.Property:
+                if issubclass(text_type, objects.AND):
+                    prop_list.append([])
+                elif len(prop_list[-1]) == 0 and issubclass(text_type, objects.Operator):
+                    current_oper = text_type
+                elif len(prop_list[-1]) == 0 and not issubclass(text_type, objects.Operator):
+                    prop_list[-1].append(current_oper)
+                    prop_list[-1].append(text_type)
+                else:
+                    prop_list[-1].append(text_type)
         for noun in noun_list:
             for prop in prop_list:
-                return_value.append(noun + oper + prop)
+                return_value.append(noun + prop)
     return return_value
 
 InfixInfo = tuple[bool, type[objects.Infix], bool, type[objects.Text]]

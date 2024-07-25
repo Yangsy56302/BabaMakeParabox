@@ -5,7 +5,7 @@ import json
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "TRUE"
 import pygame
 
-from BabaMakeParabox import basics, languages, spaces, objects, rules, displays, worlds, levels, levelpacks, edits, games
+from BabaMakeParabox import basics, languages, spaces, colors, objects, rules, displays, worlds, levels, levelpacks, edits, games, subgames
 
 def logic(args: dict[str, Any]) -> None:
     print(languages.current_language["game.name"])
@@ -92,4 +92,4 @@ def main() -> None:
     pygame.quit()
     print(languages.current_language["game.thank_you"])
 
-__all__ = ["basics", "languages", "spaces", "objects", "rules", "worlds", "displays", "levels", "edits", "games", "main"]
+__all__ = ["basics", "languages", "spaces", "colors", "objects", "rules", "worlds", "displays", "levels", "edits", "games", "subgames", "main"]

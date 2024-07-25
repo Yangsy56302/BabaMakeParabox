@@ -137,7 +137,7 @@ class world(object):
         for to_clone in to_clone_objs:
             self.new_obj(objects.Clone(to_clone.pos, to_clone.name, to_clone.inf_tier, to_clone.orient))
             self.del_obj(to_clone)
-    def get_rules_from_pos_and_orient(self, stage: Optional[str], pos: spaces.Coord, orient: spaces.Orient) -> list[rules.Rule]:
+    def get_rules_from_pos_and_orient(self, stage: str, pos: spaces.Coord, orient: spaces.Orient) -> list[rules.Rule]:
         if stage == "Prefix":
             first_matches = ()
             then_matches = (objects.Prefix, )
@@ -173,15 +173,20 @@ class world(object):
             then_matches = (objects.Operator, )
             next_stages = ("Property", )
             rule_can_be_done = False
+        elif stage == "AndOperator":
+            first_matches = (objects.AND, )
+            then_matches = (objects.Operator, )
+            next_stages = ("Property", )
+            rule_can_be_done = False
         elif stage == "Property":
             first_matches = ()
             then_matches = (objects.Noun, objects.Property)
-            next_stages = ("AndProperty", )
+            next_stages = ("AndOperator", "AndProperty")
             rule_can_be_done = False
         elif stage == "AndProperty":
             first_matches = (objects.AND, )
             then_matches = (objects.Noun, objects.Property)
-            next_stages = ("AndProperty", )
+            next_stages = ("AndOperator", "AndProperty")
             rule_can_be_done = True
         not_rules: list[rules.Rule] = []
         if stage in ("Prefix", "Noun", "InfixText", "Property"):
@@ -207,8 +212,6 @@ class world(object):
                 for prefix_obj in prefix_objs:
                     temp_prefix_rules = self.get_rules_from_pos_and_orient(next_stage, spaces.pos_facing(new_pos, orient), orient)
                     prefix_rules.extend([[type(prefix_obj)] + r for r in temp_prefix_rules if len(r) != 0])
-            temp_prefix_rules = self.get_rules_from_pos_and_orient("Noun", new_pos, orient)
-            prefix_rules.extend(temp_prefix_rules)
         text_objs = self.get_objs_from_pos_and_type(new_pos, objects.Text)
         word_objs = filter(lambda o: o.has_prop(objects.WORD), self.get_objs_from_pos(new_pos))
         text_objs.extend(map(lambda o: objects.nouns_objs_dicts.get_exist_noun(type(o))(new_pos), word_objs))
@@ -242,43 +245,45 @@ class world(object):
         new_return_rules: list[rules.Rule] = []
         if len(first_matched_list) != 0:
             for matches in first_matched_list:
+                new_return_rules = []
                 for match in matches:
                     for rule in return_rules:
                         new_return_rules.append(rule + [type(match)])
-            return_rules = new_return_rules[:]
-        not_return_rules = []
+                return_rules = new_return_rules[:]
+        not_then_return_rules = []
         if not_after_first_len != 0:
-            not_new_return_rules = []
+            not_then_new_return_rules = []
             for match in not_then_matched:
                 for rule in return_rules:
                     if stage in ("InfixText", "AndInfixText"):
                         if rule[-1] == objects.FEELING: # prop infix
                             if isinstance(match, objects.Property):
-                                not_new_return_rules.append(rule + [objects.NOT for _ in range(not_after_first_len)] + [type(match)])
+                                not_then_new_return_rules.append(rule + [objects.NOT for _ in range(not_after_first_len)] + [type(match)])
                         elif isinstance(match, objects.Noun): # noun infix
-                            not_new_return_rules.append(rule + [objects.NOT for _ in range(not_after_first_len)] + [type(match)])
+                            not_then_new_return_rules.append(rule + [objects.NOT for _ in range(not_after_first_len)] + [type(match)])
                     else:
-                        not_new_return_rules.append(rule + [objects.NOT for _ in range(not_after_first_len)] + [type(match)])
-            not_return_rules = not_new_return_rules[:]
-        new_return_rules = []
+                        not_then_new_return_rules.append(rule + [objects.NOT for _ in range(not_after_first_len)] + [type(match)])
+            not_then_return_rules = not_then_new_return_rules[:]
+        then_return_rules = []
+        new_then_return_rules = []
         for match in then_matched:
             for rule in return_rules:
                 if stage in ("InfixText", "AndInfixText"):
                     if rule[-1] == objects.FEELING: # prop infix
                         if isinstance(match, objects.Property):
-                            new_return_rules.append(rule + [objects.NOT for _ in range(not_after_first_len)] + [type(match)])
+                            new_then_return_rules.append(rule + [type(match)])
                     elif isinstance(match, objects.Noun): # noun infix
-                        new_return_rules.append(rule + [objects.NOT for _ in range(not_after_first_len)] + [type(match)])
+                        new_then_return_rules.append(rule + [type(match)])
                 else:
-                    new_return_rules.append(rule + [type(match)])
-        return_rules = new_return_rules[:]
+                    new_then_return_rules.append(rule + [type(match)])
+        then_return_rules = new_then_return_rules[:]
         new_return_rules = []
         for remain_rule in remain_rules:
-            for return_rule in return_rules:
-                new_return_rules.append(return_rule + remain_rule)
+            for then_return_rule in then_return_rules:
+                new_return_rules.append(then_return_rule + remain_rule)
         for not_remain_rule in not_remain_rules:
-            for not_return_rule in not_return_rules:
-                new_return_rules.append(not_return_rule + not_remain_rule)
+            for not_then_return_rule in not_then_return_rules:
+                new_return_rules.append(not_then_return_rule + not_remain_rule)
         if len(not_rules) != 0:
             new_return_rules.extend(not_rules)
         if len(prefix_rules) != 0:
@@ -292,6 +297,7 @@ class world(object):
             for y in range(self.height):
                 x_rule_dict.setdefault(x, [])
                 new_rule_list = self.get_rules_from_pos_and_orient("Prefix", (x, y), spaces.D)
+                new_rule_list.extend(self.get_rules_from_pos_and_orient("Noun", (x, y), spaces.D))
                 if new_rule_list is not None:
                     for rule_index in range(len(new_rule_list)):
                         part_of_old_rule = False
@@ -303,6 +309,7 @@ class world(object):
                             x_rule_dict[x].append(new_rule_list[rule_index])
                 y_rule_dict.setdefault(y, [])
                 new_rule_list = self.get_rules_from_pos_and_orient("Prefix", (x, y), spaces.S)
+                new_rule_list.extend(self.get_rules_from_pos_and_orient("Noun", (x, y), spaces.S))
                 if new_rule_list is not None:
                     for rule_index in range(len(new_rule_list)):
                         part_of_old_rule = False

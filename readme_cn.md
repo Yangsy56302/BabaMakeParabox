@@ -275,6 +275,8 @@
 | 3.15   | 2024.07.24 | Baba near Keke is Me |
 | 3.151  | 2024.07.24 | Bug feeling Shut and Open is Fix |
 | 3.16   | 2024.07.24 | Control is not Continue |
+| 3.161  | 2024.07.25 | Game on Linux is Open |
+| 3.162  | 2024.07.25 | Bug on Text is Fix |
 
 ## 报告漏洞和提出建议
 
