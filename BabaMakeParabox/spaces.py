@@ -1,59 +1,72 @@
 from typing import Literal, Final
+from enum import Enum
 
 Coord = tuple[int, int]
-Orient = Literal[0x1, 0x2, 0x4, 0x8]
-PlayerOperation = Orient | Literal[0x10]
 
-W: Final[Orient] = 0x2
-A: Final[Orient] = 0x4
-S: Final[Orient] = 0x8
-D: Final[Orient] = 0x1
-O: Final[PlayerOperation] = 0x10
+class Orient(Enum):
+    W = 0x2
+    A = 0x4
+    S = 0x8
+    D = 0x1
+    
+class NullOrient(Enum):
+    O = 0x10
+
+PlayerOperation = Orient | NullOrient
 
 def swap_orientation(direction: Orient) -> Orient:
     match direction:
-        case 0x2:
-            return S
-        case 0x4:
-            return D
-        case 0x8:
-            return W
-        case 0x1:
-            return A
+        case Orient.W:
+            return Orient.S
+        case Orient.A:
+            return Orient.D
+        case Orient.S:
+            return Orient.W
+        case Orient.D:
+            return Orient.A
 
-def orient_to_str(direction: Orient) -> str:
+def orient_to_int(direction: Orient) -> int:
     match direction:
-        case 0x2:
+        case Orient.W:
+            return 0x2
+        case Orient.A:
+            return 0x4
+        case Orient.S:
+            return 0x8
+        case Orient.D:
+            return 0x1
+
+def orient_to_str(direction: Orient) -> Literal["W", "A", "S", "D"]:
+    match direction:
+        case Orient.W:
             return "W"
-        case 0x4:
+        case Orient.A:
             return "A"
-        case 0x8:
+        case Orient.S:
             return "S"
-        case 0x1:
+        case Orient.D:
             return "D"
 
-def str_to_orient(direction: str) -> Orient:
+def str_to_orient(direction: Literal["W", "A", "S", "D"]) -> Orient:
     match direction:
         case "W":
-            return W
+            return Orient.W
         case "A":
-            return A
+            return Orient.A
         case "S":
-            return S
+            return Orient.S
         case "D":
-            return D
-        case _:
-            raise ValueError()
+            return Orient.D
 
 def pos_facing(pos: Coord, orient: Orient) -> Coord:
     match orient:
-        case 0x2:
+        case Orient.W:
             return (pos[0], pos[1] - 1)
-        case 0x4:
+        case Orient.A:
             return (pos[0] - 1, pos[1])
-        case 0x8:
+        case Orient.S:
             return (pos[0], pos[1] + 1)
-        case 0x1:
+        case Orient.D:
             return (pos[0] + 1, pos[1])
 
 def on_line(*poses: Coord) -> bool:

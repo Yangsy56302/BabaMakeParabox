@@ -201,7 +201,7 @@ class world(object):
         for first_match in first_matches:
             text_objs = self.get_objs_from_pos_and_type(new_pos, objects.Text)
             word_objs = filter(lambda o: o.has_prop(objects.WORD), self.get_objs_from_pos(new_pos))
-            text_objs.extend(map(lambda o: objects.nouns_objs_dicts.get_exist_noun(type(o))(new_pos), word_objs))
+            text_objs.extend(map(lambda o: objects.nouns_objs_dicts.swapped()[type(o)](new_pos), word_objs))
             first_matched = [o for o in text_objs if isinstance(o, first_match)]
             if len(first_matched) == 0 and len(not_rules) == 0:
                 return [[]] if rule_can_be_done else []
@@ -216,7 +216,7 @@ class world(object):
                     prefix_rules.extend([[type(prefix_obj)] + r for r in temp_prefix_rules if len(r) != 0])
         text_objs = self.get_objs_from_pos_and_type(new_pos, objects.Text)
         word_objs = filter(lambda o: o.has_prop(objects.WORD), self.get_objs_from_pos(new_pos))
-        text_objs.extend(map(lambda o: objects.nouns_objs_dicts.get_exist_noun(type(o))(new_pos), word_objs))
+        text_objs.extend(map(lambda o: objects.nouns_objs_dicts.swapped()[type(o)](new_pos), word_objs))
         if len(text_objs) == 0 and len(not_rules) == 0:
             return [[]] if rule_can_be_done else []
         then_matched: list[objects.Text] = [o for o in text_objs if isinstance(o, then_matches)]
@@ -235,7 +235,7 @@ class world(object):
                 new_pos = spaces.pos_facing(new_pos, orient)
             text_objs = self.get_objs_from_pos_and_type(new_pos, objects.Text)
             word_objs = filter(lambda o: o.has_prop(objects.WORD), self.get_objs_from_pos(new_pos))
-            text_objs.extend(map(lambda o: objects.nouns_objs_dicts.get_exist_noun(type(o))(new_pos), word_objs))
+            text_objs.extend(map(lambda o: objects.nouns_objs_dicts.swapped()[type(o)](new_pos), word_objs))
             if len(text_objs) != 0:
                 not_then_matched = [o for o in text_objs if isinstance(o, then_matches)]
             for next_stage in next_stages:
@@ -304,8 +304,8 @@ class world(object):
         for x in range(self.width):
             for y in range(self.height):
                 x_rule_dict.setdefault(x, [])
-                new_rule_list = self.get_rules_from_pos_and_orient("Prefix", (x, y), spaces.D)
-                new_rule_list.extend(self.get_rules_from_pos_and_orient("Noun", (x, y), spaces.D))
+                new_rule_list = self.get_rules_from_pos_and_orient("Prefix", (x, y), spaces.Orient.D)
+                new_rule_list.extend(self.get_rules_from_pos_and_orient("Noun", (x, y), spaces.Orient.D))
                 if new_rule_list is not None:
                     for rule_index in range(len(new_rule_list)):
                         part_of_old_rule = False
@@ -316,8 +316,8 @@ class world(object):
                         if not part_of_old_rule:
                             x_rule_dict[x].append(new_rule_list[rule_index])
                 y_rule_dict.setdefault(y, [])
-                new_rule_list = self.get_rules_from_pos_and_orient("Prefix", (x, y), spaces.S)
-                new_rule_list.extend(self.get_rules_from_pos_and_orient("Noun", (x, y), spaces.S))
+                new_rule_list = self.get_rules_from_pos_and_orient("Prefix", (x, y), spaces.Orient.S)
+                new_rule_list.extend(self.get_rules_from_pos_and_orient("Noun", (x, y), spaces.Orient.S))
                 if new_rule_list is not None:
                     for rule_index in range(len(new_rule_list)):
                         part_of_old_rule = False
@@ -335,54 +335,54 @@ class world(object):
     def set_sprite_states(self, round_num: int = 0) -> None:
         for obj in self.object_list:
             if isinstance(obj, objects.Tiled):
-                w_pos = spaces.pos_facing(obj.pos, spaces.W)
+                w_pos = spaces.pos_facing(obj.pos, spaces.Orient.W)
                 w = len(self.get_objs_from_pos_and_type(w_pos, type(obj))) != 0
-                s_pos = spaces.pos_facing(obj.pos, spaces.S)
+                s_pos = spaces.pos_facing(obj.pos, spaces.Orient.S)
                 s = len(self.get_objs_from_pos_and_type(s_pos, type(obj))) != 0
-                a_pos = spaces.pos_facing(obj.pos, spaces.A)
+                a_pos = spaces.pos_facing(obj.pos, spaces.Orient.A)
                 a = len(self.get_objs_from_pos_and_type(a_pos, type(obj))) != 0
-                d_pos = spaces.pos_facing(obj.pos, spaces.D)
+                d_pos = spaces.pos_facing(obj.pos, spaces.Orient.D)
                 d = len(self.get_objs_from_pos_and_type(d_pos, type(obj))) != 0
-                wsad = {spaces.W: w, spaces.S: s, spaces.A: a, spaces.D: d}
+                wsad = {spaces.Orient.W: w, spaces.Orient.S: s, spaces.Orient.A: a, spaces.Orient.D: d}
             else:
-                wsad = {spaces.W: False, spaces.S: False, spaces.A: False, spaces.D: False}
+                wsad = {spaces.Orient.W: False, spaces.Orient.S: False, spaces.Orient.A: False, spaces.Orient.D: False}
             displays.set_sprite_state(obj, round_num, wsad) # type: ignore
     def default_input_position(self, side: spaces.Orient) -> spaces.Coord:
         match side:
-            case spaces.W:
+            case spaces.Orient.W:
                 return (self.width // 2, -1)
-            case spaces.A:
+            case spaces.Orient.A:
                 return (-1, self.height // 2)
-            case spaces.S:
+            case spaces.Orient.S:
                 return (self.width // 2, self.height)
-            case spaces.D:
+            case spaces.Orient.D:
                 return (self.width, self.height // 2)
             case _:
                 raise ValueError()
     def pos_to_transnum(self, pos: spaces.Coord, side: spaces.Orient) -> float:
-        if side in (spaces.W, spaces.S):
+        if side in (spaces.Orient.W, spaces.Orient.S):
             return (pos[0] + 0.5) / self.width
         else:
             return (pos[1] + 0.5) / self.height
     def transnum_to_pos(self, num: float, side: spaces.Orient) -> spaces.Coord:
         match side:
-            case spaces.W:
+            case spaces.Orient.W:
                 return (int((num * self.width)), -1)
-            case spaces.S:
+            case spaces.Orient.S:
                 return (int((num * self.width)), self.height)
-            case spaces.A:
+            case spaces.Orient.A:
                 return (-1, int((num * self.height)))
-            case spaces.D:
+            case spaces.Orient.D:
                 return (self.width, int((num * self.height)))
             case _:
                 raise ValueError()
     def transnum_to_smaller_transnum(self, num: float, pos: spaces.Coord, side: spaces.Orient) -> float:
-        if side in (spaces.W, spaces.S):
+        if side in (spaces.Orient.W, spaces.Orient.S):
             return (num * self.width) - pos[0]
         else:
             return (num * self.height) - pos[1]
     def transnum_to_bigger_transnum(self, num: float, pos: spaces.Coord, side: spaces.Orient) -> float:
-        if side in (spaces.W, spaces.S):
+        if side in (spaces.Orient.W, spaces.Orient.S):
             return (num + pos[0]) / self.width
         else:
             return (num + pos[1]) / self.height

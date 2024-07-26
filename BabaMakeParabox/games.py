@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Optional, TypedDict
 import random
 import copy
 import uuid
@@ -7,6 +7,12 @@ import os
 from BabaMakeParabox import basics, languages, sounds, spaces, objects, displays, worlds, levels, levelpacks
 
 import pygame
+
+class History(TypedDict):
+    world_index: int
+    level_name: str
+    level_info: levels.ReTurnValue
+    levelpack: levelpacks.levelpack
 
 def play(levelpack: levelpacks.levelpack) -> None:
     for level in levelpack.level_list:
@@ -44,10 +50,10 @@ def play(levelpack: levelpacks.levelpack) -> None:
     current_level: levels.level = levelpack.get_exist_level(current_level_name)
     current_world_index: int = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
     current_world: worlds.world = current_level.world_list[current_world_index]
-    default_level_info = {"win": False, "end": False, "selected_level": None, "transform_to": [], "pushing_game": False}
-    level_info = default_level_info.copy()
-    level_info_backup = default_level_info.copy()
-    history = [{"world_index": current_world_index, "level_name": current_level_name, "level_info": default_level_info, "levelpack": copy.deepcopy(levelpack)}]
+    default_level_info: levels.ReTurnValue = {"win": False, "end": False, "game_push": False, "selected_level": None, "transform_to": []}
+    level_info: levels.ReTurnValue = default_level_info.copy()
+    level_info_backup: levels.ReTurnValue = default_level_info.copy()
+    history: list[History] = [{"world_index": current_world_index, "level_name": current_level_name, "level_info": default_level_info, "levelpack": copy.deepcopy(levelpack)}]
     level_changed = False
     world_changed = False
     round_num = 0
@@ -56,6 +62,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
     freeze_time = -1
     milliseconds = 1000 // basics.options["fps"]
     real_fps = basics.options["fps"]
+    show_fps = False
     if basics.options["bgm"]["enabled"] and basics.current_os == basics.windows:
         pygame.mixer.music.load(os.path.join("midi", basics.options["bgm"]["name"]))
         pygame.mixer.music.play(-1)
@@ -78,43 +85,43 @@ def play(levelpack: levelpacks.levelpack) -> None:
             if keys["W"]:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "level_info": level_info, "levelpack": copy.deepcopy(levelpack)})
                 round_num += 1
-                level_info = current_level.round(spaces.W)
+                level_info = current_level.turn(spaces.Orient.W)
                 if objects.YOU in current_level.game_properties:
                     display_offset[1] -= window.get_height() / current_world.width
-                if objects.PUSH in current_level.game_properties and level_info["pushing_game"]:
+                if objects.PUSH in current_level.game_properties and level_info["game_push"]:
                     display_offset[1] -= window.get_height() / current_world.width
                 refresh = True
             elif keys["S"]:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "level_info": level_info, "levelpack": copy.deepcopy(levelpack)})
                 round_num += 1
-                level_info = current_level.round(spaces.S)
+                level_info = current_level.turn(spaces.Orient.S)
                 if objects.YOU in current_level.game_properties:
                     display_offset[1] += window.get_height() / current_world.width
-                if objects.PUSH in current_level.game_properties and level_info["pushing_game"]:
+                if objects.PUSH in current_level.game_properties and level_info["game_push"]:
                     display_offset[1] += window.get_height() / current_world.width
                 refresh = True
             elif keys["A"]:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "level_info": level_info, "levelpack": copy.deepcopy(levelpack)})
                 round_num += 1
-                level_info = current_level.round(spaces.A)
+                level_info = current_level.turn(spaces.Orient.A)
                 if objects.YOU in current_level.game_properties:
                     display_offset[0] -= window.get_width() / current_world.height
-                if objects.PUSH in current_level.game_properties and level_info["pushing_game"]:
+                if objects.PUSH in current_level.game_properties and level_info["game_push"]:
                     display_offset[0] -= window.get_width() / current_world.height
                 refresh = True
             elif keys["D"]:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "level_info": level_info, "levelpack": copy.deepcopy(levelpack)})
                 round_num += 1
-                level_info = current_level.round(spaces.D)
+                level_info = current_level.turn(spaces.Orient.D)
                 if objects.YOU in current_level.game_properties:
                     display_offset[0] += window.get_width() / current_world.height
-                if objects.PUSH in current_level.game_properties and level_info["pushing_game"]:
+                if objects.PUSH in current_level.game_properties and level_info["game_push"]:
                     display_offset[0] += window.get_width() / current_world.height
                 refresh = True
             elif keys[" "]:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "level_info": level_info, "levelpack": copy.deepcopy(levelpack)})
                 round_num += 1
-                level_info = current_level.round(spaces.O)
+                level_info = current_level.turn(spaces.NullOrient.O)
                 refresh = True
             elif keys["ESCAPE"]:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "level_info": level_info, "levelpack": copy.deepcopy(levelpack)})
@@ -266,7 +273,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 elif basics.current_os == basics.linux:
                     os.system(f"python ./SubabaMakeParabox.py {obj_type.typename} &")
             transform_success = False
-            if len(level_info["transform_to"]) != 0:
+            if level_info["transform_to"] is not None:
                 for level in levelpack.level_list:
                     for world in level.world_list:
                         for level_obj in world.get_levels():
@@ -312,7 +319,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 if freeze_time == -1:
                     level_info_backup = copy.deepcopy(level_info)
                     freeze_time = basics.options["fps"]
-            elif transform_success and len(level_info["transform_to"]) != 0:
+            elif transform_success and level_info["transform_to"] is not None:
                 print(languages.current_language["game.level.transform"])
                 if freeze_time == -1:
                     level_info_backup = copy.deepcopy(level_info)
@@ -342,7 +349,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 current_world = current_level.world_list[current_world_index]
             elif level_info_backup["end"]:
                 game_running = False
-            elif len(level_info_backup["transform_to"]) != 0:
+            elif level_info["transform_to"] is not None:
                 super_level_name = current_level.super_level
                 super_level = levelpack.get_level(super_level_name if super_level_name is not None else levelpack.main_level)
                 current_level_name = super_level.name if super_level is not None else levelpack.main_level
@@ -372,6 +379,8 @@ def play(levelpack: levelpacks.levelpack) -> None:
         # fps
         real_fps = min(1000 / milliseconds, (real_fps * (basics.options["fps"] - 1) + 1000 / milliseconds) / basics.options["fps"])
         if keys["F1"]:
+            show_fps = not show_fps
+        if show_fps:
             real_fps_string = str(int(real_fps))
             for i in range(len(real_fps_string)):
                 window.blit(displays.sprites.get(f"text_{real_fps_string[i]}", 0, wiggle), (i * displays.sprite_size, 0))
@@ -381,7 +390,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
             transparent_black_background = pygame.Surface(window.get_size(), pygame.SRCALPHA)
             transparent_black_background.fill("#00000088")
             window.blit(transparent_black_background, (0, 0))
-        game_transform_to = [o for o in map(objects.nouns_objs_dicts.get_obj, game_transform_to) if o is not None] # type: ignore
+        game_transform_to = [o for o in map(objects.nouns_objs_dicts.get, game_transform_to) if o is not None]
         for obj_type in game_transform_to:
             window.blit(pygame.transform.scale(displays.sprites.get(obj_type.sprite_name, 0, wiggle), window.get_size()), (0, 0))
         # offset

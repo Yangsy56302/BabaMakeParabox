@@ -277,6 +277,7 @@
 | 3.161  | 2024.07.25 | Game on Linux is Open |
 | 3.162  | 2024.07.25 | Bug on Text is Fix |
 | 3.2    | 2024.07.26 | Baba make Patrick and has Box and write Win |
+| 3.201  | 2024.07.26 | Code is Better; Fps is Switch |
 
 ## 报告漏洞和提出建议
 

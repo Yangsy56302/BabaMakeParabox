@@ -60,7 +60,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
     object_list = [t for t in objects.object_name.values() if t not in objects.not_in_editor]
     current_object_index = 0
     current_object_type = object_list[current_object_index]
-    current_orient = spaces.S
+    current_orient = spaces.Orient.S
     current_object = displays.set_sprite_state(current_object_type((0, 0), current_orient))
     current_cursor_pos = (0, 0)
     current_clipboard = []
@@ -72,6 +72,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
     editor_running = True
     milliseconds = 1000 // basics.options["fps"]
     real_fps = basics.options["fps"]
+    show_fps = False
     while editor_running:
         frame += 1
         if frame >= basics.options["fpw"]:
@@ -92,30 +93,30 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                         keys[key] = True
         if keys["W"]:
             if keys["LSHIFT"] or keys["RSHIFT"]:
-                current_orient = spaces.W
+                current_orient = spaces.Orient.W
             else:
-                new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.W)
+                new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.Orient.W)
                 if not current_world.out_of_range(new_cursor_pos):
                     current_cursor_pos = new_cursor_pos
         elif keys["S"]:
             if keys["LSHIFT"] or keys["RSHIFT"]:
-                current_orient = spaces.S
+                current_orient = spaces.Orient.S
             else:
-                new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.S)
+                new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.Orient.S)
                 if not current_world.out_of_range(new_cursor_pos):
                     current_cursor_pos = new_cursor_pos
         elif keys["A"]:
             if keys["LSHIFT"] or keys["RSHIFT"]:
-                current_orient = spaces.A
+                current_orient = spaces.Orient.A
             else:
-                new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.A)
+                new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.Orient.A)
                 if not current_world.out_of_range(new_cursor_pos):
                     current_cursor_pos = new_cursor_pos
         elif keys["D"]:
             if keys["LSHIFT"] or keys["RSHIFT"]:
-                current_orient = spaces.D
+                current_orient = spaces.Orient.D
             else:
-                new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.D)
+                new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.Orient.D)
                 if not current_world.out_of_range(new_cursor_pos):
                     current_cursor_pos = new_cursor_pos
         elif keys["Q"]:
@@ -308,13 +309,13 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
             try:
                 obj_to_noun = None
                 if not issubclass(current_object_type, objects.Noun):
-                    obj_to_noun = objects.nouns_objs_dicts.get_noun(current_object_type)
+                    obj_to_noun = objects.nouns_objs_dicts.swapped().get(current_object_type)
             except KeyError:
                 pass
             try:
                 noun_to_obj = None
                 if issubclass(current_object_type, objects.Noun):
-                    noun_to_obj = objects.nouns_objs_dicts.get_obj(current_object_type)
+                    noun_to_obj = objects.nouns_objs_dicts.get(current_object_type)
             except KeyError:
                 pass
             new_object_type = obj_to_noun if obj_to_noun is not None else (noun_to_obj if noun_to_obj is not None else None)
@@ -400,13 +401,15 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
         window.blit(pygame.transform.scale(displays.sprites.get(current_object_type.sprite_name, current_object.sprite_state, wiggle),
                                            (displays.pixel_sprite_size, displays.pixel_sprite_size)), (window.get_width() - displays.pixel_sprite_size, 0))
         for index, obj_type in object_type_shortcuts.items():
-            obj = displays.set_sprite_state(obj_type((0, 0), spaces.S))
+            obj = displays.set_sprite_state(obj_type((0, 0), spaces.Orient.S))
             window.blit(pygame.transform.scale(displays.sprites.get(obj_type.sprite_name, obj.sprite_state, wiggle),
                                                (displays.pixel_sprite_size, displays.pixel_sprite_size)),
                         (window.get_width() + (index % 5 * displays.pixel_sprite_size) - (displays.pixel_sprite_size * 5),
                          window.get_height() + (index // 5 * displays.pixel_sprite_size) - (displays.pixel_sprite_size * 2)))
         real_fps = min(1000 / milliseconds, (real_fps * (basics.options["fps"] - 1) + 1000 / milliseconds) / basics.options["fps"])
         if keys["F1"]:
+            show_fps = not show_fps
+        if show_fps:
             real_fps_string = str(int(real_fps))
             for i in range(len(real_fps_string)):
                 window.blit(displays.sprites.get(f"text_{real_fps_string[i]}", 0, wiggle), (i * displays.sprite_size, 0))

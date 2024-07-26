@@ -80,7 +80,7 @@ def set_sprite_state(obj: objects.Object, round_num: int = 0, wsad: Optional[dic
     if isinstance(obj, objects.Character):
         obj.set_sprite()
     if isinstance(obj, objects.Tiled):
-        obj.set_sprite(wsad if wsad is not None else {spaces.W: False, spaces.S: False, spaces.A: False, spaces.D: False})
+        obj.set_sprite(wsad if wsad is not None else {spaces.Orient.W: False, spaces.Orient.S: False, spaces.Orient.A: False, spaces.Orient.D: False})
     return obj
 
 sprite_colors: dict[str, colors.ColorHex] = {}

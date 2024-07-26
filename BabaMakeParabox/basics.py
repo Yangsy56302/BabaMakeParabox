@@ -1,3 +1,4 @@
+from typing import TypedDict
 import os
 import json
 import copy
@@ -7,9 +8,29 @@ import pygame
 
 pygame.init()
 
-versions = "3.2"
+versions = "3.201"
 
-default_options = {
+class DefaultNewWorldOptions(TypedDict):
+    width: int
+    height: int
+    color: int
+
+class BgmOptions(TypedDict):
+    enabled: bool
+    name: str
+
+class Options(TypedDict):
+    lang: str
+    fps: int
+    fpw: int
+    input_cooldown: int
+    world_display_recursion_depth: int
+    compressed_json_output: bool
+    default_new_world: DefaultNewWorldOptions
+    object_type_shortcuts: list[str]
+    bgm: BgmOptions
+
+default_options: Options = {
     "lang": "id_FK",
     "fps": 30,
     "fpw": 5,
@@ -34,11 +55,11 @@ linux = "Linux"
 
 os.makedirs("levelpacks", exist_ok=True)
 options_filename = "options.json"
-options = copy.deepcopy(default_options)
+options: Options = copy.deepcopy(default_options)
 if os.path.exists(options_filename):
     with open(options_filename, "r", encoding="utf-8") as file:
         options = json.load(file)
-        updated_options = copy.deepcopy(default_options)
+        updated_options: Options = copy.deepcopy(default_options)
         updated_options.update(options)
         options = copy.deepcopy(updated_options)
 else:

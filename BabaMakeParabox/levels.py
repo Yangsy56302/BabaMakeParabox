@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Optional, TypedDict
 import random
 import copy
 import uuid
@@ -6,6 +6,13 @@ import uuid
 from BabaMakeParabox import basics, colors, spaces, objects, rules, worlds, displays
 
 import pygame
+
+class ReTurnValue(TypedDict):
+    win: bool
+    end: bool
+    game_push: bool
+    selected_level: Optional[str]
+    transform_to: Optional[list[objects.Object]]
 
 class level(object):
     def __init__(self, name: str, world_list: list[worlds.world], super_level: Optional[str] = None, main_world_name: Optional[str] = None, main_world_tier: Optional[int] = None, rule_list: Optional[list[rules.Rule]] = None) -> None:
@@ -79,7 +86,7 @@ class level(object):
     def all_list_set(self) -> None:
         for world in self.world_list:
             for obj in world.object_list:
-                noun_type = objects.nouns_objs_dicts.get_noun(type(obj))
+                noun_type = objects.nouns_objs_dicts.swapped().get(type(obj))
                 if noun_type is not None and noun_type not in self.all_list:
                     self.all_list.append(noun_type)
     def meet_prefix_conditions(self, world: worlds.world, obj: objects.Object, prefix_info_list: list[rules.PrefixInfo], is_meta: bool = False) -> bool:
@@ -103,7 +110,7 @@ class level(object):
             elif infix_info[1] == objects.NEXTTO:
                 find_range = [(obj.x, obj.y - 1), (obj.x - 1, obj.y), (obj.x + 1, obj.y), (obj.x, obj.y + 1)]
             if infix_info[1] in (objects.ON, objects.NEAR, objects.NEXTTO):
-                match_type = objects.nouns_objs_dicts.get_obj(infix_info[3]) # type: ignore
+                match_type = objects.nouns_objs_dicts.get(infix_info[3]) # type: ignore
                 if match_type is not None:
                     if infix_info[2]:
                         for new_match_type in [o for o in self.all_list if (not issubclass(o, objects.not_in_all)) and not issubclass(o, match_type)]:
@@ -194,7 +201,7 @@ class level(object):
                         continue
                     if prop_type != objects.WORD:
                         continue
-                    obj_type = objects.nouns_objs_dicts.get_obj(noun_type)
+                    obj_type = objects.nouns_objs_dicts.get(noun_type)
                     if obj_type is None:
                         if noun_type == objects.ALL:
                             if noun_negated:
@@ -234,7 +241,7 @@ class level(object):
         for world in self.world_list:
             for rule in world.rule_list:
                 for prefix_list, noun_negated, noun_type, infix_list, oper_type, prop_negated_count, prop_type in rules.analysis_rule(rule):
-                    obj_type = objects.nouns_objs_dicts.get_obj(noun_type)
+                    obj_type = objects.nouns_objs_dicts.get(noun_type)
                     if obj_type is None:
                         if noun_type == objects.ALL:
                             if noun_negated:
@@ -378,10 +385,10 @@ class level(object):
                 self.set_world(new_world)
                 world.new_obj(objects.Clone(obj.pos, obj.uuid.hex, 0, obj.orient))
             elif new_noun_type == objects.TEXT:
-                new_obj_type = objects.nouns_objs_dicts.get_exist_noun(type(obj))
+                new_obj_type = objects.nouns_objs_dicts.swapped()[type(obj)]
                 world.new_obj(new_obj_type(obj.pos, obj.orient))
             else:
-                new_obj_type = objects.nouns_objs_dicts.get_exist_obj(new_noun_type)
+                new_obj_type = objects.nouns_objs_dicts[new_noun_type]
                 world.new_obj(new_obj_type(obj.pos, obj.orient))
     def same_float_prop(self, obj_1: objects.Object, obj_2: objects.Object):
         return not (obj_1.has_prop(objects.FLOAT) ^ obj_2.has_prop(objects.FLOAT))
@@ -554,14 +561,14 @@ class level(object):
         if len(move_list) != 0 and "move" not in self.sound_events:
             self.sound_events.append("move")
     def you(self, orient: spaces.PlayerOperation) -> bool:
-        if orient == spaces.O:
+        if orient == spaces.NullOrient.O:
             return False
         move_list = []
         pushing_game = False
         for world in self.world_list:
             if world.has_world_prop(objects.YOU) or self.has_prop(objects.YOU):
                 for obj in world.object_list:
-                    new_move_list = self.get_move_list(objects.MOVE, world, obj, spaces.S)
+                    new_move_list = self.get_move_list(objects.MOVE, world, obj, spaces.Orient.S)
                     if new_move_list is not None:
                         move_list.extend(new_move_list)
                     else:
@@ -569,8 +576,8 @@ class level(object):
                 continue
             you_objs = [o for o in world.object_list if o.has_prop(objects.YOU)]
             for obj in you_objs:
-                obj.orient = orient # type: ignore
-                new_move_list = self.get_move_list(objects.YOU, world, obj, obj.orient) # type: ignore
+                obj.orient = orient
+                new_move_list = self.get_move_list(objects.YOU, world, obj, obj.orient)
                 if new_move_list is not None:
                     move_list.extend(new_move_list)
                 else:
@@ -579,7 +586,7 @@ class level(object):
         self.move_objs_from_move_list(move_list)
         return pushing_game
     def select(self, orient: spaces.PlayerOperation) -> Optional[str]:
-        if orient == spaces.O:
+        if orient == spaces.NullOrient.O:
             for world in self.world_list:
                 select_objs = [o for o in world.object_list if o.has_prop(objects.SELECT)]
                 levels: list[objects.Level] = []
@@ -592,7 +599,7 @@ class level(object):
             for world in self.world_list:
                 select_objs = [o for o in world.object_list if o.has_prop(objects.SELECT)]
                 for obj in select_objs:
-                    new_pos = spaces.pos_facing(obj.pos, orient) # type: ignore
+                    new_pos = spaces.pos_facing(obj.pos, orient)
                     if not world.out_of_range(new_pos):
                         self.move_obj_in_world(world, obj, new_pos)
             return None
@@ -602,7 +609,7 @@ class level(object):
             if world.has_world_prop(objects.MOVE) or self.has_prop(objects.MOVE):
                 for obj in world.object_list:
                     if not obj.has_prop(objects.FLOAT):
-                        new_move_list = self.get_move_list(objects.MOVE, world, obj, spaces.S)
+                        new_move_list = self.get_move_list(objects.MOVE, world, obj, spaces.Orient.S)
                         if new_move_list is not None:
                             move_list.extend(new_move_list)
                         else:
@@ -631,7 +638,7 @@ class level(object):
             if world.has_world_prop(objects.SHIFT) or self.has_prop(objects.SHIFT):
                 for obj in world.object_list:
                     if not obj.has_prop(objects.FLOAT):
-                        new_move_list = self.get_move_list(objects.SHIFT, world, obj, spaces.D)
+                        new_move_list = self.get_move_list(objects.SHIFT, world, obj, spaces.Orient.D)
                         if new_move_list is not None:
                             move_list.extend(new_move_list)
                         else:
@@ -821,21 +828,21 @@ class level(object):
                         self.set_world(new_world)
                         world.new_obj(objects.Clone(obj.pos, obj.uuid.hex, 0, obj.orient))
                     elif make_noun_type == objects.TEXT:
-                        make_obj_type = objects.nouns_objs_dicts.get_exist_noun(type(obj))
+                        make_obj_type = objects.nouns_objs_dicts.swapped()[type(obj)]
                         world.new_obj(make_obj_type(obj.pos, obj.orient))
                     else:
-                        make_obj_type = objects.nouns_objs_dicts.get_exist_obj(make_noun_type)
+                        make_obj_type = objects.nouns_objs_dicts[make_noun_type]
                         world.new_obj(make_obj_type(obj.pos, obj.orient))
-    def transform(self) -> list[objects.Object]:
+    def transform(self) -> Optional[list[objects.Object]]:
         for world in self.world_list:
             delete_object_list = []
             for old_obj in world.object_list: # type: ignore
                 old_obj: objects.Object # type: ignore
                 old_type = type(old_obj)
                 new_nouns = [n for n, c in old_obj.properties if issubclass(n, objects.Noun) and c % 2 == 0]
-                new_types = [t for t in map(objects.nouns_objs_dicts.get_obj, new_nouns) if t is not None]
+                new_types = [t for t in map(objects.nouns_objs_dicts.get, new_nouns) if t is not None]
                 not_new_nouns = [n for n, c in old_obj.properties if issubclass(n, objects.Noun) and c % 2 == 1]
-                not_new_types = [t for t in map(objects.nouns_objs_dicts.get_obj, not_new_nouns) if t is not None]
+                not_new_types = [t for t in map(objects.nouns_objs_dicts.get, not_new_nouns) if t is not None]
                 transform_success = False
                 old_type_is_old_type = False
                 old_type_is_not_old_type = False
@@ -850,7 +857,7 @@ class level(object):
                 if not old_type_is_old_type:
                     if objects.ALL in new_nouns:
                         all_nouns = [t for t in self.all_list if t not in not_new_types]
-                        new_types.extend([t for t in map(objects.nouns_objs_dicts.get_obj, all_nouns) if t is not None]) # type: ignore
+                        new_types.extend([t for t in map(objects.nouns_objs_dicts.get, all_nouns) if t is not None])
                     for new_text_type in old_obj.write_text:
                         new_obj = new_text_type(old_obj.pos, old_obj.orient)
                         world.new_obj(new_obj)
@@ -929,7 +936,7 @@ class level(object):
                                 transform_success = True
                         elif issubclass(new_type, objects.Text) and not issubclass(old_type, objects.Text):
                             transform_success = True
-                            new_obj = objects.nouns_objs_dicts.get_exist_noun(old_type)(old_obj.pos, old_obj.orient)
+                            new_obj = objects.nouns_objs_dicts.swapped()[old_type](old_obj.pos, old_obj.orient)
                             world.new_obj(new_obj)
                         else:
                             transform_success = True
@@ -954,7 +961,7 @@ class level(object):
                 else:
                     special_not_new_types[objects.Level].extend(objects.in_not_all)
             else:
-                new_type = objects.nouns_objs_dicts.get_exist_obj(prop_type)
+                new_type = objects.nouns_objs_dicts[prop_type]
                 if prop_negated_count % 2 == 0:
                     special_new_types[objects.Level].append(new_type)
                 else:
@@ -973,7 +980,7 @@ class level(object):
                     else:
                         special_not_new_types[objects.World].extend(objects.in_not_all)
                 else:
-                    new_type = objects.nouns_objs_dicts.get_exist_obj(prop_type)
+                    new_type = objects.nouns_objs_dicts[prop_type]
                     if prop_negated_count % 2 == 0:
                         special_new_types[objects.World].append(new_type)
                     else:
@@ -987,7 +994,7 @@ class level(object):
                     else:
                         special_not_new_types[objects.Clone].extend(objects.in_not_all)
                 else:
-                    new_type = objects.nouns_objs_dicts.get_exist_obj(prop_type)
+                    new_type = objects.nouns_objs_dicts[prop_type]
                     if prop_negated_count % 2 == 0:
                         special_new_types[objects.Clone].append(new_type)
                     else:
@@ -1072,7 +1079,10 @@ class level(object):
                             super_world.new_obj(transform_obj)
             for obj in delete_special_object_list:
                 super_world.del_obj(obj)
-        return transform_to[objects.Level]
+        if len(transform_to[objects.Level]) != 0:
+            return transform_to[objects.Level]
+        else:
+            return None
     def win(self) -> bool:
         for world in self.world_list:
             you_objs = [o for o in world.object_list if o.has_prop(objects.YOU)]
@@ -1118,7 +1128,7 @@ class level(object):
                 success = True
         if success:
             self.sound_events.append("done")
-    def round(self, op: spaces.PlayerOperation) -> dict[str, Any]:
+    def turn(self, op: spaces.PlayerOperation) -> ReTurnValue:
         self.new_games = []
         self.sound_events = []
         self.created_levels = []
@@ -1128,10 +1138,10 @@ class level(object):
                 old_prop_dict[obj.uuid] = [t for t in obj.properties]
                 obj.moved = False
         self.update_rules(old_prop_dict)
-        pushing_game = self.you(op)
-        pushing_game |= self.move()
+        game_push = self.you(op)
+        game_push |= self.move()
         self.update_rules(old_prop_dict)
-        pushing_game |= self.shift()
+        game_push |= self.shift()
         self.update_rules(old_prop_dict)
         transform_to = self.transform()
         self.update_rules(old_prop_dict)
@@ -1150,9 +1160,9 @@ class level(object):
         win = self.win()
         end = self.end()
         return {"win": win, "end": end,
+                "game_push": game_push,
                 "selected_level": selected_level,
-                "transform_to": transform_to,
-                "pushing_game": pushing_game}
+                "transform_to": transform_to}
     def have_you(self) -> bool:
         for world in self.world_list:
             for obj in world.object_list:

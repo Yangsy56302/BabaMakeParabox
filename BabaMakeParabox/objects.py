@@ -7,7 +7,7 @@ from BabaMakeParabox import colors, spaces
 class Object(object):
     typename: str = "Object"
     sprite_name: str
-    def __init__(self, pos: spaces.Coord, orient: spaces.Orient = spaces.S) -> None:
+    def __init__(self, pos: spaces.Coord, orient: spaces.Orient = spaces.Orient.S) -> None:
         self.uuid: uuid.UUID = uuid.uuid4()
         self.x: int = pos[0]
         self.y: int = pos[1]
@@ -58,7 +58,7 @@ class Object(object):
     def clear_prop(self) -> None:
         self.properties = []
     def to_json(self) -> dict[str, Any]:
-        return {"type": self.typename, "position": [self.x, self.y], "orientation": spaces.orient_to_str(self.orient)} # type: ignore
+        return {"type": self.typename, "position": [self.x, self.y], "orientation": spaces.orient_to_str(self.orient)}
 
 class Static(Object):
     typename: str = "Static"
@@ -70,7 +70,7 @@ class Static(Object):
 class Tiled(Object):
     typename: str = "Tiled"
     def set_sprite(self, connected: dict[spaces.Orient, bool]) -> None:
-        self.sprite_state = (connected[spaces.D] * 0x1) | (connected[spaces.W] * 0x2) | (connected[spaces.A] * 0x4) | (connected[spaces.S] * 0x8)
+        self.sprite_state = (connected[spaces.Orient.D] * 0x1) | (connected[spaces.Orient.W] * 0x2) | (connected[spaces.Orient.A] * 0x4) | (connected[spaces.Orient.S] * 0x8)
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
 
@@ -84,14 +84,14 @@ class Animated(Object):
 class Directional(Object):
     typename: str = "Directional"
     def set_sprite(self) -> None:
-        self.sprite_state = int(math.log2(self.orient)) * 0x8
+        self.sprite_state = int(math.log2(spaces.orient_to_int(self.orient))) * 0x8
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
 
 class AnimatedDirectional(Object):
     typename: str = "AnimatedDirectional"
     def set_sprite(self, round_num: int) -> None:
-        self.sprite_state = int(math.log2(self.orient)) * 0x8 | round_num % 4
+        self.sprite_state = int(math.log2(spaces.orient_to_int(self.orient))) * 0x8 | round_num % 4
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
 
@@ -102,11 +102,11 @@ class Character(Object):
         if not self.sleeping:
             if self.moved:
                 temp_state = (self.sprite_state & 0x3) + 1 if (self.sprite_state & 0x3) != 0x3 else 0x0
-                self.sprite_state = int(math.log2(self.orient)) * 0x8 | temp_state
+                self.sprite_state = int(math.log2(spaces.orient_to_int(self.orient))) * 0x8 | temp_state
             else:
-                self.sprite_state = int(math.log2(self.orient)) * 0x8 | (self.sprite_state & 0x3)
+                self.sprite_state = int(math.log2(spaces.orient_to_int(self.orient))) * 0x8 | (self.sprite_state & 0x3)
         else:
-            self.sprite_state = int(math.log2(self.orient)) * 0x8 | 0x7
+            self.sprite_state = int(math.log2(spaces.orient_to_int(self.orient))) * 0x8 | 0x7
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
 
@@ -275,7 +275,7 @@ class Empty(Object):
 class Level(Object):
     typename: str = "Level"
     sprite_name: str = "level"
-    def __init__(self, pos: spaces.Coord, name: str, icon_name: str = "empty", icon_color: colors.ColorHex = colors.WHITE, orient: spaces.Orient = spaces.S) -> None:
+    def __init__(self, pos: spaces.Coord, name: str, icon_name: str = "empty", icon_color: colors.ColorHex = colors.WHITE, orient: spaces.Orient = spaces.Orient.S) -> None:
         super().__init__(pos, orient)
         self.name: str = name
         self.icon_name: str = icon_name
@@ -284,13 +284,13 @@ class Level(Object):
         return self.uuid == obj.uuid
     def to_json(self) -> dict[str, Any]:
         json_object = super().to_json()
-        json_object.update({"level": {"name": self.name}}) # type: ignore
-        json_object.update({"icon": {"name": self.icon_name, "color": self.icon_color}}) # type: ignore
-        return json_object # type: ignore
+        json_object.update({"level": {"name": self.name}})
+        json_object.update({"icon": {"name": self.icon_name, "color": self.icon_color}})
+        return json_object
 
 class WorldPointer(Object):
     typename: str = "WorldContainer"
-    def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, orient: spaces.Orient = spaces.S) -> None:
+    def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, orient: spaces.Orient = spaces.Orient.S) -> None:
         super().__init__(pos, orient)
         self.name: str = name
         self.inf_tier: int = inf_tier
@@ -298,13 +298,13 @@ class WorldPointer(Object):
         return self.uuid == obj.uuid
     def to_json(self) -> dict[str, Any]:
         json_object = super().to_json()
-        json_object.update({"world": {"name": self.name, "infinite_tier": self.inf_tier}}) # type: ignore
-        return json_object # type: ignore
+        json_object.update({"world": {"name": self.name, "infinite_tier": self.inf_tier}})
+        return json_object
 
 class World(WorldPointer):
     typename: str = "World"
     sprite_name: str = "world"
-    def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, orient: spaces.Orient = spaces.S) -> None:
+    def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, orient: spaces.Orient = spaces.Orient.S) -> None:
         super().__init__(pos, name, inf_tier, orient)
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
@@ -312,14 +312,14 @@ class World(WorldPointer):
 class Clone(WorldPointer):
     typename: str = "Clone"
     sprite_name: str = "clone"
-    def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, orient: spaces.Orient = spaces.S) -> None:
+    def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, orient: spaces.Orient = spaces.Orient.S) -> None:
         super().__init__(pos, name, inf_tier, orient)
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
 
 class Transform(Object):
     typename: str = "Transform"
-    def __init__(self, pos: spaces.Coord, info: dict[str, Any], orient: spaces.Orient = spaces.S) -> None:
+    def __init__(self, pos: spaces.Coord, info: dict[str, Any], orient: spaces.Orient = spaces.Orient.S) -> None:
         super().__init__(pos, orient)
         self.from_type: type[Object] = info["from"]["type"]
         self.from_name: str = info["from"]["name"]
@@ -331,15 +331,15 @@ class Transform(Object):
 
 class Sprite(Object):
     typename: str = "Sprite"
-    def __init__(self, pos: spaces.Coord, sprite_name: str, orient: spaces.Orient = spaces.S) -> None:
+    def __init__(self, pos: spaces.Coord, sprite_name: str, orient: spaces.Orient = spaces.Orient.S) -> None:
         super().__init__(pos, orient)
         self.sprite_name: str = sprite_name
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
     def to_json(self) -> dict[str, Any]:
         json_object = super().to_json()
-        json_object.update({"sprite": {"name": self.sprite_name}}) # type: ignore
-        return json_object # type: ignore
+        json_object.update({"sprite": {"name": self.sprite_name}})
+        return json_object
 
 class Game(Object):
     typename: str = "Game"
@@ -788,158 +788,171 @@ def json_to_object(json_object: dict[str, Any]) -> Object: # oh hell no
         return object_type(pos=tuple(json_object["position"]), # type: ignore
                            orient=spaces.str_to_orient(json_object["orientation"])) # type: ignore
 
-object_name: dict[str, type[Object]] = {
-    "Baba": Baba,
-    "Keke": Keke,
-    "Me": Me,
-    "Patrick": Patrick,
-    "Skull": Skull,
-    "Ghost": Ghost,
-    "Wall": Wall,
-    "Hedge": Hedge,
-    "Ice": Ice,
-    "Tile": Tile,
-    "Grass": Grass,
-    "Water": Water,
-    "Lava": Lava,
-    "Box": Box,
-    "Rock": Rock,
-    "Fruit": Fruit,
-    "Belt": Belt,
-    "Sun": Sun,
-    "Moon": Moon,
-    "Star": Star,
-    "What": What,
-    "Love": Love,
-    "Flag": Flag,
-    "Cursor": Cursor,
-    "Empty": Empty,
-    "Level": Level,
-    "World": World,
-    "Clone": Clone,
-    "BABA": BABA,
-    "KEKE": KEKE,
-    "ME": ME,
-    "PATRICK": PATRICK,
-    "SKULL": SKULL,
-    "GHOST": GHOST,
-    "WALL": WALL,
-    "HEDGE": HEDGE,
-    "ICE": ICE,
-    "TILE": TILE,
-    "GRASS": GRASS,
-    "WATER": WATER,
-    "LAVA": LAVA,
-    "BOX": BOX,
-    "ROCK": ROCK,
-    "FRUIT": FRUIT,
-    "BELT": BELT,
-    "SUN": SUN,
-    "MOON": MOON,
-    "STAR": STAR,
-    "WHAT": WHAT,
-    "LOVE": LOVE,
-    "FLAG": FLAG,
-    "CURSOR": CURSOR,
-    "ALL": ALL,
-    "EMPTY": EMPTY,
-    "TEXT": TEXT,
-    "LEVEL": LEVEL,
-    "WORLD": WORLD,
-    "CLONE": CLONE,
-    "GAME": GAME,
-    "META": META,
-    "ON": ON,
-    "NEAR": NEAR,
-    "NEXTTO": NEXTTO,
-    "FEELING": FEELING,
-    "IS": IS,
-    "HAS": HAS,
-    "MAKE": MAKE,
-    "WRITE": WRITE,
-    "NOT": NOT,
-    "AND": AND,
-    "YOU": YOU,
-    "MOVE": MOVE,
-    "STOP": STOP,
-    "PUSH": PUSH,
-    "SINK": SINK,
-    "FLOAT": FLOAT,
-    "OPEN": OPEN,
-    "SHUT": SHUT,
-    "HOT": HOT,
-    "MELT": MELT,
-    "WIN": WIN,
-    "DEFEAT": DEFEAT,
-    "SHIFT": SHIFT,
-    "TELE": TELE,
-    "WORD": WORD,
-    "SELECT": SELECT,
-    "END": END,
-    "DONE": DONE
-}
+object_name: dict[str, type[Object]] = {}
+object_name["Baba"] = Baba
+object_name["Keke"] = Keke
+object_name["Me"] = Me
+object_name["Patrick"] = Patrick
+object_name["Skull"] = Skull
+object_name["Ghost"] = Ghost
+object_name["Wall"] = Wall
+object_name["Hedge"] = Hedge
+object_name["Ice"] = Ice
+object_name["Tile"] = Tile
+object_name["Grass"] = Grass
+object_name["Water"] = Water
+object_name["Lava"] = Lava
+object_name["Box"] = Box
+object_name["Rock"] = Rock
+object_name["Fruit"] = Fruit
+object_name["Belt"] = Belt
+object_name["Sun"] = Sun
+object_name["Moon"] = Moon
+object_name["Star"] = Star
+object_name["What"] = What
+object_name["Love"] = Love
+object_name["Flag"] = Flag
+object_name["Cursor"] = Cursor
+object_name["Empty"] = Empty
+object_name["Level"] = Level
+object_name["World"] = World
+object_name["Clone"] = Clone
+object_name["BABA"] = BABA
+object_name["KEKE"] = KEKE
+object_name["ME"] = ME
+object_name["PATRICK"] = PATRICK
+object_name["SKULL"] = SKULL
+object_name["GHOST"] = GHOST
+object_name["WALL"] = WALL
+object_name["HEDGE"] = HEDGE
+object_name["ICE"] = ICE
+object_name["TILE"] = TILE
+object_name["GRASS"] = GRASS
+object_name["WATER"] = WATER
+object_name["LAVA"] = LAVA
+object_name["BOX"] = BOX
+object_name["ROCK"] = ROCK
+object_name["FRUIT"] = FRUIT
+object_name["BELT"] = BELT
+object_name["SUN"] = SUN
+object_name["MOON"] = MOON
+object_name["STAR"] = STAR
+object_name["WHAT"] = WHAT
+object_name["LOVE"] = LOVE
+object_name["FLAG"] = FLAG
+object_name["CURSOR"] = CURSOR
+object_name["ALL"] = ALL
+object_name["EMPTY"] = EMPTY
+object_name["TEXT"] = TEXT
+object_name["LEVEL"] = LEVEL
+object_name["WORLD"] = WORLD
+object_name["CLONE"] = CLONE
+object_name["GAME"] = GAME
+object_name["META"] = META
+object_name["ON"] = ON
+object_name["NEAR"] = NEAR
+object_name["NEXTTO"] = NEXTTO
+object_name["FEELING"] = FEELING
+object_name["IS"] = IS
+object_name["HAS"] = HAS
+object_name["MAKE"] = MAKE
+object_name["WRITE"] = WRITE
+object_name["NOT"] = NOT
+object_name["AND"] = AND
+object_name["YOU"] = YOU
+object_name["MOVE"] = MOVE
+object_name["STOP"] = STOP
+object_name["PUSH"] = PUSH
+object_name["SINK"] = SINK
+object_name["FLOAT"] = FLOAT
+object_name["OPEN"] = OPEN
+object_name["SHUT"] = SHUT
+object_name["HOT"] = HOT
+object_name["MELT"] = MELT
+object_name["WIN"] = WIN
+object_name["DEFEAT"] = DEFEAT
+object_name["SHIFT"] = SHIFT
+object_name["TELE"] = TELE
+object_name["WORD"] = WORD
+object_name["SELECT"] = SELECT
+object_name["END"] = END
+object_name["DONE"] = DONE
 
-class NounsObjsDicts(object):
-    pairs: dict[type[Noun], type[Object]]
-    def __init__(self) -> None:
-        self.pairs = {}
-    def new_pair(self, noun: type[Noun], obj: type[Object]) -> None:
+class ObjectNounDict(object):
+    def __init__(self, pairs: Optional[dict[type[Object], type[Noun]]] = None) -> None:
+        self.pairs: dict[type[Object], type[Noun]] = pairs if pairs is not None else {}
+    def __getitem__(self, obj: type[Object]) -> type[Noun]:
+        for k, v in self.pairs.items():
+            if issubclass(obj, k):
+                return v
+        raise KeyError(obj)
+    def __setitem__(self, obj: type[Object], noun: type[Noun]) -> None:
+        self.pairs[obj] = noun
+    def __delitem__(self, obj: type[Object]) -> None:
+        for k in self.pairs.keys():
+            if issubclass(obj, k):
+                del self.pairs[k]
+    def get(self, obj: type[Object]) -> Optional[type[Noun]]:
+        for k, v in self.pairs.items():
+            if issubclass(obj, k):
+                return v
+        return None
+
+class NounObjectDict(object):
+    def __init__(self, pairs: Optional[dict[type[Noun], type[Object]]] = None) -> None:
+        self.pairs: dict[type[Noun], type[Object]] = pairs if pairs is not None else {}
+    def __getitem__(self, noun: type[Noun]) -> type[Object]:
+        for k, v in self.pairs.items():
+            if issubclass(noun, k):
+                return v
+        raise KeyError(noun)
+    def __setitem__(self, noun: type[Noun], obj: type[Object]) -> None:
         self.pairs[noun] = obj
-    def get_obj(self, noun: type[Noun]) -> Optional[type[Object]]:
-        for get_noun, get_object in self.pairs.items():
-            if issubclass(noun, get_noun):
-                return get_object
-    def get_exist_obj(self, noun: type[Noun]) -> type[Object]:
-        for get_noun, get_object in self.pairs.items():
-            if issubclass(noun, get_noun):
-                return get_object
-        raise ValueError()
-    def get_noun(self, obj: type[Object]) -> Optional[type[Noun]]:
-        pairs = {v: k for k, v in self.pairs.items()}
-        for get_object, get_noun in pairs.items():
-            if issubclass(obj, get_object):
-                return get_noun
-    def get_exist_noun(self, obj: type[Object]) -> type[Noun]:
-        pairs = {v: k for k, v in self.pairs.items()}
-        for get_object, get_noun in pairs.items():
-            if issubclass(obj, get_object):
-                return get_noun
-        raise ValueError()
+    def __delitem__(self, noun: type[Noun]) -> None:
+        for k in self.pairs.keys():
+            if issubclass(noun, k):
+                del self.pairs[k]
+    def get(self, noun: type[Noun]) -> Optional[type[Object]]:
+        for k, v in self.pairs.items():
+            if issubclass(noun, k):
+                return v
+        return None
+    def swapped(self) -> ObjectNounDict:
+        return ObjectNounDict({v: k for k, v in self.pairs.items()})
 
-nouns_objs_dicts = NounsObjsDicts()
-
-nouns_objs_dicts.new_pair(BABA, Baba)
-nouns_objs_dicts.new_pair(KEKE, Keke)
-nouns_objs_dicts.new_pair(ME, Me)
-nouns_objs_dicts.new_pair(PATRICK, Patrick)
-nouns_objs_dicts.new_pair(SKULL, Skull)
-nouns_objs_dicts.new_pair(GHOST, Ghost)
-nouns_objs_dicts.new_pair(WALL, Wall)
-nouns_objs_dicts.new_pair(HEDGE, Hedge)
-nouns_objs_dicts.new_pair(ICE, Ice)
-nouns_objs_dicts.new_pair(TILE, Tile)
-nouns_objs_dicts.new_pair(GRASS, Grass)
-nouns_objs_dicts.new_pair(WATER, Water)
-nouns_objs_dicts.new_pair(LAVA, Lava)
-nouns_objs_dicts.new_pair(DOOR, Door)
-nouns_objs_dicts.new_pair(KEY, Key)
-nouns_objs_dicts.new_pair(BOX, Box)
-nouns_objs_dicts.new_pair(ROCK, Rock)
-nouns_objs_dicts.new_pair(FRUIT, Fruit)
-nouns_objs_dicts.new_pair(BELT, Belt)
-nouns_objs_dicts.new_pair(SUN, Sun)
-nouns_objs_dicts.new_pair(MOON, Moon)
-nouns_objs_dicts.new_pair(STAR, Star)
-nouns_objs_dicts.new_pair(WHAT, What)
-nouns_objs_dicts.new_pair(LOVE, Love)
-nouns_objs_dicts.new_pair(FLAG, Flag)
-nouns_objs_dicts.new_pair(CURSOR, Cursor)
-nouns_objs_dicts.new_pair(EMPTY, Empty)
-nouns_objs_dicts.new_pair(LEVEL, Level)
-nouns_objs_dicts.new_pair(WORLD, World)
-nouns_objs_dicts.new_pair(CLONE, Clone)
-nouns_objs_dicts.new_pair(TEXT, Text)
-nouns_objs_dicts.new_pair(GAME, Game)
+nouns_objs_dicts = NounObjectDict()
+nouns_objs_dicts[BABA] = Baba
+nouns_objs_dicts[KEKE] = Keke
+nouns_objs_dicts[ME] = Me
+nouns_objs_dicts[PATRICK] = Patrick
+nouns_objs_dicts[SKULL] = Skull
+nouns_objs_dicts[GHOST] = Ghost
+nouns_objs_dicts[WALL] = Wall
+nouns_objs_dicts[HEDGE] = Hedge
+nouns_objs_dicts[ICE] = Ice
+nouns_objs_dicts[TILE] = Tile
+nouns_objs_dicts[GRASS] = Grass
+nouns_objs_dicts[WATER] = Water
+nouns_objs_dicts[LAVA] = Lava
+nouns_objs_dicts[DOOR] = Door
+nouns_objs_dicts[KEY] = Key
+nouns_objs_dicts[BOX] = Box
+nouns_objs_dicts[ROCK] = Rock
+nouns_objs_dicts[FRUIT] = Fruit
+nouns_objs_dicts[BELT] = Belt
+nouns_objs_dicts[SUN] = Sun
+nouns_objs_dicts[MOON] = Moon
+nouns_objs_dicts[STAR] = Star
+nouns_objs_dicts[WHAT] = What
+nouns_objs_dicts[LOVE] = Love
+nouns_objs_dicts[FLAG] = Flag
+nouns_objs_dicts[CURSOR] = Cursor
+nouns_objs_dicts[EMPTY] = Empty
+nouns_objs_dicts[LEVEL] = Level
+nouns_objs_dicts[WORLD] = World
+nouns_objs_dicts[CLONE] = Clone
+nouns_objs_dicts[TEXT] = Text
+nouns_objs_dicts[GAME] = Game
 
 not_in_all: tuple[type[Object], ...] = (Text, Empty, Level, WorldPointer, Transform, Sprite, Game)
 in_not_all: tuple[type[Object], ...] = (Text, Empty, Transform, Sprite, Game)
