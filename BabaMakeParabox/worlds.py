@@ -17,6 +17,8 @@ class world(object):
         self.object_pos_index: list[list[objects.Object]]
         self.world_properties: list[tuple[type[objects.Object], int]] = []
         self.clone_properties: list[tuple[type[objects.Object], int]] = []
+        self.world_write_text: list[type[objects.Noun] | type[objects.Property]] = []
+        self.clone_write_text: list[type[objects.Noun] | type[objects.Property]] = []
         self.rule_list: list[rules.Rule] = []
         self.refresh_index()
     def __eq__(self, world: "world") -> bool:
@@ -215,10 +217,9 @@ class world(object):
         text_objs = self.get_objs_from_pos_and_type(new_pos, objects.Text)
         word_objs = filter(lambda o: o.has_prop(objects.WORD), self.get_objs_from_pos(new_pos))
         text_objs.extend(map(lambda o: objects.nouns_objs_dicts.get_exist_noun(type(o))(new_pos), word_objs))
-        then_matched: list[objects.Text] = []
         if len(text_objs) == 0 and len(not_rules) == 0:
             return [[]] if rule_can_be_done else []
-        then_matched = [o for o in text_objs if isinstance(o, then_matches)]
+        then_matched: list[objects.Text] = [o for o in text_objs if isinstance(o, then_matches)]
         remain_rules: list[rules.Rule] = []
         for next_stage in next_stages:
             remain_rules.extend(self.get_rules_from_pos_and_orient(next_stage, spaces.pos_facing(new_pos, orient), orient))
@@ -280,6 +281,13 @@ class world(object):
         new_return_rules = []
         for remain_rule in remain_rules:
             for then_return_rule in then_return_rules:
+                if stage in ("Operator", "AndOperator"):
+                    if then_return_rule[-1] in (objects.HAS, objects.MAKE): # noun infix
+                        if not issubclass(remain_rule[0], objects.Noun):
+                            continue
+                    if then_return_rule[-1] == objects.WRITE: # noun / prop infix
+                        if not issubclass(remain_rule[0], (objects.Noun, objects.Property)):
+                            continue
                 new_return_rules.append(then_return_rule + remain_rule)
         for not_remain_rule in not_remain_rules:
             for not_then_return_rule in not_then_return_rules:

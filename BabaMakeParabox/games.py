@@ -9,12 +9,6 @@ from BabaMakeParabox import basics, languages, sounds, spaces, objects, displays
 import pygame
 
 def play(levelpack: levelpacks.levelpack) -> None:
-    print(languages.current_language["game.levelpack.rule_list"]) 
-    for rule in levelpack.rule_list:
-        str_list = []
-        for obj_type in rule:
-            str_list.append(obj_type.typename)
-        print(" ".join(str_list))
     for level in levelpack.level_list:
         old_prop_dict: dict[uuid.UUID, list[tuple[type[objects.Text], int]]] = {}
         for world in level.world_list:
@@ -50,7 +44,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
     current_level: levels.level = levelpack.get_exist_level(current_level_name)
     current_world_index: int = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
     current_world: worlds.world = current_level.world_list[current_world_index]
-    default_level_info = {"win": False, "end": False, "selected_level": None, "new_levels": [], "transform_to": [], "pushing_game": False, "new_window_objects": []}
+    default_level_info = {"win": False, "end": False, "selected_level": None, "transform_to": [], "pushing_game": False}
     level_info = default_level_info.copy()
     level_info_backup = default_level_info.copy()
     history = [{"world_index": current_world_index, "level_name": current_level_name, "level_info": default_level_info, "levelpack": copy.deepcopy(levelpack)}]
@@ -260,9 +254,9 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 game_running = False
             for event in current_level.sound_events:
                 sounds.play(event)
-            for new_level in level_info["new_levels"]:
+            for new_level in current_level.created_levels:
                 levelpack.set_level(new_level)
-            for obj_type in level_info["new_window_objects"]:
+            for obj_type in current_level.new_games:
                 obj_type: type[objects.Object]
                 if basics.current_os == basics.windows:
                     if os.path.exists("SubabaMakeParabox.exe"):

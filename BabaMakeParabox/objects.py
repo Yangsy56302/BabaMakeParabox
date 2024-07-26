@@ -13,6 +13,9 @@ class Object(object):
         self.y: int = pos[1]
         self.orient: spaces.Orient = orient
         self.properties: list[tuple[type["Text"], int]] = []
+        self.has_object: list[type["Noun"]] = []
+        self.make_object: list[type["Noun"]] = []
+        self.write_text: list[type["Noun"] | type["Property"]] = []
         self.moved: bool = False
         self.sprite_state: int = 0
     def __eq__(self, obj: "Object") -> bool:
@@ -607,6 +610,24 @@ class IS(Operator):
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
 
+class HAS(Operator):
+    typename: str = "HAS"
+    sprite_name: str = "text_has"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
+
+class MAKE(Operator):
+    typename: str = "MAKE"
+    sprite_name: str = "text_make"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
+
+class WRITE(Operator):
+    typename: str = "WRITE"
+    sprite_name: str = "text_write"
+    def __eq__(self, obj: "Object") -> bool:
+        return self.uuid == obj.uuid
+
 class NOT(Text):
     typename: str = "NOT"
     sprite_name: str = "text_not"
@@ -833,6 +854,9 @@ object_name: dict[str, type[Object]] = {
     "NEXTTO": NEXTTO,
     "FEELING": FEELING,
     "IS": IS,
+    "HAS": HAS,
+    "MAKE": MAKE,
+    "WRITE": WRITE,
     "NOT": NOT,
     "AND": AND,
     "YOU": YOU,

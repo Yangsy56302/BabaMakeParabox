@@ -14,7 +14,7 @@ def to_atom_rules(rule_list: list[Rule]) -> list[Rule]:
                 if issubclass(text_type, objects.Operator):
                     stage = objects.Property
                     current_oper = text_type
-                if issubclass(text_type, objects.Infix):
+                elif issubclass(text_type, objects.Infix):
                     stage = objects.Infix
                     noun_list = [l + [text_type] for l in noun_list]
                 elif issubclass(text_type, objects.AND):
@@ -42,9 +42,9 @@ def to_atom_rules(rule_list: list[Rule]) -> list[Rule]:
                 return_value.append(noun + prop)
     return return_value
 
-InfixInfo = tuple[bool, type[objects.Infix], bool, type[objects.Text]]
+InfixInfo = tuple[bool, type[objects.Infix], bool, type[objects.Noun] | type[objects.Property]]
 PrefixInfo = tuple[bool, type[objects.Prefix]]
-RuleInfo = list[tuple[list[PrefixInfo], bool, type[objects.Noun], list[InfixInfo], type[objects.Operator], int, type[objects.Text]]]
+RuleInfo = list[tuple[list[PrefixInfo], bool, type[objects.Noun], list[InfixInfo], type[objects.Operator], int, type[objects.Noun] | type[objects.Property]]]
 
 def analysis_rule(atom_rule: Rule) -> RuleInfo:
     return_value: RuleInfo = []
@@ -56,7 +56,7 @@ def analysis_rule(atom_rule: Rule) -> RuleInfo:
     oper_index = list(map(lambda t: issubclass(t, objects.Operator), atom_rule)).index(True)
     oper_type: type[objects.Operator] = atom_rule[oper_index] # type: ignore
     prop_index = list(map(lambda t: issubclass(t, (objects.Noun, objects.Property)), atom_rule[oper_index:])).index(True)
-    prop_type: type[objects.Text] = atom_rule[prop_index + oper_index] # type: ignore
+    prop_type: type[objects.Noun] | type[objects.Property] = atom_rule[prop_index + oper_index] # type: ignore
     prop_negated_count = atom_rule[oper_index:].count(objects.NOT)
     prefix_info_list = []
     prefix_slice = atom_rule[:last_prefix_index + 1]
