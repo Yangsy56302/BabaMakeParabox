@@ -6,12 +6,17 @@
 The original games are [**Baba Is You**](https://hempuli.com/baba/) and [**Patrick's Parabox**](https://www.patricksparabox.com/),
 made separately by **Arvi Hempuli** and **Patrick Traynor**.
 
-**The code of this game follows the MIT Open Source License.**
+**This game used [The MIT License](https://opensource.org/license/MIT/).**
+
+**This game used [Pygame](https://www.pygame.org/news/) for game engine, and Pygame used [GNU Lesser General Public License, version 2.1](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html)。**
+Therefore, I'm not providing any source code of Pygame, please get it by yourself.
+But I do provide the game program, build by [PyInstaller](https://pyinstaller.org/en/stable/index.html), using unmodified Pygame souce code.
+**PyInstaller used [GNU General Public License, version 2](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)。**
 
 **I DO NOT have the copyright of the game's textures.**
 If you have some informations about the right of use for the game's textures or something, please tell me.
 
-The game's prototype was born at 2024.05.15, UTC+0 04:12:15 (or UTC+8 12:12:15).
+The game's prototype was born at 2024.05.15, game's folder at UTC+0 04:12:15 (or UTC+8 12:12:15 in my time zone).
 
 ## How to Download
 

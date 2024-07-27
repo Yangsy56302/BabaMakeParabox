@@ -6,7 +6,12 @@
 取材游戏为[**Baba Is You**](https://hempuli.com/baba/)与[**Patrick's Parabox**](https://www.patricksparabox.com/)，
 作者分别为**Arvi Hempuli**和**Patrick Traynor**。
 
-**本游戏的代码遵循MIT开源协议。**
+**本游戏的源代码使用[MIT许可证](https://opensource.org/license/MIT/)。**
+
+**本游戏使用[Pygame](https://www.pygame.org/news/)作为游戏引擎，而Pygame使用[GNU宽通用公共许可证 2.1版](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html)。**
+因此，本人不提供任何Pygame源代码，请自行获取。
+但本人确实提供使用未经修改的Pygame版本经[PyInstaller](https://pyinstaller.org/en/stable/index.html)打包后形成的游戏程序。
+**PyInstaller使用[GNU通用公共许可证 第2版](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)。**
 
 **我并未拥有游戏贴图的版权。**
 如果您有关于游戏贴图的使用权等权利的更多信息，请尽快联系我。
