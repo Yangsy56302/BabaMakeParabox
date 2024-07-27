@@ -1,9 +1,10 @@
 {
     "language.select": "English: input en_US",
     "main.welcome": "Welcome to the Baba Make Parabox starter!",
-    "main.change_options": "Input anything if you want to change your options.",
+    "main.change_options": "Do you want to change your options? [y/N]: ",
     "main.change_options.fps": "If your computer is extremely slow, input 1;\nIf your computer is slow, input 2;\nIf your computer is good, input 3;\nIf your computer is awesome, input 4.",
-    "main.change_options.bgm": "Do you want a background music? [y/N]：",
+    "main.change_options.json": "Do you have any needs to edit the levelpack files? [y/N]: ",
+    "main.change_options.bgm": "Do you like to have a background music? [y/N]: ",
     "main.change_options.done": "The game options has been updated.",
     "main.play_or_edit": "If you are going to play levelpacks, input 1;\nIf you are going to edit levelpacks, input 2.",
     "main.open.levelpack": "Please input levelpack's filename without extension that you are going to open at below.",

@@ -9,40 +9,39 @@ from BabaMakeParabox import basics, languages, spaces, colors, objects, rules, d
 
 def logic(args: dict[str, Any]) -> None:
     print(languages.current_language["game.name"])
-    if os.environ.get("PYINSTALLER") == "TRUE":
-        pass # just do nothing
-    else:
-        if args.get("edit", False):
-            default_new_world_settings = basics.options["default_new_world"]
-            size = (default_new_world_settings["width"], default_new_world_settings["height"])
-            color = default_new_world_settings["color"]
-            if args.get("input") != "":
-                filename: str = args["input"]
-                if os.path.isfile(os.path.join("levelpacks", filename + ".json")):
-                    with open(os.path.join("levelpacks", filename + ".json"), "r", encoding="utf-8") as file:
-                        levelpack = levelpacks.json_to_levelpack(json.load(file))
-                else:
-                    world = worlds.world(filename, size, color=color)
-                    level = levels.level(filename, [world])
-                    levelpack = levelpacks.levelpack(filename, [level])
-            else:
-                world = worlds.world("main", size, color=color)
-                level = levels.level("main", [world])
-                levelpack = levelpacks.levelpack("main", [level])
-            levelpack = edits.levelpack_editor(levelpack)
-            if args.get("output") != "":
-                filename: str = args["output"]
-                with open(os.path.join("levelpacks", filename + ".json"), "w", encoding="utf-8") as file:
-                    json.dump(levelpack.to_json(), file, indent=None if basics.options["compressed_json_output"] else 4)
-            return
-        elif args.get("play", False):
+    if args.get("edit", False):
+        default_new_world_settings = basics.options["default_new_world"]
+        size = (default_new_world_settings["width"], default_new_world_settings["height"])
+        color = default_new_world_settings["color"]
+        if args.get("input") != "":
             filename: str = args["input"]
-            with open(os.path.join("levelpacks", filename + ".json"), "r", encoding="utf-8") as file:
-                levelpack = levelpacks.json_to_levelpack(json.load(file))
-                games.play(levelpack)
-            return
+            if os.path.isfile(os.path.join("levelpacks", filename + ".json")):
+                with open(os.path.join("levelpacks", filename + ".json"), "r", encoding="utf-8") as file:
+                    levelpack = levelpacks.json_to_levelpack(json.load(file))
+            else:
+                world = worlds.world(filename, size, color=color)
+                level = levels.level(filename, [world])
+                levelpack = levelpacks.levelpack(filename, [level])
+        else:
+            world = worlds.world("main", size, color=color)
+            level = levels.level("main", [world])
+            levelpack = levelpacks.levelpack("main", [level])
+        levelpack = edits.levelpack_editor(levelpack)
+        if args.get("output") != "":
+            filename: str = args["output"]
+            with open(os.path.join("levelpacks", filename + ".json"), "w", encoding="utf-8") as file:
+                json.dump(levelpack.to_json(), file, indent=None if basics.options["compressed_json_output"] else 4)
+        return
+    elif args.get("play", False):
+        filename: str = args["input"]
+        with open(os.path.join("levelpacks", filename + ".json"), "r", encoding="utf-8") as file:
+            levelpack = levelpacks.json_to_levelpack(json.load(file))
+            games.play(levelpack)
+        return
 
 def main() -> None:
+    if os.environ.get("PYINSTALLER") == "TRUE":
+        return
     settings = {}
     if basics.options["lang"] not in languages.language_dict.keys():
         for lang in languages.language_dict.keys():
@@ -53,19 +52,21 @@ def main() -> None:
     else:
         languages.set_current_language(basics.options["lang"])
     print(languages.current_language["main.welcome"])
-    print(languages.current_language["main.change_options"])
-    change_options = input(languages.current_language["input.string"]) != ""
-    if change_options:
+    if input(languages.current_language["main.change_options"]) in languages.yes:
         print(languages.current_language["main.change_options.fps"])
         match int(input(languages.current_language["input.number"])):
             case 1:
-                basics.options.update({"fps": 5, "fpw": 1, "input_cooldown": 1, "world_display_recursion_depth": 1, "compressed_json_output": True})
+                basics.options.update({"fps": 5, "fpw": 1, "world_display_recursion_depth": 1})
             case 2:
-                basics.options.update({"fps": 15, "fpw": 3, "input_cooldown": 3, "world_display_recursion_depth": 2, "compressed_json_output": True})
+                basics.options.update({"fps": 15, "fpw": 3, "world_display_recursion_depth": 2})
             case 3:
-                basics.options.update({"fps": 30, "fpw": 5, "input_cooldown": 5, "world_display_recursion_depth": 3, "compressed_json_output": False})
+                basics.options.update({"fps": 30, "fpw": 5, "world_display_recursion_depth": 3})
             case 4:
-                basics.options.update({"fps": 60, "fpw": 10, "input_cooldown": 10, "world_display_recursion_depth": 4, "compressed_json_output": False})
+                basics.options.update({"fps": 60, "fpw": 10, "world_display_recursion_depth": 4})
+        if input(languages.current_language["main.change_options.json"]) in languages.yes:
+            basics.options.update({"compressed_json_output": False})
+        else:
+            basics.options.update({"compressed_json_output": True})
         if input(languages.current_language["main.change_options.bgm"]) in languages.yes:
             basics.options.update({"bgm": {"enabled": True, "name": "rush_baba.mid"}})
         else:

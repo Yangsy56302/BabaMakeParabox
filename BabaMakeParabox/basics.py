@@ -8,7 +8,9 @@ import pygame
 
 pygame.init()
 
-versions = "3.201"
+versions = "3.202"
+
+options_filename = "options.json"
 
 class DefaultNewWorldOptions(TypedDict):
     width: int
@@ -20,10 +22,10 @@ class BgmOptions(TypedDict):
     name: str
 
 class Options(TypedDict):
+    ver: str
     lang: str
     fps: int
     fpw: int
-    input_cooldown: int
     world_display_recursion_depth: int
     compressed_json_output: bool
     default_new_world: DefaultNewWorldOptions
@@ -31,10 +33,10 @@ class Options(TypedDict):
     bgm: BgmOptions
 
 default_options: Options = {
+    "ver": versions,
     "lang": "id_FK",
     "fps": 30,
     "fpw": 5,
-    "input_cooldown": 5,
     "world_display_recursion_depth": 3,
     "compressed_json_output": False,
     "default_new_world": {
@@ -49,28 +51,32 @@ default_options: Options = {
     }
 }
 
+def save_options(new_options: Options) -> None:
+    with open(options_filename, "w", encoding="utf-8") as file:
+        json.dump(new_options, file, indent=None if options["compressed_json_output"] else 4)
+
+def update_options(old_options: Options) -> Options:
+    new_options = old_options.copy()
+    temp_options = default_options.copy()
+    temp_options.update(new_options)
+    new_options = temp_options.copy()
+    new_options["ver"] = versions
+    return new_options
+
 current_os = platform.system()
 windows = "Windows"
 linux = "Linux"
 
 os.makedirs("levelpacks", exist_ok=True)
-options_filename = "options.json"
 options: Options = copy.deepcopy(default_options)
 if os.path.exists(options_filename):
     with open(options_filename, "r", encoding="utf-8") as file:
         options = json.load(file)
-        updated_options: Options = copy.deepcopy(default_options)
-        updated_options.update(options)
-        options = copy.deepcopy(updated_options)
+        options = update_options(options)
 else:
     with open(options_filename, "w", encoding="utf-8") as file:
         options = default_options
         json.dump(default_options, file)
-
-def save_options(new_options) -> None:
-    file = open(options_filename, "w", encoding="utf-8")
-    json.dump(new_options, file, indent=None if options["compressed_json_output"] else 4)
-    file.close()
 
 def remove_same_elements[T](a_list: list[T]) -> list[T]:
     e_list = list(enumerate(a_list))
