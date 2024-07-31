@@ -77,7 +77,7 @@ def analysis_rule(atom_rule: Rule) -> RuleInfo:
         current_negated = False
         current_infix_type = objects.Infix
         current_infix_negated = False
-        current_infix_noun = objects.Object
+        current_infix_noun = objects.BmpObj
         current_infix_noun_negated = False
         for obj_type in infix_slice:
             if issubclass(obj_type, objects.Infix):

@@ -64,7 +64,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
     current_object = displays.set_sprite_state(current_object_type((0, 0), current_orient))
     current_cursor_pos = (0, 0)
     current_clipboard = []
-    object_type_shortcuts: dict[int, type[objects.Object]] = {k: objects.object_name[v] for k, v in enumerate(basics.options["object_type_shortcuts"])}
+    object_type_shortcuts: dict[int, type[objects.BmpObj]] = {k: objects.object_name[v] for k, v in enumerate(basics.options["object_type_shortcuts"])}
     level_changed = True
     world_changed = True
     frame = 0
@@ -336,17 +336,17 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
             history.append(copy.deepcopy(levelpack))
             current_clipboard = current_world.get_objs_from_pos(current_cursor_pos)
             current_clipboard = copy.deepcopy(current_clipboard)
-            list(map(objects.Object.reset_uuid, current_clipboard))
+            list(map(objects.BmpObj.reset_uuid, current_clipboard))
             current_world.del_objs_from_pos(current_cursor_pos)
         elif keys["C"]:
             history.append(copy.deepcopy(levelpack))
             current_clipboard = current_world.get_objs_from_pos(current_cursor_pos)
             current_clipboard = copy.deepcopy(current_clipboard)
-            list(map(objects.Object.reset_uuid, current_clipboard))
+            list(map(objects.BmpObj.reset_uuid, current_clipboard))
         elif keys["V"]:
             history.append(copy.deepcopy(levelpack))
             current_clipboard = copy.deepcopy(current_clipboard)
-            list(map(objects.Object.reset_uuid, current_clipboard))
+            list(map(objects.BmpObj.reset_uuid, current_clipboard))
             for obj in current_clipboard:
                 obj.pos = current_cursor_pos
                 current_world.new_obj(obj)

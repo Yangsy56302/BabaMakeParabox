@@ -8,7 +8,7 @@ import pygame
 
 pygame.init()
 
-versions = "3.202"
+versions = "3.21"
 
 options_filename = "options.json"
 
@@ -44,7 +44,7 @@ default_options: Options = {
         "height": 9,
         "color": 0x000000
     },
-    "object_type_shortcuts": ["Baba", "Wall", "Rock", "Flag", "Skull", "WORLD", "LEVEL", "IS", "YOU", "WIN"],
+    "object_type_shortcuts": ["baba", "wall", "rock", "flag", "skull", "text_world", "text_level", "text_is", "text_you", "text_win"],
     "bgm": {
         "enabled": False,
         "name": "rush_baba.mid"

@@ -25,7 +25,7 @@ class levelpack(object):
                 return
         self.level_list.append(level)
     def to_json(self) -> dict[str, Any]:
-        json_object = {"name": self.name, "level_list": [], "main_level": self.main_level, "rule_list": []}
+        json_object = {"ver": basics.versions, "name": self.name, "level_list": [], "main_level": self.main_level, "rule_list": []}
         for level in self.level_list:
             json_object["level_list"].append(level.to_json())
         for rule in self.rule_list:
@@ -35,14 +35,18 @@ class levelpack(object):
         return json_object
 
 def json_to_levelpack(json_object: dict[str, Any]) -> levelpack: # oh hell no * 4
+    ver = json_object.get("ver")
     level_list = []
     for level in json_object["level_list"]: # type: ignore
-        level_list.append(levels.json_to_level(level)) # type: ignore
+        level_list.append(levels.json_to_level(level, ver)) # type: ignore
     rule_list = []
     for rule in json_object["rule_list"]: # type: ignore
         rule_list.append([])
         for obj_type in rule: # type: ignore
-            rule_list[-1].append(objects.object_name[obj_type])
+            if ver is None:
+                rule_list[-1].append(objects.old_object_name[obj_type])
+            else:
+                rule_list[-1].append(objects.object_name[obj_type])
     return levelpack(name=json_object["name"], # type: ignore
                      level_list=level_list, # type: ignore
                      main_level=json_object["main_level"], # type: ignore

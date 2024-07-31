@@ -50,7 +50,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
     current_level: levels.level = levelpack.get_exist_level(current_level_name)
     current_world_index: int = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
     current_world: worlds.world = current_level.world_list[current_world_index]
-    default_level_info: levels.ReTurnValue = {"win": False, "end": False, "game_push": False, "selected_level": None, "transform_to": []}
+    default_level_info: levels.ReTurnValue = {"win": False, "end": False, "game_push": False, "selected_level": None, "transform_to": None}
     level_info: levels.ReTurnValue = default_level_info.copy()
     level_info_backup: levels.ReTurnValue = default_level_info.copy()
     history: list[History] = [{"world_index": current_world_index, "level_name": current_level_name, "level_info": default_level_info, "levelpack": copy.deepcopy(levelpack)}]
@@ -264,14 +264,14 @@ def play(levelpack: levelpacks.levelpack) -> None:
             for new_level in current_level.created_levels:
                 levelpack.set_level(new_level)
             for obj_type in current_level.new_games:
-                obj_type: type[objects.Object]
+                obj_type: type[objects.BmpObj]
                 if basics.current_os == basics.windows:
                     if os.path.exists("SubabaMakeParabox.exe"):
-                        os.system(f"start SubabaMakeParabox.exe {obj_type.typename}")
+                        os.system(f"start SubabaMakeParabox.exe {obj_type.json_name}")
                     elif os.path.exists("SubabaMakeParabox.py"):
-                        os.system(f"start /b python SubabaMakeParabox.py {obj_type.typename}")
+                        os.system(f"start /b python SubabaMakeParabox.py {obj_type.json_name}")
                 elif basics.current_os == basics.linux:
-                    os.system(f"python ./SubabaMakeParabox.py {obj_type.typename} &")
+                    os.system(f"python ./SubabaMakeParabox.py {obj_type.json_name} &")
             transform_success = False
             if level_info["transform_to"] is not None:
                 for level in levelpack.level_list:
@@ -280,7 +280,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                             if current_level.name == level_obj.name:
                                 transform_success = True
                                 for obj in level_info["transform_to"]:
-                                    obj: objects.Object
+                                    obj: objects.BmpObj
                                     obj.pos = level_obj.pos
                                     obj.orient = level_obj.orient
                                     world.new_obj(obj)
@@ -349,7 +349,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 current_world = current_level.world_list[current_world_index]
             elif level_info_backup["end"]:
                 game_running = False
-            elif level_info["transform_to"] is not None:
+            elif level_info_backup["transform_to"] is not None:
                 super_level_name = current_level.super_level
                 super_level = levelpack.get_level(super_level_name if super_level_name is not None else levelpack.main_level)
                 current_level_name = super_level.name if super_level is not None else levelpack.main_level

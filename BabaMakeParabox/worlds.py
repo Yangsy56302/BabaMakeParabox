@@ -1,9 +1,9 @@
 from typing import Any, Optional
 import random
 
-from BabaMakeParabox import colors, spaces, objects, rules, displays
+from BabaMakeParabox import basics, colors, spaces, objects, rules, displays
 
-def match_pos(obj: objects.Object, pos: spaces.Coord) -> bool:
+def match_pos(obj: objects.BmpObj, pos: spaces.Coord) -> bool:
     return obj.pos == pos
 
 class world(object):
@@ -13,10 +13,10 @@ class world(object):
         self.width: int = size[0]
         self.height: int = size[1]
         self.color: colors.ColorHex = color if color is not None else colors.random_world_color()
-        self.object_list: list[objects.Object] = []
-        self.object_pos_index: list[list[objects.Object]]
-        self.world_properties: list[tuple[type[objects.Object], int]] = []
-        self.clone_properties: list[tuple[type[objects.Object], int]] = []
+        self.object_list: list[objects.BmpObj] = []
+        self.object_pos_index: list[list[objects.BmpObj]]
+        self.world_properties: list[tuple[type[objects.BmpObj], int]] = []
+        self.clone_properties: list[tuple[type[objects.BmpObj], int]] = []
         self.world_write_text: list[type[objects.Noun] | type[objects.Property]] = []
         self.clone_write_text: list[type[objects.Noun] | type[objects.Property]] = []
         self.rule_list: list[rules.Rule] = []
@@ -63,26 +63,26 @@ class world(object):
         return coord[0] < 0 or coord[1] < 0 or coord[0] >= self.width or coord[1] >= self.height
     def pos_to_index(self, pos) -> int:
         return pos[1] * self.width + pos[0]
-    def pos_to_objs(self, pos) -> list[objects.Object]:
+    def pos_to_objs(self, pos) -> list[objects.BmpObj]:
         return self.object_pos_index[self.pos_to_index(pos)]
     def refresh_index(self) -> None:
         self.object_pos_index = [[] for _ in range(self.width * self.height)]
         for obj in self.object_list:
             self.pos_to_objs(obj.pos).append(obj)
-    def new_obj(self, obj: objects.Object) -> None:
+    def new_obj(self, obj: objects.BmpObj) -> None:
         self.object_list.append(obj)
         self.pos_to_objs(obj.pos).append(obj)
-    def get_objs_from_pos(self, pos: spaces.Coord) -> list[objects.Object]:
+    def get_objs_from_pos(self, pos: spaces.Coord) -> list[objects.BmpObj]:
         if self.out_of_range(pos):
             return []
         return self.pos_to_objs(pos)
-    def get_objs_from_pos_and_type[T: objects.Object](self, pos: spaces.Coord, obj_type: type[T]) -> list[T]:
+    def get_objs_from_pos_and_type[T: objects.BmpObj](self, pos: spaces.Coord, obj_type: type[T]) -> list[T]:
         if self.out_of_range(pos):
             return []
         return [o for o in self.pos_to_objs(pos) if isinstance(o, obj_type)]
-    def get_objs_from_type[T: objects.Object](self, obj_type: type[T]) -> list[T]:
+    def get_objs_from_type[T: objects.BmpObj](self, obj_type: type[T]) -> list[T]:
         return [o for o in self.object_list if isinstance(o, obj_type)]
-    def del_obj(self, obj: objects.Object) -> None:
+    def del_obj(self, obj: objects.BmpObj) -> None:
         self.pos_to_objs(obj.pos).remove(obj)
         self.object_list.remove(obj)
     def del_obj_from_pos_and_type(self, pos: spaces.Coord, obj_type: type) -> bool:
@@ -392,12 +392,12 @@ class world(object):
             json_object["object_list"].append(obj.to_json())
         return json_object
 
-def json_to_world(json_object: dict[str, Any]) -> world: # oh hell no * 2
+def json_to_world(json_object: dict[str, Any], ver: Optional[str] = None) -> world: # oh hell no * 2
     new_world = world(name=json_object["name"], # type: ignore
                       inf_tier=json_object["infinite_tier"], # type: ignore
                       size=tuple(json_object["size"]), # type: ignore
                       color=json_object["color"]) # type: ignore
     for obj in json_object["object_list"]: # type: ignore
-        new_world.new_obj(objects.json_to_object(obj)) # type: ignore
+        new_world.new_obj(objects.json_to_object(obj, ver)) # type: ignore
     new_world.refresh_index()
     return new_world

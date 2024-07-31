@@ -2,13 +2,13 @@ from BabaMakeParabox import displays, objects
 
 import pygame
 
-def sub(typename: str) -> None:
+def sub(json_name: str) -> None:
     pygame.init()
     window_size = (192, 192)
     window = pygame.display.set_mode(window_size)
-    pygame.display.set_caption(typename)
+    pygame.display.set_caption(json_name)
     displays.sprites.update()
-    sprites = list(map(lambda i: displays.sprites.get(objects.object_name[typename].sprite_name, 0, i), range(1, 4)))
+    sprites = list(map(lambda i: displays.sprites.get(objects.object_name[json_name].sprite_name, 0, i), range(1, 4)))
     pygame.display.set_icon(sprites[0])
     clock = pygame.time.Clock()
     wiggle = 0
