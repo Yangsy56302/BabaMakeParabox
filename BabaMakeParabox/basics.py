@@ -8,7 +8,7 @@ import pygame
 
 pygame.init()
 
-versions = "3.3"
+versions = "3.31"
 
 options_filename = "options.json"
 

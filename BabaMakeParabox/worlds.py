@@ -190,19 +190,21 @@ class World(object):
             then_matches = (objects.Noun, objects.Property)
             next_stages = ("AndOperator", "AndProperty")
             rule_can_be_done = True
+        else:
+            raise ValueError(stage)
         not_rules: list[rules.Rule] = []
         if stage in ("Prefix", "Noun", "InfixText", "Property"):
-            not_objs = self.get_objs_from_pos_and_type(pos, objects.TextNot)
-            if len(not_objs) != 0:
+            text__objs = self.get_objs_from_pos_and_type(pos, objects.TextNot)
+            if len(text__objs) != 0:
                 not_rules = self.get_rules_from_pos_and_orient(stage, spaces.pos_facing(pos, orient), orient)
                 not_rules = [[objects.TextNot] + r for r in not_rules if len(r) != 0]
         new_pos = pos
-        first_matched_list: list[list[objects.Text]] = []
+        first_matched_list: list[list[type[objects.Text]]] = []
         for first_match in first_matches:
-            text_objs = self.get_objs_from_pos_and_type(new_pos, objects.Text)
+            text_objs = list(map(type, self.get_objs_from_pos_and_type(new_pos, objects.Text)))
             word_objs = filter(lambda o: o.has_prop(objects.TextWord), self.get_objs_from_pos(new_pos))
-            text_objs.extend(map(lambda o: objects.get_exist_noun_from_obj(type(o))(new_pos), word_objs))
-            first_matched = [o for o in text_objs if isinstance(o, first_match)]
+            text_objs.extend(map(lambda o: objects.get_exist_noun_from_obj(type(o)), word_objs))
+            first_matched = [o for o in text_objs if issubclass(o, first_match)]
             if len(first_matched) == 0 and len(not_rules) == 0:
                 return [[]] if rule_can_be_done else []
             first_matched_list.append(first_matched) # type: ignore
@@ -214,33 +216,67 @@ class World(object):
                 for prefix_obj in prefix_objs:
                     temp_prefix_rules = self.get_rules_from_pos_and_orient(next_stage, spaces.pos_facing(new_pos, orient), orient)
                     prefix_rules.extend([[type(prefix_obj)] + r for r in temp_prefix_rules if len(r) != 0])
-        text_objs = self.get_objs_from_pos_and_type(new_pos, objects.Text)
+        text_objs = list(map(type, self.get_objs_from_pos_and_type(new_pos, objects.Text)))
         word_objs = filter(lambda o: o.has_prop(objects.TextWord), self.get_objs_from_pos(new_pos))
-        text_objs.extend(map(lambda o: objects.get_exist_noun_from_obj(type(o))(new_pos), word_objs))
+        text_objs.extend(map(lambda o: objects.get_exist_noun_from_obj(type(o)), word_objs))
         if len(text_objs) == 0 and len(not_rules) == 0:
             return [[]] if rule_can_be_done else []
-        then_matched: list[objects.Text] = [o for o in text_objs if isinstance(o, then_matches)]
+        then_matched: list[type[objects.Text]] = [o for o in text_objs if issubclass(o, then_matches)]
         remain_rules: list[rules.Rule] = []
         for next_stage in next_stages:
             remain_rules.extend(self.get_rules_from_pos_and_orient(next_stage, spaces.pos_facing(new_pos, orient), orient))
-        not_then_matched: list[objects.Text] = []
+        temp_pos = new_pos
+        text__then_matched: list[type[objects.Text]] = []
+        text__remain_rules: list[rules.Rule] = []
+        text__after_first_len = 0
+        if stage in ("Noun", "AndNoun", "InfixText", "AndInfixText", "Property", "AndProperty"):
+            while True:
+                text__objs = self.get_objs_from_pos_and_type(temp_pos, objects.TextText_)
+                if len(text__objs) == 0:
+                    break
+                text__after_first_len += 1
+                temp_pos = spaces.pos_facing(temp_pos, orient)
+            if text__after_first_len > 0:
+                text_objs = list(map(type, self.get_objs_from_pos_and_type(temp_pos, objects.Text)))
+                word_objs = filter(lambda o: o.has_prop(objects.TextWord), self.get_objs_from_pos(temp_pos))
+                text_objs.extend(map(lambda o: objects.get_exist_noun_from_obj(type(o)), word_objs))
+                text__then_matched = [o for o in text_objs]
+                for next_stage in next_stages:
+                    text__remain_rules.extend(self.get_rules_from_pos_and_orient(next_stage, spaces.pos_facing(temp_pos, orient), orient))
+        not_then_matched: list[type[objects.Text]] = []
         not_remain_rules: list[rules.Rule] = []
         not_after_first_len = 0
+        not_text__then_matched: list[type[objects.Text]] = []
+        not_text__remain_rules: list[rules.Rule] = []
+        not_text__after_first_len = 0
         if stage in ("Prefix", "AndPrefix", "Noun", "AndNoun", "InfixText", "AndInfixText", "Property", "AndProperty"):
             while True:
-                not_objs = self.get_objs_from_pos_and_type(new_pos, objects.TextNot)
-                if len(not_objs) == 0:
+                text__objs = self.get_objs_from_pos_and_type(new_pos, objects.TextNot)
+                if len(text__objs) == 0:
                     break
                 not_after_first_len += 1
                 new_pos = spaces.pos_facing(new_pos, orient)
-            text_objs = self.get_objs_from_pos_and_type(new_pos, objects.Text)
+            text_objs = list(map(type, self.get_objs_from_pos_and_type(new_pos, objects.Text)))
             word_objs = filter(lambda o: o.has_prop(objects.TextWord), self.get_objs_from_pos(new_pos))
-            text_objs.extend(map(lambda o: objects.get_exist_noun_from_obj(type(o))(new_pos), word_objs))
-            if len(text_objs) != 0:
-                not_then_matched = [o for o in text_objs if isinstance(o, then_matches)]
+            text_objs.extend(map(lambda o: objects.get_exist_noun_from_obj(type(o)), word_objs))
+            not_then_matched = [o for o in text_objs if issubclass(o, then_matches)]
             for next_stage in next_stages:
                 not_remain_rules.extend(self.get_rules_from_pos_and_orient(next_stage, spaces.pos_facing(new_pos, orient), orient))
-        if len(then_matched) == 0 and len(not_then_matched) == 0 and len(not_rules) == 0 and len(prefix_rules) == 0:
+            if stage in ("Noun", "AndNoun", "InfixText", "AndInfixText", "Property", "AndProperty"):
+                while True:
+                    text__objs = self.get_objs_from_pos_and_type(new_pos, objects.TextText_)
+                    if len(text__objs) == 0:
+                        break
+                    not_text__after_first_len += 1
+                    new_pos = spaces.pos_facing(new_pos, orient)
+                if not_text__after_first_len > 0:
+                    text_objs = list(map(type, self.get_objs_from_pos_and_type(new_pos, objects.Text)))
+                    word_objs = filter(lambda o: o.has_prop(objects.TextWord), self.get_objs_from_pos(new_pos))
+                    text_objs.extend(map(lambda o: objects.get_exist_noun_from_obj(type(o)), word_objs))
+                    not_text__then_matched = [o for o in text_objs]
+                    for next_stage in next_stages:
+                        not_text__remain_rules.extend(self.get_rules_from_pos_and_orient(next_stage, spaces.pos_facing(new_pos, orient), orient))
+        if len(then_matched) == 0 and len(text__then_matched) == 0 and len(not_then_matched) == 0 and len(not_text__then_matched) == 0 and len(not_rules) == 0 and len(prefix_rules) == 0:
             return [[]] if rule_can_be_done else []
         return_rules: list[rules.Rule] = [[]]
         new_return_rules: list[rules.Rule] = []
@@ -249,8 +285,35 @@ class World(object):
                 new_return_rules = []
                 for match in matches:
                     for rule in return_rules:
-                        new_return_rules.append(rule + [type(match)])
+                        new_return_rules.append(rule + [match])
                 return_rules = new_return_rules[:]
+        then_return_rules = []
+        new_then_return_rules = []
+        for match in then_matched:
+            for rule in return_rules:
+                if stage in ("InfixText", "AndInfixText"):
+                    if rule[-1] == objects.TextFeeling: # prop infix
+                        if isinstance(match, objects.Property):
+                            new_then_return_rules.append(rule + [match])
+                    elif isinstance(match, objects.Noun): # noun infix
+                        new_then_return_rules.append(rule + [match])
+                else:
+                    new_then_return_rules.append(rule + [match])
+        then_return_rules = new_then_return_rules[:]
+        text__then_return_rules = []
+        if text__after_first_len != 0:
+            text__then_new_return_rules = []
+            for match in text__then_matched:
+                for rule in return_rules:
+                    if stage in ("InfixText", "AndInfixText"):
+                        if rule[-1] == objects.TextFeeling: # prop infix
+                            if isinstance(match, objects.Property):
+                                text__then_new_return_rules.append(rule + [objects.TextText_ for _ in range(text__after_first_len)] + [match])
+                        elif isinstance(match, objects.Noun): # noun infix
+                            text__then_new_return_rules.append(rule + [objects.TextText_ for _ in range(text__after_first_len)] + [match])
+                    else:
+                        text__then_new_return_rules.append(rule + [objects.TextText_ for _ in range(text__after_first_len)] + [match])
+            text__then_return_rules = text__then_new_return_rules[:]
         not_then_return_rules = []
         if not_after_first_len != 0:
             not_then_new_return_rules = []
@@ -259,25 +322,26 @@ class World(object):
                     if stage in ("InfixText", "AndInfixText"):
                         if rule[-1] == objects.TextFeeling: # prop infix
                             if isinstance(match, objects.Property):
-                                not_then_new_return_rules.append(rule + [objects.TextNot for _ in range(not_after_first_len)] + [type(match)])
+                                not_then_new_return_rules.append(rule + [objects.TextNot for _ in range(not_after_first_len)] + [match])
                         elif isinstance(match, objects.Noun): # noun infix
-                            not_then_new_return_rules.append(rule + [objects.TextNot for _ in range(not_after_first_len)] + [type(match)])
+                            not_then_new_return_rules.append(rule + [objects.TextNot for _ in range(not_after_first_len)] + [match])
                     else:
-                        not_then_new_return_rules.append(rule + [objects.TextNot for _ in range(not_after_first_len)] + [type(match)])
+                        not_then_new_return_rules.append(rule + [objects.TextNot for _ in range(not_after_first_len)] + [match])
             not_then_return_rules = not_then_new_return_rules[:]
-        then_return_rules = []
-        new_then_return_rules = []
-        for match in then_matched:
-            for rule in return_rules:
-                if stage in ("InfixText", "AndInfixText"):
-                    if rule[-1] == objects.TextFeeling: # prop infix
-                        if isinstance(match, objects.Property):
-                            new_then_return_rules.append(rule + [type(match)])
-                    elif isinstance(match, objects.Noun): # noun infix
-                        new_then_return_rules.append(rule + [type(match)])
-                else:
-                    new_then_return_rules.append(rule + [type(match)])
-        then_return_rules = new_then_return_rules[:]
+        not_text__then_return_rules = []
+        if not_text__after_first_len != 0:
+            not_text__then_new_return_rules = []
+            for match in not_text__then_matched:
+                for rule in return_rules:
+                    if stage in ("InfixText", "AndInfixText"):
+                        if rule[-1] == objects.TextFeeling: # prop infix
+                            if isinstance(match, objects.Property):
+                                not_text__then_new_return_rules.append(rule + [objects.TextNot for _ in range(not_after_first_len)] + [objects.TextText_ for _ in range(not_text__after_first_len)] + [match])
+                        elif isinstance(match, objects.Noun): # noun infix
+                            not_text__then_new_return_rules.append(rule + [objects.TextNot for _ in range(not_after_first_len)] + [objects.TextText_ for _ in range(not_text__after_first_len)] + [match])
+                    else:
+                        not_text__then_new_return_rules.append(rule + [objects.TextNot for _ in range(not_after_first_len)] + [objects.TextText_ for _ in range(not_text__after_first_len)] + [match])
+            not_text__then_return_rules = not_text__then_new_return_rules[:]
         new_return_rules = []
         for remain_rule in remain_rules:
             for then_return_rule in then_return_rules:
@@ -292,6 +356,12 @@ class World(object):
         for not_remain_rule in not_remain_rules:
             for not_then_return_rule in not_then_return_rules:
                 new_return_rules.append(not_then_return_rule + not_remain_rule)
+        for text__remain_rule in text__remain_rules:
+            for text__then_return_rule in text__then_return_rules:
+                new_return_rules.append(text__then_return_rule + text__remain_rule)
+        for not_text__remain_rule in not_text__remain_rules:
+            for not_text__then_return_rule in not_text__then_return_rules:
+                new_return_rules.append(not_text__then_return_rule + not_text__remain_rule)
         if len(not_rules) != 0:
             new_return_rules.extend(not_rules)
         if len(prefix_rules) != 0:

@@ -487,6 +487,10 @@ class TextMeta(Prefix):
     json_name: str = "text_meta"
     sprite_name: str = "text_meta"
 
+class TextText_(Text):
+    json_name: str = "text_text_"
+    sprite_name: str = "text_text_"
+
 class TextOn(Infix):
     json_name: str = "text_on"
     sprite_name: str = "text_on"
@@ -611,7 +615,7 @@ object_used.extend([TextBaba, TextKeke, TextMe, TextPatrick, TextSkull, TextGhos
 object_used.extend([TextWall, TextHedge, TextIce, TextTile, TextGrass, TextWater, TextLava])
 object_used.extend([TextBox, TextRock, TextFruit, TextBelt, TextSun, TextMoon, TextStar, TextWhat, TextLove, TextFlag])
 object_used.extend([TextCursor, TextAll, TextText, TextLevel, TextWorld, TextClone, TextGame])
-object_used.extend([TextMeta])
+object_used.extend([TextText_, TextMeta])
 object_used.extend([TextOn, TextNear, TextNextto, TextFeeling])
 object_used.extend([TextIs, TextHas, TextMake, TextWrite])
 object_used.extend([TextNot, TextAnd])
@@ -628,6 +632,18 @@ noun_list.extend([TextBaba, TextKeke, TextMe, TextPatrick, TextSkull, TextGhost]
 noun_list.extend([TextWall, TextHedge, TextIce, TextTile, TextGrass, TextWater, TextLava])
 noun_list.extend([TextDoor, TextKey, TextBox, TextRock, TextFruit, TextBelt, TextSun, TextMoon, TextStar, TextWhat, TextLove, TextFlag])
 noun_list.extend([TextCursor, TextAll, TextText, TextLevel, TextWorld, TextClone, TextGame])
+
+text_list: list[type[Text]] = []
+text_list.extend([TextBaba, TextKeke, TextMe, TextPatrick, TextSkull, TextGhost])
+text_list.extend([TextWall, TextHedge, TextIce, TextTile, TextGrass, TextWater, TextLava])
+text_list.extend([TextDoor, TextKey, TextBox, TextRock, TextFruit, TextBelt, TextSun, TextMoon, TextStar, TextWhat, TextLove, TextFlag])
+text_list.extend([TextCursor, TextAll, TextText, TextLevel, TextWorld, TextClone, TextGame])
+text_list.extend([TextText_, TextMeta])
+text_list.extend([TextOn, TextNear, TextNextto, TextFeeling])
+text_list.extend([TextIs, TextHas, TextMake, TextWrite])
+text_list.extend([TextNot, TextAnd])
+text_list.extend([TextYou, TextMove, TextStop, TextPush, TextSink, TextFloat, TextOpen, TextShut, TextHot, TextMelt, TextWin, TextDefeat, TextShift, TextTele])
+text_list.extend([TextWord, TextSelect, TextEnd, TextDone])
 
 def get_noun_from_obj(obj_type: type[BmpObject]) -> Optional[type[Noun]]:
     return_value: Optional[type[Noun]] = None
@@ -646,7 +662,7 @@ def get_exist_noun_from_obj(obj_type: type[BmpObject]) -> type[Noun]:
         if issubclass(obj_type, noun_type.obj_type):
             return_value = noun_type
     if return_value is None:
-        raise ValueError(obj_type.__name__)
+        return TextText
     return return_value
 
 not_in_all: tuple[type[BmpObject], ...] = (All, Empty, Text, Level, WorldPointer, Transform, Sprite, Game)
@@ -660,25 +676,27 @@ def generate_metatext(T: type[Text]) -> type[Metatext]:
     new_type: type[Metatext] = type(new_type_name, (Metatext, ), new_type_vars)
     return new_type
 
-def generate_metatext_at_tier(tier: int) -> list[type[Metatext]]:
+def generate_metatext_at_tier(tier: int) -> tuple[list[type[Metatext]], list[type[Metatext]]]:
     if tier < 1:
         raise ValueError(str(tier))
-    return_list: list[type[Metatext]] = []
+    new_metatext_list: list[type[Metatext]] = []
     if tier == 1:
-        for noun in noun_list:
-            return_list.append(generate_metatext(noun))
-    else:
-        for noun in generate_metatext_at_tier(tier - 1):
-            return_list.append(generate_metatext(noun))
-    return return_list
+        for noun in text_list:
+            new_metatext_list.append(generate_metatext(noun))
+        return new_metatext_list, []
+    old_metatext_list, older_metatext_list = generate_metatext_at_tier(tier - 1)
+    for noun in old_metatext_list:
+        new_metatext_list.append(generate_metatext(noun))
+    return new_metatext_list, older_metatext_list + old_metatext_list
 
 if basics.options["metatext"]["enabled"]:
-    metatext_list = generate_metatext_at_tier(basics.options["metatext"]["tier"])
-    for new_type in metatext_list:
+    max_metatext_list, other_metatext_list = generate_metatext_at_tier(basics.options["metatext"]["tier"])
+    for new_type in max_metatext_list + other_metatext_list:
         object_class_used.append(new_type)
         object_used.append(new_type)
         object_name[new_type.json_name] = new_type
         noun_list.append(new_type)
+        text_list.append(new_type)
 
 def is_correct_bmp_object_json(T):
     def func(json_object: BmpObjectJson) -> TypeGuard[T]:

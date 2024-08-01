@@ -206,25 +206,24 @@ class Level(object):
                     if prop_type != objects.TextWord:
                         continue
                     obj_type = noun_type.obj_type
-                    if obj_type is not None:
-                        if obj_type == objects.All:
-                            if noun_negated:
-                                for obj in [o for o in world.object_list if isinstance(o, objects.in_not_all)]:
-                                    if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
-                                        new_prop_list.append((obj, (objects.TextWord, prop_negated_count)))
-                            else:
-                                for obj in [o for o in world.object_list if not isinstance(o, objects.not_in_all)]:
-                                    if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
-                                        new_prop_list.append((obj, (objects.TextWord, prop_negated_count)))
+                    if obj_type == objects.All:
+                        if noun_negated:
+                            for obj in [o for o in world.object_list if isinstance(o, objects.in_not_all)]:
+                                if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
+                                    new_prop_list.append((obj, (objects.TextWord, prop_negated_count)))
                         else:
-                            if noun_negated:
-                                for obj in [o for o in world.object_list if (not isinstance(o, objects.not_in_all)) and not isinstance(o, obj_type)]:
-                                    if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
-                                        new_prop_list.append((obj, (objects.TextWord, prop_negated_count)))
-                            else:
-                                for obj in world.get_objs_from_type(obj_type):
-                                    if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
-                                        new_prop_list.append((obj, (objects.TextWord, prop_negated_count)))
+                            for obj in [o for o in world.object_list if not isinstance(o, objects.not_in_all)]:
+                                if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
+                                    new_prop_list.append((obj, (objects.TextWord, prop_negated_count)))
+                    else:
+                        if noun_negated:
+                            for obj in [o for o in world.object_list if (not isinstance(o, objects.not_in_all)) and not isinstance(o, obj_type)]:
+                                if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
+                                    new_prop_list.append((obj, (objects.TextWord, prop_negated_count)))
+                        else:
+                            for obj in world.get_objs_from_type(obj_type):
+                                if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
+                                    new_prop_list.append((obj, (objects.TextWord, prop_negated_count)))
         for obj, prop in new_prop_list:
             prop_type, prop_negated_count = prop
             obj.new_prop(prop_type, prop_negated_count)
@@ -246,71 +245,71 @@ class Level(object):
             for rule in world.rule_list:
                 for prefix_list, noun_negated, noun_type, infix_list, oper_type, prop_negated_count, prop_type in rules.analysis_rule(rule):
                     obj_type = noun_type.obj_type
-                    if obj_type is not None:
-                        if obj_type == objects.All:
-                            if noun_negated:
-                                for obj in [o for o in world.object_list if isinstance(o, objects.in_not_all)]:
-                                    if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
-                                        if oper_type == objects.TextIs:
-                                            new_prop_list.append((obj, (prop_type, prop_negated_count)))
-                                        elif oper_type == objects.TextHas:
-                                            if prop_type == objects.TextAll and noun_negated == False:
-                                                obj.has_object.extend(self.all_list)
-                                            else:
-                                                obj.has_object.append(prop_type) # type: ignore
-                                        elif oper_type == objects.TextMake:
-                                            if prop_type == objects.TextAll and noun_negated == False:
-                                                obj.make_object.extend(self.all_list)
-                                            else:
-                                                obj.make_object.append(prop_type) # type: ignore
-                                        elif oper_type == objects.TextWrite:
-                                            obj.write_text.append(prop_type)
-                            else:
-                                for obj in [o for o in world.object_list if not isinstance(o, objects.not_in_all)]:
-                                    if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
-                                        if oper_type == objects.TextIs:
-                                            new_prop_list.append((obj, (prop_type, prop_negated_count)))
-                                        elif oper_type == objects.TextHas and prop_negated_count % 2 == 0:
-                                            if prop_type == objects.TextAll and noun_negated == False:
-                                                obj.has_object.extend(self.all_list)
-                                            else:
-                                                obj.has_object.append(prop_type) # type: ignore
-                                        elif oper_type == objects.TextMake and prop_negated_count % 2 == 0:
-                                            if prop_type == objects.TextAll and noun_negated == False:
-                                                obj.make_object.extend(self.all_list)
-                                            else:
-                                                obj.make_object.append(prop_type) # type: ignore
-                                        elif oper_type == objects.TextWrite and prop_negated_count % 2 == 0:
-                                            obj.write_text.append(prop_type)
-                        if obj_type == objects.Game and oper_type == objects.TextIs:
-                            if (not noun_negated) and len(infix_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject((0, 0)), prefix_list, True):
-                                del_props = []
-                                for old_prop_type, old_prop_negated_count in self.game_properties:
-                                    if prop_type == old_prop_type:
-                                        if old_prop_negated_count > prop_negated_count:
-                                            return
-                                        del_props.append((old_prop_type, old_prop_negated_count))
-                                for old_prop_type, old_prop_negated_count in del_props:
-                                    self.game_properties.remove((old_prop_type, old_prop_negated_count))
-                                self.game_properties.append((prop_type, prop_negated_count))
-                        elif obj_type == objects.Level:
-                            if (not noun_negated) and len(infix_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject((0, 0)), prefix_list, True):
-                                if oper_type == objects.TextIs:
-                                    self.new_prop(prop_type, prop_negated_count)
-                                elif oper_type == objects.TextWrite and prop_negated_count % 2 == 0:
-                                    self.write_text.append(prop_type)
-                        elif obj_type == objects.World:
-                            if (not noun_negated) and len(infix_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject((0, 0)), prefix_list, True):
-                                if oper_type == objects.TextIs:
-                                    world.new_world_prop(prop_type, prop_negated_count)
-                                elif oper_type == objects.TextWrite and prop_negated_count % 2 == 0:
-                                    world.world_write_text.append(prop_type)
-                        elif obj_type == objects.Clone:
-                            if (not noun_negated) and len(infix_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject((0, 0)), prefix_list, True):
-                                if oper_type == objects.TextIs:
-                                    world.new_clone_prop(prop_type, prop_negated_count)
-                                elif oper_type == objects.TextWrite and prop_negated_count % 2 == 0:
-                                    world.clone_write_text.append(prop_type)
+                    if obj_type == objects.All:
+                        if noun_negated:
+                            for obj in [o for o in world.object_list if isinstance(o, objects.in_not_all)]:
+                                if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
+                                    if oper_type == objects.TextIs:
+                                        new_prop_list.append((obj, (prop_type, prop_negated_count)))
+                                    elif oper_type == objects.TextHas:
+                                        if prop_type == objects.TextAll and noun_negated == False:
+                                            obj.has_object.extend(self.all_list)
+                                        else:
+                                            obj.has_object.append(prop_type) # type: ignore
+                                    elif oper_type == objects.TextMake:
+                                        if prop_type == objects.TextAll and noun_negated == False:
+                                            obj.make_object.extend(self.all_list)
+                                        else:
+                                            obj.make_object.append(prop_type) # type: ignore
+                                    elif oper_type == objects.TextWrite:
+                                        obj.write_text.append(prop_type)
+                        else:
+                            for obj in [o for o in world.object_list if not isinstance(o, objects.not_in_all)]:
+                                if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
+                                    if oper_type == objects.TextIs:
+                                        new_prop_list.append((obj, (prop_type, prop_negated_count)))
+                                    elif oper_type == objects.TextHas and prop_negated_count % 2 == 0:
+                                        if prop_type == objects.TextAll and noun_negated == False:
+                                            obj.has_object.extend(self.all_list)
+                                        else:
+                                            obj.has_object.append(prop_type) # type: ignore
+                                    elif oper_type == objects.TextMake and prop_negated_count % 2 == 0:
+                                        if prop_type == objects.TextAll and noun_negated == False:
+                                            obj.make_object.extend(self.all_list)
+                                        else:
+                                            obj.make_object.append(prop_type) # type: ignore
+                                    elif oper_type == objects.TextWrite and prop_negated_count % 2 == 0:
+                                        obj.write_text.append(prop_type)
+                    elif obj_type == objects.Game and oper_type == objects.TextIs:
+                        if (not noun_negated) and len(infix_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject((0, 0)), prefix_list, True):
+                            del_props = []
+                            for old_prop_type, old_prop_negated_count in self.game_properties:
+                                if prop_type == old_prop_type:
+                                    if old_prop_negated_count > prop_negated_count:
+                                        return
+                                    del_props.append((old_prop_type, old_prop_negated_count))
+                            for old_prop_type, old_prop_negated_count in del_props:
+                                self.game_properties.remove((old_prop_type, old_prop_negated_count))
+                            self.game_properties.append((prop_type, prop_negated_count))
+                    elif obj_type == objects.Level:
+                        if (not noun_negated) and len(infix_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject((0, 0)), prefix_list, True):
+                            if oper_type == objects.TextIs:
+                                self.new_prop(prop_type, prop_negated_count)
+                            elif oper_type == objects.TextWrite and prop_negated_count % 2 == 0:
+                                self.write_text.append(prop_type)
+                    elif obj_type == objects.World:
+                        if (not noun_negated) and len(infix_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject((0, 0)), prefix_list, True):
+                            if oper_type == objects.TextIs:
+                                world.new_world_prop(prop_type, prop_negated_count)
+                            elif oper_type == objects.TextWrite and prop_negated_count % 2 == 0:
+                                world.world_write_text.append(prop_type)
+                    elif obj_type == objects.Clone:
+                        if (not noun_negated) and len(infix_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject((0, 0)), prefix_list, True):
+                            if oper_type == objects.TextIs:
+                                world.new_clone_prop(prop_type, prop_negated_count)
+                            elif oper_type == objects.TextWrite and prop_negated_count % 2 == 0:
+                                world.clone_write_text.append(prop_type)
+                    else:
                         if noun_negated:
                             for obj in [o for o in world.object_list if (not isinstance(o, objects.not_in_all)) and not isinstance(o, obj_type)]:
                                 if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
@@ -842,9 +841,9 @@ class Level(object):
             for old_obj in world.object_list:
                 old_type = type(old_obj)
                 new_nouns = [n for n, c in old_obj.properties if issubclass(n, objects.Noun) and c % 2 == 0]
-                new_types = [t.obj_type for t in new_nouns if t is not None]
+                new_types = [t.obj_type for t in new_nouns]
                 not_new_nouns = [n for n, c in old_obj.properties if issubclass(n, objects.Noun) and c % 2 == 1]
-                not_new_types = [t.obj_type for t in not_new_nouns if t is not None]
+                not_new_types = [t.obj_type for t in not_new_nouns]
                 transform_success = False
                 old_type_is_old_type = False
                 old_type_is_not_old_type = False
@@ -860,7 +859,7 @@ class Level(object):
                     if objects.All in new_types:
                         new_types.remove(objects.All)
                         all_nouns = [t for t in self.all_list if t not in not_new_types]
-                        new_types.extend([t.obj_type for t in all_nouns if t is not None])
+                        new_types.extend([t.obj_type for t in all_nouns])
                     for new_text_type in old_obj.write_text:
                         new_obj = new_text_type(old_obj.pos, old_obj.orient)
                         world.new_obj(new_obj)
@@ -932,7 +931,7 @@ class Level(object):
                                 self.set_world(new_world)
                                 world.new_obj(objects.Clone(old_obj.pos, old_obj.uuid.hex, 0, old_obj.orient))
                                 transform_success = True
-                        elif issubclass(new_type, objects.Text) and not isinstance(old_obj, objects.Text):
+                        elif new_type == objects.Text and not isinstance(old_obj, objects.Text):
                             transform_success = True
                             new_obj = objects.get_exist_noun_from_obj(old_type)(old_obj.pos, old_obj.orient)
                             world.new_obj(new_obj)
@@ -942,7 +941,7 @@ class Level(object):
                             world.new_obj(new_obj)
                 if transform_success:
                     delete_object_list.append(old_obj)
-            for delete_obj in delete_object_list:
+            for delete_obj in delete_object_list: 
                 world.del_obj(delete_obj)
         transform_to: dict[type[objects.BmpObject], list[objects.BmpObject]] = {}
         special_new_types: dict[type[objects.BmpObject], list[type[objects.BmpObject]]] = {}

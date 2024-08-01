@@ -4,7 +4,7 @@ import json
 
 print("-= Pygame =-")
 import pygame
-print("-= Pygame =-")
+print("-= BmP =-")
 
 from BabaMakeParabox import basics, languages, spaces, colors, objects, rules, displays, worlds, levels, levelpacks, edits, games, subgames
 
