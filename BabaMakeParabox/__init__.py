@@ -2,8 +2,9 @@ from typing import Any
 import os
 import json
 
-os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "TRUE"
+print("-= Pygame =-")
 import pygame
+print("-= Pygame =-")
 
 from BabaMakeParabox import basics, languages, spaces, colors, objects, rules, displays, worlds, levels, levelpacks, edits, games, subgames
 
@@ -19,13 +20,13 @@ def logic(args: dict[str, Any]) -> None:
                 with open(os.path.join("levelpacks", filename + ".json"), "r", encoding="utf-8") as file:
                     levelpack = levelpacks.json_to_levelpack(json.load(file))
             else:
-                world = worlds.world(filename, size, color=color)
-                level = levels.level(filename, [world])
-                levelpack = levelpacks.levelpack(filename, [level])
+                world = worlds.World(filename, size, color=color)
+                level = levels.Level(filename, [world])
+                levelpack = levelpacks.Levelpack(filename, [level])
         else:
-            world = worlds.world("main", size, color=color)
-            level = levels.level("main", [world])
-            levelpack = levelpacks.levelpack("main", [level])
+            world = worlds.World("main", size, color=color)
+            level = levels.Level("main", [world])
+            levelpack = levelpacks.Levelpack("main", [level])
         levelpack = edits.levelpack_editor(levelpack)
         if args.get("output") != "":
             filename: str = args["output"]

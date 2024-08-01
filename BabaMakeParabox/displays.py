@@ -68,7 +68,7 @@ class Sprites(object):
     def get(self, sprite_name: str, state: int, frame: int = 0) -> pygame.Surface:
         return self.sprites["_".join([sprite_name, str(state), str(frame)])]
 
-def set_sprite_state(obj: objects.BmpObj, round_num: int = 0, wsad: Optional[dict[spaces.Orient, bool]] = None) -> objects.BmpObj:
+def set_sprite_state(obj: objects.BmpObject, round_num: int = 0, wsad: Optional[dict[spaces.Orient, bool]] = None) -> objects.BmpObject:
     if isinstance(obj, objects.Static):
         obj.set_sprite()
     if isinstance(obj, objects.Directional):
@@ -189,6 +189,6 @@ order = [objects.Cursor,
          objects.Animated,
          objects.Tiled,
          objects.WorldPointer,
-         objects.BmpObj]
+         objects.BmpObject]
 
 sprites = Sprites(sprite_colors)

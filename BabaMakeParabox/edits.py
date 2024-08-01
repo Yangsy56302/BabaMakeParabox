@@ -4,7 +4,7 @@ from BabaMakeParabox import basics, languages, colors, spaces, objects, rules, w
 
 import pygame
 
-def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
+def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     for level in levelpack.level_list:
         for world in level.world_list:
             world.set_sprite_states(0)
@@ -64,7 +64,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
     current_object = displays.set_sprite_state(current_object_type((0, 0), current_orient))
     current_cursor_pos = (0, 0)
     current_clipboard = []
-    object_type_shortcuts: dict[int, type[objects.BmpObj]] = {k: objects.object_name[v] for k, v in enumerate(basics.options["object_type_shortcuts"])}
+    object_type_shortcuts: dict[int, type[objects.BmpObject]] = {k: objects.object_name[v] for k, v in enumerate(basics.options["object_type_shortcuts"])}
     level_changed = True
     world_changed = True
     frame = 0
@@ -186,7 +186,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
         elif keys["RETURN"]:
             if keys["LCTRL"] or keys["RCTRL"] or len(current_world.get_objs_from_pos(current_cursor_pos)) == 0:
                 history.append(copy.deepcopy(levelpack))
-                if issubclass(current_object_type, objects.Level):
+                if issubclass(current_object_type, objects.LevelPointer):
                     if keys["LSHIFT"] or keys["RSHIFT"]:
                         name = input(languages.current_language["editor.level.new.name"])
                         name = name if levelpack.get_level(name) is not None else current_level.name
@@ -228,8 +228,8 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                     inf_tier = int(inf_tier) if inf_tier != "" else 0
                     color = input(languages.current_language["editor.world.new.color"])
                     color = colors.str_to_hex(color) if color != "" else basics.options["default_new_world"]["color"]
-                    default_world = worlds.world(name, size, inf_tier, color)
-                    levelpack.level_list.append(levels.level(level_name, [default_world], super_level, name, inf_tier, levelpack.rule_list))
+                    default_world = worlds.World(name, size, inf_tier, color)
+                    levelpack.level_list.append(levels.Level(level_name, [default_world], super_level, name, inf_tier, levelpack.rule_list))
                     current_level_index = len(levelpack.level_list) - 1
                     current_world_index = 0
                     level_changed = True
@@ -247,7 +247,7 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
                     inf_tier = int(inf_tier) if inf_tier != "" else 0
                     color = input(languages.current_language["editor.world.new.color"])
                     color = colors.str_to_hex(color) if color != "" else basics.options["default_new_world"]["color"]
-                    current_level.world_list.append(worlds.world(name, size, inf_tier, color))
+                    current_level.world_list.append(worlds.World(name, size, inf_tier, color))
                     current_world_index = len(current_level.world_list) - 1
                     world_changed = True
         elif keys["DELETE"]:
@@ -336,17 +336,17 @@ def levelpack_editor(levelpack: levelpacks.levelpack) -> levelpacks.levelpack:
             history.append(copy.deepcopy(levelpack))
             current_clipboard = current_world.get_objs_from_pos(current_cursor_pos)
             current_clipboard = copy.deepcopy(current_clipboard)
-            list(map(objects.BmpObj.reset_uuid, current_clipboard))
+            list(map(objects.BmpObject.reset_uuid, current_clipboard))
             current_world.del_objs_from_pos(current_cursor_pos)
         elif keys["C"]:
             history.append(copy.deepcopy(levelpack))
             current_clipboard = current_world.get_objs_from_pos(current_cursor_pos)
             current_clipboard = copy.deepcopy(current_clipboard)
-            list(map(objects.BmpObj.reset_uuid, current_clipboard))
+            list(map(objects.BmpObject.reset_uuid, current_clipboard))
         elif keys["V"]:
             history.append(copy.deepcopy(levelpack))
             current_clipboard = copy.deepcopy(current_clipboard)
-            list(map(objects.BmpObj.reset_uuid, current_clipboard))
+            list(map(objects.BmpObject.reset_uuid, current_clipboard))
             for obj in current_clipboard:
                 obj.pos = current_cursor_pos
                 current_world.new_obj(obj)

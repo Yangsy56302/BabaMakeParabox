@@ -285,6 +285,7 @@
 | 3.201  | 2024.07.26 | Code is Better; Fps is Switch |
 | 3.202  | 2024.07.27 | Options is Better and has Versions |
 | 3.21   | 2024.07.31 | Levelpack has Versions; Name is Vanilla |
+| 3.211  | 2024.08.01 | Code feeling Strict is More |
 
 ## 报告漏洞和提出建议
 

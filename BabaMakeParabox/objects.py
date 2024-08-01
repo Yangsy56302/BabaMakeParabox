@@ -1,11 +1,15 @@
-from typing import Any, Optional
+from typing import Any, Optional, TypeGuard, TypeVar, TypedDict
 import math
 import uuid
-
 from BabaMakeParabox import colors, spaces
 
-class BmpObj(object):
-    typename: str = "BmpObj"
+class BmpObjectJson(TypedDict):
+    type: str
+    position: spaces.Coord
+    orientation: spaces.OrientStr
+
+class BmpObject(object):
+    typename: str = "BmpObject"
     json_name: str
     sprite_name: str
     def __init__(self, pos: spaces.Coord, orient: spaces.Orient = spaces.Orient.S) -> None:
@@ -19,7 +23,7 @@ class BmpObj(object):
         self.write_text: list[type["Noun"] | type["Property"]] = []
         self.moved: bool = False
         self.sprite_state: int = 0
-    def __eq__(self, obj: "BmpObj") -> bool:
+    def __eq__(self, obj: "BmpObject") -> bool:
         return self.uuid == obj.uuid
     @property
     def pos(self) -> spaces.Coord:
@@ -58,45 +62,35 @@ class BmpObj(object):
         return False
     def clear_prop(self) -> None:
         self.properties = []
-    def to_json(self) -> dict[str, Any]:
-        return {"type": self.json_name, "position": [self.x, self.y], "orientation": spaces.orient_to_str(self.orient)}
+    def to_json(self) -> BmpObjectJson:
+        return {"type": self.json_name, "position": (self.x, self.y), "orientation": spaces.orient_to_str(self.orient)}
 
-class Static(BmpObj):
+class Static(BmpObject):
     typename: str = "Static"
     def set_sprite(self) -> None:
         self.sprite_state = 0
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
-class Tiled(BmpObj):
+class Tiled(BmpObject):
     typename: str = "Tiled"
     def set_sprite(self, connected: dict[spaces.Orient, bool]) -> None:
         self.sprite_state = (connected[spaces.Orient.D] * 0x1) | (connected[spaces.Orient.W] * 0x2) | (connected[spaces.Orient.A] * 0x4) | (connected[spaces.Orient.S] * 0x8)
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
-class Animated(BmpObj):
+class Animated(BmpObject):
     typename: str = "Animated"
     def set_sprite(self, round_num: int) -> None:
         self.sprite_state = round_num % 4
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
-class Directional(BmpObj):
+class Directional(BmpObject):
     typename: str = "Directional"
     def set_sprite(self) -> None:
         self.sprite_state = int(math.log2(spaces.orient_to_int(self.orient))) * 0x8
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
-class AnimatedDirectional(BmpObj):
+class AnimatedDirectional(BmpObject):
     typename: str = "AnimatedDirectional"
     def set_sprite(self, round_num: int) -> None:
         self.sprite_state = int(math.log2(spaces.orient_to_int(self.orient))) * 0x8 | round_num % 4
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
-class Character(BmpObj):
+class Character(BmpObject):
     typename: str = "Character"
     def set_sprite(self) -> None:
         self.sleeping = False
@@ -108,234 +102,200 @@ class Character(BmpObj):
                 self.sprite_state = int(math.log2(spaces.orient_to_int(self.orient))) * 0x8 | (self.sprite_state & 0x3)
         else:
             self.sprite_state = int(math.log2(spaces.orient_to_int(self.orient))) * 0x8 | 0x7
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Baba(Character):
     typename: str = "Baba"
     json_name: str = "baba"
     sprite_name: str = "baba"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Keke(Character):
     typename: str = "Keke"
     json_name: str = "keke"
     sprite_name: str = "keke"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Me(Character):
     typename: str = "Me"
     json_name: str = "me"
     sprite_name: str = "me"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Patrick(Directional):
     typename: str = "Patrick"
     json_name: str = "patrick"
     sprite_name: str = "patrick"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Skull(Directional):
     typename: str = "Skull"
     json_name: str = "skull"
     sprite_name: str = "skull"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Ghost(Directional):
     typename: str = "Ghost"
     json_name: str = "ghost"
     sprite_name: str = "ghost"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Wall(Tiled):
     typename: str = "Wall"
     json_name: str = "wall"
     sprite_name: str = "wall"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Hedge(Tiled):
     typename: str = "Hedge"
     json_name: str = "hedge"
     sprite_name: str = "hedge"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Ice(Tiled):
     typename: str = "Ice"
     json_name: str = "ice"
     sprite_name: str = "ice"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Tile(Static):
     typename: str = "Tile"
     json_name: str = "tile"
     sprite_name: str = "tile"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Grass(Tiled):
     typename: str = "Grass"
     json_name: str = "grass"
     sprite_name: str = "grass"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Water(Tiled):
     typename: str = "Water"
     json_name: str = "water"
     sprite_name: str = "water"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Lava(Tiled):
     typename: str = "Lava"
     json_name: str = "lava"
     sprite_name: str = "lava"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Door(Static):
     typename: str = "Door"
     json_name: str = "door"
     sprite_name: str = "door"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Key(Static):
     typename: str = "Key"
     json_name: str = "key"
     sprite_name: str = "key"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Box(Static):
     typename: str = "Box"
     json_name: str = "box"
     sprite_name: str = "box"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Rock(Static):
     typename: str = "Rock"
     json_name: str = "rock"
     sprite_name: str = "rock"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Fruit(Static):
     typename: str = "Fruit"
     json_name: str = "fruit"
     sprite_name: str = "fruit"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Belt(AnimatedDirectional):
     typename: str = "Belt"
     json_name: str = "belt"
     sprite_name: str = "belt"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Sun(Static):
     typename: str = "Sun"
     json_name: str = "sun"
     sprite_name: str = "sun"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Moon(Static):
     typename: str = "Moon"
     json_name: str = "moon"
     sprite_name: str = "moon"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Star(Static):
     typename: str = "Star"
     json_name: str = "star"
     sprite_name: str = "star"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class What(Static):
     typename: str = "What"
     json_name: str = "what"
     sprite_name: str = "what"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Love(Static):
     typename: str = "Love"
     json_name: str = "love"
     sprite_name: str = "love"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Flag(Static):
     typename: str = "Flag"
     json_name: str = "flag"
     sprite_name: str = "flag"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Cursor(Static):
     typename: str = "Cursor"
     json_name: str = "cursor"
     sprite_name: str = "cursor"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
-class All(BmpObj):
+class All(BmpObject):
     typename: str = "All"
     json_name: str = "all"
     sprite_name: str = "all"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
-class Empty(BmpObj):
+class Empty(BmpObject):
     typename: str = "Empty"
     json_name: str = "empty"
     sprite_name: str = "empty"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
-class Level(BmpObj):
-    typename: str = "Level"
-    json_name: str = "level"
-    sprite_name: str = "level"
+class LevelPointerInfoJson(TypedDict):
+    name: str
+
+class LevelPointerIconJson(TypedDict):
+    name: str
+    color: colors.ColorHex
+
+class LevelPointerExtraJson(TypedDict):
+    level: LevelPointerInfoJson
+    icon: LevelPointerIconJson
+
+class LevelPointerJson(BmpObjectJson, LevelPointerExtraJson):
+    pass
+
+class LevelPointer(BmpObject):
+    typename: str = "LevelPointer"
     def __init__(self, pos: spaces.Coord, name: str, icon_name: str = "empty", icon_color: colors.ColorHex = colors.WHITE, orient: spaces.Orient = spaces.Orient.S) -> None:
         super().__init__(pos, orient)
         self.name: str = name
         self.icon_name: str = icon_name
         self.icon_color: colors.ColorHex = icon_color
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
-    def to_json(self) -> dict[str, Any]:
-        json_object = super().to_json()
-        json_object.update({"level": {"name": self.name}})
-        json_object.update({"icon": {"name": self.icon_name, "color": self.icon_color}})
-        return json_object
+    def to_json(self) -> LevelPointerJson:
+        basic_json_object = super().to_json()
+        extra_json_object: LevelPointerExtraJson = {"level": {"name": self.name}, "icon": {"name": self.icon_name, "color": self.icon_color}}
+        return {**basic_json_object, **extra_json_object}
 
-class WorldPointer(BmpObj):
+class Level(LevelPointer):
+    typename: str = "Level"
+    json_name: str = "level"
+    sprite_name: str = "level"
+    def __init__(self, pos: spaces.Coord, name: str, icon_name: str = "empty", icon_color: colors.ColorHex = colors.WHITE, orient: spaces.Orient = spaces.Orient.S) -> None:
+        super().__init__(pos, name, icon_name, icon_color, orient)
+
+class WorldPointerInfoJson(TypedDict):
+    name: str
+    infinite_tier: int
+    
+class WorldPointerExtraJson(TypedDict):
+    world: WorldPointerInfoJson
+
+class WorldPointerJson(BmpObjectJson, WorldPointerExtraJson):
+    pass
+
+class WorldPointer(BmpObject):
     typename: str = "WorldContainer"
     def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, orient: spaces.Orient = spaces.Orient.S) -> None:
         super().__init__(pos, orient)
         self.name: str = name
         self.inf_tier: int = inf_tier
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
-    def to_json(self) -> dict[str, Any]:
-        json_object = super().to_json()
-        json_object.update({"world": {"name": self.name, "infinite_tier": self.inf_tier}})
-        return json_object
+    def to_json(self) -> WorldPointerJson:
+        basic_json_object = super().to_json()
+        extra_json_object: WorldPointerExtraJson = {"world": {"name": self.name, "infinite_tier": self.inf_tier}}
+        return {**basic_json_object, **extra_json_object}
 
 class World(WorldPointer):
     typename: str = "World"
@@ -343,8 +303,6 @@ class World(WorldPointer):
     sprite_name: str = "world"
     def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, orient: spaces.Orient = spaces.Orient.S) -> None:
         super().__init__(pos, name, inf_tier, orient)
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
         
 class Clone(WorldPointer):
     typename: str = "Clone"
@@ -352,550 +310,372 @@ class Clone(WorldPointer):
     sprite_name: str = "clone"
     def __init__(self, pos: spaces.Coord, name: str, inf_tier: int = 0, orient: spaces.Orient = spaces.Orient.S) -> None:
         super().__init__(pos, name, inf_tier, orient)
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
-class Transform(BmpObj):
+class Transform(BmpObject):
     typename: str = "Transform"
     def __init__(self, pos: spaces.Coord, info: dict[str, Any], orient: spaces.Orient = spaces.Orient.S) -> None:
         super().__init__(pos, orient)
-        self.from_type: type[BmpObj] = info["from"]["type"]
+        self.from_type: type[BmpObject] = info["from"]["type"]
         self.from_name: str = info["from"]["name"]
         if issubclass(self.from_type, WorldPointer):
             self.from_inf_tier: int = info["from"]["inf_tier"]
-        self.to_type: type[BmpObj] = info["to"]["type"]
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
+        self.to_type: type[BmpObject] = info["to"]["type"]
 
-class Sprite(BmpObj):
+class SpriteInfoJson(TypedDict):
+    name: str
+    
+class SpriteExtraJson(TypedDict):
+    sprite: SpriteInfoJson
+
+class SpriteJson(BmpObjectJson, SpriteExtraJson):
+    pass
+
+class Sprite(BmpObject):
     typename: str = "Sprite"
     def __init__(self, pos: spaces.Coord, sprite_name: str, orient: spaces.Orient = spaces.Orient.S) -> None:
         super().__init__(pos, orient)
         self.sprite_name: str = sprite_name
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
-    def to_json(self) -> dict[str, Any]:
-        json_object = super().to_json()
-        json_object.update({"sprite": {"name": self.sprite_name}})
-        return json_object
+    def to_json(self) -> SpriteJson:
+        basic_json_object = super().to_json()
+        extra_json_object: SpriteExtraJson = {"sprite": {"name": self.sprite_name}}
+        return {**basic_json_object, **extra_json_object}
 
-class Game(BmpObj):
+class Game(BmpObject):
     typename: str = "Game"
     json_name: str = "game"
     sprite_name: str = "game"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
-class Text(BmpObj):
+class Text(BmpObject):
     typename: str = "Text"
     json_name: str = "text"
     sprite_name: str = "text"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Noun(Text):
     typename: str = "Noun"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Prefix(Text):
     typename: str = "Prefix"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Infix(Text):
     typename: str = "Infix"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Operator(Text):
     typename: str = "Operator"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class Property(Text):
     typename: str = "Property"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class BABA(Noun):
     typename: str = "BABA"
     json_name: str = "text_baba"
     sprite_name: str = "text_baba"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class KEKE(Noun):
     typename: str = "KEKE"
     json_name: str = "text_keke"
     sprite_name: str = "text_keke"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class ME(Noun):
     typename: str = "ME"
     json_name: str = "text_me"
     sprite_name: str = "text_me"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class PATRICK(Noun):
     typename: str = "PATRICK"
     json_name: str = "text_patrick"
     sprite_name: str = "text_patrick"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class SKULL(Noun):
     typename: str = "SKULL"
     json_name: str = "text_skull"
     sprite_name: str = "text_skull"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class GHOST(Noun):
     typename: str = "GHOST"
     json_name: str = "text_ghost"
     sprite_name: str = "text_ghost"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class WALL(Noun):
     typename: str = "WALL"
     json_name: str = "text_wall"
     sprite_name: str = "text_wall"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class HEDGE(Noun):
     typename: str = "HEDGE"
     json_name: str = "text_hedge"
     sprite_name: str = "text_hedge"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class ICE(Noun):
     typename: str = "ICE"
     json_name: str = "text_ice"
     sprite_name: str = "text_ice"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class TILE(Noun):
     typename: str = "TILE"
     json_name: str = "text_tile"
     sprite_name: str = "text_tile"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class GRASS(Noun):
     typename: str = "GRASS"
     json_name: str = "text_grass"
     sprite_name: str = "text_grass"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class WATER(Noun):
     typename: str = "WATER"
     json_name: str = "text_water"
     sprite_name: str = "text_water"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class LAVA(Noun):
     typename: str = "LAVA"
     json_name: str = "text_lava"
     sprite_name: str = "text_lava"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class DOOR(Noun):
     typename: str = "DOOR"
     json_name: str = "text_door"
     sprite_name: str = "text_door"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class KEY(Noun):
     typename: str = "KEY"
     json_name: str = "text_key"
     sprite_name: str = "text_key"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class BOX(Noun):
     typename: str = "BOX"
     json_name: str = "text_box"
     sprite_name: str = "text_box"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class ROCK(Noun):
     typename: str = "ROCK"
     json_name: str = "text_rock"
     sprite_name: str = "text_rock"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class FRUIT(Noun):
     typename: str = "FRUIT"
     json_name: str = "text_fruit"
     sprite_name: str = "text_fruit"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class BELT(Noun):
     typename: str = "BELT"
     json_name: str = "text_belt"
     sprite_name: str = "text_belt"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class SUN(Noun):
     typename: str = "SUN"
     json_name: str = "text_sun"
     sprite_name: str = "text_sun"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class MOON(Noun):
     typename: str = "MOON"
     json_name: str = "text_moon"
     sprite_name: str = "text_moon"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class STAR(Noun):
     typename: str = "STAR"
     json_name: str = "text_star"
     sprite_name: str = "text_star"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class WHAT(Noun):
     typename: str = "WHAT"
     json_name: str = "text_what"
     sprite_name: str = "text_what"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class LOVE(Noun):
     typename: str = "LOVE"
     json_name: str = "text_love"
     sprite_name: str = "text_love"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class FLAG(Noun):
     typename: str = "FLAG"
     json_name: str = "text_flag"
     sprite_name: str = "text_flag"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class CURSOR(Noun):
     typename: str = "CURSOR"
     json_name: str = "text_cursor"
     sprite_name: str = "text_cursor"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class ALL(Noun):
     typename: str = "ALL"
     json_name: str = "text_all"
     sprite_name: str = "text_all"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class EMPTY(Noun):
     typename: str = "EMPTY"
     json_name: str = "text_empty"
     sprite_name: str = "text_empty"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class TEXT(Noun):
     typename: str = "TEXT"
     json_name: str = "text_text"
     sprite_name: str = "text_text"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class LEVEL(Noun):
     typename: str = "LEVEL"
     json_name: str = "text_level"
     sprite_name: str = "text_level"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class WORLD(Noun):
     typename: str = "WORLD"
     json_name: str = "text_world"
     sprite_name: str = "text_world"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class CLONE(Noun):
     typename: str = "CLONE"
     json_name: str = "text_clone"
     sprite_name: str = "text_clone"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class GAME(Noun):
     typename: str = "GAME"
     json_name: str = "text_game"
     sprite_name: str = "text_game"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class META(Prefix):
     typename: str = "META"
     json_name: str = "text_meta"
     sprite_name: str = "text_meta"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class ON(Infix):
     typename: str = "ON"
     json_name: str = "text_on"
     sprite_name: str = "text_on"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class NEAR(Infix):
     typename: str = "NEAR"
     json_name: str = "text_near"
     sprite_name: str = "text_near"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class NEXTTO(Infix):
     typename: str = "NEXTTO"
     json_name: str = "text_nextto"
     sprite_name: str = "text_nextto"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class FEELING(Infix):
     typename: str = "FEELING"
     json_name: str = "text_feeling"
     sprite_name: str = "text_feeling"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class IS(Operator):
     typename: str = "IS"
     json_name: str = "text_is"
     sprite_name: str = "text_is"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class HAS(Operator):
     typename: str = "HAS"
     json_name: str = "text_has"
     sprite_name: str = "text_has"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class MAKE(Operator):
     typename: str = "MAKE"
     json_name: str = "text_make"
     sprite_name: str = "text_make"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class WRITE(Operator):
     typename: str = "WRITE"
     json_name: str = "text_write"
     sprite_name: str = "text_write"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class NOT(Text):
     typename: str = "NOT"
     json_name: str = "text_not"
     sprite_name: str = "text_not"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class AND(Text):
     typename: str = "AND"
     json_name: str = "text_and"
     sprite_name: str = "text_and"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class YOU(Property):
     typename: str = "YOU"
     json_name: str = "text_you"
     sprite_name: str = "text_you"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class MOVE(Property):
     typename: str = "MOVE"
     json_name: str = "text_move"
     sprite_name: str = "text_move"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class STOP(Property):
     typename: str = "STOP"
     json_name: str = "text_stop"
     sprite_name: str = "text_stop"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class PUSH(Property):
     typename: str = "PUSH"
     json_name: str = "text_push"
     sprite_name: str = "text_push"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class SINK(Property):
     typename: str = "SINK"
     json_name: str = "text_sink"
     sprite_name: str = "text_sink"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class FLOAT(Property):
     typename: str = "FLOAT"
     json_name: str = "text_float"
     sprite_name: str = "text_float"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class OPEN(Property):
     typename: str = "OPEN"
     json_name: str = "text_open"
     sprite_name: str = "text_open"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class SHUT(Property):
     typename: str = "SHUT"
     json_name: str = "text_shut"
     sprite_name: str = "text_shut"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class HOT(Property):
     typename: str = "HOT"
     json_name: str = "text_hot"
     sprite_name: str = "text_hot"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class MELT(Property):
     typename: str = "MELT"
     json_name: str = "text_melt"
     sprite_name: str = "text_melt"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class WIN(Property):
     typename: str = "WIN"
     json_name: str = "text_win"
     sprite_name: str = "text_win"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class DEFEAT(Property):
     typename: str = "DEFEAT"
     json_name: str = "text_defeat"
     sprite_name: str = "text_defeat"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class SHIFT(Property):
     typename: str = "SHIFT"
     json_name: str = "text_shift"
     sprite_name: str = "text_shift"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class TELE(Property):
     typename: str = "TELE"
     json_name: str = "text_tele"
     sprite_name: str = "text_tele"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class WORD(Property):
     typename: str = "WORD"
     json_name: str = "text_word"
     sprite_name: str = "text_word"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class SELECT(Property):
     typename: str = "SELECT"
     json_name: str = "text_select"
     sprite_name: str = "text_select"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class END(Property):
     typename: str = "END"
     json_name: str = "text_end"
     sprite_name: str = "text_end"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
 class DONE(Property):
     typename: str = "DONE"
     json_name: str = "text_done"
     sprite_name: str = "text_done"
-    def __eq__(self, obj: "BmpObj") -> bool:
-        return self.uuid == obj.uuid
 
-def json_to_object(json_object: dict[str, Any], ver: Optional[str] = None) -> BmpObj: # oh hell no
-    typename: str = json_object["type"] # type: ignore
-    if ver is None:
-        object_type = old_object_name[typename]
-    else:
-        object_type = object_name[typename]
-    if issubclass(object_type, WorldPointer):
-        if json_object.get("world") is not None:
-            return object_type(pos=tuple(json_object["position"]), # type: ignore
-                            name=json_object["world"]["name"], # type: ignore
-                            inf_tier=json_object["world"]["infinite_tier"], # type: ignore
-                            orient=spaces.str_to_orient(json_object["orientation"])) # type: ignore
-        else:
-            return object_type(pos=tuple(json_object["position"]), # type: ignore
-                            name=json_object["level"]["name"], # type: ignore
-                            inf_tier=json_object["level"]["infinite_tier"], # type: ignore
-                            orient=spaces.str_to_orient(json_object["orientation"])) # type: ignore
-    elif issubclass(object_type, Level):
-        if json_object.get("icon") is not None:
-            if isinstance(json_object["icon"]["color"], int):
-                return object_type(pos=tuple(json_object["position"]), # type: ignore
-                                   name=json_object["level"]["name"], # type: ignore
-                                   icon_name=json_object["icon"]["name"], # type: ignore
-                                   icon_color=json_object["icon"]["color"], # type: ignore
-                                   orient=spaces.str_to_orient(json_object["orientation"])) # type: ignore
-            else:
-                return object_type(pos=tuple(json_object["position"]), # type: ignore
-                                   name=json_object["level"]["name"], # type: ignore
-                                   icon_name=json_object["icon"]["name"], # type: ignore
-                                   icon_color=colors.rgb_to_hex(*json_object["icon"]["color"]), # type: ignore
-                                   orient=spaces.str_to_orient(json_object["orientation"])) # type: ignore
-        else:
-            return object_type(pos=tuple(json_object["position"]), # type: ignore
-                               name=json_object["level"]["name"], # type: ignore
-                               orient=spaces.str_to_orient(json_object["orientation"])) # type: ignore
-    elif issubclass(object_type, Sprite):
-        return object_type(pos=tuple(json_object["position"]), # type: ignore
-                           orient=spaces.str_to_orient(json_object["orientation"]),
-                           sprite_name=json_object["sprite"]["name"]) # type: ignore
-    else:
-        return object_type(pos=tuple(json_object["position"]), # type: ignore
-                           orient=spaces.str_to_orient(json_object["orientation"])) # type: ignore
-
-old_object_name: dict[str, type[BmpObj]] = {}
+old_object_name: dict[str, type[BmpObject]] = {}
 old_object_name["Baba"] = Baba
 old_object_name["Keke"] = Keke
 old_object_name["Me"] = Me
@@ -985,7 +765,7 @@ old_object_name["SELECT"] = SELECT
 old_object_name["END"] = END
 old_object_name["DONE"] = DONE
 
-object_class_used: list[type[BmpObj]] = []
+object_class_used: list[type[BmpObject]] = []
 object_class_used.extend([Baba, Keke, Me, Patrick, Skull, Ghost])
 object_class_used.extend([Wall, Hedge, Ice, Tile, Grass, Water, Lava])
 object_class_used.extend([Box, Rock, Fruit, Belt, Sun, Moon, Star, What, Love, Flag])
@@ -1001,43 +781,43 @@ object_class_used.extend([NOT, AND])
 object_class_used.extend([YOU, MOVE, STOP, PUSH, SINK, FLOAT, OPEN, SHUT, HOT, MELT, WIN, DEFEAT, SHIFT, TELE])
 object_class_used.extend([WORD, SELECT, END, DONE])
 
-object_name: dict[str, type[BmpObj]] = {t.json_name : t for t in object_class_used}
+object_name: dict[str, type[BmpObject]] = {t.json_name : t for t in object_class_used}
 
 class ObjectNounDict(object):
-    def __init__(self, pairs: Optional[dict[type[BmpObj], type[Noun]]] = None) -> None:
-        self.pairs: dict[type[BmpObj], type[Noun]] = pairs if pairs is not None else {}
-    def __getitem__(self, obj: type[BmpObj]) -> type[Noun]:
+    def __init__(self, pairs: Optional[dict[type[BmpObject], type[Noun]]] = None) -> None:
+        self.pairs: dict[type[BmpObject], type[Noun]] = pairs if pairs is not None else {}
+    def __getitem__(self, obj: type[BmpObject]) -> type[Noun]:
         for k, v in self.pairs.items():
             if issubclass(obj, k):
                 return v
         raise KeyError(obj)
-    def __setitem__(self, obj: type[BmpObj], noun: type[Noun]) -> None:
+    def __setitem__(self, obj: type[BmpObject], noun: type[Noun]) -> None:
         self.pairs[obj] = noun
-    def __delitem__(self, obj: type[BmpObj]) -> None:
+    def __delitem__(self, obj: type[BmpObject]) -> None:
         for k in self.pairs.keys():
             if issubclass(obj, k):
                 del self.pairs[k]
-    def get(self, obj: type[BmpObj]) -> Optional[type[Noun]]:
+    def get(self, obj: type[BmpObject]) -> Optional[type[Noun]]:
         for k, v in self.pairs.items():
             if issubclass(obj, k):
                 return v
         return None
 
 class NounObjectDict(object):
-    def __init__(self, pairs: Optional[dict[type[Noun], type[BmpObj]]] = None) -> None:
-        self.pairs: dict[type[Noun], type[BmpObj]] = pairs if pairs is not None else {}
-    def __getitem__(self, noun: type[Noun]) -> type[BmpObj]:
+    def __init__(self, pairs: Optional[dict[type[Noun], type[BmpObject]]] = None) -> None:
+        self.pairs: dict[type[Noun], type[BmpObject]] = pairs if pairs is not None else {}
+    def __getitem__(self, noun: type[Noun]) -> type[BmpObject]:
         for k, v in self.pairs.items():
             if issubclass(noun, k):
                 return v
         raise KeyError(noun)
-    def __setitem__(self, noun: type[Noun], obj: type[BmpObj]) -> None:
+    def __setitem__(self, noun: type[Noun], obj: type[BmpObject]) -> None:
         self.pairs[noun] = obj
     def __delitem__(self, noun: type[Noun]) -> None:
         for k in self.pairs.keys():
             if issubclass(noun, k):
                 del self.pairs[k]
-    def get(self, noun: type[Noun]) -> Optional[type[BmpObj]]:
+    def get(self, noun: type[Noun]) -> Optional[type[BmpObject]]:
         for k, v in self.pairs.items():
             if issubclass(noun, k):
                 return v
@@ -1080,6 +860,46 @@ nouns_objs_dicts[CLONE] = Clone
 nouns_objs_dicts[TEXT] = Text
 nouns_objs_dicts[GAME] = Game
 
-not_in_all: tuple[type[BmpObj], ...] = (All, Empty, Text, Level, WorldPointer, Transform, Sprite, Game)
-in_not_all: tuple[type[BmpObj], ...] = (Text, Empty, Transform, Sprite, Game)
-not_in_editor: tuple[type[BmpObj], ...] = (All, Empty, EMPTY, Text, Transform, Sprite, Game)
+not_in_all: tuple[type[BmpObject], ...] = (All, Empty, Text, Level, WorldPointer, Transform, Sprite, Game)
+in_not_all: tuple[type[BmpObject], ...] = (Text, Empty, Transform, Sprite, Game)
+not_in_editor: tuple[type[BmpObject], ...] = (All, Empty, EMPTY, Text, Transform, Sprite, Game)
+
+def is_correct_bmp_object_json(T):
+    def func(json_object: BmpObjectJson) -> TypeGuard[T]:
+        return True # i dk why this works
+    return func
+
+is_world_pointer_json = is_correct_bmp_object_json(WorldPointerJson)
+is_level_json = is_correct_bmp_object_json(LevelPointerJson)
+is_sprite_json = is_correct_bmp_object_json(SpriteJson)
+
+def json_to_object(json_object: BmpObjectJson, ver: Optional[str] = None) -> BmpObject:
+    typename: str = json_object["type"]
+    if ver is None:
+        object_type = old_object_name[typename]
+    else:
+        object_type = object_name[typename]
+    if issubclass(object_type, WorldPointer):
+        if is_world_pointer_json(json_object):
+            return object_type(pos=json_object["position"],
+                               name=json_object["world"]["name"],
+                               inf_tier=json_object["world"]["infinite_tier"],
+                               orient=spaces.str_to_orient(json_object["orientation"]))
+        raise KeyError("HOW")
+    elif issubclass(object_type, Level):
+        if is_level_json(json_object):
+            return object_type(pos=json_object["position"],
+                               name=json_object["level"]["name"],
+                               icon_name=json_object["icon"]["name"],
+                               icon_color=json_object["icon"]["color"],
+                               orient=spaces.str_to_orient(json_object["orientation"]))
+        raise KeyError("HOW")
+    elif issubclass(object_type, Sprite):
+        if is_sprite_json(json_object):
+            return object_type(pos=json_object["position"],
+                               sprite_name=json_object["sprite"]["name"],
+                               orient=spaces.str_to_orient(json_object["orientation"]))
+        raise KeyError("HOW")
+    else:
+        return object_type(pos=json_object["position"],
+                           orient=spaces.str_to_orient(json_object["orientation"]))

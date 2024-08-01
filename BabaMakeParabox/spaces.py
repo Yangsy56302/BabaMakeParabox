@@ -12,6 +12,8 @@ class Orient(Enum):
 class NullOrient(Enum):
     O = 0x10
 
+OrientStr = Literal["W", "A", "S", "D"]
+
 PlayerOperation = Orient | NullOrient
 
 def swap_orientation(direction: Orient) -> Orient:
@@ -36,7 +38,7 @@ def orient_to_int(direction: Orient) -> int:
         case Orient.D:
             return 0x1
 
-def orient_to_str(direction: Orient) -> Literal["W", "A", "S", "D"]:
+def orient_to_str(direction: Orient) -> OrientStr:
     match direction:
         case Orient.W:
             return "W"
@@ -47,7 +49,7 @@ def orient_to_str(direction: Orient) -> Literal["W", "A", "S", "D"]:
         case Orient.D:
             return "D"
 
-def str_to_orient(direction: Literal["W", "A", "S", "D"]) -> Orient:
+def str_to_orient(direction: OrientStr) -> Orient:
     match direction:
         case "W":
             return Orient.W

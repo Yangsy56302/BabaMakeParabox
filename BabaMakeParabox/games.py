@@ -12,9 +12,9 @@ class History(TypedDict):
     world_index: int
     level_name: str
     level_info: levels.ReTurnValue
-    levelpack: levelpacks.levelpack
+    levelpack: levelpacks.Levelpack
 
-def play(levelpack: levelpacks.levelpack) -> None:
+def play(levelpack: levelpacks.Levelpack) -> None:
     for level in levelpack.level_list:
         old_prop_dict: dict[uuid.UUID, list[tuple[type[objects.Text], int]]] = {}
         for world in level.world_list:
@@ -47,9 +47,9 @@ def play(levelpack: levelpacks.levelpack) -> None:
     keys = {v: False for v in keybinds.values()}
     window.fill("#000000")
     current_level_name = levelpack.main_level
-    current_level: levels.level = levelpack.get_exist_level(current_level_name)
+    current_level: levels.Level = levelpack.get_exist_level(current_level_name)
     current_world_index: int = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
-    current_world: worlds.world = current_level.world_list[current_world_index]
+    current_world: worlds.World = current_level.world_list[current_world_index]
     default_level_info: levels.ReTurnValue = {"win": False, "end": False, "game_push": False, "selected_level": None, "transform_to": None}
     level_info: levels.ReTurnValue = default_level_info.copy()
     level_info_backup: levels.ReTurnValue = default_level_info.copy()
@@ -264,7 +264,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
             for new_level in current_level.created_levels:
                 levelpack.set_level(new_level)
             for obj_type in current_level.new_games:
-                obj_type: type[objects.BmpObj]
+                obj_type: type[objects.BmpObject]
                 if basics.current_os == basics.windows:
                     if os.path.exists("SubabaMakeParabox.exe"):
                         os.system(f"start SubabaMakeParabox.exe {obj_type.json_name}")
@@ -280,7 +280,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                             if current_level.name == level_obj.name:
                                 transform_success = True
                                 for obj in level_info["transform_to"]:
-                                    obj: objects.BmpObj
+                                    obj: objects.BmpObject
                                     obj.pos = level_obj.pos
                                     obj.orient = level_obj.orient
                                     world.new_obj(obj)
@@ -289,7 +289,7 @@ def play(levelpack: levelpacks.levelpack) -> None:
                 for world in level.world_list:
                     transform_objs = world.get_objs_from_type(objects.Transform)
                     for transform_obj in transform_objs:
-                        if issubclass(transform_obj.from_type, objects.Level):
+                        if issubclass(transform_obj.from_type, objects.LevelPointer):
                             from_level = levelpack.get_exist_level(transform_obj.from_name)
                             if issubclass(transform_obj.to_type, objects.WorldPointer):
                                 for new_world in from_level.world_list:
@@ -299,10 +299,10 @@ def play(levelpack: levelpacks.levelpack) -> None:
                                 world.new_obj(new_obj)
                         elif issubclass(transform_obj.from_type, objects.WorldPointer):
                             from_world = level.get_exist_world(transform_obj.from_name, transform_obj.from_inf_tier)
-                            if issubclass(transform_obj.to_type, objects.Level):
-                                new_level = levels.level(from_world.name, level.world_list, level.name, transform_obj.from_name, transform_obj.from_inf_tier, level.rule_list)
+                            if issubclass(transform_obj.to_type, objects.LevelPointer):
+                                new_level = levels.Level(from_world.name, level.world_list, level.name, transform_obj.from_name, transform_obj.from_inf_tier, level.rule_list)
                                 levelpack.set_level(new_level)
-                                new_obj = objects.Level(transform_obj.pos, from_world.name, icon_color=from_world.color, orient=transform_obj.orient)
+                                new_obj = objects.LevelPointer(transform_obj.pos, from_world.name, icon_color=from_world.color, orient=transform_obj.orient)
                                 world.del_obj(transform_obj)
                                 world.new_obj(new_obj)
             for level in levelpack.level_list:
