@@ -72,23 +72,30 @@ def main() -> None:
             basics.options.update({"bgm": {"enabled": True, "name": "rush_baba.mid"}})
         else:
             basics.options.update({"bgm": {"enabled": False, "name": "rush_baba.mid"}})
+        print(languages.current_language["main.change_options.metatext"])
+        metatext_tier = int(input(languages.current_language["input.number"]))
+        if metatext_tier == 0:
+            basics.options.update({"metatext": {"enabled": False, "tier": 1}})
+        else:
+            basics.options.update({"metatext": {"enabled": True, "tier": metatext_tier}})
         print(languages.current_language["main.change_options.done"])
-    print(languages.current_language["main.play_or_edit"])
-    play_or_edit = int(input(languages.current_language["input.number"]))
-    if play_or_edit == 1:
-        settings["play"] = True
-        print(languages.current_language["main.open.levelpack"])
-        settings["input"] = input(languages.current_language["input.file.name"])
     else:
-        settings["edit"] = True
-        print(languages.current_language["main.open.levelpack"])
-        print(languages.current_language["main.open.levelpack.empty.editor"])
-        settings["input"] = input(languages.current_language["input.file.name"])
-        print(languages.current_language["main.save.levelpack"])
-        print(languages.current_language["main.save.levelpack.empty.editor"])
-        settings["output"] = input(languages.current_language["input.file.name"])
-    print(languages.current_language["game.start"])
-    logic(settings)
+        print(languages.current_language["main.play_or_edit"])
+        play_or_edit = int(input(languages.current_language["input.number"]))
+        if play_or_edit == 1:
+            settings["play"] = True
+            print(languages.current_language["main.open.levelpack"])
+            settings["input"] = input(languages.current_language["input.file.name"])
+        else:
+            settings["edit"] = True
+            print(languages.current_language["main.open.levelpack"])
+            print(languages.current_language["main.open.levelpack.empty.editor"])
+            settings["input"] = input(languages.current_language["input.file.name"])
+            print(languages.current_language["main.save.levelpack"])
+            print(languages.current_language["main.save.levelpack.empty.editor"])
+            settings["output"] = input(languages.current_language["input.file.name"])
+        print(languages.current_language["game.start"])
+        logic(settings)
     print(languages.current_language["game.exit"])
     basics.save_options(basics.options)
     pygame.quit()

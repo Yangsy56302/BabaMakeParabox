@@ -50,10 +50,7 @@ def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
     for rule in json_object["rule_list"]:
         rule_list.append([])
         for obj_type in rule:
-            if ver is None:
-                rule_list[-1].append(objects.old_object_name[obj_type]) # type: ignore
-            else:
-                rule_list[-1].append(objects.object_name[obj_type]) # type: ignore
+            rule_list[-1].append(objects.object_name[obj_type]) # type: ignore
     return Levelpack(name=json_object["name"],
                      level_list=level_list,
                      main_level=json_object["main_level"],

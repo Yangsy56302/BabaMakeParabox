@@ -7,9 +7,9 @@ def match_pos(obj: objects.BmpObject, pos: spaces.Coord) -> bool:
     return obj.pos == pos
 
 class World(object):
-    def __init__(self, name: str, size: tuple[int, int], inf_tier: int = 0, color: Optional[colors.ColorHex] = None) -> None:
+    def __init__(self, name: str, size: tuple[int, int], infinite_tier: int = 0, color: Optional[colors.ColorHex] = None) -> None:
         self.name: str = name
-        self.inf_tier: int = inf_tier
+        self.infinite_tier: int = infinite_tier
         self.width: int = size[0]
         self.height: int = size[1]
         self.color: colors.ColorHex = color if color is not None else colors.random_world_color()
@@ -22,7 +22,7 @@ class World(object):
         self.rule_list: list[rules.Rule] = []
         self.refresh_index()
     def __eq__(self, world: "World") -> bool:
-        return self.name == world.name and self.inf_tier == world.inf_tier
+        return self.name == world.name and self.infinite_tier == world.infinite_tier
     def new_world_prop(self, prop: type[objects.Text], negated_count: int = 0) -> None:
         del_props = []
         for old_prop, old_negated_count in self.world_properties:
@@ -131,13 +131,13 @@ class World(object):
             for j in range(len(world_objs)):
                 if i == j:
                     continue
-                if world_objs[i].name == world_objs[j].name and world_objs[i].inf_tier == world_objs[j].inf_tier:
+                if world_objs[i].name == world_objs[j].name and world_objs[i].infinite_tier == world_objs[j].infinite_tier:
                     if world_objs[j] not in to_clone_objs:
                         to_clone_objs.append(world_objs[j])
         random.shuffle(to_clone_objs)
         to_clone_objs = to_clone_objs[1:]
         for to_clone in to_clone_objs:
-            self.new_obj(objects.Clone(to_clone.pos, to_clone.name, to_clone.inf_tier, to_clone.orient))
+            self.new_obj(objects.Clone(to_clone.pos, to_clone.name, to_clone.infinite_tier, to_clone.orient))
             self.del_obj(to_clone)
     def get_rules_from_pos_and_orient(self, stage: str, pos: spaces.Coord, orient: spaces.Orient) -> list[rules.Rule]:
         if stage == "Prefix":
@@ -146,7 +146,7 @@ class World(object):
             next_stages = ("AndPrefix", "Noun")
             rule_can_be_done = False
         elif stage == "AndPrefix":
-            first_matches = (objects.AND, )
+            first_matches = (objects.TextAnd, )
             then_matches = (objects.Prefix, )
             next_stages = ("AndPrefix", "Noun")
             rule_can_be_done = False
@@ -156,7 +156,7 @@ class World(object):
             next_stages = ("AndPrefix", "AndNoun", "InfixText", "Operator")
             rule_can_be_done = False
         elif stage == "AndNoun":
-            first_matches = (objects.AND, )
+            first_matches = (objects.TextAnd, )
             then_matches = (objects.Noun, )
             next_stages = ("AndPrefix", "AndNoun", "InfixText", "Operator")
             rule_can_be_done = False
@@ -166,7 +166,7 @@ class World(object):
             next_stages = ("AndPrefix", "AndNoun", "AndInfixText", "Operator")
             rule_can_be_done = False
         elif stage == "AndInfixText":
-            first_matches = (objects.AND, objects.Infix)
+            first_matches = (objects.TextAnd, objects.Infix)
             then_matches = (objects.Noun, objects.Property)
             next_stages = ("AndPrefix", "AndNoun", "AndInfixText", "Operator")
             rule_can_be_done = False
@@ -176,7 +176,7 @@ class World(object):
             next_stages = ("Property", )
             rule_can_be_done = False
         elif stage == "AndOperator":
-            first_matches = (objects.AND, )
+            first_matches = (objects.TextAnd, )
             then_matches = (objects.Operator, )
             next_stages = ("Property", )
             rule_can_be_done = False
@@ -186,22 +186,22 @@ class World(object):
             next_stages = ("AndOperator", "AndProperty")
             rule_can_be_done = False
         elif stage == "AndProperty":
-            first_matches = (objects.AND, )
+            first_matches = (objects.TextAnd, )
             then_matches = (objects.Noun, objects.Property)
             next_stages = ("AndOperator", "AndProperty")
             rule_can_be_done = True
         not_rules: list[rules.Rule] = []
         if stage in ("Prefix", "Noun", "InfixText", "Property"):
-            not_objs = self.get_objs_from_pos_and_type(pos, objects.NOT)
+            not_objs = self.get_objs_from_pos_and_type(pos, objects.TextNot)
             if len(not_objs) != 0:
                 not_rules = self.get_rules_from_pos_and_orient(stage, spaces.pos_facing(pos, orient), orient)
-                not_rules = [[objects.NOT] + r for r in not_rules if len(r) != 0]
+                not_rules = [[objects.TextNot] + r for r in not_rules if len(r) != 0]
         new_pos = pos
         first_matched_list: list[list[objects.Text]] = []
         for first_match in first_matches:
             text_objs = self.get_objs_from_pos_and_type(new_pos, objects.Text)
-            word_objs = filter(lambda o: o.has_prop(objects.WORD), self.get_objs_from_pos(new_pos))
-            text_objs.extend(map(lambda o: objects.nouns_objs_dicts.swapped()[type(o)](new_pos), word_objs))
+            word_objs = filter(lambda o: o.has_prop(objects.TextWord), self.get_objs_from_pos(new_pos))
+            text_objs.extend(map(lambda o: objects.get_exist_noun_from_obj(type(o))(new_pos), word_objs))
             first_matched = [o for o in text_objs if isinstance(o, first_match)]
             if len(first_matched) == 0 and len(not_rules) == 0:
                 return [[]] if rule_can_be_done else []
@@ -215,8 +215,8 @@ class World(object):
                     temp_prefix_rules = self.get_rules_from_pos_and_orient(next_stage, spaces.pos_facing(new_pos, orient), orient)
                     prefix_rules.extend([[type(prefix_obj)] + r for r in temp_prefix_rules if len(r) != 0])
         text_objs = self.get_objs_from_pos_and_type(new_pos, objects.Text)
-        word_objs = filter(lambda o: o.has_prop(objects.WORD), self.get_objs_from_pos(new_pos))
-        text_objs.extend(map(lambda o: objects.nouns_objs_dicts.swapped()[type(o)](new_pos), word_objs))
+        word_objs = filter(lambda o: o.has_prop(objects.TextWord), self.get_objs_from_pos(new_pos))
+        text_objs.extend(map(lambda o: objects.get_exist_noun_from_obj(type(o))(new_pos), word_objs))
         if len(text_objs) == 0 and len(not_rules) == 0:
             return [[]] if rule_can_be_done else []
         then_matched: list[objects.Text] = [o for o in text_objs if isinstance(o, then_matches)]
@@ -228,14 +228,14 @@ class World(object):
         not_after_first_len = 0
         if stage in ("Prefix", "AndPrefix", "Noun", "AndNoun", "InfixText", "AndInfixText", "Property", "AndProperty"):
             while True:
-                not_objs = self.get_objs_from_pos_and_type(new_pos, objects.NOT)
+                not_objs = self.get_objs_from_pos_and_type(new_pos, objects.TextNot)
                 if len(not_objs) == 0:
                     break
                 not_after_first_len += 1
                 new_pos = spaces.pos_facing(new_pos, orient)
             text_objs = self.get_objs_from_pos_and_type(new_pos, objects.Text)
-            word_objs = filter(lambda o: o.has_prop(objects.WORD), self.get_objs_from_pos(new_pos))
-            text_objs.extend(map(lambda o: objects.nouns_objs_dicts.swapped()[type(o)](new_pos), word_objs))
+            word_objs = filter(lambda o: o.has_prop(objects.TextWord), self.get_objs_from_pos(new_pos))
+            text_objs.extend(map(lambda o: objects.get_exist_noun_from_obj(type(o))(new_pos), word_objs))
             if len(text_objs) != 0:
                 not_then_matched = [o for o in text_objs if isinstance(o, then_matches)]
             for next_stage in next_stages:
@@ -257,20 +257,20 @@ class World(object):
             for match in not_then_matched:
                 for rule in return_rules:
                     if stage in ("InfixText", "AndInfixText"):
-                        if rule[-1] == objects.FEELING: # prop infix
+                        if rule[-1] == objects.TextFeeling: # prop infix
                             if isinstance(match, objects.Property):
-                                not_then_new_return_rules.append(rule + [objects.NOT for _ in range(not_after_first_len)] + [type(match)])
+                                not_then_new_return_rules.append(rule + [objects.TextNot for _ in range(not_after_first_len)] + [type(match)])
                         elif isinstance(match, objects.Noun): # noun infix
-                            not_then_new_return_rules.append(rule + [objects.NOT for _ in range(not_after_first_len)] + [type(match)])
+                            not_then_new_return_rules.append(rule + [objects.TextNot for _ in range(not_after_first_len)] + [type(match)])
                     else:
-                        not_then_new_return_rules.append(rule + [objects.NOT for _ in range(not_after_first_len)] + [type(match)])
+                        not_then_new_return_rules.append(rule + [objects.TextNot for _ in range(not_after_first_len)] + [type(match)])
             not_then_return_rules = not_then_new_return_rules[:]
         then_return_rules = []
         new_then_return_rules = []
         for match in then_matched:
             for rule in return_rules:
                 if stage in ("InfixText", "AndInfixText"):
-                    if rule[-1] == objects.FEELING: # prop infix
+                    if rule[-1] == objects.TextFeeling: # prop infix
                         if isinstance(match, objects.Property):
                             new_then_return_rules.append(rule + [type(match)])
                     elif isinstance(match, objects.Noun): # noun infix
@@ -282,10 +282,10 @@ class World(object):
         for remain_rule in remain_rules:
             for then_return_rule in then_return_rules:
                 if stage in ("Operator", "AndOperator"):
-                    if then_return_rule[-1] in (objects.HAS, objects.MAKE): # noun infix
+                    if then_return_rule[-1] in (objects.TextHas, objects.TextMake): # noun infix
                         if not issubclass(remain_rule[0], objects.Noun):
                             continue
-                    if then_return_rule[-1] == objects.WRITE: # noun / prop infix
+                    if then_return_rule[-1] == objects.TextWrite: # noun / prop infix
                         if not issubclass(remain_rule[0], (objects.Noun, objects.Property)):
                             continue
                 new_return_rules.append(then_return_rule + remain_rule)
@@ -387,7 +387,7 @@ class World(object):
         else:
             return (num + pos[1]) / self.height
     def to_json(self) -> dict[str, Any]:
-        json_object = {"name": self.name, "infinite_tier": self.inf_tier, "size": [self.width, self.height], "color": self.color, "object_list": []}
+        json_object = {"name": self.name, "infinite_tier": self.infinite_tier, "size": [self.width, self.height], "color": self.color, "object_list": []}
         for obj in self.object_list:
             json_object["object_list"].append(obj.to_json())
         return json_object
@@ -401,7 +401,7 @@ class WorldJson(TypedDict):
 
 def json_to_world(json_object: WorldJson, ver: Optional[str] = None) -> World:
     new_world = World(name=json_object["name"],
-                      inf_tier=json_object["infinite_tier"],
+                      infinite_tier=json_object["infinite_tier"],
                       size=json_object["size"],
                       color=json_object["color"])
     for obj in json_object["object_list"]:

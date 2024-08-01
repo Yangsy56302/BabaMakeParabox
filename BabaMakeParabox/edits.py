@@ -202,13 +202,13 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 elif issubclass(current_object_type, objects.WorldPointer):
                     if keys["LSHIFT"] or keys["RSHIFT"]:
                         name = input(languages.current_language["editor.world.new.name"])
-                        inf_tier = input(languages.current_language["editor.world.new.inf_tier"])
-                        inf_tier = int(inf_tier) if inf_tier != "" else 0
-                        name, inf_tier = (name, inf_tier) if current_level.get_world(name, inf_tier) is not None else (current_world.name, current_world.inf_tier)
+                        infinite_tier = input(languages.current_language["editor.world.new.infinite_tier"])
+                        infinite_tier = int(infinite_tier) if infinite_tier != "" else 0
+                        name, infinite_tier = (name, infinite_tier) if current_level.get_world(name, infinite_tier) is not None else (current_world.name, current_world.infinite_tier)
                     else:
                         name = current_world.name
-                        inf_tier = current_world.inf_tier
-                    current_world.new_obj(current_object_type(current_cursor_pos, name, inf_tier, current_orient))
+                        infinite_tier = current_world.infinite_tier
+                    current_world.new_obj(current_object_type(current_cursor_pos, name, infinite_tier, current_orient))
                 else:
                     current_world.new_obj(current_object_type(current_cursor_pos, current_orient))
         elif keys["BACKSLASH"]:
@@ -224,12 +224,12 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     height = input(languages.current_language["editor.world.new.height"])
                     height = int(height) if height != "" else basics.options["default_new_world"]["height"]
                     size = (width, height)
-                    inf_tier = input(languages.current_language["editor.world.new.inf_tier"])
-                    inf_tier = int(inf_tier) if inf_tier != "" else 0
+                    infinite_tier = input(languages.current_language["editor.world.new.infinite_tier"])
+                    infinite_tier = int(infinite_tier) if infinite_tier != "" else 0
                     color = input(languages.current_language["editor.world.new.color"])
                     color = colors.str_to_hex(color) if color != "" else basics.options["default_new_world"]["color"]
-                    default_world = worlds.World(name, size, inf_tier, color)
-                    levelpack.level_list.append(levels.Level(level_name, [default_world], super_level, name, inf_tier, levelpack.rule_list))
+                    default_world = worlds.World(name, size, infinite_tier, color)
+                    levelpack.level_list.append(levels.Level(level_name, [default_world], super_level, name, infinite_tier, levelpack.rule_list))
                     current_level_index = len(levelpack.level_list) - 1
                     current_world_index = 0
                     level_changed = True
@@ -243,11 +243,11 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     height = input(languages.current_language["editor.world.new.height"])
                     height = int(height) if height != "" else basics.options["default_new_world"]["height"]
                     size = (width, height)
-                    inf_tier = input(languages.current_language["editor.world.new.inf_tier"])
-                    inf_tier = int(inf_tier) if inf_tier != "" else 0
+                    infinite_tier = input(languages.current_language["editor.world.new.infinite_tier"])
+                    infinite_tier = int(infinite_tier) if infinite_tier != "" else 0
                     color = input(languages.current_language["editor.world.new.color"])
                     color = colors.str_to_hex(color) if color != "" else basics.options["default_new_world"]["color"]
-                    current_level.world_list.append(worlds.World(name, size, inf_tier, color))
+                    current_level.world_list.append(worlds.World(name, size, infinite_tier, color))
                     current_world_index = len(current_level.world_list) - 1
                     world_changed = True
         elif keys["DELETE"]:
@@ -295,7 +295,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             for rule in levelpack.rule_list:
                 str_list = []
                 for obj_type in rule:
-                    str_list.append(obj_type.typename)
+                    str_list.append(obj_type.__name__[4:])
                 print(" ".join(str_list))
         elif keys["T"]:
             if keys["LSHIFT"] or keys["RSHIFT"]:
@@ -306,25 +306,15 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             history.append(copy.deepcopy(levelpack))
             current_world.del_objs_from_pos(current_cursor_pos)
         elif keys["TAB"]:
-            try:
-                obj_to_noun = None
-                if not issubclass(current_object_type, objects.Noun):
-                    obj_to_noun = objects.nouns_objs_dicts.swapped().get(current_object_type)
-            except KeyError:
-                pass
-            try:
-                noun_to_obj = None
-                if issubclass(current_object_type, objects.Noun):
-                    noun_to_obj = objects.nouns_objs_dicts.get(current_object_type)
-            except KeyError:
-                pass
-            new_object_type = obj_to_noun if obj_to_noun is not None else (noun_to_obj if noun_to_obj is not None else None)
-            if new_object_type is not None:
-                try:
-                    new_object_index = object_list.index(new_object_type)
-                    current_object_index = new_object_index
-                except ValueError:
-                    pass
+            if keys["LSHIFT"] or keys["RSHIFT"]:
+                if issubclass(current_object_type, objects.Noun) and current_object_type.obj_type not in objects.not_in_editor:
+                    current_object_type = current_object_type.obj_type
+                    current_object_index = object_list.index(current_object_type)
+            else:
+                obj_to_noun = objects.get_noun_from_obj(current_object_type)
+                if obj_to_noun is not None and obj_to_noun not in objects.not_in_editor:
+                    current_object_type = obj_to_noun
+                    current_object_index = object_list.index(current_object_type)
         elif keys["Z"]:
             if len(history) > 1:
                 levelpack = copy.deepcopy(history.pop())
@@ -352,9 +342,9 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 current_world.new_obj(obj)
                 if isinstance(obj, objects.WorldPointer):
                     name = obj.name
-                    inf_tier = obj.inf_tier
+                    infinite_tier = obj.infinite_tier
                     for level in levelpack.level_list:
-                        world = level.get_world(name, inf_tier)
+                        world = level.get_world(name, infinite_tier)
                         if world is not None:
                             for new_world in level.world_list:
                                 current_level.set_world(new_world)
@@ -387,7 +377,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
             current_world = current_level.world_list[current_world_index]
             print(languages.current_language["editor.world.current.name"], current_world.name, sep="")
-            print(languages.current_language["editor.world.current.inf_tier"], current_world.inf_tier, sep="")
+            print(languages.current_language["editor.world.current.infinite_tier"], current_world.infinite_tier, sep="")
             world_changed = False
         current_object_index = current_object_index % len(object_list) if current_object_index >= 0 else len(object_list) - 1
         current_object_type = object_list[current_object_index]

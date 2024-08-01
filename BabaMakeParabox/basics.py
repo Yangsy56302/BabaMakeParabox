@@ -8,7 +8,7 @@ import pygame
 
 pygame.init()
 
-versions = "3.211"
+versions = "3.3"
 
 options_filename = "options.json"
 
@@ -21,6 +21,10 @@ class BgmOptions(TypedDict):
     enabled: bool
     name: str
 
+class MetatextOptions(TypedDict):
+    enabled: bool
+    tier: int
+
 class Options(TypedDict):
     ver: str
     lang: str
@@ -28,8 +32,9 @@ class Options(TypedDict):
     fpw: int
     world_display_recursion_depth: int
     compressed_json_output: bool
-    default_new_world: DefaultNewWorldOptions
     object_type_shortcuts: list[str]
+    default_new_world: DefaultNewWorldOptions
+    metatext: MetatextOptions
     bgm: BgmOptions
 
 default_options: Options = {
@@ -45,6 +50,10 @@ default_options: Options = {
         "color": 0x000000
     },
     "object_type_shortcuts": ["baba", "wall", "rock", "flag", "skull", "text_world", "text_level", "text_is", "text_you", "text_win"],
+    "metatext": {
+        "enabled": False,
+        "tier": 1
+    },
     "bgm": {
         "enabled": False,
         "name": "rush_baba.mid"

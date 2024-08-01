@@ -86,36 +86,36 @@ def play(levelpack: levelpacks.Levelpack) -> None:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "level_info": level_info, "levelpack": copy.deepcopy(levelpack)})
                 round_num += 1
                 level_info = current_level.turn(spaces.Orient.W)
-                if objects.YOU in current_level.game_properties:
+                if objects.TextYou in current_level.game_properties:
                     display_offset[1] -= window.get_height() / current_world.width
-                if objects.PUSH in current_level.game_properties and level_info["game_push"]:
+                if objects.TextPush in current_level.game_properties and level_info["game_push"]:
                     display_offset[1] -= window.get_height() / current_world.width
                 refresh = True
             elif keys["S"]:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "level_info": level_info, "levelpack": copy.deepcopy(levelpack)})
                 round_num += 1
                 level_info = current_level.turn(spaces.Orient.S)
-                if objects.YOU in current_level.game_properties:
+                if objects.TextYou in current_level.game_properties:
                     display_offset[1] += window.get_height() / current_world.width
-                if objects.PUSH in current_level.game_properties and level_info["game_push"]:
+                if objects.TextPush in current_level.game_properties and level_info["game_push"]:
                     display_offset[1] += window.get_height() / current_world.width
                 refresh = True
             elif keys["A"]:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "level_info": level_info, "levelpack": copy.deepcopy(levelpack)})
                 round_num += 1
                 level_info = current_level.turn(spaces.Orient.A)
-                if objects.YOU in current_level.game_properties:
+                if objects.TextYou in current_level.game_properties:
                     display_offset[0] -= window.get_width() / current_world.height
-                if objects.PUSH in current_level.game_properties and level_info["game_push"]:
+                if objects.TextPush in current_level.game_properties and level_info["game_push"]:
                     display_offset[0] -= window.get_width() / current_world.height
                 refresh = True
             elif keys["D"]:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "level_info": level_info, "levelpack": copy.deepcopy(levelpack)})
                 round_num += 1
                 level_info = current_level.turn(spaces.Orient.D)
-                if objects.YOU in current_level.game_properties:
+                if objects.TextYou in current_level.game_properties:
                     display_offset[0] += window.get_width() / current_world.height
-                if objects.PUSH in current_level.game_properties and level_info["game_push"]:
+                if objects.TextPush in current_level.game_properties and level_info["game_push"]:
                     display_offset[0] += window.get_width() / current_world.height
                 refresh = True
             elif keys[" "]:
@@ -175,13 +175,13 @@ def play(levelpack: levelpacks.Levelpack) -> None:
                 for rule in levelpack.rule_list:
                     str_list = []
                     for obj_type in rule:
-                        str_list.append(obj_type.typename)
+                        str_list.append(obj_type.__name__[4:])
                     print(" ".join(str_list))
                 print(languages.current_language["game.world.rule_list"])
                 for rule in current_world.rule_list:
                     str_list = []
                     for obj_type in rule:
-                        str_list.append(obj_type.typename)
+                        str_list.append(obj_type.__name__[4:])
                     print(" ".join(str_list))
             elif keys["-"]:
                 current_world_index -= 1
@@ -197,16 +197,16 @@ def play(levelpack: levelpacks.Levelpack) -> None:
             for prop, prop_negated_count in current_level.game_properties:
                 if prop_negated_count % 2 == 1:
                     continue
-                if prop == objects.STOP:
+                if prop == objects.TextStop:
                     wiggle = 1
-                elif prop == objects.SHIFT:
+                elif prop == objects.TextShift:
                     display_offset[0] += window.get_width() / basics.options["fps"]
-                elif prop == objects.MOVE:
+                elif prop == objects.TextMove:
                     display_offset[1] += window.get_height() / (4 * basics.options["fps"])
-                elif prop == objects.SINK:
+                elif prop == objects.TextSink:
                     display_offset_speed[1] += window.get_height() / (16 * basics.options["fps"])
                     offset_used = True
-                elif prop == objects.FLOAT:
+                elif prop == objects.TextFloat:
                     display_offset_speed[1] -= window.get_height() / (64 * basics.options["fps"])
                     offset_used = True
             if not offset_used:
@@ -222,19 +222,19 @@ def play(levelpack: levelpacks.Levelpack) -> None:
             for prop, prop_negated_count in current_level.game_properties:
                 if prop_negated_count % 2 == 1:
                     continue
-                if prop == objects.WIN:
+                if prop == objects.TextWin:
                     sounds.play("win")
                     game_running = False
-                elif prop == objects.SHUT:
+                elif prop == objects.TextShut:
                     sounds.play("defeat")
                     game_running = False
-                elif prop == objects.END:
+                elif prop == objects.TextEnd:
                     sounds.play("end")
                     game_running = False
-                elif prop == objects.DONE:
+                elif prop == objects.TextDone:
                     sounds.play("done")
                     game_running = False
-                elif prop == objects.OPEN:
+                elif prop == objects.TextOpen:
                     if basics.current_os == basics.windows:
                         if os.path.exists("BabaMakeParabox.exe"):
                                 os.system("start BabaMakeParabox.exe")
@@ -242,15 +242,15 @@ def play(levelpack: levelpacks.Levelpack) -> None:
                             os.system("start python BabaMakeParabox.py")
                     elif basics.current_os == basics.linux:
                         os.system("python ./BabaMakeParabox.py &")
-                elif prop == objects.HOT:
+                elif prop == objects.TextHot:
                     game_is_hot = True
-                elif prop == objects.MELT:
+                elif prop == objects.TextMelt:
                     game_is_melt = True
-                elif prop == objects.YOU:
+                elif prop == objects.TextYou:
                     game_is_you = True
-                elif prop == objects.DEFEAT:
+                elif prop == objects.TextDefeat:
                     game_is_defeat = True
-                elif prop == objects.TELE:
+                elif prop == objects.TextTele:
                     sounds.play("tele")
                     display_offset = [float(random.randrange(window.get_width())), float(random.randrange(window.get_height()))]
             if game_is_hot and game_is_melt:
@@ -298,11 +298,11 @@ def play(levelpack: levelpacks.Levelpack) -> None:
                                 world.del_obj(transform_obj)
                                 world.new_obj(new_obj)
                         elif issubclass(transform_obj.from_type, objects.WorldPointer):
-                            from_world = level.get_exist_world(transform_obj.from_name, transform_obj.from_inf_tier)
+                            from_world = level.get_exist_world(transform_obj.from_name, transform_obj.from_infinite_tier)
                             if issubclass(transform_obj.to_type, objects.LevelPointer):
-                                new_level = levels.Level(from_world.name, level.world_list, level.name, transform_obj.from_name, transform_obj.from_inf_tier, level.rule_list)
+                                new_level = levels.Level(from_world.name, level.world_list, level.name, transform_obj.from_name, transform_obj.from_infinite_tier, level.rule_list)
                                 levelpack.set_level(new_level)
-                                new_obj = objects.LevelPointer(transform_obj.pos, from_world.name, icon_color=from_world.color, orient=transform_obj.orient)
+                                new_obj = objects.Level(transform_obj.pos, from_world.name, icon_color=from_world.color, orient=transform_obj.orient)
                                 world.del_obj(transform_obj)
                                 world.new_obj(new_obj)
             for level in levelpack.level_list:
@@ -367,7 +367,7 @@ def play(levelpack: levelpacks.Levelpack) -> None:
             level_changed = False
         if world_changed:
             print(languages.current_language["game.world.current.name"], current_world.name, sep="")
-            print(languages.current_language["game.world.current.inf_tier"], current_world.inf_tier, sep="")
+            print(languages.current_language["game.world.current.infinite_tier"], current_world.infinite_tier, sep="")
             world_changed = False
         pygame.mixer.music.set_volume(1.0 if current_level.have_you() else 0.5)
         # world
@@ -390,7 +390,7 @@ def play(levelpack: levelpacks.Levelpack) -> None:
             transparent_black_background = pygame.Surface(window.get_size(), pygame.SRCALPHA)
             transparent_black_background.fill("#00000088")
             window.blit(transparent_black_background, (0, 0))
-        game_transform_to = [o for o in map(objects.nouns_objs_dicts.get, game_transform_to) if o is not None]
+        game_transform_to = [o.obj_type for o in game_transform_to if o is not None]
         for obj_type in game_transform_to:
             window.blit(pygame.transform.scale(displays.sprites.get(obj_type.sprite_name, 0, wiggle), window.get_size()), (0, 0))
         # offset
