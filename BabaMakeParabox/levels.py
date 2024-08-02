@@ -83,6 +83,32 @@ class Level(object):
                 if name == obj.name and infinite_tier == obj.infinite_tier:
                     return (super_world, obj)
         return None
+    def repeated_world_to_clone(self) -> None:
+        world_objs: list[tuple[worlds.World, objects.World]] = []
+        for world in self.world_list:
+            world_objs.extend([(world, o) for o in world.get_worlds()])
+        to_clone_obj_dict: dict[tuple[str, int], list[tuple[worlds.World, objects.World]]] = {}
+        for i, (i_world, i_world_object) in enumerate(world_objs):
+            for j, (j_world, j_world_object) in enumerate(world_objs):
+                if i == j:
+                    continue
+                if i_world_object.name == j_world_object.name and i_world_object.infinite_tier == j_world_object.infinite_tier:
+                    if j_world_object not in to_clone_obj_dict[(j_world_object.name, j_world_object.infinite_tier)]:
+                        to_clone_obj_dict.setdefault((j_world_object.name, j_world_object.infinite_tier), [])
+                        to_clone_obj_dict[(j_world_object.name, j_world_object.infinite_tier)].append((j_world, j_world_object))
+        to_clone_obj_list: list[tuple[worlds.World, objects.World]] = []
+        for to_clone_objs in to_clone_obj_dict.values():
+            random.shuffle(to_clone_objs)
+            to_clone_obj_list.extend(to_clone_objs[1:])
+        for world, to_clone_obj in to_clone_obj_list:
+            world.new_obj(objects.Clone(to_clone_obj.pos, to_clone_obj.name, to_clone_obj.infinite_tier, to_clone_obj.orient))
+            world.del_obj(to_clone_obj)
+    def selected_world_to_clone(self, name: str, infinite_tier: int) -> None:
+        for world in self.world_list:
+            for world_obj in world.get_worlds():
+                if name == world_obj.name and infinite_tier == world_obj.infinite_tier:
+                    world.new_obj(objects.Clone(world_obj.pos, world_obj.name, world_obj.infinite_tier, world_obj.orient))
+                    world.del_obj(world_obj)
     def all_list_set(self) -> None:
         for world in self.world_list:
             for obj in world.object_list:
@@ -1197,7 +1223,7 @@ class Level(object):
                 obj_surface = displays.set_surface_color_dark(displays.sprites.get(obj.sprite_name, obj.sprite_state, frame).copy(), obj.icon_color)
                 icon_surface = displays.set_surface_color_light(displays.sprites.get(obj.icon_name, 0, frame).copy(), 0xFFFFFF)
                 icon_surface_pos = ((obj_surface.get_width() - icon_surface.get_width()) * displays.pixel_size // 2,
-                                    (obj_surface.get_height() - icon_surface.get_width()) * displays.pixel_size // 2)
+                                    (obj_surface.get_height() - icon_surface.get_height()) * displays.pixel_size // 2)
                 obj_surface.blit(icon_surface, icon_surface_pos)
                 obj_surface_pos = (obj.x * pixel_sprite_size - (obj_surface.get_width() - displays.sprite_size) * displays.pixel_size // 2,
                                obj.y * pixel_sprite_size - (obj_surface.get_height() - displays.sprite_size) * displays.pixel_size // 2)
@@ -1210,7 +1236,7 @@ class Level(object):
                     tier_surface.blit(displays.sprites.get("text_" + char, 0, frame), (0, displays.sprite_size * digit))
                 tier_surface = pygame.transform.scale_by(tier_surface, 1 / len(str(obj.meta_tier)))
                 tier_surface_pos = ((obj_surface.get_width() - tier_surface.get_width()) * displays.pixel_size // 2,
-                                    (obj_surface.get_height() - tier_surface.get_width()) * displays.pixel_size // 2)
+                                    (obj_surface.get_height() - tier_surface.get_height()) * displays.pixel_size // 2)
                 tier_surface = displays.set_alpha(tier_surface, 0x88)
                 obj_surface.blit(tier_surface, tier_surface_pos)
                 obj_surface_pos = (obj.x * pixel_sprite_size - (obj_surface.get_width() - displays.sprite_size) * displays.pixel_size // 2,

@@ -306,8 +306,7 @@ def play(levelpack: levelpacks.Levelpack) -> None:
                                 world.del_obj(transform_obj)
                                 world.new_obj(new_obj)
             for level in levelpack.level_list:
-                for world in level.world_list:
-                    world.repeated_world_to_clone()
+                level.repeated_world_to_clone()
             levelpack.set_level(current_level)
             if level_info["win"]:
                 print(languages.current_language["game.level.win"])

@@ -208,6 +208,8 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     else:
                         name = current_world.name
                         infinite_tier = current_world.infinite_tier
+                    if current_object_type == objects.World:
+                        current_level.selected_world_to_clone(name, infinite_tier)
                     current_world.new_obj(current_object_type(current_cursor_pos, name, infinite_tier, current_orient))
                 else:
                     current_world.new_obj(current_object_type(current_cursor_pos, current_orient))
@@ -339,6 +341,8 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             list(map(objects.BmpObject.reset_uuid, current_clipboard))
             for obj in current_clipboard:
                 obj.pos = current_cursor_pos
+                if type(obj) == objects.World:
+                    current_level.selected_world_to_clone(obj.name, obj.infinite_tier)
                 current_world.new_obj(obj)
                 if isinstance(obj, objects.WorldPointer):
                     name = obj.name
@@ -385,17 +389,51 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             world.set_sprite_states(0)
         window.fill("#000000")
         displays.set_pixel_size(window.get_size())
-        window.blit(pygame.transform.scale(current_level.show_world(current_world, wiggle, cursor=current_cursor_pos),
-                                           (window.get_height() * current_world.width // current_world.height, window.get_height())), (0, 0))
+        current_world_surface = current_level.show_world(current_world, wiggle, cursor=current_cursor_pos)
+        window.blit(pygame.transform.scale(current_world_surface, (window.get_height() * current_world.width // current_world.height, window.get_height())), (0, 0))
         current_object = displays.set_sprite_state(current_object_type((0, 0), current_orient))
-        window.blit(pygame.transform.scale(displays.sprites.get(current_object_type.sprite_name, current_object.sprite_state, wiggle),
-                                           (displays.pixel_sprite_size, displays.pixel_sprite_size)), (window.get_width() - displays.pixel_sprite_size, 0))
+        current_object_surface = displays.sprites.get(current_object_type.sprite_name, current_object.sprite_state, wiggle)
+        current_object_surface = pygame.transform.scale(current_object_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
+        if isinstance(current_object, objects.World):
+            current_object_surface = displays.set_surface_color_dark(current_world_surface, 0xCCCCCC)
+            current_object_surface = pygame.transform.scale(current_object_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
+        elif isinstance(current_object, objects.Clone):
+            current_object_surface = displays.set_surface_color_light(current_world_surface, 0x444444)
+            current_object_surface = pygame.transform.scale(current_object_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
+        elif isinstance(current_object, objects.Metatext):
+            tier_surface = pygame.Surface((displays.sprite_size, displays.sprite_size * len(str(current_object.meta_tier))), pygame.SRCALPHA)
+            tier_surface.fill("#00000000")
+            for digit, char in enumerate(str(current_object.meta_tier)):
+                tier_surface.blit(displays.sprites.get("text_" + char, 0, wiggle), (0, displays.sprite_size * digit))
+            tier_surface = displays.set_alpha(tier_surface, 0x88)
+            tier_surface = pygame.transform.scale_by(tier_surface, displays.pixel_size / len(str(current_object.meta_tier)))
+            tier_surface_pos = ((current_object_surface.get_width() - tier_surface.get_width()) * displays.pixel_size // 2,
+                                (current_object_surface.get_height() - tier_surface.get_height()) * displays.pixel_size // 2)
+            current_object_surface.blit(tier_surface, tier_surface_pos)
+        window.blit(current_object_surface, (window.get_width() - displays.pixel_sprite_size, 0))
         for index, obj_type in object_type_shortcuts.items():
             obj = displays.set_sprite_state(obj_type((0, 0), spaces.Orient.S))
-            window.blit(pygame.transform.scale(displays.sprites.get(obj_type.sprite_name, obj.sprite_state, wiggle),
-                                               (displays.pixel_sprite_size, displays.pixel_sprite_size)),
-                        (window.get_width() + (index % 5 * displays.pixel_sprite_size) - (displays.pixel_sprite_size * 5),
-                         window.get_height() + (index // 5 * displays.pixel_sprite_size) - (displays.pixel_sprite_size * 2)))
+            obj_surface = displays.sprites.get(obj_type.sprite_name, obj.sprite_state, wiggle)
+            obj_surface = pygame.transform.scale(obj_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
+            obj_surface_pos = (window.get_width() + (index % 5 * displays.pixel_sprite_size) - (displays.pixel_sprite_size * 5),
+                               window.get_height() + (index // 5 * displays.pixel_sprite_size) - (displays.pixel_sprite_size * 2))
+            if isinstance(obj, objects.World):
+                obj_surface = displays.set_surface_color_dark(current_world_surface, 0xCCCCCC)
+                obj_surface = pygame.transform.scale(obj_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
+            elif isinstance(obj, objects.Clone):
+                obj_surface = displays.set_surface_color_light(current_world_surface, 0x444444)
+                obj_surface = pygame.transform.scale(obj_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
+            elif isinstance(obj, objects.Metatext):
+                tier_surface = pygame.Surface((displays.sprite_size, displays.sprite_size * len(str(obj.meta_tier))), pygame.SRCALPHA)
+                tier_surface.fill("#00000000")
+                for digit, char in enumerate(str(obj.meta_tier)):
+                    tier_surface.blit(displays.sprites.get("text_" + char, 0, wiggle), (0, displays.sprite_size * digit))
+                tier_surface = displays.set_alpha(tier_surface, 0x88)
+                tier_surface = pygame.transform.scale_by(tier_surface, displays.pixel_size / len(str(obj.meta_tier)))
+                tier_surface_pos = ((obj_surface.get_width() - tier_surface.get_width()) * displays.pixel_size // 2,
+                                    (obj_surface.get_height() - tier_surface.get_height()) * displays.pixel_size // 2)
+                obj_surface.blit(tier_surface, tier_surface_pos)
+            window.blit(obj_surface, obj_surface_pos)
         real_fps = min(1000 / milliseconds, (real_fps * (basics.options["fps"] - 1) + 1000 / milliseconds) / basics.options["fps"])
         if keys["F1"]:
             show_fps = not show_fps

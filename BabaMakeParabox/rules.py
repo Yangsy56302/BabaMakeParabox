@@ -2,9 +2,26 @@ from BabaMakeParabox import objects
 
 Rule = list[type[objects.Text]]
 
+def handle_text_text_(rule: Rule) -> Rule:
+    new_rule = []
+    counter = 0
+    for text_type in rule:
+        if text_type == objects.TextText_:
+            counter += 1
+        elif counter != 0:
+            new_text_type = text_type
+            for _ in range(counter):
+                new_text_type = objects.get_exist_noun_from_obj(new_text_type)
+            new_rule.append(new_text_type)
+            counter = 0
+        else:
+            new_rule.append(text_type)
+    return new_rule
+
 def to_atom_rules(rule_list: list[Rule]) -> list[Rule]:
     return_value: list[Rule] = []
     for rule in rule_list:
+        rule = handle_text_text_(rule)
         noun_list: list[list[type[objects.Text]]] = [[]]
         prop_list: list[list[type[objects.Text]]] = [[]]
         current_oper = objects.TextIs
@@ -42,29 +59,12 @@ def to_atom_rules(rule_list: list[Rule]) -> list[Rule]:
                 return_value.append(noun + prop)
     return return_value
 
-def handle_text_text_(atom_rule: Rule) -> Rule:
-    new_atom_rule = []
-    counter = 0
-    for text_type in atom_rule:
-        if text_type == objects.TextText_:
-            counter += 1
-        elif counter != 0:
-            new_text_type = text_type
-            for _ in range(counter):
-                new_text_type = objects.get_exist_noun_from_obj(new_text_type)
-            new_atom_rule.append(new_text_type)
-            counter = 0
-        else:
-            new_atom_rule.append(text_type)
-    return new_atom_rule
-
 InfixInfo = tuple[bool, type[objects.Infix], bool, type[objects.Noun] | type[objects.Property]]
 PrefixInfo = tuple[bool, type[objects.Prefix]]
 RuleInfo = list[tuple[list[PrefixInfo], bool, type[objects.Noun], list[InfixInfo], type[objects.Operator], int, type[objects.Noun] | type[objects.Property]]]
 
 def analysis_rule(atom_rule: Rule) -> RuleInfo:
     return_value: RuleInfo = []
-    atom_rule = handle_text_text_(atom_rule)
     prefix_indexes = list(map(lambda t: issubclass(t, objects.Prefix), reversed(atom_rule)))
     last_prefix_index = len(atom_rule) - prefix_indexes.index(True) - 1 if True in prefix_indexes else -1
     noun_index = list(map(lambda t: issubclass(t, objects.Noun), atom_rule)).index(True)

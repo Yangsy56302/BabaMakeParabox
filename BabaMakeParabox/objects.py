@@ -604,6 +604,7 @@ class TextDone(Property):
     sprite_name: str = "text_done"
 
 class Metatext(Noun):
+    base_obj_type: type[Text]
     meta_tier: int
 
 object_used: list[type[BmpObject]] = []
@@ -671,8 +672,9 @@ not_in_editor: tuple[type[BmpObject], ...] = (All, Empty, TextEmpty, Text, Trans
 
 def generate_metatext(T: type[Text]) -> type[Metatext]:
     new_type_name = "Text" + T.__name__
-    new_type_tier = new_type_name.count("Text") - (1 if new_type_name[-4:] != "Text" else 2)
-    new_type_vars: dict[str, Any] = {"json_name": "text_" + T.json_name, "sprite_name": T.sprite_name, "obj_type": T, "meta_tier": new_type_tier}
+    new_type_tier = new_type_name.count("Text") - (1 if new_type_name[-4:] != "Text" and new_type_name[-5:] != "Text_" else 2)
+    new_type_base = T.base_obj_type if issubclass(T, Metatext) else T
+    new_type_vars: dict[str, Any] = {"json_name": "text_" + T.json_name, "sprite_name": T.sprite_name, "obj_type": T, "base_obj_type": new_type_base, "meta_tier": new_type_tier}
     new_type: type[Metatext] = type(new_type_name, (Metatext, ), new_type_vars)
     return new_type
 

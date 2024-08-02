@@ -124,21 +124,6 @@ class World(object):
         if self.out_of_range(pos):
             return []
         return [o for o in self.pos_to_objs(pos) if isinstance(o, objects.LevelPointer)]
-    def repeated_world_to_clone(self) -> None:
-        world_objs = self.get_worlds()
-        to_clone_objs: list[objects.World] = []
-        for i in range(len(world_objs)):
-            for j in range(len(world_objs)):
-                if i == j:
-                    continue
-                if world_objs[i].name == world_objs[j].name and world_objs[i].infinite_tier == world_objs[j].infinite_tier:
-                    if world_objs[j] not in to_clone_objs:
-                        to_clone_objs.append(world_objs[j])
-        random.shuffle(to_clone_objs)
-        to_clone_objs = to_clone_objs[1:]
-        for to_clone in to_clone_objs:
-            self.new_obj(objects.Clone(to_clone.pos, to_clone.name, to_clone.infinite_tier, to_clone.orient))
-            self.del_obj(to_clone)
     def get_rules_from_pos_and_orient(self, stage: str, pos: spaces.Coord, orient: spaces.Orient) -> list[rules.Rule]:
         if stage == "Prefix":
             first_matches = ()
