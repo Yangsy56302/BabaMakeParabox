@@ -175,13 +175,13 @@ def play(levelpack: levelpacks.Levelpack) -> None:
                 for rule in levelpack.rule_list:
                     str_list = []
                     for obj_type in rule:
-                        str_list.append(obj_type.__name__[4:])
+                        str_list.append(obj_type.display_name)
                     print(" ".join(str_list))
                 print(languages.current_language["game.world.rule_list"])
                 for rule in current_world.rule_list:
                     str_list = []
                     for obj_type in rule:
-                        str_list.append(obj_type.__name__[4:])
+                        str_list.append(obj_type.display_name)
                     print(" ".join(str_list))
             elif keys["-"]:
                 current_world_index -= 1

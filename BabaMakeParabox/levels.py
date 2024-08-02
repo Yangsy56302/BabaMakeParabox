@@ -117,7 +117,7 @@ class Level(object):
                 for not_all in objects.not_in_all:
                     if isinstance(obj, not_all):
                         in_not_in_all = True
-                if noun_type is not None and noun_type not in self.all_list and not in_not_in_all:
+                if noun_type not in self.all_list and not in_not_in_all:
                     self.all_list.append(noun_type)
     def meet_prefix_conditions(self, world: worlds.World, obj: objects.BmpObject, prefix_info_list: list[rules.PrefixInfo], is_meta: bool = False) -> bool:
         return_value = True
@@ -413,7 +413,7 @@ class Level(object):
                 self.set_world(new_world)
                 world.new_obj(objects.Clone(obj.pos, obj.uuid.hex, 0, obj.orient))
             elif new_noun_type == objects.TextText:
-                new_obj_type = objects.get_exist_noun_from_obj(type(obj))
+                new_obj_type = objects.get_noun_from_obj(type(obj))
                 world.new_obj(new_obj_type(obj.pos, obj.orient))
             else:
                 new_obj_type = new_noun_type.obj_type
@@ -856,7 +856,7 @@ class Level(object):
                         self.set_world(new_world)
                         world.new_obj(objects.Clone(obj.pos, obj.uuid.hex, 0, obj.orient))
                     elif make_noun_type == objects.TextText:
-                        make_obj_type = objects.get_exist_noun_from_obj(type(obj))
+                        make_obj_type = objects.get_noun_from_obj(type(obj))
                         world.new_obj(make_obj_type(obj.pos, obj.orient))
                     else:
                         make_obj_type = make_noun_type.obj_type
@@ -959,7 +959,7 @@ class Level(object):
                                 transform_success = True
                         elif new_type == objects.Text and not isinstance(old_obj, objects.Text):
                             transform_success = True
-                            new_obj = objects.get_exist_noun_from_obj(old_type)(old_obj.pos, old_obj.orient)
+                            new_obj = objects.get_noun_from_obj(old_type)(old_obj.pos, old_obj.orient)
                             world.new_obj(new_obj)
                         else:
                             transform_success = True
@@ -1106,6 +1106,47 @@ class Level(object):
             return transform_to[objects.Level]
         else:
             return None
+    def text_plus_and_text_minus(self) -> None:
+        for world in self.world_list:
+            delete_list = []
+            text_plus_objs = [o for o in world.object_list if o.has_prop(objects.TextTextPlus)]
+            text_minus_objs = [o for o in world.object_list if o.has_prop(objects.TextTextMinus)]
+            for text_plus_obj in text_plus_objs:
+                if text_plus_obj in text_minus_objs:
+                    continue
+                new_type = objects.get_noun_from_obj(type(text_plus_obj))
+                if new_type != objects.TextText:
+                    delete_list.append(text_plus_obj)
+                    world.new_obj(new_type(text_plus_obj.pos, text_plus_obj.orient))
+            for text_minus_obj in text_minus_objs:
+                if text_minus_obj in text_plus_objs:
+                    continue
+                if not isinstance(text_minus_obj, objects.Noun):
+                    continue
+                new_type = text_minus_obj.obj_type
+                if new_type == objects.Text:
+                    continue
+                delete_list.append(text_minus_obj)
+                if issubclass(new_type, objects.Game):
+                    self.new_games.append(objects.TextGame)
+                elif issubclass(new_type, objects.LevelPointer):
+                    world_color = colors.to_background_color(displays.sprite_colors[text_minus_obj.sprite_name])
+                    new_world = worlds.World(text_minus_obj.uuid.hex, (3, 3), 0, world_color)
+                    self.created_levels.append(Level(text_minus_obj.uuid.hex, [new_world], self.name, rule_list=self.rule_list))
+                    new_world.new_obj(type(text_minus_obj)((1, 1), text_minus_obj.orient))
+                    new_obj = objects.Level(text_minus_obj.pos, text_minus_obj.uuid.hex, orient=text_minus_obj.orient)
+                    world.new_obj(new_obj)
+                elif issubclass(new_type, objects.WorldPointer):
+                    world_color = colors.to_background_color(displays.sprite_colors[text_minus_obj.sprite_name])
+                    new_world = worlds.World(text_minus_obj.uuid.hex, (3, 3), 0, world_color)
+                    new_world.new_obj(type(text_minus_obj)((1, 1), text_minus_obj.orient))
+                    self.set_world(new_world)
+                    new_obj = new_type(text_minus_obj.pos, text_minus_obj.uuid.hex, 0, text_minus_obj.orient)
+                    world.new_obj(new_obj)
+                else:
+                    world.new_obj(new_type(text_minus_obj.pos, text_minus_obj.orient))
+            for obj in delete_list:
+                self.destroy_obj(world, obj)
     def win(self) -> bool:
         for world in self.world_list:
             you_objs = [o for o in world.object_list if o.has_prop(objects.TextYou)]
@@ -1167,6 +1208,7 @@ class Level(object):
         game_push |= self.shift()
         self.update_rules(old_prop_dict)
         transform_to = self.transform()
+        self.text_plus_and_text_minus()
         self.update_rules(old_prop_dict)
         self.tele()
         selected_level = self.select(op)

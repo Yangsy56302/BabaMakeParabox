@@ -12,6 +12,7 @@ class BmpObjectJson(TypedDict):
 class BmpObject(object):
     json_name: str
     sprite_name: str
+    display_name: str
     def __init__(self, pos: spaces.Coord, orient: spaces.Orient = spaces.Orient.S) -> None:
         self.uuid: uuid.UUID = uuid.uuid4()
         self.x: int = pos[0]
@@ -100,106 +101,132 @@ class Character(BmpObject):
 class Baba(Character):
     json_name: str = "baba"
     sprite_name: str = "baba"
+    display_name: str = "Baba"
 
 class Keke(Character):
     json_name: str = "keke"
     sprite_name: str = "keke"
+    display_name: str = "Keke"
 
 class Me(Character):
     json_name: str = "me"
     sprite_name: str = "me"
+    display_name: str = "Me"
 
 class Patrick(Directional):
     json_name: str = "patrick"
     sprite_name: str = "patrick"
+    display_name: str = "Patrick"
 
 class Skull(Directional):
     json_name: str = "skull"
     sprite_name: str = "skull"
+    display_name: str = "Skull"
 
 class Ghost(Directional):
     json_name: str = "ghost"
     sprite_name: str = "ghost"
+    display_name: str = "Ghost"
 
 class Wall(Tiled):
     json_name: str = "wall"
     sprite_name: str = "wall"
+    display_name: str = "Wall"
 
 class Hedge(Tiled):
     json_name: str = "hedge"
     sprite_name: str = "hedge"
+    display_name: str = "Hedge"
 
 class Ice(Tiled):
     json_name: str = "ice"
     sprite_name: str = "ice"
+    display_name: str = "Ice"
 
 class Tile(Static):
     json_name: str = "tile"
     sprite_name: str = "tile"
+    display_name: str = "Tile"
 
 class Grass(Tiled):
     json_name: str = "grass"
     sprite_name: str = "grass"
+    display_name: str = "Grass"
 
 class Water(Tiled):
     json_name: str = "water"
     sprite_name: str = "water"
+    display_name: str = "Water"
 
 class Lava(Tiled):
     json_name: str = "lava"
     sprite_name: str = "lava"
+    display_name: str = "Lava"
 
 class Door(Static):
     json_name: str = "door"
     sprite_name: str = "door"
+    display_name: str = "Door"
 
 class Key(Static):
     json_name: str = "key"
     sprite_name: str = "key"
+    display_name: str = "Key"
 
 class Box(Static):
     json_name: str = "box"
     sprite_name: str = "box"
+    display_name: str = "Box"
 
 class Rock(Static):
     json_name: str = "rock"
     sprite_name: str = "rock"
+    display_name: str = "Rock"
 
 class Fruit(Static):
     json_name: str = "fruit"
     sprite_name: str = "fruit"
+    display_name: str = "Fruit"
 
 class Belt(AnimatedDirectional):
     json_name: str = "belt"
     sprite_name: str = "belt"
+    display_name: str = "Belt"
 
 class Sun(Static):
     json_name: str = "sun"
     sprite_name: str = "sun"
+    display_name: str = "Sun"
 
 class Moon(Static):
     json_name: str = "moon"
     sprite_name: str = "moon"
+    display_name: str = "Moon"
 
 class Star(Static):
     json_name: str = "star"
     sprite_name: str = "star"
+    display_name: str = "Star"
 
 class What(Static):
     json_name: str = "what"
     sprite_name: str = "what"
+    display_name: str = "What"
 
 class Love(Static):
     json_name: str = "love"
     sprite_name: str = "love"
+    display_name: str = "Love"
 
 class Flag(Static):
     json_name: str = "flag"
     sprite_name: str = "flag"
+    display_name: str = "Flag"
 
 class Cursor(Static):
     json_name: str = "cursor"
     sprite_name: str = "cursor"
+    display_name: str = "Cursor"
 
 class All(BmpObject):
     pass
@@ -235,6 +262,7 @@ class LevelPointer(BmpObject):
 class Level(LevelPointer):
     json_name: str = "level"
     sprite_name: str = "level"
+    display_name: str = "Level"
     def __init__(self, pos: spaces.Coord, name: str, icon_name: str = "empty", icon_color: colors.ColorHex = colors.WHITE, orient: spaces.Orient = spaces.Orient.S) -> None:
         super().__init__(pos, name, icon_name, icon_color, orient)
 
@@ -261,12 +289,14 @@ class WorldPointer(BmpObject):
 class World(WorldPointer):
     json_name: str = "world"
     sprite_name: str = "world"
+    display_name: str = "World"
     def __init__(self, pos: spaces.Coord, name: str, infinite_tier: int = 0, orient: spaces.Orient = spaces.Orient.S) -> None:
         super().__init__(pos, name, infinite_tier, orient)
         
 class Clone(WorldPointer):
     json_name: str = "clone"
     sprite_name: str = "clone"
+    display_name: str = "Clone"
     def __init__(self, pos: spaces.Coord, name: str, infinite_tier: int = 0, orient: spaces.Orient = spaces.Orient.S) -> None:
         super().__init__(pos, name, infinite_tier, orient)
 
@@ -322,311 +352,363 @@ class TextBaba(Noun):
     obj_type: type[BmpObject] = Baba
     json_name: str = "text_baba"
     sprite_name: str = "text_baba"
+    display_name: str = "BABA"
 
 class TextKeke(Noun):
     obj_type: type[BmpObject] = Keke
     json_name: str = "text_keke"
     sprite_name: str = "text_keke"
+    display_name: str = "KEKE"
 
 class TextMe(Noun):
     obj_type: type[BmpObject] = Me
     json_name: str = "text_me"
     sprite_name: str = "text_me"
+    display_name: str = "ME"
 
 class TextPatrick(Noun):
     obj_type: type[BmpObject] = Patrick
     json_name: str = "text_patrick"
     sprite_name: str = "text_patrick"
+    display_name: str = "PATRICK"
 
 class TextSkull(Noun):
     obj_type: type[BmpObject] = Skull
     json_name: str = "text_skull"
     sprite_name: str = "text_skull"
+    display_name: str = "SKULL"
 
 class TextGhost(Noun):
     obj_type: type[BmpObject] = Ghost
     json_name: str = "text_ghost"
     sprite_name: str = "text_ghost"
+    display_name: str = "GHOST"
 
 class TextWall(Noun):
     obj_type: type[BmpObject] = Wall
     json_name: str = "text_wall"
     sprite_name: str = "text_wall"
+    display_name: str = "WALL"
 
 class TextHedge(Noun):
     obj_type: type[BmpObject] = Hedge
     json_name: str = "text_hedge"
     sprite_name: str = "text_hedge"
+    display_name: str = "HEDGE"
 
 class TextIce(Noun):
     obj_type: type[BmpObject] = Ice
     json_name: str = "text_ice"
     sprite_name: str = "text_ice"
+    display_name: str = "ICE"
 
 class TextTile(Noun):
     obj_type: type[BmpObject] = Tile
     json_name: str = "text_tile"
     sprite_name: str = "text_tile"
+    display_name: str = "TILE"
 
 class TextGrass(Noun):
     obj_type: type[BmpObject] = Grass
     json_name: str = "text_grass"
     sprite_name: str = "text_grass"
+    display_name: str = "GARSS"
 
 class TextWater(Noun):
     obj_type: type[BmpObject] = Water
     json_name: str = "text_water"
     sprite_name: str = "text_water"
+    display_name: str = "WATER"
 
 class TextLava(Noun):
     obj_type: type[BmpObject] = Lava
     json_name: str = "text_lava"
     sprite_name: str = "text_lava"
+    display_name: str = "LAVA"
 
 class TextDoor(Noun):
     obj_type: type[BmpObject] = Door
     json_name: str = "text_door"
     sprite_name: str = "text_door"
+    display_name: str = "DOOR"
 
 class TextKey(Noun):
     obj_type: type[BmpObject] = Key
     json_name: str = "text_key"
     sprite_name: str = "text_key"
+    display_name: str = "KEY"
 
 class TextBox(Noun):
     obj_type: type[BmpObject] = Box
     json_name: str = "text_box"
     sprite_name: str = "text_box"
+    display_name: str = "BOX"
 
 class TextRock(Noun):
     obj_type: type[BmpObject] = Rock
     json_name: str = "text_rock"
     sprite_name: str = "text_rock"
+    display_name: str = "ROCK"
 
 class TextFruit(Noun):
     obj_type: type[BmpObject] = Fruit
     json_name: str = "text_fruit"
     sprite_name: str = "text_fruit"
+    display_name: str = "FRUIT"
 
 class TextBelt(Noun):
     obj_type: type[BmpObject] = Belt
     json_name: str = "text_belt"
     sprite_name: str = "text_belt"
+    display_name: str = "BELT"
 
 class TextSun(Noun):
     obj_type: type[BmpObject] = Sun
     json_name: str = "text_sun"
     sprite_name: str = "text_sun"
+    display_name: str = "SUN"
 
 class TextMoon(Noun):
     obj_type: type[BmpObject] = Moon
     json_name: str = "text_moon"
     sprite_name: str = "text_moon"
+    display_name: str = "MOON"
 
 class TextStar(Noun):
     obj_type: type[BmpObject] = Star
     json_name: str = "text_star"
     sprite_name: str = "text_star"
+    display_name: str = "STAR"
 
 class TextWhat(Noun):
     obj_type: type[BmpObject] = What
     json_name: str = "text_what"
     sprite_name: str = "text_what"
+    display_name: str = "WHAT"
 
 class TextLove(Noun):
     obj_type: type[BmpObject] = Love
     json_name: str = "text_love"
     sprite_name: str = "text_love"
+    display_name: str = "LOVE"
 
 class TextFlag(Noun):
     obj_type: type[BmpObject] = Flag
     json_name: str = "text_flag"
     sprite_name: str = "text_flag"
+    display_name: str = "FLAG"
 
 class TextCursor(Noun):
     obj_type: type[BmpObject] = Cursor
     json_name: str = "text_cursor"
     sprite_name: str = "text_cursor"
+    display_name: str = "CURSOR"
 
 class TextAll(Noun):
     obj_type: type[BmpObject] = All
     json_name: str = "text_all"
     sprite_name: str = "text_all"
+    display_name: str = "ALL"
 
 class TextEmpty(Noun):
     obj_type: type[BmpObject] = Empty
     json_name: str = "text_empty"
     sprite_name: str = "text_empty"
+    display_name: str = "EMPTY"
 
 class TextText(Noun):
     obj_type: type[BmpObject] = Text
     json_name: str = "text_text"
     sprite_name: str = "text_text"
+    display_name: str = "TEXT"
 
 class TextLevel(Noun):
     obj_type: type[BmpObject] = Level
     json_name: str = "text_level"
     sprite_name: str = "text_level"
+    display_name: str = "LEVEL"
 
 class TextWorld(Noun):
     obj_type: type[BmpObject] = World
     json_name: str = "text_world"
     sprite_name: str = "text_world"
+    display_name: str = "WORLD"
 
 class TextClone(Noun):
     obj_type: type[BmpObject] = Clone
     json_name: str = "text_clone"
     sprite_name: str = "text_clone"
+    display_name: str = "CLONE"
 
 class TextGame(Noun):
     obj_type: type[BmpObject] = Game
     json_name: str = "text_game"
     sprite_name: str = "text_game"
+    display_name: str = "GAME"
 
 class TextMeta(Prefix):
     json_name: str = "text_meta"
     sprite_name: str = "text_meta"
+    display_name: str = "META"
 
 class TextText_(Text):
     json_name: str = "text_text_"
-    sprite_name: str = "text_text_"
+    sprite_name: str = "text_text_underline"
+    display_name: str = "TEXT_"
 
 class TextOn(Infix):
     json_name: str = "text_on"
     sprite_name: str = "text_on"
+    display_name: str = "ON"
 
 class TextNear(Infix):
     json_name: str = "text_near"
     sprite_name: str = "text_near"
+    display_name: str = "NEAR"
 
 class TextNextto(Infix):
     json_name: str = "text_nextto"
     sprite_name: str = "text_nextto"
+    display_name: str = "MEXTTO"
 
 class TextFeeling(Infix):
     json_name: str = "text_feeling"
     sprite_name: str = "text_feeling"
+    display_name: str = "FEELING"
 
 class TextIs(Operator):
     json_name: str = "text_is"
     sprite_name: str = "text_is"
+    display_name: str = "IS"
 
 class TextHas(Operator):
     json_name: str = "text_has"
     sprite_name: str = "text_has"
+    display_name: str = "HAS"
 
 class TextMake(Operator):
     json_name: str = "text_make"
     sprite_name: str = "text_make"
+    display_name: str = "MAKE"
 
 class TextWrite(Operator):
     json_name: str = "text_write"
     sprite_name: str = "text_write"
+    display_name: str = "WRITE"
 
 class TextNot(Text):
     json_name: str = "text_not"
     sprite_name: str = "text_not"
+    display_name: str = "NOT"
 
 class TextAnd(Text):
     json_name: str = "text_and"
     sprite_name: str = "text_and"
+    display_name: str = "AND"
 
 class TextYou(Property):
     json_name: str = "text_you"
     sprite_name: str = "text_you"
+    display_name: str = "YOU"
 
 class TextMove(Property):
     json_name: str = "text_move"
     sprite_name: str = "text_move"
+    display_name: str = "MOVE"
 
 class TextStop(Property):
     json_name: str = "text_stop"
     sprite_name: str = "text_stop"
+    display_name: str = "STOP"
 
 class TextPush(Property):
     json_name: str = "text_push"
     sprite_name: str = "text_push"
+    display_name: str = "PUSH"
 
 class TextSink(Property):
     json_name: str = "text_sink"
     sprite_name: str = "text_sink"
+    display_name: str = "SINK"
 
 class TextFloat(Property):
     json_name: str = "text_float"
     sprite_name: str = "text_float"
+    display_name: str = "FLOAT"
 
 class TextOpen(Property):
     json_name: str = "text_open"
     sprite_name: str = "text_open"
+    display_name: str = "OPEN"
 
 class TextShut(Property):
     json_name: str = "text_shut"
     sprite_name: str = "text_shut"
+    display_name: str = "SHUT"
 
 class TextHot(Property):
     json_name: str = "text_hot"
     sprite_name: str = "text_hot"
+    display_name: str = "HOT"
 
 class TextMelt(Property):
     json_name: str = "text_melt"
     sprite_name: str = "text_melt"
+    display_name: str = "MELT"
 
 class TextWin(Property):
     json_name: str = "text_win"
     sprite_name: str = "text_win"
+    display_name: str = "WIN"
 
 class TextDefeat(Property):
     json_name: str = "text_defeat"
     sprite_name: str = "text_defeat"
+    display_name: str = "DEFEAT"
 
 class TextShift(Property):
     json_name: str = "text_shift"
     sprite_name: str = "text_shift"
+    display_name: str = "SHIFT"
 
 class TextTele(Property):
     json_name: str = "text_tele"
     sprite_name: str = "text_tele"
+    display_name: str = "TELE"
 
 class TextWord(Property):
     json_name: str = "text_word"
     sprite_name: str = "text_word"
+    display_name: str = "WORD"
 
 class TextSelect(Property):
     json_name: str = "text_select"
     sprite_name: str = "text_select"
+    display_name: str = "SELECT"
+
+class TextTextPlus(Property):
+    json_name: str = "text_text+"
+    sprite_name: str = "text_text_plus"
+    display_name: str = "TEXT+"
+
+class TextTextMinus(Property):
+    json_name: str = "text_text-"
+    sprite_name: str = "text_text_minus"
+    display_name: str = "TEXT-"
 
 class TextEnd(Property):
     json_name: str = "text_end"
     sprite_name: str = "text_end"
+    display_name: str = "END"
 
 class TextDone(Property):
     json_name: str = "text_done"
     sprite_name: str = "text_done"
+    display_name: str = "DONE"
 
 class Metatext(Noun):
     base_obj_type: type[Text]
     meta_tier: int
-
-object_used: list[type[BmpObject]] = []
-object_used.extend([Baba, Keke, Me, Patrick, Skull, Ghost])
-object_used.extend([Wall, Hedge, Ice, Tile, Grass, Water, Lava])
-object_used.extend([Door, Key, Box, Rock, Fruit, Belt, Sun, Moon, Star, What, Love, Flag])
-object_used.extend([Cursor, Level, World, Clone])
-object_used.extend([TextBaba, TextKeke, TextMe, TextPatrick, TextSkull, TextGhost])
-object_used.extend([TextWall, TextHedge, TextIce, TextTile, TextGrass, TextWater, TextLava])
-object_used.extend([TextBox, TextRock, TextFruit, TextBelt, TextSun, TextMoon, TextStar, TextWhat, TextLove, TextFlag])
-object_used.extend([TextCursor, TextAll, TextText, TextLevel, TextWorld, TextClone, TextGame])
-object_used.extend([TextText_, TextMeta])
-object_used.extend([TextOn, TextNear, TextNextto, TextFeeling])
-object_used.extend([TextIs, TextHas, TextMake, TextWrite])
-object_used.extend([TextNot, TextAnd])
-object_used.extend([TextYou, TextMove, TextStop, TextPush, TextSink, TextFloat, TextOpen, TextShut, TextHot, TextMelt, TextWin, TextDefeat, TextShift, TextTele])
-object_used.extend([TextWord, TextSelect, TextEnd, TextDone])
-
-object_class_used = object_used[:]
-object_class_used.extend([All, Empty, Text, Game, TextEmpty])
-
-object_name: dict[str, type[BmpObject]] = {t.json_name: t for t in object_used}
 
 noun_list: list[type[Noun]] = []
 noun_list.extend([TextBaba, TextKeke, TextMe, TextPatrick, TextSkull, TextGhost])
@@ -635,27 +717,27 @@ noun_list.extend([TextDoor, TextKey, TextBox, TextRock, TextFruit, TextBelt, Tex
 noun_list.extend([TextCursor, TextAll, TextText, TextLevel, TextWorld, TextClone, TextGame])
 
 text_list: list[type[Text]] = []
-text_list.extend([TextBaba, TextKeke, TextMe, TextPatrick, TextSkull, TextGhost])
-text_list.extend([TextWall, TextHedge, TextIce, TextTile, TextGrass, TextWater, TextLava])
-text_list.extend([TextDoor, TextKey, TextBox, TextRock, TextFruit, TextBelt, TextSun, TextMoon, TextStar, TextWhat, TextLove, TextFlag])
-text_list.extend([TextCursor, TextAll, TextText, TextLevel, TextWorld, TextClone, TextGame])
+text_list.extend(noun_list)
 text_list.extend([TextText_, TextMeta])
 text_list.extend([TextOn, TextNear, TextNextto, TextFeeling])
 text_list.extend([TextIs, TextHas, TextMake, TextWrite])
 text_list.extend([TextNot, TextAnd])
 text_list.extend([TextYou, TextMove, TextStop, TextPush, TextSink, TextFloat, TextOpen, TextShut, TextHot, TextMelt, TextWin, TextDefeat, TextShift, TextTele])
-text_list.extend([TextWord, TextSelect, TextEnd, TextDone])
+text_list.extend([TextWord, TextSelect, TextTextPlus, TextTextMinus, TextEnd, TextDone])
 
-def get_noun_from_obj(obj_type: type[BmpObject]) -> Optional[type[Noun]]:
-    return_value: Optional[type[Noun]] = None
-    for noun_type in noun_list:
-        if obj_type == noun_type.obj_type:
-            return noun_type
-        if issubclass(obj_type, noun_type.obj_type):
-            return_value = noun_type
-    return return_value
+object_used: list[type[BmpObject]] = []
+object_used.extend([Baba, Keke, Me, Patrick, Skull, Ghost])
+object_used.extend([Wall, Hedge, Ice, Tile, Grass, Water, Lava])
+object_used.extend([Door, Key, Box, Rock, Fruit, Belt, Sun, Moon, Star, What, Love, Flag])
+object_used.extend([Cursor, Level, World, Clone])
+object_used.extend(text_list)
 
-def get_exist_noun_from_obj(obj_type: type[BmpObject]) -> type[Noun]:
+object_class_used = object_used[:]
+object_class_used.extend([All, Empty, Text, Game, TextEmpty])
+
+object_name: dict[str, type[BmpObject]] = {t.json_name: t for t in object_used}
+
+def get_noun_from_obj(obj_type: type[BmpObject]) -> type[Noun]:
     return_value: Optional[type[Noun]] = None
     for noun_type in noun_list:
         if obj_type == noun_type.obj_type:
@@ -674,7 +756,12 @@ def generate_metatext(T: type[Text]) -> type[Metatext]:
     new_type_name = "Text" + T.__name__
     new_type_tier = new_type_name.count("Text") - (1 if new_type_name[-4:] != "Text" and new_type_name[-5:] != "Text_" else 2)
     new_type_base = T.base_obj_type if issubclass(T, Metatext) else T
-    new_type_vars: dict[str, Any] = {"json_name": "text_" + T.json_name, "sprite_name": T.sprite_name, "obj_type": T, "base_obj_type": new_type_base, "meta_tier": new_type_tier}
+    new_type_vars: dict[str, Any] = {"json_name": "text_" + T.json_name,
+                                     "sprite_name": T.sprite_name,
+                                     "obj_type": T,
+                                     "base_obj_type": new_type_base,
+                                     "meta_tier": new_type_tier,
+                                     "display_name": "TEXT_" + T.display_name}
     new_type: type[Metatext] = type(new_type_name, (Metatext, ), new_type_vars)
     return new_type
 

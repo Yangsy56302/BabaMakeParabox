@@ -11,7 +11,7 @@ def handle_text_text_(rule: Rule) -> Rule:
         elif counter != 0:
             new_text_type = text_type
             for _ in range(counter):
-                new_text_type = objects.get_exist_noun_from_obj(new_text_type)
+                new_text_type = objects.get_noun_from_obj(new_text_type)
             new_rule.append(new_text_type)
             counter = 0
         else:

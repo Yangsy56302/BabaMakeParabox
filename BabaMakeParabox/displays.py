@@ -148,7 +148,7 @@ sprite_colors["text_world"] = colors.LIGHT_GRAY_BLUE
 sprite_colors["text_clone"] = colors.LIGHTER_GRAY_BLUE
 sprite_colors["text_game"] = colors.PINK
 sprite_colors["text_meta"] = colors.MAGENTA
-sprite_colors["text_text_"] = colors.MAGENTA
+sprite_colors["text_text_underline"] = colors.MAGENTA
 sprite_colors["text_on"] = colors.WHITE
 sprite_colors["text_near"] = colors.WHITE
 sprite_colors["text_nextto"] = colors.WHITE
@@ -175,6 +175,8 @@ sprite_colors["text_shift"] = colors.LIGHT_GRAY_BLUE
 sprite_colors["text_tele"] = colors.LIGHTER_GRAY_BLUE
 sprite_colors["text_word"] = colors.WHITE
 sprite_colors["text_select"] = colors.LIGHT_YELLOW
+sprite_colors["text_text_plus"] = colors.MAGENTA
+sprite_colors["text_text_minus"] = colors.PINK
 sprite_colors["text_end"] = colors.WHITE
 sprite_colors["text_done"] = colors.WHITE
 

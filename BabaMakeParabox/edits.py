@@ -297,7 +297,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             for rule in levelpack.rule_list:
                 str_list = []
                 for obj_type in rule:
-                    str_list.append(obj_type.__name__[4:])
+                    str_list.append(obj_type.display_name)
                 print(" ".join(str_list))
         elif keys["T"]:
             if keys["LSHIFT"] or keys["RSHIFT"]:
@@ -314,7 +314,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     current_object_index = object_list.index(current_object_type)
             else:
                 obj_to_noun = objects.get_noun_from_obj(current_object_type)
-                if obj_to_noun is not None and obj_to_noun not in objects.not_in_editor:
+                if obj_to_noun not in objects.not_in_editor:
                     current_object_type = obj_to_noun
                     current_object_index = object_list.index(current_object_type)
         elif keys["Z"]:

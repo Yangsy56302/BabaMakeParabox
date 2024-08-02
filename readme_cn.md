@@ -289,6 +289,7 @@
 | 3.3    | 2024.08.01 | Text_Baba is You |
 | 3.31   | 2024.08.01 | Text_ Baba is Text_ Text_ Baba |
 | 3.311  | 2024.08.02 | Baba write Text_ You |
+| 3.32   | 2024.08.02 | Text on Box is TextPlus; Bug on Text_ on is Fix |
 
 ## 报告漏洞和提出建议
 
