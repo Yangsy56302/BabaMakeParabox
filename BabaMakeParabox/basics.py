@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import Literal, TypedDict
 import os
 import json
 import copy
@@ -8,7 +8,19 @@ import pygame
 
 pygame.init()
 
-versions = "3.321"
+versions = "3.4"
+def compare_versions(ver_1: str, ver_2: str) -> Literal[-1, 0, 1]:
+    for char_1, char_2 in zip(ver_1, ver_2):
+        if ord(char_1) > ord(char_2):
+            return 1
+        elif ord(char_1) < ord(char_2):
+            return -1
+    if len(ver_1) == len(ver_2):
+        return 0
+    elif len(ver_1) > len(ver_2):
+        return 1
+    else:
+        return -1
 
 options_filename = "options.json"
 
@@ -62,7 +74,7 @@ default_options: Options = {
 
 def save_options(new_options: Options) -> None:
     with open(options_filename, "w", encoding="utf-8") as file:
-        json.dump(new_options, file, indent=None if options["compressed_json_output"] else 4)
+        json.dump(new_options, file, indent=None if options["compressed_json_output"] else 4, separators=(",", ":") if options["compressed_json_output"] else (", ", ": "))
 
 def update_options(old_options: Options) -> Options:
     new_options = old_options.copy()

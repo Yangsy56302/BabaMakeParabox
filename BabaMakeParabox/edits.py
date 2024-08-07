@@ -198,19 +198,21 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                         name = current_level.name
                         icon_name = "empty"
                         icon_color = colors.WHITE
-                    current_world.new_obj(current_object_type(current_cursor_pos, name, icon_name, icon_color, current_orient))
+                    level_info: objects.LevelPointerExtraJson = {"name": name, "icon": {"name": icon_name, "color": icon_color}}
+                    current_world.new_obj(current_object_type(current_cursor_pos, current_orient, level_info=level_info))
                 elif issubclass(current_object_type, objects.WorldPointer):
                     if keys["LSHIFT"] or keys["RSHIFT"]:
                         name = input(languages.current_language["editor.world.new.name"])
                         infinite_tier = input(languages.current_language["editor.world.new.infinite_tier"])
                         infinite_tier = int(infinite_tier) if infinite_tier != "" else 0
-                        name, infinite_tier = (name, infinite_tier) if current_level.get_world(name, infinite_tier) is not None else (current_world.name, current_world.infinite_tier)
+                        name, infinite_tier = (name, infinite_tier) if current_level.get_world({"name": name, "infinite_tier": infinite_tier}) is not None else (current_world.name, current_world.infinite_tier)
                     else:
                         name = current_world.name
                         infinite_tier = current_world.infinite_tier
                     if current_object_type == objects.World:
                         current_level.selected_world_to_clone(name, infinite_tier)
-                    current_world.new_obj(current_object_type(current_cursor_pos, name, infinite_tier, current_orient))
+                    world_info: objects.WorldPointerExtraJson = {"name": name, "infinite_tier": infinite_tier}
+                    current_world.new_obj(current_object_type(current_cursor_pos, current_orient, world_info=world_info))
                 else:
                     current_world.new_obj(current_object_type(current_cursor_pos, current_orient))
         elif keys["BACKSLASH"]:
@@ -342,13 +344,13 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             for obj in current_clipboard:
                 obj.pos = current_cursor_pos
                 if type(obj) == objects.World:
-                    current_level.selected_world_to_clone(obj.name, obj.infinite_tier)
+                    current_level.selected_world_to_clone(obj.world_info["name"], obj.world_info["infinite_tier"])
                 current_world.new_obj(obj)
                 if isinstance(obj, objects.WorldPointer):
-                    name = obj.name
-                    infinite_tier = obj.infinite_tier
+                    name = obj.world_info["name"]
+                    infinite_tier = obj.world_info["infinite_tier"]
                     for level in levelpack.level_list:
-                        world = level.get_world(name, infinite_tier)
+                        world = level.get_world({"name": name, "infinite_tier": infinite_tier})
                         if world is not None:
                             for new_world in level.world_list:
                                 current_level.set_world(new_world)
@@ -391,7 +393,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         displays.set_pixel_size(window.get_size())
         current_world_surface = current_level.show_world(current_world, wiggle, cursor=current_cursor_pos)
         window.blit(pygame.transform.scale(current_world_surface, (window.get_height() * current_world.width // current_world.height, window.get_height())), (0, 0))
-        current_object = displays.set_sprite_state(current_object_type((0, 0), current_orient))
+        current_object = displays.set_sprite_state(current_object_type((0, 0), current_orient, level_info=None, world_info=None))
         current_object_surface = displays.sprites.get(current_object_type.sprite_name, current_object.sprite_state, wiggle)
         current_object_surface = pygame.transform.scale(current_object_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
         if isinstance(current_object, objects.World):

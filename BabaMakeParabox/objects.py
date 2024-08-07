@@ -1,23 +1,40 @@
-from typing import Any, Optional, TypeGuard, TypeVar, TypedDict
+from typing import Any, NotRequired, Optional, TypeGuard, TypedDict, Protocol, runtime_checkable
 import types
 import math
 import uuid
 from BabaMakeParabox import basics, colors, spaces
+from BabaMakeParabox.spaces import Coord
+
+class WorldPointerExtraJson(TypedDict):
+    name: str
+    infinite_tier: int
+
+class LevelPointerIconJson(TypedDict):
+    name: str
+    color: colors.ColorHex
+
+class LevelPointerExtraJson(TypedDict):
+    name: str
+    icon: LevelPointerIconJson
 
 class BmpObjectJson(TypedDict):
     type: str
     position: spaces.Coord
     orientation: spaces.OrientStr
+    world: NotRequired[WorldPointerExtraJson]
+    level: NotRequired[LevelPointerExtraJson]
 
 class BmpObject(object):
     json_name: str
     sprite_name: str
     display_name: str
-    def __init__(self, pos: spaces.Coord, orient: spaces.Orient = spaces.Orient.S) -> None:
+    def __init__(self, pos: spaces.Coord, orient: spaces.Orient = spaces.Orient.S, *, world_info: Optional[WorldPointerExtraJson] = None, level_info: Optional[LevelPointerExtraJson] = None) -> None:
         self.uuid: uuid.UUID = uuid.uuid4()
         self.x: int = pos[0]
         self.y: int = pos[1]
         self.orient: spaces.Orient = orient
+        self.world_info: Optional[WorldPointerExtraJson] = world_info
+        self.level_info: Optional[LevelPointerExtraJson] = level_info
         self.properties: list[tuple[type["Text"], int]] = []
         self.has_object: list[type["Noun"]] = []
         self.make_object: list[type["Noun"]] = []
@@ -64,7 +81,12 @@ class BmpObject(object):
     def clear_prop(self) -> None:
         self.properties = []
     def to_json(self) -> BmpObjectJson:
-        return {"type": self.json_name, "position": (self.x, self.y), "orientation": spaces.orient_to_str(self.orient)}
+        json_object: BmpObjectJson = {"type": self.json_name, "position": (self.x, self.y), "orientation": spaces.orient_to_str(self.orient)}
+        if self.world_info is not None:
+            json_object = {**json_object, "world": self.world_info}
+        if self.level_info is not None:
+            json_object = {**json_object, "level": self.level_info}
+        return json_object
 
 class Static(BmpObject):
     def set_sprite(self) -> None:
@@ -234,71 +256,30 @@ class All(BmpObject):
 class Empty(BmpObject):
     pass
 
-class LevelPointerInfoJson(TypedDict):
-    name: str
-
-class LevelPointerIconJson(TypedDict):
-    name: str
-    color: colors.ColorHex
-
-class LevelPointerExtraJson(TypedDict):
-    level: LevelPointerInfoJson
-    icon: LevelPointerIconJson
-
-class LevelPointerJson(BmpObjectJson, LevelPointerExtraJson):
-    pass
-
 class LevelPointer(BmpObject):
-    def __init__(self, pos: spaces.Coord, name: str, icon_name: str = "empty", icon_color: colors.ColorHex = colors.WHITE, orient: spaces.Orient = spaces.Orient.S) -> None:
-        super().__init__(pos, orient)
-        self.name: str = name
-        self.icon_name: str = icon_name
-        self.icon_color: colors.ColorHex = icon_color
-    def to_json(self) -> LevelPointerJson:
-        basic_json_object = super().to_json()
-        extra_json_object: LevelPointerExtraJson = {"level": {"name": self.name}, "icon": {"name": self.icon_name, "color": self.icon_color}}
-        return {**basic_json_object, **extra_json_object}
+    level_info: LevelPointerExtraJson
+    def __init__(self, pos: tuple[int, int], orient: spaces.Orient = spaces.Orient.S, *, world_info: Optional[WorldPointerExtraJson] = None, level_info: LevelPointerExtraJson) -> None:
+        super().__init__(pos, orient, world_info=world_info, level_info=level_info)
 
 class Level(LevelPointer):
     json_name: str = "level"
     sprite_name: str = "level"
     display_name: str = "Level"
-    def __init__(self, pos: spaces.Coord, name: str, icon_name: str = "empty", icon_color: colors.ColorHex = colors.WHITE, orient: spaces.Orient = spaces.Orient.S) -> None:
-        super().__init__(pos, name, icon_name, icon_color, orient)
-
-class WorldPointerInfoJson(TypedDict):
-    name: str
-    infinite_tier: int
-    
-class WorldPointerExtraJson(TypedDict):
-    world: WorldPointerInfoJson
-
-class WorldPointerJson(BmpObjectJson, WorldPointerExtraJson):
-    pass
 
 class WorldPointer(BmpObject):
-    def __init__(self, pos: spaces.Coord, name: str, infinite_tier: int = 0, orient: spaces.Orient = spaces.Orient.S) -> None:
-        super().__init__(pos, orient)
-        self.name: str = name
-        self.infinite_tier: int = infinite_tier
-    def to_json(self) -> WorldPointerJson:
-        basic_json_object = super().to_json()
-        extra_json_object: WorldPointerExtraJson = {"world": {"name": self.name, "infinite_tier": self.infinite_tier}}
-        return {**basic_json_object, **extra_json_object}
+    world_info: WorldPointerExtraJson
+    def __init__(self, pos: tuple[int, int], orient: spaces.Orient = spaces.Orient.S, *, world_info: WorldPointerExtraJson, level_info: Optional[LevelPointerExtraJson] = None) -> None:
+        super().__init__(pos, orient, world_info=world_info, level_info=level_info)
 
 class World(WorldPointer):
     json_name: str = "world"
     sprite_name: str = "world"
     display_name: str = "World"
-    def __init__(self, pos: spaces.Coord, name: str, infinite_tier: int = 0, orient: spaces.Orient = spaces.Orient.S) -> None:
-        super().__init__(pos, name, infinite_tier, orient)
         
 class Clone(WorldPointer):
     json_name: str = "clone"
     sprite_name: str = "clone"
     display_name: str = "Clone"
-    def __init__(self, pos: spaces.Coord, name: str, infinite_tier: int = 0, orient: spaces.Orient = spaces.Orient.S) -> None:
-        super().__init__(pos, name, infinite_tier, orient)
 
 class Transform(BmpObject):
     def __init__(self, pos: spaces.Coord, info: dict[str, Any], orient: spaces.Orient = spaces.Orient.S) -> None:
@@ -309,23 +290,10 @@ class Transform(BmpObject):
             self.from_infinite_tier: int = info["from"]["infinite_tier"]
         self.to_type: type[BmpObject] = info["to"]["type"]
 
-class SpriteInfoJson(TypedDict):
-    name: str
-    
-class SpriteExtraJson(TypedDict):
-    sprite: SpriteInfoJson
-
-class SpriteJson(BmpObjectJson, SpriteExtraJson):
-    pass
-
 class Sprite(BmpObject):
     def __init__(self, pos: spaces.Coord, sprite_name: str, orient: spaces.Orient = spaces.Orient.S) -> None:
         super().__init__(pos, orient)
         self.sprite_name: str = sprite_name
-    def to_json(self) -> SpriteJson:
-        basic_json_object = super().to_json()
-        extra_json_object: SpriteExtraJson = {"sprite": {"name": self.sprite_name}}
-        return {**basic_json_object, **extra_json_object}
 
 class Game(BmpObject):
     pass
@@ -792,33 +760,20 @@ def is_correct_bmp_object_json(T):
         return True # i dk why this works
     return func
 
-is_world_pointer_json = is_correct_bmp_object_json(WorldPointerJson)
-is_level_json = is_correct_bmp_object_json(LevelPointerJson)
-is_sprite_json = is_correct_bmp_object_json(SpriteJson)
+is_world_pointer_json = is_correct_bmp_object_json(LevelPointerExtraJson)
+is_level_json = is_correct_bmp_object_json(LevelPointerExtraJson)
 
 def json_to_object(json_object: BmpObjectJson, ver: Optional[str] = None) -> BmpObject:
-    object_type = object_name[json_object["type"]]
-    if issubclass(object_type, WorldPointer):
-        if is_world_pointer_json(json_object):
-            return object_type(pos=json_object["position"],
-                               name=json_object["world"]["name"],
-                               infinite_tier=json_object["world"]["infinite_tier"],
-                               orient=spaces.str_to_orient(json_object["orientation"]))
-        raise KeyError("HOW")
-    elif issubclass(object_type, Level):
-        if is_level_json(json_object):
-            return object_type(pos=json_object["position"],
-                               name=json_object["level"]["name"],
-                               icon_name=json_object["icon"]["name"],
-                               icon_color=json_object["icon"]["color"],
-                               orient=spaces.str_to_orient(json_object["orientation"]))
-        raise KeyError("HOW")
-    elif issubclass(object_type, Sprite):
-        if is_sprite_json(json_object):
-            return object_type(pos=json_object["position"],
-                               sprite_name=json_object["sprite"]["name"],
-                               orient=spaces.str_to_orient(json_object["orientation"]))
-        raise KeyError("HOW")
+    if ver is not None and basics.compare_versions(ver, "3.321") == -1:
+        world_info = json_object.get("world")
+        level_info = json_object.get("level")
+        if type(json_object) == dict and type(level_info) == dict:
+            level_info["icon"] = json_object.get("icon")
     else:
-        return object_type(pos=json_object["position"],
-                           orient=spaces.str_to_orient(json_object["orientation"]))
+        world_info = json_object.get("world")
+        level_info = json_object.get("level")
+    object_type = object_name[json_object["type"]]
+    return object_type(pos=json_object["position"],
+                       orient=spaces.str_to_orient(json_object["orientation"]),
+                       world_info=world_info,
+                       level_info=level_info)

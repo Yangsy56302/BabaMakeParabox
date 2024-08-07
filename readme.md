@@ -215,6 +215,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 3.311  | 2024.08.02 | Baba write Text_ You |
 | 3.32   | 2024.08.02 | Text on Box is TextPlus; Bug on Text_ on is Fix |
 | 3.321  | 2024.08.07 | Number on Text_Text feeling Edit is not Hide |
+| 3.4    | 2024.08.07 | Storage on Level and World is Update |
 
 ## Bug Reports and Suggestions
 

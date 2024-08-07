@@ -29,7 +29,7 @@ def logic(args: dict[str, Any]) -> None:
         if args.get("output") != "":
             filename: str = args["output"]
             with open(os.path.join("levelpacks", filename + ".json"), "w", encoding="utf-8") as file:
-                json.dump(levelpack.to_json(), file, indent=None if basics.options["compressed_json_output"] else 4)
+                json.dump(levelpack.to_json(), file, indent=None if basics.options["compressed_json_output"] else 4, separators=(",", ":") if basics.options["compressed_json_output"] else (", ", ": "))
         return
     elif args.get("play", False):
         filename: str = args["input"]

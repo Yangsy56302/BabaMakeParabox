@@ -48,7 +48,7 @@ def play(levelpack: levelpacks.Levelpack) -> None:
     window.fill("#000000")
     current_level_name = levelpack.main_level
     current_level: levels.Level = levelpack.get_exist_level(current_level_name)
-    current_world_index: int = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
+    current_world_index: int = current_level.world_list.index(current_level.get_exist_world({"name": current_level.main_world_name, "infinite_tier": current_level.main_world_tier}))
     current_world: worlds.World = current_level.world_list[current_world_index]
     default_level_info: levels.ReTurnValue = {"win": False, "end": False, "game_push": False, "selected_level": None, "transform_to": None}
     level_info: levels.ReTurnValue = default_level_info.copy()
@@ -127,7 +127,7 @@ def play(levelpack: levelpacks.Levelpack) -> None:
                 history.append({"world_index": current_world_index, "level_name": current_level_name, "level_info": level_info, "levelpack": copy.deepcopy(levelpack)})
                 current_level_name = current_level.super_level if current_level.super_level is not None else levelpack.main_level
                 current_level = levelpack.get_exist_level(current_level_name)
-                current_world_index = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
+                current_world_index = current_level.world_list.index(current_level.get_exist_world({"name": current_level.main_world_name, "infinite_tier": current_level.main_world_tier}))
                 current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
                 current_world = current_level.world_list[current_world_index]
                 level_changed = True
@@ -160,7 +160,7 @@ def play(levelpack: levelpacks.Levelpack) -> None:
                 levelpack = copy.deepcopy(levelpack_backup)
                 current_level_name = levelpack.main_level
                 current_level = levelpack.get_exist_level(current_level_name)
-                current_world_index = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
+                current_world_index = current_level.world_list.index(current_level.get_exist_world({"name": current_level.main_world_name, "infinite_tier": current_level.main_world_tier}))
                 current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
                 current_world = current_level.world_list[current_world_index]
                 history = [{"world_index": current_world_index, "level_name": current_level_name, "level_info": default_level_info, "levelpack": copy.deepcopy(levelpack)}]
@@ -277,7 +277,7 @@ def play(levelpack: levelpacks.Levelpack) -> None:
                 for level in levelpack.level_list:
                     for world in level.world_list:
                         for level_obj in world.get_levels():
-                            if current_level.name == level_obj.name:
+                            if current_level.name == level_obj.level_info["name"]:
                                 transform_success = True
                                 for obj in level_info["transform_to"]:
                                     obj: objects.BmpObject
@@ -294,15 +294,17 @@ def play(levelpack: levelpacks.Levelpack) -> None:
                             if issubclass(transform_obj.to_type, objects.WorldPointer):
                                 for new_world in from_level.world_list:
                                     level.set_world(new_world)
-                                new_obj = transform_obj.to_type(transform_obj.pos, from_level.main_world_name, from_level.main_world_tier, transform_obj.orient)
+                                world_obj_info: objects.WorldPointerExtraJson = {"name": from_level.main_world_name, "infinite_tier": from_level.main_world_tier}
+                                new_obj = transform_obj.to_type(transform_obj.pos, transform_obj.orient, world_info=world_obj_info)
                                 world.del_obj(transform_obj)
                                 world.new_obj(new_obj)
                         elif issubclass(transform_obj.from_type, objects.WorldPointer):
-                            from_world = level.get_exist_world(transform_obj.from_name, transform_obj.from_infinite_tier)
+                            from_world = level.get_exist_world({"name": transform_obj.from_name, "infinite_tier": transform_obj.from_infinite_tier})
                             if issubclass(transform_obj.to_type, objects.LevelPointer):
                                 new_level = levels.Level(from_world.name, level.world_list, level.name, transform_obj.from_name, transform_obj.from_infinite_tier, level.rule_list)
                                 levelpack.set_level(new_level)
-                                new_obj = objects.Level(transform_obj.pos, from_world.name, icon_color=from_world.color, orient=transform_obj.orient)
+                                level_obj_info: objects.LevelPointerExtraJson = {"name": from_world.name, "icon": {"name": "empty", "color": from_world.color}}
+                                new_obj = objects.Level(transform_obj.pos, orient=transform_obj.orient, level_info=level_obj_info)
                                 world.del_obj(transform_obj)
                                 world.new_obj(new_obj)
             for level in levelpack.level_list:
@@ -344,7 +346,7 @@ def play(levelpack: levelpacks.Levelpack) -> None:
                 super_level = levelpack.get_level(super_level_name if super_level_name is not None else levelpack.main_level)
                 current_level_name = super_level.name if super_level is not None else levelpack.main_level
                 current_level = levelpack.get_exist_level(current_level_name)
-                current_world_index = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
+                current_world_index = current_level.world_list.index(current_level.get_exist_world({"name": current_level.main_world_name, "infinite_tier": current_level.main_world_tier}))
                 current_world = current_level.world_list[current_world_index]
             elif level_info_backup["end"]:
                 game_running = False
@@ -353,12 +355,12 @@ def play(levelpack: levelpacks.Levelpack) -> None:
                 super_level = levelpack.get_level(super_level_name if super_level_name is not None else levelpack.main_level)
                 current_level_name = super_level.name if super_level is not None else levelpack.main_level
                 current_level = levelpack.get_exist_level(current_level_name)
-                current_world_index = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
+                current_world_index = current_level.world_list.index(current_level.get_exist_world({"name": current_level.main_world_name, "infinite_tier": current_level.main_world_tier}))
                 current_world = current_level.world_list[current_world_index]
             elif level_info_backup["selected_level"] is not None:
                 current_level_name = level_info_backup["selected_level"]
                 current_level = levelpack.get_exist_level(current_level_name)
-                current_world_index = current_level.world_list.index(current_level.get_exist_world(current_level.main_world_name, current_level.main_world_tier))
+                current_world_index = current_level.world_list.index(current_level.get_exist_world({"name": current_level.main_world_name, "infinite_tier": current_level.main_world_tier}))
                 current_world = current_level.world_list[current_world_index]
                 round_num = 0
         if level_changed:
