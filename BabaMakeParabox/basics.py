@@ -1,4 +1,4 @@
-from typing import Literal, TypedDict
+from typing import Literal, TypedDict, NotRequired
 import os
 import json
 import copy
@@ -8,7 +8,7 @@ import pygame
 
 pygame.init()
 
-versions = "3.4"
+versions = "3.401"
 def compare_versions(ver_1: str, ver_2: str) -> Literal[-1, 0, 1]:
     for char_1, char_2 in zip(ver_1, ver_2):
         if ord(char_1) > ord(char_2):
@@ -48,6 +48,8 @@ class Options(TypedDict):
     default_new_world: DefaultNewWorldOptions
     metatext: MetatextOptions
     bgm: BgmOptions
+    game_is_end: NotRequired[bool]
+    game_is_done: NotRequired[bool]
 
 default_options: Options = {
     "ver": versions,

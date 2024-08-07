@@ -57,9 +57,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     current_level = levelpack.level_list[current_level_index]
     current_world_index: int = 0
     current_world = current_level.world_list[current_world_index]
-    object_list = [t for t in objects.object_name.values() if t not in objects.not_in_editor]
-    current_object_index = 0
-    current_object_type = object_list[current_object_index]
+    current_object_type = objects.Baba
     current_orient = spaces.Orient.S
     current_object = displays.set_sprite_state(current_object_type((0, 0), current_orient))
     current_cursor_pos = (0, 0)
@@ -120,69 +118,73 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 if not current_world.out_of_range(new_cursor_pos):
                     current_cursor_pos = new_cursor_pos
         elif keys["Q"]:
-            current_object_index -= 1
+            current_object_type_list = list(objects.object_name.values())
+            current_object_type_index = current_object_type_list.index(current_object_type)
+            current_object_type = current_object_type_list[current_object_type_index - 1 if current_object_type_index >= 0 else len(current_object_type_list) - 1]
         elif keys["E"]:
-            current_object_index += 1
+            current_object_type_list = list(objects.object_name.values())
+            current_object_type_index = current_object_type_list.index(current_object_type)
+            current_object_type = current_object_type_list[current_object_type_index + 1 if current_object_type_index < len(current_object_type_list) else 0]
         elif keys["1"]:
             if keys["LCTRL"] or keys["RCTRL"]:
                 object_type_shortcuts[0] = current_object_type
                 basics.options["object_type_shortcuts"][0] = {v: k for k, v in objects.object_name.items()}[current_object_type]
             else:
-                current_object_index = object_list.index(object_type_shortcuts[0])
+                current_object_type = object_type_shortcuts[0]
         elif keys["2"]:
             if keys["LCTRL"] or keys["RCTRL"]:
                 object_type_shortcuts[1] = current_object_type
                 basics.options["object_type_shortcuts"][1] = {v: k for k, v in objects.object_name.items()}[current_object_type]
             else:
-                current_object_index = object_list.index(object_type_shortcuts[1])
+                current_object_type = object_type_shortcuts[1]
         elif keys["3"]:
             if keys["LCTRL"] or keys["RCTRL"]:
                 object_type_shortcuts[2] = current_object_type
                 basics.options["object_type_shortcuts"][2] = {v: k for k, v in objects.object_name.items()}[current_object_type]
             else:
-                current_object_index = object_list.index(object_type_shortcuts[2])
+                current_object_type = object_type_shortcuts[2]
         elif keys["4"]:
             if keys["LCTRL"] or keys["RCTRL"]:
                 object_type_shortcuts[3] = current_object_type
                 basics.options["object_type_shortcuts"][3] = {v: k for k, v in objects.object_name.items()}[current_object_type]
             else:
-                current_object_index = object_list.index(object_type_shortcuts[3])
+                current_object_type = object_type_shortcuts[3]
         elif keys["5"]:
             if keys["LCTRL"] or keys["RCTRL"]:
                 object_type_shortcuts[4] = current_object_type
                 basics.options["object_type_shortcuts"][4] = {v: k for k, v in objects.object_name.items()}[current_object_type]
             else:
-                current_object_index = object_list.index(object_type_shortcuts[4])
+                current_object_type = object_type_shortcuts[4]
         elif keys["6"]:
             if keys["LCTRL"] or keys["RCTRL"]:
                 object_type_shortcuts[5] = current_object_type
                 basics.options["object_type_shortcuts"][5] = {v: k for k, v in objects.object_name.items()}[current_object_type]
             else:
-                current_object_index = object_list.index(object_type_shortcuts[5])
+                current_object_type = object_type_shortcuts[5]
         elif keys["7"]:
             if keys["LCTRL"] or keys["RCTRL"]:
                 object_type_shortcuts[6] = current_object_type
                 basics.options["object_type_shortcuts"][6] = {v: k for k, v in objects.object_name.items()}[current_object_type]
             else:
-                current_object_index = object_list.index(object_type_shortcuts[6])
+                current_object_type = object_type_shortcuts[6]
         elif keys["8"]:
             if keys["LCTRL"] or keys["RCTRL"]:
                 object_type_shortcuts[7] = current_object_type
                 basics.options["object_type_shortcuts"][7] = {v: k for k, v in objects.object_name.items()}[current_object_type]
             else:
-                current_object_index = object_list.index(object_type_shortcuts[7])
+                current_object_type = object_type_shortcuts[7]
         elif keys["9"]:
             if keys["LCTRL"] or keys["RCTRL"]:
                 object_type_shortcuts[8] = current_object_type
                 basics.options["object_type_shortcuts"][8] = {v: k for k, v in objects.object_name.items()}[current_object_type]
             else:
-                current_object_index = object_list.index(object_type_shortcuts[8])
+                current_object_type = object_type_shortcuts[8]
         elif keys["0"]:
             if keys["LCTRL"] or keys["RCTRL"]:
                 object_type_shortcuts[9] = current_object_type
                 basics.options["object_type_shortcuts"][9] = {v: k for k, v in objects.object_name.items()}[current_object_type]
             else:
-                current_object_index = object_list.index(object_type_shortcuts[9])
+                current_object_type = object_type_shortcuts[9]
         elif keys["RETURN"]:
             if keys["LCTRL"] or keys["RCTRL"] or len(current_world.get_objs_from_pos(current_cursor_pos)) == 0:
                 history.append(copy.deepcopy(levelpack))
@@ -313,12 +315,10 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             if keys["LSHIFT"] or keys["RSHIFT"]:
                 if issubclass(current_object_type, objects.Noun) and current_object_type.obj_type not in objects.not_in_editor:
                     current_object_type = current_object_type.obj_type
-                    current_object_index = object_list.index(current_object_type)
             else:
                 obj_to_noun = objects.get_noun_from_obj(current_object_type)
                 if obj_to_noun not in objects.not_in_editor:
                     current_object_type = obj_to_noun
-                    current_object_index = object_list.index(current_object_type)
         elif keys["Z"]:
             if len(history) > 1:
                 levelpack = copy.deepcopy(history.pop())
@@ -385,33 +385,39 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             print(languages.current_language["editor.world.current.name"], current_world.name, sep="")
             print(languages.current_language["editor.world.current.infinite_tier"], current_world.infinite_tier, sep="")
             world_changed = False
-        current_object_index = current_object_index % len(object_list) if current_object_index >= 0 else len(object_list) - 1
-        current_object_type = object_list[current_object_index]
         for world in current_level.world_list:
             world.set_sprite_states(0)
         window.fill("#000000")
         displays.set_pixel_size(window.get_size())
         current_world_surface = current_level.show_world(current_world, wiggle, cursor=current_cursor_pos)
         window.blit(pygame.transform.scale(current_world_surface, (window.get_height() * current_world.width // current_world.height, window.get_height())), (0, 0))
-        current_object = displays.set_sprite_state(current_object_type((0, 0), current_orient, level_info=None, world_info=None))
-        current_object_surface = displays.sprites.get(current_object_type.sprite_name, current_object.sprite_state, wiggle)
-        current_object_surface = pygame.transform.scale(current_object_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
-        if isinstance(current_object, objects.World):
-            current_object_surface = displays.set_surface_color_dark(current_world_surface, 0xCCCCCC)
+        if issubclass(current_object_type, objects.WorldPointer):
+            if issubclass(current_object_type, objects.World):
+                current_object_surface = displays.set_surface_color_dark(current_world_surface, 0xCCCCCC)
+                current_object_surface = pygame.transform.scale(current_object_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
+            elif issubclass(current_object_type, objects.Clone):
+                current_object_surface = displays.set_surface_color_light(current_world_surface, 0x444444)
+                current_object_surface = pygame.transform.scale(current_object_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
+        elif issubclass(current_object_type, objects.LevelPointer):
+            current_object_surface = displays.sprites.get(current_object_type.sprite_name, 0, wiggle)
             current_object_surface = pygame.transform.scale(current_object_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
-        elif isinstance(current_object, objects.Clone):
-            current_object_surface = displays.set_surface_color_light(current_world_surface, 0x444444)
+        elif issubclass(current_object_type, objects.Metatext):
+            current_object = displays.set_sprite_state(current_object_type((0, 0), current_orient, level_info=None, world_info=None))
+            current_object_surface = displays.sprites.get(current_object_type.sprite_name, current_object.sprite_state, wiggle)
             current_object_surface = pygame.transform.scale(current_object_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
-        elif isinstance(current_object, objects.Metatext):
-            tier_surface = pygame.Surface((displays.sprite_size * len(str(current_object.meta_tier)), displays.sprite_size), pygame.SRCALPHA)
+            tier_surface = pygame.Surface((displays.sprite_size * len(str(current_object_type.meta_tier)), displays.sprite_size), pygame.SRCALPHA)
             tier_surface.fill("#00000000")
-            for digit, char in enumerate(str(current_object.meta_tier)):
+            for digit, char in enumerate(str(current_object_type.meta_tier)):
                 tier_surface.blit(displays.sprites.get("text_" + char, 0, wiggle), (displays.sprite_size * digit, 0))
             tier_surface = displays.set_alpha(tier_surface, 0x88)
-            tier_surface = pygame.transform.scale(tier_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size / len(str(current_object.meta_tier))))
+            tier_surface = pygame.transform.scale(tier_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size / len(str(current_object_type.meta_tier))))
             tier_surface_pos = ((current_object_surface.get_width() - tier_surface.get_width()) // 2,
                                 (current_object_surface.get_height() - tier_surface.get_height()) // 2)
             current_object_surface.blit(tier_surface, tier_surface_pos)
+        else:
+            current_object = displays.set_sprite_state(current_object_type((0, 0), current_orient, level_info=None, world_info=None))
+            current_object_surface = displays.sprites.get(current_object_type.sprite_name, current_object.sprite_state, wiggle)
+            current_object_surface = pygame.transform.scale(current_object_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
         window.blit(current_object_surface, (window.get_width() - displays.pixel_sprite_size, 0))
         for index, obj_type in object_type_shortcuts.items():
             obj = displays.set_sprite_state(obj_type((0, 0), spaces.Orient.S))

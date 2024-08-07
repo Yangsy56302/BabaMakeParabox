@@ -705,20 +705,11 @@ object_class_used.extend([All, Empty, Text, Game, TextEmpty])
 
 object_name: dict[str, type[BmpObject]] = {t.json_name: t for t in object_used}
 
-def get_noun_from_obj(obj_type: type[BmpObject]) -> type[Noun]:
-    return_value: Optional[type[Noun]] = None
-    for noun_type in noun_list:
-        if obj_type == noun_type.obj_type:
-            return noun_type
-        if issubclass(obj_type, noun_type.obj_type):
-            return_value = noun_type
-    if return_value is None:
-        return TextText
-    return return_value
-
 not_in_all: tuple[type[BmpObject], ...] = (All, Empty, Text, Level, WorldPointer, Transform, Sprite, Game)
 in_not_all: tuple[type[BmpObject], ...] = (Text, Empty, Transform, Sprite, Game)
 not_in_editor: tuple[type[BmpObject], ...] = (All, Empty, TextEmpty, Text, Transform, Sprite, Game)
+
+current_metatext_tier: int = basics.options["metatext"]["tier"]
 
 def generate_metatext(T: type[Text]) -> type[Metatext]:
     new_type_name = "Text" + T.__name__
@@ -746,6 +737,27 @@ def generate_metatext_at_tier(tier: int) -> tuple[list[type[Metatext]], list[typ
         new_metatext_list.append(generate_metatext(noun))
     return new_metatext_list, older_metatext_list + old_metatext_list
 
+def get_noun_from_obj(obj_type: type[BmpObject]) -> type[Noun]:
+    global current_metatext_tier
+    global object_class_used, object_used, object_name, noun_list, text_list
+    return_value: type[Noun] = TextText
+    for noun_type in noun_list:
+        if obj_type.__name__ == noun_type.obj_type.__name__:
+            return noun_type
+        if issubclass(obj_type, noun_type.obj_type):
+            return_value = noun_type
+    if return_value == TextText:
+        current_metatext_tier += 1
+        max_metatext_list, other_metatext_list = generate_metatext_at_tier(current_metatext_tier)
+        for new_type in max_metatext_list:
+            object_class_used.append(new_type)
+            object_used.append(new_type)
+            object_name[new_type.json_name] = new_type
+            noun_list.append(new_type)
+            text_list.append(new_type)
+        return get_noun_from_obj(obj_type)
+    return return_value
+
 if basics.options["metatext"]["enabled"]:
     max_metatext_list, other_metatext_list = generate_metatext_at_tier(basics.options["metatext"]["tier"])
     for new_type in max_metatext_list + other_metatext_list:
@@ -764,6 +776,8 @@ is_world_pointer_json = is_correct_bmp_object_json(LevelPointerExtraJson)
 is_level_json = is_correct_bmp_object_json(LevelPointerExtraJson)
 
 def json_to_object(json_object: BmpObjectJson, ver: Optional[str] = None) -> BmpObject:
+    global current_metatext_tier
+    global object_class_used, object_used, object_name, noun_list, text_list
     if ver is not None and basics.compare_versions(ver, "3.321") == -1:
         world_info = json_object.get("world")
         level_info = json_object.get("level")
@@ -772,7 +786,17 @@ def json_to_object(json_object: BmpObjectJson, ver: Optional[str] = None) -> Bmp
     else:
         world_info = json_object.get("world")
         level_info = json_object.get("level")
-    object_type = object_name[json_object["type"]]
+    object_type = object_name.get(json_object["type"])
+    if object_type is None:
+        current_metatext_tier += 1
+        max_metatext_list, other_metatext_list = generate_metatext_at_tier(current_metatext_tier)
+        for new_type in max_metatext_list:
+            object_class_used.append(new_type)
+            object_used.append(new_type)
+            object_name[new_type.json_name] = new_type
+            noun_list.append(new_type)
+            text_list.append(new_type)
+        return json_to_object(json_object, ver)
     return object_type(pos=json_object["position"],
                        orient=spaces.str_to_orient(json_object["orientation"]),
                        world_info=world_info,

@@ -993,10 +993,11 @@ class Level(object):
                                 world_info: objects.WorldPointerExtraJson = {"name": old_obj.uuid.hex, "infinite_tier": 0}
                                 world.new_obj(objects.World(old_obj.pos, old_obj.orient, world_info=world_info, level_info=old_obj.level_info))
                                 transform_success = True
-                        elif new_type == objects.Text and not isinstance(old_obj, objects.Text):
-                            transform_success = True
-                            new_obj = objects.get_noun_from_obj(old_type)(old_obj.pos, old_obj.orient, world_info=old_obj.world_info, level_info=old_obj.level_info)
-                            world.new_obj(new_obj)
+                        elif new_type == objects.Text:
+                            if not isinstance(old_obj, objects.Text):
+                                transform_success = True
+                                new_obj = objects.get_noun_from_obj(old_type)(old_obj.pos, old_obj.orient, world_info=old_obj.world_info, level_info=old_obj.level_info)
+                                world.new_obj(new_obj)
                         else:
                             transform_success = True
                             new_obj = new_type(old_obj.pos, old_obj.orient, world_info=old_obj.world_info, level_info=old_obj.level_info)

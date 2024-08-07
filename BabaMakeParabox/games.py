@@ -8,6 +8,10 @@ from BabaMakeParabox import basics, languages, sounds, spaces, objects, displays
 
 import pygame
 
+class GameIsDoneError(Exception):
+    def __str__(self) -> str:
+        return languages.current_language["game.done"]
+
 class History(TypedDict):
     world_index: int
     level_name: str
@@ -223,17 +227,23 @@ def play(levelpack: levelpacks.Levelpack) -> None:
                 if prop_negated_count % 2 == 1:
                     continue
                 if prop == objects.TextWin:
+                    print(languages.current_language["game.win"])
                     sounds.play("win")
                     game_running = False
                 elif prop == objects.TextShut:
                     sounds.play("defeat")
                     game_running = False
                 elif prop == objects.TextEnd:
+                    print(languages.current_language["game.end"])
                     sounds.play("end")
+                    basics.options["game_is_end"] = True
                     game_running = False
                 elif prop == objects.TextDone:
                     sounds.play("done")
+                    basics.options["game_is_done"] = True
+                    basics.save_options(basics.options)
                     game_running = False
+                    raise GameIsDoneError()
                 elif prop == objects.TextOpen:
                     if basics.current_os == basics.windows:
                         if os.path.exists("BabaMakeParabox.exe"):

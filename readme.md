@@ -66,7 +66,7 @@ Please remember:
 
 ### About Special Nouns / Objects
 
-...
+Please help me to translate this chapter from [the Chinese version of readme file](readme_cn.md)...
 
 ## How to Make a Custom Levelpack
 
@@ -75,7 +75,8 @@ Please remember:
 - WSAD: Move cursor.
 - Shift + WSAD: Change orientation.
 - Q / E: Select object.
-- Tab: Switch object / noun.
+- Tab: Select noun from object.
+- Shift + Tab: Select object from noun.
 - 0 ~ 9: Select object from palette.
 - Ctrl + 0 ~ Ctrl + 9: Set palette from selected object.
 - Enter: Place object on cursor.
@@ -105,9 +106,9 @@ Please remember:
 **input some informations on terminal after pressing this key.**
 During that time, the game window will freeze because the program is waiting for inputs.
 
-**Important: as default, the levels / worlds / clones that placed**
-**are pointed to the levels / worlds / clones that where the camera is.**
-If you want to put levels / worlds / clones inside other levels / worlds,
+**Important: as default, the level / world / clone objects that placed**
+**are pointed to the levels / worlds that where the camera is.**
+If you want to put level / world / clone objects inside other levels / worlds,
 please considering shift + enter, or cut, copy, and paste.
 
 ## Misc
@@ -216,6 +217,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 3.32   | 2024.08.02 | Text on Box is TextPlus; Bug on Text_ on is Fix |
 | 3.321  | 2024.08.07 | Number on Text_Text feeling Edit is not Hide |
 | 3.4    | 2024.08.07 | Storage on Level and World is Update |
+| 3.401  | 2024.08.07 | Game feeling Done is Shut; Text_Text_ is More |
 
 ## Bug Reports and Suggestions
 
