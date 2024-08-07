@@ -129,56 +129,56 @@ class Level(object):
         return return_value
     def meet_infix_conditions(self, world: worlds.World, obj: objects.BmpObject, infix_info_list: list[rules.InfixInfo], old_feeling: Optional[list[tuple[type[objects.Text], int]]] = None) -> bool:
         return_value = True
+        matched_objs: list[objects.BmpObject] = [obj]
         for infix_info in infix_info_list:
             meet_infix_condition = True
-            if infix_info[1] == objects.TextOn:
-                find_range = [(obj.x, obj.y)]
-            elif infix_info[1] == objects.TextNear:
-                find_range = [(obj.x - 1, obj.y - 1), (obj.x, obj.y - 1), (obj.x + 1, obj.y - 1),
-                              (obj.x - 1, obj.y), (obj.x, obj.y), (obj.x + 1, obj.y),
-                              (obj.x - 1, obj.y + 1), (obj.x, obj.y + 1), (obj.x + 1, obj.y + 1)]
-            elif infix_info[1] == objects.TextNextto:
-                find_range = [(obj.x, obj.y - 1), (obj.x - 1, obj.y), (obj.x + 1, obj.y), (obj.x, obj.y + 1)]
             if infix_info[1] in (objects.TextOn, objects.TextNear, objects.TextNextto):
+                if infix_info[1] == objects.TextOn:
+                    find_range = [(obj.x, obj.y)]
+                elif infix_info[1] == objects.TextNear:
+                    find_range = [(obj.x - 1, obj.y - 1), (obj.x, obj.y - 1), (obj.x + 1, obj.y - 1),
+                                  (obj.x - 1, obj.y), (obj.x, obj.y), (obj.x + 1, obj.y),
+                                  (obj.x - 1, obj.y + 1), (obj.x, obj.y + 1), (obj.x + 1, obj.y + 1)]
+                elif infix_info[1] == objects.TextNextto:
+                    find_range = [(obj.x, obj.y - 1), (obj.x - 1, obj.y), (obj.x + 1, obj.y), (obj.x, obj.y + 1)]
                 match_type: type[objects.BmpObject] = infix_info[3].obj_type # type: ignore
-                if match_type is not None:
-                    if match_type == objects.All:
-                        if infix_info[2]:
-                            for new_match_type in [o for o in self.all_list if issubclass(o, objects.in_not_all)]:
-                                match_objs = []
-                                for pos in find_range:
-                                    match_objs.extend(world.get_objs_from_pos_and_type(pos, new_match_type))
-                                if obj in match_objs:
-                                    match_objs.remove(obj)
-                                if len(match_objs) == 0:
-                                    meet_infix_condition = False
-                        else:
-                            for new_match_type in [o for o in self.all_list if not issubclass(o, objects.not_in_all)]:
-                                match_objs = []
-                                for pos in find_range:
-                                    match_objs.extend(world.get_objs_from_pos_and_type(pos, new_match_type))
-                                if obj in match_objs:
-                                    match_objs.remove(obj)
-                                if len(match_objs) == 0:
-                                    meet_infix_condition = False
-                    else:
-                        if infix_info[2]:
-                            for new_match_type in [o for o in self.all_list if (not issubclass(o, objects.not_in_all)) and not issubclass(o, match_type)]:
-                                match_objs = []
-                                for pos in find_range:
-                                    match_objs.extend(world.get_objs_from_pos_and_type(pos, new_match_type))
-                                if obj in match_objs:
-                                    match_objs.remove(obj)
-                                if len(match_objs) == 0:
-                                    meet_infix_condition = False
-                        else:
-                            match_objs = []
+                if match_type == objects.All:
+                    if infix_info[2]:
+                        for new_match_type in [o for o in self.all_list if issubclass(o, objects.in_not_all)]:
+                            match_objs: list[objects.BmpObject] = []
                             for pos in find_range:
-                                match_objs.extend(world.get_objs_from_pos_and_type(pos, match_type))
-                            if obj in match_objs:
-                                match_objs.remove(obj)
+                                match_objs.extend([o for o in world.get_objs_from_pos_and_type(pos, new_match_type) if o not in matched_objs])
                             if len(match_objs) == 0:
                                 meet_infix_condition = False
+                            else:
+                                matched_objs.append(match_objs[0])
+                    else:
+                        for new_match_type in [o for o in self.all_list if not issubclass(o, objects.not_in_all)]:
+                            match_objs: list[objects.BmpObject] = []
+                            for pos in find_range:
+                                match_objs.extend([o for o in world.get_objs_from_pos_and_type(pos, new_match_type) if o not in matched_objs])
+                            if len(match_objs) == 0:
+                                meet_infix_condition = False
+                            else:
+                                matched_objs.append(match_objs[0])
+                else:
+                    if infix_info[2]:
+                        for new_match_type in [o for o in self.all_list if (not issubclass(o, objects.not_in_all)) and not issubclass(o, match_type)]:
+                            match_objs: list[objects.BmpObject] = []
+                            for pos in find_range:
+                                match_objs.extend([o for o in world.get_objs_from_pos_and_type(pos, new_match_type) if o not in matched_objs])
+                            if len(match_objs) == 0:
+                                meet_infix_condition = False
+                            else:
+                                matched_objs.append(match_objs[0])
+                    else:
+                        match_objs: list[objects.BmpObject] = []
+                        for pos in find_range:
+                            match_objs.extend([o for o in world.get_objs_from_pos_and_type(pos, match_type) if o not in matched_objs])
+                        if len(match_objs) == 0:
+                            meet_infix_condition = False
+                        else:
+                            matched_objs.append(match_objs[0])
             elif infix_info[1] == objects.TextFeeling:
                 if old_feeling is None:
                     meet_infix_condition = False
@@ -1264,38 +1264,40 @@ class Level(object):
             elif isinstance(obj, objects.Level):
                 obj_surface = displays.set_surface_color_dark(displays.sprites.get(obj.sprite_name, obj.sprite_state, frame).copy(), obj.icon_color)
                 icon_surface = displays.set_surface_color_light(displays.sprites.get(obj.icon_name, 0, frame).copy(), 0xFFFFFF)
-                icon_surface_pos = ((obj_surface.get_width() - icon_surface.get_width()) * displays.pixel_size // 2,
-                                    (obj_surface.get_height() - icon_surface.get_height()) * displays.pixel_size // 2)
+                icon_surface_pos = ((obj_surface.get_width() - icon_surface.get_width()) // 2,
+                                    (obj_surface.get_height() - icon_surface.get_height()) // 2)
                 obj_surface.blit(icon_surface, icon_surface_pos)
-                obj_surface_pos = (obj.x * pixel_sprite_size - (obj_surface.get_width() - displays.sprite_size) * displays.pixel_size // 2,
-                               obj.y * pixel_sprite_size - (obj_surface.get_height() - displays.sprite_size) * displays.pixel_size // 2)
+                obj_surface_pos = (obj.x * pixel_sprite_size, obj.y * pixel_sprite_size)
                 obj_surface_list.append((obj_surface_pos, obj_surface, obj))
             elif isinstance(obj, objects.Metatext):
                 obj_surface = displays.sprites.get(obj.sprite_name, 0, frame).copy()
-                tier_surface = pygame.Surface((displays.sprite_size, displays.sprite_size * len(str(obj.meta_tier))), pygame.SRCALPHA)
+                obj_surface = pygame.transform.scale(obj_surface, (displays.sprite_size * len(str(obj.meta_tier)), displays.sprite_size * len(str(obj.meta_tier))))
+                tier_surface = pygame.Surface((displays.sprite_size * len(str(obj.meta_tier)), displays.sprite_size), pygame.SRCALPHA)
                 tier_surface.fill("#00000000")
                 for digit, char in enumerate(str(obj.meta_tier)):
-                    tier_surface.blit(displays.sprites.get("text_" + char, 0, frame), (0, displays.sprite_size * digit))
-                tier_surface = pygame.transform.scale_by(tier_surface, 1 / len(str(obj.meta_tier)))
-                tier_surface_pos = ((obj_surface.get_width() - tier_surface.get_width()) * displays.pixel_size // 2,
-                                    (obj_surface.get_height() - tier_surface.get_height()) * displays.pixel_size // 2)
+                    tier_surface.blit(displays.sprites.get("text_" + char, 0, frame), (displays.sprite_size * digit, 0))
                 tier_surface = displays.set_alpha(tier_surface, 0x88)
+                tier_surface_pos = ((obj_surface.get_width() - tier_surface.get_width()) // 2,
+                                    (obj_surface.get_height() - tier_surface.get_height()) // 2)
                 obj_surface.blit(tier_surface, tier_surface_pos)
+                obj_surface_pos = (obj.x * pixel_sprite_size, obj.y * pixel_sprite_size)
+                obj_surface_list.append((obj_surface_pos, obj_surface, obj))
+            elif isinstance(obj, objects.Cursor):
+                obj_surface = displays.sprites.get(obj.sprite_name, obj.sprite_state, frame).copy()
                 obj_surface_pos = (obj.x * pixel_sprite_size - (obj_surface.get_width() - displays.sprite_size) * displays.pixel_size // 2,
-                               obj.y * pixel_sprite_size - (obj_surface.get_height() - displays.sprite_size) * displays.pixel_size // 2)
+                                   obj.y * pixel_sprite_size - (obj_surface.get_height() - displays.sprite_size) * displays.pixel_size // 2)
                 obj_surface_list.append((obj_surface_pos, obj_surface, obj))
             else:
                 obj_surface = displays.sprites.get(obj.sprite_name, obj.sprite_state, frame).copy()
-                obj_surface_pos = (obj.x * pixel_sprite_size - (obj_surface.get_width() - displays.sprite_size) * displays.pixel_size // 2,
-                               obj.y * pixel_sprite_size - (obj_surface.get_height() - displays.sprite_size) * displays.pixel_size // 2)
+                obj_surface_pos = (obj.x * pixel_sprite_size, obj.y * pixel_sprite_size)
                 obj_surface_list.append((obj_surface_pos, obj_surface, obj))
         sorted_obj_surface_list = map(lambda o: list(map(lambda t: isinstance(o[-1], t), displays.order)).index(True), obj_surface_list)
         sorted_obj_surface_list = map(lambda t: t[1], sorted(zip(sorted_obj_surface_list, obj_surface_list), key=lambda t: t[0], reverse=True))
         for pos, surface, obj in sorted_obj_surface_list:
-            if isinstance(obj, objects.WorldPointer):
-                world_surface.blit(pygame.transform.scale(surface, (pixel_sprite_size, pixel_sprite_size)), pos)
-            else:
+            if isinstance(obj, objects.Cursor):
                 world_surface.blit(pygame.transform.scale(surface, (displays.pixel_size * surface.get_width(), displays.pixel_size * surface.get_height())), pos)
+            else:
+                world_surface.blit(pygame.transform.scale(surface, (pixel_sprite_size, pixel_sprite_size)), pos)
         if cursor is not None:
             surface = displays.sprites.get("cursor", 0, frame).copy()
             pos = (cursor[0] * pixel_sprite_size - (surface.get_width() - displays.sprite_size) * displays.pixel_size // 2,

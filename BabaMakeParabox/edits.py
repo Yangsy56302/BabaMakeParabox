@@ -401,14 +401,14 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             current_object_surface = displays.set_surface_color_light(current_world_surface, 0x444444)
             current_object_surface = pygame.transform.scale(current_object_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
         elif isinstance(current_object, objects.Metatext):
-            tier_surface = pygame.Surface((displays.sprite_size, displays.sprite_size * len(str(current_object.meta_tier))), pygame.SRCALPHA)
+            tier_surface = pygame.Surface((displays.sprite_size * len(str(current_object.meta_tier)), displays.sprite_size), pygame.SRCALPHA)
             tier_surface.fill("#00000000")
             for digit, char in enumerate(str(current_object.meta_tier)):
-                tier_surface.blit(displays.sprites.get("text_" + char, 0, wiggle), (0, displays.sprite_size * digit))
+                tier_surface.blit(displays.sprites.get("text_" + char, 0, wiggle), (displays.sprite_size * digit, 0))
             tier_surface = displays.set_alpha(tier_surface, 0x88)
-            tier_surface = pygame.transform.scale_by(tier_surface, displays.pixel_size / len(str(current_object.meta_tier)))
-            tier_surface_pos = ((current_object_surface.get_width() - tier_surface.get_width()) * displays.pixel_size // 2,
-                                (current_object_surface.get_height() - tier_surface.get_height()) * displays.pixel_size // 2)
+            tier_surface = pygame.transform.scale(tier_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size / len(str(current_object.meta_tier))))
+            tier_surface_pos = ((current_object_surface.get_width() - tier_surface.get_width()) // 2,
+                                (current_object_surface.get_height() - tier_surface.get_height()) // 2)
             current_object_surface.blit(tier_surface, tier_surface_pos)
         window.blit(current_object_surface, (window.get_width() - displays.pixel_sprite_size, 0))
         for index, obj_type in object_type_shortcuts.items():
@@ -424,14 +424,14 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 obj_surface = displays.set_surface_color_light(current_world_surface, 0x444444)
                 obj_surface = pygame.transform.scale(obj_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
             elif isinstance(obj, objects.Metatext):
-                tier_surface = pygame.Surface((displays.sprite_size, displays.sprite_size * len(str(obj.meta_tier))), pygame.SRCALPHA)
+                tier_surface = pygame.Surface((displays.sprite_size * len(str(obj.meta_tier)), displays.sprite_size), pygame.SRCALPHA)
                 tier_surface.fill("#00000000")
                 for digit, char in enumerate(str(obj.meta_tier)):
-                    tier_surface.blit(displays.sprites.get("text_" + char, 0, wiggle), (0, displays.sprite_size * digit))
+                    tier_surface.blit(displays.sprites.get("text_" + char, 0, wiggle), (displays.sprite_size * digit, 0))
                 tier_surface = displays.set_alpha(tier_surface, 0x88)
-                tier_surface = pygame.transform.scale_by(tier_surface, displays.pixel_size / len(str(obj.meta_tier)))
-                tier_surface_pos = ((obj_surface.get_width() - tier_surface.get_width()) * displays.pixel_size // 2,
-                                    (obj_surface.get_height() - tier_surface.get_height()) * displays.pixel_size // 2)
+                tier_surface = pygame.transform.scale(tier_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size / len(str(obj.meta_tier))))
+                tier_surface_pos = ((obj_surface.get_width() - tier_surface.get_width()) // 2,
+                                    (obj_surface.get_height() - tier_surface.get_height()) // 2)
                 obj_surface.blit(tier_surface, tier_surface_pos)
             window.blit(obj_surface, obj_surface_pos)
         real_fps = min(1000 / milliseconds, (real_fps * (basics.options["fps"] - 1) + 1000 / milliseconds) / basics.options["fps"])

@@ -54,7 +54,8 @@ class Sprites(object):
     def __init__(self, sprite_colors: dict[str, colors.ColorHex]) -> None:
         self.sprite_colors = sprite_colors
     def update(self) -> None:
-        self.sprites = {}
+        self.raw_sprites: dict[str, pygame.Surface] = {}
+        self.sprites: dict[str, pygame.Surface] = {}
         for filename in os.listdir(os.path.join("sprites")):
             sprite = pygame.image.load(os.path.join("sprites", filename)).convert_alpha()
             sprite_name = os.path.splitext(filename)[0]
@@ -64,8 +65,11 @@ class Sprites(object):
             sprite_color = self.sprite_colors.get(sprite_basename)
             if sprite_color is None:
                 sprite_color = colors.WHITE
+            self.raw_sprites[sprite_name] = sprite.copy()
             self.sprites[sprite_name] = set_surface_color_dark(sprite, sprite_color)
-    def get(self, sprite_name: str, state: int, frame: int = 0) -> pygame.Surface:
+    def get(self, sprite_name: str, state: int, frame: int = 0, raw_sprite: bool = False) -> pygame.Surface:
+        if raw_sprite:
+            return self.raw_sprites["_".join([sprite_name, str(state), str(frame)])]
         return self.sprites["_".join([sprite_name, str(state), str(frame)])]
 
 def set_sprite_state(obj: objects.BmpObject, round_num: int = 0, wsad: Optional[dict[spaces.Orient, bool]] = None) -> objects.BmpObject:
@@ -184,6 +188,7 @@ order = [objects.Cursor,
          objects.Operator,
          objects.Noun,
          objects.Property,
+         objects.Text,
          objects.Character,
          objects.Level,
          objects.Static,
