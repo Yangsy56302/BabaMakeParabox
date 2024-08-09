@@ -6,6 +6,13 @@ from BabaMakeParabox import basics, colors, spaces, objects, rules, displays
 def match_pos(obj: objects.BmpObject, pos: spaces.Coord) -> bool:
     return obj.pos == pos
 
+class WorldJson(TypedDict):
+    name: str
+    infinite_tier: int
+    size: spaces.Coord
+    color: colors.ColorHex
+    object_list: list[objects.BmpObjectJson]
+
 class World(object):
     def __init__(self, name: str, size: tuple[int, int], infinite_tier: int = 0, color: Optional[colors.ColorHex] = None) -> None:
         self.name: str = name
@@ -441,18 +448,11 @@ class World(object):
             return (num + pos[0]) / self.width
         else:
             return (num + pos[1]) / self.height
-    def to_json(self) -> dict[str, Any]:
-        json_object = {"name": self.name, "infinite_tier": self.infinite_tier, "size": [self.width, self.height], "color": self.color, "object_list": []}
+    def to_json(self) -> WorldJson:
+        json_object: WorldJson = {"name": self.name, "infinite_tier": self.infinite_tier, "size": (self.width, self.height), "color": self.color, "object_list": []}
         for obj in self.object_list:
             json_object["object_list"].append(obj.to_json())
         return json_object
-
-class WorldJson(TypedDict):
-    name: str
-    infinite_tier: int
-    size: spaces.Coord
-    color: colors.ColorHex
-    object_list: list[objects.BmpObjectJson]
 
 def json_to_world(json_object: WorldJson, ver: Optional[str] = None) -> World:
     new_world = World(name=json_object["name"],

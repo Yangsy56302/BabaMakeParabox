@@ -1,4 +1,4 @@
-from typing import Any, Optional, TypedDict
+from typing import Any, NotRequired, Optional, TypedDict
 import random
 import copy
 import uuid
@@ -14,14 +14,26 @@ class ReTurnValue(TypedDict):
     selected_level: Optional[str]
     transform_to: Optional[list[objects.BmpObject]]
 
+class LevelMainWorldJson(TypedDict):
+    name: str
+    infinite_tier: int
+
+class LevelJson(TypedDict):
+    name: str
+    super_level: Optional[str]
+    is_map: NotRequired[bool]
+    main_world: LevelMainWorldJson
+    world_list: list[worlds.WorldJson]
+
 class Level(object):
-    def __init__(self, name: str, world_list: list[worlds.World], super_level: Optional[str] = None, main_world_name: Optional[str] = None, main_world_tier: Optional[int] = None, rule_list: Optional[list[rules.Rule]] = None) -> None:
+    def __init__(self, name: str, world_list: list[worlds.World], *, super_level: Optional[str] = None, main_world_name: Optional[str] = None, main_world_tier: Optional[int] = None, is_map: bool = False, rule_list: Optional[list[rules.Rule]] = None) -> None:
         self.name: str = name
         self.world_list: list[worlds.World] = list(world_list)
         self.super_level: Optional[str] = super_level
         self.main_world_name: str = main_world_name if main_world_name is not None else world_list[0].name
         self.main_world_tier: int = main_world_tier if main_world_tier is not None else world_list[0].infinite_tier
         self.rule_list: list[rules.Rule] = rule_list if rule_list is not None else rules.default_rule_list
+        self.is_map: bool = is_map
         self.game_properties: list[tuple[type[objects.BmpObject], int]] = []
         self.new_games: list[type[objects.BmpObject]] = []
         self.properties: list[tuple[type[objects.BmpObject], int]] = []
@@ -396,7 +408,7 @@ class Level(object):
                     obj.pos = (1, 1)
                     obj.reset_uuid()
                     new_world.new_obj(obj)
-                    self.created_levels.append(Level(obj.uuid.hex, [new_world], self.name, rule_list=self.rule_list))
+                    self.created_levels.append(Level(obj.uuid.hex, [new_world], super_level=self.name, rule_list=self.rule_list))
                     level_info: objects.LevelPointerExtraJson = {"name": obj.uuid.hex, "icon": {"name": obj.sprite_name, "color": displays.sprite_colors[obj.sprite_name]}}
                     world.new_obj(objects.Level(obj.pos, obj.orient, level_info=level_info))
             elif new_noun_type == objects.TextWorld:
@@ -709,7 +721,7 @@ class Level(object):
             object_list.extend([(world, o) for o in world.object_list])
         tele_objs = [t for t in object_list if t[1].has_prop(objects.TextTele)]
         tele_obj_types: dict[type[objects.BmpObject], list[tuple[worlds.World, objects.BmpObject]]] = {}
-        for obj_type in [n.obj_type for n in objects.noun_list]:
+        for obj_type in [n.obj_type for n in objects.noun_class_list]:
             for tele_obj in tele_objs:
                 if isinstance(tele_obj[1], obj_type):
                     tele_obj_types[obj_type] = tele_obj_types.get(obj_type, []) + [tele_obj]
@@ -849,7 +861,7 @@ class Level(object):
                             new_obj.pos = (1, 1)
                             new_obj.reset_uuid()
                             new_world.new_obj(new_obj)
-                            self.created_levels.append(Level(obj.uuid.hex, [new_world], self.name, rule_list=self.rule_list))
+                            self.created_levels.append(Level(obj.uuid.hex, [new_world], super_level=self.name, rule_list=self.rule_list))
                             level_info: objects.LevelPointerExtraJson = {"name": obj.uuid.hex, "icon": {"name": obj.sprite_name, "color": displays.sprite_colors[obj.sprite_name]}}
                             world.new_obj(objects.Level(obj.pos, obj.orient, world_info=obj.world_info, level_info=level_info))
                     elif make_noun_type == objects.TextWorld:
@@ -945,7 +957,7 @@ class Level(object):
                             else:
                                 world_color = colors.to_background_color(displays.sprite_colors[old_obj.sprite_name])
                                 new_world = worlds.World(old_obj.uuid.hex, (3, 3), 0, world_color)
-                                self.created_levels.append(Level(old_obj.uuid.hex, [new_world], self.name, rule_list=self.rule_list))
+                                self.created_levels.append(Level(old_obj.uuid.hex, [new_world], super_level=self.name, rule_list=self.rule_list))
                                 new_world.new_obj(old_type((1, 1)))
                                 level_info: objects.LevelPointerExtraJson = {"name": old_obj.uuid.hex, "icon": {"name": old_obj.sprite_name, "color": displays.sprite_colors[old_obj.sprite_name]}}
                                 new_obj = objects.Level(old_obj.pos, old_obj.orient, world_info=old_obj.world_info, level_info=level_info)
@@ -955,7 +967,7 @@ class Level(object):
                             if isinstance(old_obj, objects.World):
                                 pass
                             elif isinstance(old_obj, objects.Level):
-                                transform_info = {"from": {"type": objects.Level, "name": old_obj.level_info["name"]}, "to": {"type": new_type}} # type: ignore
+                                transform_info: objects.TransformInfoJson = {"from": {"type": objects.Level, "name": old_obj.level_info["name"]}, "to": {"type": new_type}} # type: ignore
                                 world.new_obj(objects.Transform(old_obj.pos, transform_info, old_obj.orient))
                                 transform_success = True
                             elif isinstance(old_obj, objects.Clone):
@@ -1077,10 +1089,10 @@ class Level(object):
                             transform_to[objects.Level] = []
                             break
                         elif issubclass(new_type, objects.World):
-                            info = {"from": {"type": objects.Level, "name": self.name}, "to": {"type": objects.World}}
+                            info: objects.TransformInfoJson = {"from": {"type": objects.Level, "name": self.name}, "to": {"type": objects.World}}
                             transform_to[objects.Level].append(objects.Transform((0, 0), info))
                         elif issubclass(new_type, objects.Clone):
-                            info = {"from": {"type": objects.Level, "name": self.name}, "to": {"type": objects.Clone}}
+                            info: objects.TransformInfoJson = {"from": {"type": objects.Level, "name": self.name}, "to": {"type": objects.Clone}}
                             transform_to[objects.Level].append(objects.Transform((0, 0), info))
                         elif issubclass(new_type, objects.Game):
                             transform_to[objects.Level].append(objects.Empty((0, 0)))
@@ -1094,7 +1106,7 @@ class Level(object):
                             transform_to[objects.World] = []
                             break
                         elif issubclass(new_type, objects.Level):
-                            self.created_levels.append(Level(world.name, self.world_list, self.name, world.name, world.infinite_tier, self.rule_list))
+                            self.created_levels.append(Level(world.name, self.world_list, super_level=self.name, main_world_name=world.name, main_world_tier=world.infinite_tier, rule_list=self.rule_list))
                             level_info: objects.LevelPointerExtraJson = {"name": world.name, "icon": {"name": "world", "color": world.color}}
                             transform_to[objects.World].append(objects.Level((0, 0), level_info=level_info))
                         elif issubclass(new_type, objects.Clone):
@@ -1112,7 +1124,7 @@ class Level(object):
                             transform_to[objects.Clone] = []
                             break
                         elif issubclass(new_type, objects.Level):
-                            self.created_levels.append(Level(world.name, self.world_list, self.name, world.name, world.infinite_tier, self.rule_list))
+                            self.created_levels.append(Level(world.name, self.world_list, super_level=self.name, main_world_name=world.name, main_world_tier=world.infinite_tier, rule_list=self.rule_list))
                             level_info: objects.LevelPointerExtraJson = {"name": world.name, "icon": {"name": "world", "color": world.color}}
                             transform_to[objects.World].append(objects.Level((0, 0), level_info=level_info))
                         elif issubclass(new_type, objects.World):
@@ -1176,7 +1188,7 @@ class Level(object):
                     else:
                         world_color = colors.to_background_color(displays.sprite_colors[text_minus_obj.sprite_name])
                         new_world = worlds.World(text_minus_obj.uuid.hex, (3, 3), 0, world_color)
-                        self.created_levels.append(Level(text_minus_obj.uuid.hex, [new_world], self.name, rule_list=self.rule_list))
+                        self.created_levels.append(Level(text_minus_obj.uuid.hex, [new_world], super_level=self.name, rule_list=self.rule_list))
                         new_world.new_obj(type(text_minus_obj)((1, 1), text_minus_obj.orient))
                         level_info: objects.LevelPointerExtraJson = {"name": text_minus_obj.uuid.hex, "icon": {"name": text_minus_obj.sprite_name, "color": displays.sprite_colors[text_minus_obj.sprite_name]}}
                         new_obj = objects.Level(text_minus_obj.pos, text_minus_obj.orient, level_info=level_info)
@@ -1375,21 +1387,11 @@ class Level(object):
             multi_epsilon_surface = displays.set_alpha(multi_epsilon_surface, 0x88)
             world_surface.blit(multi_epsilon_surface, ((world_surface.get_width() - multi_epsilon_surface.get_width()) // 2, 0))
         return world_surface
-    def to_json(self) -> dict[str, Any]:
-        json_object = {"name": self.name, "world_list": [], "super_level": self.super_level, "main_world": {"name": self.main_world_name, "infinite_tier": self.main_world_tier}}
+    def to_json(self) -> LevelJson:
+        json_object: LevelJson = {"name": self.name, "world_list": [], "super_level": self.super_level, "is_map": self.is_map, "main_world": {"name": self.main_world_name, "infinite_tier": self.main_world_tier}}
         for world in self.world_list:
             json_object["world_list"].append(world.to_json())
         return json_object
-
-class LevelMainWorldJson(TypedDict):
-    name: str
-    infinite_tier: int
-
-class LevelJson(TypedDict):
-    name: str
-    super_level: str
-    main_world: LevelMainWorldJson
-    world_list: list[worlds.WorldJson]
 
 def json_to_level(json_object: LevelJson, ver: Optional[str] = None) -> Level:
     world_list = []
@@ -1399,4 +1401,5 @@ def json_to_level(json_object: LevelJson, ver: Optional[str] = None) -> Level:
                  world_list=world_list,
                  super_level=json_object["super_level"],
                  main_world_name=json_object["main_world"]["name"],
-                 main_world_tier=json_object["main_world"]["infinite_tier"])
+                 main_world_tier=json_object["main_world"]["infinite_tier"],
+                 is_map=json_object.get("is_map", False))

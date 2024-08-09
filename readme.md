@@ -48,11 +48,13 @@ Please make sure you have a levelpack file, if not, you can [make one](#how-to-m
 - WSAD: You / Cursor move.
 - Space: You wait for something / Cursor select a level to play.
 - Z: Undo.
-- R: Restart the levelpack.
+- R: Restart the level.
 - Tab: Display gamerules.
-- Esc：Save level state and go back.
+- Esc：Go back to the superlevel.
 - \- / =: Select world for camera to focus.
 - F1: Show FPS.
+- Close Pygame Window: Save and quit.
+- Close Terminal: Do not save, just quit.
 
 ### How to Win
 
@@ -218,6 +220,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 3.321  | 2024.08.07 | Number on Text_Text feeling Edit is not Hide |
 | 3.4    | 2024.08.07 | Storage on Level and World is Update |
 | 3.401  | 2024.08.07 | Game feeling Done is Shut; Text_Text_ is More |
+| 3.41   | 2024.08.09 | Level is Map; Levelpack is not Restart |
 
 ## Bug Reports and Suggestions
 

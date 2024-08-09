@@ -10,7 +10,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             world.set_sprite_states(0)
     history = [copy.deepcopy(levelpack)]
     window = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
-    pygame.display.set_caption(f"Baba Make Parabox In-game Editor Version {basics.versions}")
+    pygame.display.set_caption(f"Baba Make Parabox Editor Version {basics.versions}")
     pygame.display.set_icon(pygame.image.load("BabaMakeParabox.png"))
     displays.sprites.update()
     pygame.key.set_repeat()
@@ -235,7 +235,8 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     color = input(languages.current_language["editor.world.new.color"])
                     color = colors.str_to_hex(color) if color != "" else basics.options["default_new_world"]["color"]
                     default_world = worlds.World(name, size, infinite_tier, color)
-                    levelpack.level_list.append(levels.Level(level_name, [default_world], super_level, name, infinite_tier, levelpack.rule_list))
+                    is_map = input(languages.current_language["editor.level.new.is_map"]) in languages.yes
+                    levelpack.level_list.append(levels.Level(level_name, [default_world], super_level=super_level, main_world_name=name, main_world_tier=infinite_tier, is_map=is_map, rule_list=levelpack.rule_list))
                     current_level_index = len(levelpack.level_list) - 1
                     current_world_index = 0
                     level_changed = True

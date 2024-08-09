@@ -48,11 +48,13 @@
 - WSAD：移动
 - Space：等待
 - Z：撤回
-- R：重新开始关卡包
+- R：重新开始关卡
 - Tab：显示游戏规则
-- Esc：保存所在关卡的状态并返回上一级
+- Esc：返回上一级世界
 - \- / =：选择摄像机所在的世界
 - F1: 显示FPS
+- 关闭游戏窗口：保存并退出
+- 关闭终端：不保存退出
 
 ### 如何胜利
 
@@ -314,6 +316,7 @@
 | 3.321  | 2024.08.07 | Number on Text_Text feeling Edit is not Hide |
 | 3.4    | 2024.08.07 | Storage on Level and World is Update |
 | 3.401  | 2024.08.07 | Game feeling Done is Shut; Text_Text_ is More |
+| 3.41   | 2024.08.09 | Level is Map; Levelpack is not Restart |
 
 ## 报告漏洞和提出建议
 

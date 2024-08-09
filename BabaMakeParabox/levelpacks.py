@@ -2,6 +2,13 @@ from typing import Any, Optional, TypedDict
 
 from BabaMakeParabox import basics, objects, rules, levels
 
+class LevelpackJson(TypedDict):
+    ver: str
+    name: str
+    main_level: str
+    level_list: list[levels.LevelJson]
+    rule_list: list[list[str]]
+
 class Levelpack(object):
     def __init__(self, name: str, level_list: list[levels.Level], main_level: Optional[str] = None, rule_list: Optional[list[rules.Rule]] = None) -> None:
         self.name: str = name
@@ -24,8 +31,8 @@ class Levelpack(object):
                 self.level_list[i] = level
                 return
         self.level_list.append(level)
-    def to_json(self) -> dict[str, Any]:
-        json_object = {"ver": basics.versions, "name": self.name, "level_list": [], "main_level": self.main_level, "rule_list": []}
+    def to_json(self) -> LevelpackJson:
+        json_object: LevelpackJson = {"ver": basics.versions, "name": self.name, "level_list": [], "main_level": self.main_level, "rule_list": []}
         for level in self.level_list:
             json_object["level_list"].append(level.to_json())
         for rule in self.rule_list:
@@ -33,13 +40,6 @@ class Levelpack(object):
             for obj in rule:
                 json_object["rule_list"][-1].append({v: k for k, v in objects.object_name.items()}[obj])
         return json_object
-
-class LevelpackJson(TypedDict):
-    ver: str
-    name: str
-    main_level: str
-    level_list: list[levels.LevelJson]
-    rule_list: list[list[str]]
 
 def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
     ver = json_object.get("ver")
