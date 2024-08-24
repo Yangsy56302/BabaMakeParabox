@@ -455,7 +455,7 @@ class Level(object):
         new_pos = spaces.pos_facing(pos, orient)
         exit_world = False
         exit_list = []
-        if world.out_of_range(new_pos):
+        if world.out_of_range(new_pos) and not obj.has_prop(objects.TextLeave, negate=True):
             exit_world = True
             # infinite exit
             if world in passed:
@@ -539,6 +539,9 @@ class Level(object):
                     temp_stop_object.new_prop(objects.TextStop)
                     world.new_obj(temp_stop_object)
                     for new_push_object in new_push_objects:
+                        if new_push_object.has_prop(objects.TextEnter, negate=True):
+                            squeeze = False
+                            break
                         input_pos = sub_world.default_input_position(orient)
                         pushed.append(obj)
                         test_move_list = self.get_move_list(cause, sub_world, new_push_object, spaces.swap_orientation(orient), input_pos, pushed=pushed, depth=depth)
@@ -546,15 +549,14 @@ class Level(object):
                         if test_move_list is None:
                             squeeze = False
                             break
-                        else:
-                            squeeze_list.extend(test_move_list)
+                        squeeze_list.extend(test_move_list)
                     if squeeze:
                         squeeze_list.append((obj, world, new_pos, orient))
                     world.del_obj(temp_stop_object)
         enter_world = False
         enter_list = []
         worlds_that_cant_push = [o for o in objects_that_cant_push if isinstance(o, objects.WorldPointer)]
-        if len(worlds_that_cant_push) != 0 and not world.out_of_range(new_pos):
+        if len(worlds_that_cant_push) != 0 and (not world.out_of_range(new_pos)) and not obj.has_prop(objects.TextEnter, negate=True):
             enter_world = True
             for world_object in worlds_that_cant_push:
                 sub_world = self.get_world(world_object.world_info)

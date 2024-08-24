@@ -63,8 +63,7 @@ class Sprites(object):
             sprite_basename = sprite_basename[:sprite_basename.rfind("_")]
             sprite_basename = sprite_basename[:sprite_basename.rfind("_")]
             sprite_color = self.sprite_colors.get(sprite_basename)
-            if sprite_color is None:
-                sprite_color = colors.WHITE
+            sprite_color = colors.WHITE if sprite_color is None else sprite_color
             self.raw_sprites[sprite_name] = sprite.copy()
             self.sprites[sprite_name] = set_surface_color_dark(sprite, sprite_color)
     def get(self, sprite_name: str, state: int, frame: int = 0, raw_sprite: bool = False) -> pygame.Surface:
@@ -114,6 +113,8 @@ sprite_colors["star"] = colors.LIGHT_YELLOW
 sprite_colors["what"] = colors.WHITE
 sprite_colors["love"] = colors.PINK
 sprite_colors["flag"] = colors.LIGHT_YELLOW
+sprite_colors["line"] = colors.WHITE
+sprite_colors["dot"] = colors.WHITE
 sprite_colors["cursor"] = colors.PINK
 sprite_colors["level"] = colors.WHITE
 sprite_colors["world"] = colors.LIGHT_GRAY_BLUE
@@ -143,6 +144,8 @@ sprite_colors["text_star"] = colors.LIGHT_YELLOW
 sprite_colors["text_what"] = colors.WHITE
 sprite_colors["text_love"] = colors.PINK
 sprite_colors["text_flag"] = colors.LIGHT_YELLOW
+sprite_colors["text_line"] = colors.WHITE
+sprite_colors["text_dot"] = colors.WHITE
 sprite_colors["text_cursor"] = colors.LIGHT_YELLOW
 sprite_colors["text_all"] = colors.WHITE
 sprite_colors["text_empty"] = colors.WHITE
@@ -177,6 +180,8 @@ sprite_colors["text_win"] = colors.LIGHT_YELLOW
 sprite_colors["text_defeat"] = colors.DARK_RED
 sprite_colors["text_shift"] = colors.LIGHT_GRAY_BLUE
 sprite_colors["text_tele"] = colors.LIGHTER_GRAY_BLUE
+sprite_colors["text_enter"] = colors.LIGHT_GREEN
+sprite_colors["text_leave"] = colors.LIGHT_RED
 sprite_colors["text_word"] = colors.WHITE
 sprite_colors["text_select"] = colors.LIGHT_YELLOW
 sprite_colors["text_text_plus"] = colors.MAGENTA

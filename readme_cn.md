@@ -317,6 +317,7 @@
 | 3.4    | 2024.08.07 | Storage on Level and World is Update |
 | 3.401  | 2024.08.07 | Game feeling Done is Shut; Text_Text_ is More |
 | 3.41   | 2024.08.09 | Level is Map; Levelpack is not Restart |
+| 3.5    | 2024.08.24 | Rock is Push and not Enter and not Leave |
 
 ## 报告漏洞和提出建议
 

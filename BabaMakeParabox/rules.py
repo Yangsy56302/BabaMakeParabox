@@ -116,13 +116,6 @@ def analysis_rule(atom_rule: Rule) -> RuleInfo:
 default_rule_list: list[Rule] = []
 default_rule_list.append([objects.TextCursor, objects.TextIs, objects.TextSelect])
 default_rule_list.append([objects.TextText, objects.TextIs, objects.TextPush])
-default_rule_list.append([objects.TextNot, objects.TextMeta, objects.TextWorld, objects.TextIs, objects.TextPush])
-default_rule_list.append([objects.TextNot, objects.TextMeta, objects.TextClone, objects.TextIs, objects.TextPush])
+default_rule_list.append([objects.TextNot, objects.TextMeta, objects.TextWorld, objects.TextAnd,
+                          objects.TextNot, objects.TextMeta, objects.TextClone, objects.TextIs, objects.TextPush])
 default_rule_list.append([objects.TextNot, objects.TextMeta, objects.TextLevel, objects.TextIs, objects.TextStop])
-
-advanced_rule_list: list[Rule] = []
-advanced_rule_list.append([objects.TextBaba, objects.TextIs, objects.TextYou])
-advanced_rule_list.append([objects.TextWall, objects.TextIs, objects.TextStop])
-advanced_rule_list.append([objects.TextRock, objects.TextIs, objects.TextPush])
-advanced_rule_list.append([objects.TextFlag, objects.TextIs, objects.TextWin])
-advanced_rule_list.extend(default_rule_list)

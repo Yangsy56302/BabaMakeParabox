@@ -1,10 +1,7 @@
-from typing import Any, NotRequired, Optional, TypeGuard, TypedDict, Protocol, runtime_checkable
-from functools import wraps
-import types
+from typing import Any, NotRequired, Optional, TypeGuard, TypedDict
 import math
 import uuid
 from BabaMakeParabox import basics, colors, spaces
-from BabaMakeParabox.spaces import Coord
 
 class WorldPointerExtraJson(TypedDict):
     name: str
@@ -246,6 +243,16 @@ class Flag(Static):
     sprite_name: str = "flag"
     display_name: str = "Flag"
 
+class Line(Tiled):
+    json_name: str = "line"
+    sprite_name: str = "line"
+    display_name: str = "Line"
+
+class Dot(Tiled):
+    json_name: str = "dot"
+    sprite_name: str = "dot"
+    display_name: str = "Dot"
+
 class Cursor(Static):
     json_name: str = "cursor"
     sprite_name: str = "cursor"
@@ -471,6 +478,18 @@ class TextFlag(Noun):
     sprite_name: str = "text_flag"
     display_name: str = "FLAG"
 
+class TextLine(Noun):
+    obj_type: type[BmpObject] = Line
+    json_name: str = "text_line"
+    sprite_name: str = "text_line"
+    display_name: str = "LINE"
+
+class TextDot(Noun):
+    obj_type: type[BmpObject] = Dot
+    json_name: str = "text_dot"
+    sprite_name: str = "text_dot"
+    display_name: str = "DOT"
+
 class TextCursor(Noun):
     obj_type: type[BmpObject] = Cursor
     json_name: str = "text_cursor"
@@ -649,6 +668,16 @@ class TextTele(Property):
     sprite_name: str = "text_tele"
     display_name: str = "TELE"
 
+class TextEnter(Property):
+    json_name: str = "text_enter"
+    sprite_name: str = "text_enter"
+    display_name: str = "ENTER"
+
+class TextLeave(Property):
+    json_name: str = "text_leave"
+    sprite_name: str = "text_leave"
+    display_name: str = "LEAVE"
+
 class TextWord(Property):
     json_name: str = "text_word"
     sprite_name: str = "text_word"
@@ -687,7 +716,7 @@ noun_class_list: list[type[Noun]] = []
 noun_class_list.extend([TextBaba, TextKeke, TextMe, TextPatrick, TextSkull, TextGhost])
 noun_class_list.extend([TextWall, TextHedge, TextIce, TextTile, TextGrass, TextWater, TextLava])
 noun_class_list.extend([TextDoor, TextKey, TextBox, TextRock, TextFruit, TextBelt, TextSun, TextMoon, TextStar, TextWhat, TextLove, TextFlag])
-noun_class_list.extend([TextCursor, TextAll, TextText, TextLevel, TextWorld, TextClone, TextGame])
+noun_class_list.extend([TextLine, TextDot, TextCursor, TextAll, TextText, TextLevel, TextWorld, TextClone, TextGame])
 
 text_class_list: list[type[Text]] = []
 text_class_list.extend(noun_class_list)
@@ -696,13 +725,13 @@ text_class_list.extend([TextOn, TextNear, TextNextto, TextFeeling])
 text_class_list.extend([TextIs, TextHas, TextMake, TextWrite])
 text_class_list.extend([TextNot, TextAnd])
 text_class_list.extend([TextYou, TextMove, TextStop, TextPush, TextSink, TextFloat, TextOpen, TextShut, TextHot, TextMelt, TextWin, TextDefeat, TextShift, TextTele])
-text_class_list.extend([TextWord, TextSelect, TextTextPlus, TextTextMinus, TextEnd, TextDone])
+text_class_list.extend([TextEnter, TextLeave, TextWord, TextSelect, TextTextPlus, TextTextMinus, TextEnd, TextDone])
 
 object_used: list[type[BmpObject]] = []
 object_used.extend([Baba, Keke, Me, Patrick, Skull, Ghost])
 object_used.extend([Wall, Hedge, Ice, Tile, Grass, Water, Lava])
 object_used.extend([Door, Key, Box, Rock, Fruit, Belt, Sun, Moon, Star, What, Love, Flag])
-object_used.extend([Cursor, Level, World, Clone])
+object_used.extend([Line, Dot, Cursor, Level, World, Clone])
 object_used.extend(text_class_list)
 
 object_class_used = object_used[:]
