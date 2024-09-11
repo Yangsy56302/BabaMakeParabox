@@ -124,7 +124,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         elif keys["E"]:
             current_object_type_list = list(objects.object_name.values())
             current_object_type_index = current_object_type_list.index(current_object_type)
-            current_object_type = current_object_type_list[current_object_type_index + 1 if current_object_type_index < len(current_object_type_list) else 0]
+            current_object_type = current_object_type_list[current_object_type_index + 1 if current_object_type_index < len(current_object_type_list) - 1 else 0]
         elif keys["1"]:
             if keys["LCTRL"] or keys["RCTRL"]:
                 object_type_shortcuts[0] = current_object_type

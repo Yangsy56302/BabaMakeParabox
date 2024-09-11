@@ -46,9 +46,9 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     window.fill("#000000")
     current_level: levels.Level = levelpack.get_exist_level(levelpack.main_level)
     current_world: worlds.World = current_level.get_exist_world({"name": current_level.main_world_name, "infinite_tier": current_level.main_world_tier})
-    default_level_info: levels.ReTurnValue = {"win": False, "end": False, "game_push": False, "selected_level": None, "transform_to": None}
-    level_info: levels.ReTurnValue = default_level_info.copy()
-    level_info_backup: levels.ReTurnValue = default_level_info.copy()
+    default_level_info: levelpacks.ReTurnValue = {"win": False, "end": False, "transform": False, "game_push": False, "selected_level": None}
+    level_info: levelpacks.ReTurnValue = default_level_info.copy()
+    level_info_backup: levelpacks.ReTurnValue = default_level_info.copy()
     history: dict[str, list[levels.Level]] = {l.name: [l] for l in levelpack_backup.level_list}
     level_changed = False
     world_changed = False
@@ -81,7 +81,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             if keys["W"]:
                 history[current_level.name].append(copy.deepcopy(current_level))
                 round_num += 1
-                level_info = current_level.turn(spaces.Orient.W)
+                level_info = levelpack.turn(current_level, spaces.Orient.W)
                 if objects.TextYou in current_level.game_properties:
                     display_offset[1] -= window.get_height() / current_world.width
                 if objects.TextPush in current_level.game_properties and level_info["game_push"]:
@@ -90,7 +90,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             elif keys["S"]:
                 history[current_level.name].append(copy.deepcopy(current_level))
                 round_num += 1
-                level_info = current_level.turn(spaces.Orient.S)
+                level_info = levelpack.turn(current_level, spaces.Orient.S)
                 if objects.TextYou in current_level.game_properties:
                     display_offset[1] += window.get_height() / current_world.width
                 if objects.TextPush in current_level.game_properties and level_info["game_push"]:
@@ -99,7 +99,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             elif keys["A"]:
                 history[current_level.name].append(copy.deepcopy(current_level))
                 round_num += 1
-                level_info = current_level.turn(spaces.Orient.A)
+                level_info = levelpack.turn(current_level, spaces.Orient.A)
                 if objects.TextYou in current_level.game_properties:
                     display_offset[0] -= window.get_width() / current_world.height
                 if objects.TextPush in current_level.game_properties and level_info["game_push"]:
@@ -108,7 +108,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             elif keys["D"]:
                 history[current_level.name].append(copy.deepcopy(current_level))
                 round_num += 1
-                level_info = current_level.turn(spaces.Orient.D)
+                level_info = levelpack.turn(current_level, spaces.Orient.D)
                 if objects.TextYou in current_level.game_properties:
                     display_offset[0] += window.get_width() / current_world.height
                 if objects.TextPush in current_level.game_properties and level_info["game_push"]:
@@ -117,19 +117,19 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             elif keys[" "]:
                 history[current_level.name].append(copy.deepcopy(current_level))
                 round_num += 1
-                level_info = current_level.turn(spaces.NullOrient.O)
+                level_info = levelpack.turn(current_level, spaces.NullOrient.O)
                 refresh = True
             elif keys["ESCAPE"]:
                 level = copy.deepcopy(levelpack_backup.get_level(current_level.name))
-                if level is not None and not level.is_map:
+                if level is not None:
                     levelpack.set_level(level)
                     history[current_level.name].append(copy.deepcopy(current_level))
-                    current_level.name = current_level.super_level if current_level.super_level is not None else levelpack.main_level
-                    current_level = levelpack.get_exist_level(current_level.name)
-                    current_world = current_level.get_exist_world({"name": current_level.main_world_name, "infinite_tier": current_level.main_world_tier})
-                    level_changed = True
-                    world_changed = True
-                    refresh = True
+                current_level.name = current_level.super_level if current_level.super_level is not None else levelpack.main_level
+                current_level = levelpack.get_exist_level(current_level.name)
+                current_world = current_level.get_exist_world({"name": current_level.main_world_name, "infinite_tier": current_level.main_world_tier})
+                level_changed = True
+                world_changed = True
+                refresh = True
             elif keys["Z"]:
                 if len(history[current_level.name]) > 1:
                     current_level = copy.deepcopy(history[current_level.name].pop())
@@ -251,8 +251,6 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 game_running = False
             for event in current_level.sound_events:
                 sounds.play(event)
-            for new_level in current_level.created_levels:
-                levelpack.set_level(new_level)
             for obj_type in current_level.new_games:
                 obj_type: type[objects.BmpObject]
                 if basics.current_os == basics.windows:
@@ -262,41 +260,6 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                         os.system(f"start /b python SubabaMakeParabox.py {obj_type.json_name}")
                 elif basics.current_os == basics.linux:
                     os.system(f"python ./SubabaMakeParabox.py {obj_type.json_name} &")
-            transform_success = False
-            if level_info["transform_to"] is not None:
-                for level in levelpack.level_list:
-                    for world in level.world_list:
-                        for level_obj in world.get_levels():
-                            if current_level.name == level_obj.level_info["name"]:
-                                transform_success = True
-                                for obj in level_info["transform_to"]:
-                                    obj: objects.BmpObject
-                                    obj.pos = level_obj.pos
-                                    obj.orient = level_obj.orient
-                                    world.new_obj(obj)
-                                world.del_obj(level_obj)
-            for level in levelpack.level_list:
-                for world in level.world_list:
-                    transform_objs = world.get_objs_from_type(objects.Transform)
-                    for transform_obj in transform_objs:
-                        if issubclass(transform_obj.from_type, objects.LevelPointer):
-                            from_level = levelpack.get_exist_level(transform_obj.from_name)
-                            if issubclass(transform_obj.to_type, objects.WorldPointer):
-                                for new_world in from_level.world_list:
-                                    level.set_world(new_world)
-                                world_obj_info: objects.WorldPointerExtraJson = {"name": from_level.main_world_name, "infinite_tier": from_level.main_world_tier}
-                                new_obj = transform_obj.to_type(transform_obj.pos, transform_obj.orient, world_info=world_obj_info)
-                                world.del_obj(transform_obj)
-                                world.new_obj(new_obj)
-                        elif issubclass(transform_obj.from_type, objects.WorldPointer):
-                            from_world = level.get_exist_world({"name": transform_obj.from_name, "infinite_tier": transform_obj.from_infinite_tier})
-                            if issubclass(transform_obj.to_type, objects.LevelPointer):
-                                new_level = levels.Level(from_world.name, level.world_list, super_level=level.name, main_world_name=transform_obj.from_name, main_world_tier=transform_obj.from_infinite_tier, rule_list=level.rule_list)
-                                levelpack.set_level(new_level)
-                                level_obj_info: objects.LevelPointerExtraJson = {"name": from_world.name, "icon": {"name": "empty", "color": from_world.color}}
-                                new_obj = objects.Level(transform_obj.pos, orient=transform_obj.orient, level_info=level_obj_info)
-                                world.del_obj(transform_obj)
-                                world.new_obj(new_obj)
             for level in levelpack.level_list:
                 level.repeated_world_to_clone()
             levelpack.set_level(current_level)
@@ -310,7 +273,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 if freeze_time == -1:
                     level_info_backup = copy.deepcopy(level_info)
                     freeze_time = basics.options["fps"]
-            elif transform_success and level_info["transform_to"] is not None:
+            elif level_info["transform"]:
                 print(languages.current_language["game.level.transform"])
                 if freeze_time == -1:
                     level_info_backup = copy.deepcopy(level_info)
@@ -338,7 +301,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 current_world = current_level.get_exist_world({"name": current_level.main_world_name, "infinite_tier": current_level.main_world_tier})
             elif level_info_backup["end"]:
                 game_running = False
-            elif level_info_backup["transform_to"] is not None:
+            elif level_info_backup["transform"]:
                 super_level_name = current_level.super_level
                 super_level = levelpack.get_level(super_level_name if super_level_name is not None else levelpack.main_level)
                 current_level = levelpack.get_exist_level(super_level.name if super_level is not None else levelpack.main_level)

@@ -7,13 +7,6 @@ from BabaMakeParabox import basics, colors, spaces, objects, rules, worlds, disp
 
 import pygame
 
-class ReTurnValue(TypedDict):
-    win: bool
-    end: bool
-    game_push: bool
-    selected_level: Optional[str]
-    transform_to: Optional[list[objects.BmpObject]]
-
 class LevelMainWorldJson(TypedDict):
     name: str
     infinite_tier: int
@@ -104,7 +97,7 @@ class Level(object):
             for j, (j_world, j_world_object) in enumerate(world_objs):
                 if i == j:
                     continue
-                if i_world_object.world_info["name"] == j_world_object.world_info["name"] and i_world_object.world_info["infinite_tier"] == j_world_object.world_info["infinite_tier"]:
+                if i_world_object.world_info == j_world_object.world_info:
                     to_clone_obj_dict.setdefault((j_world_object.world_info["name"], j_world_object.world_info["infinite_tier"]), [])
                     if (j_world, j_world_object) not in to_clone_obj_dict[(j_world_object.world_info["name"], j_world_object.world_info["infinite_tier"])]:
                         to_clone_obj_dict[(j_world_object.world_info["name"], j_world_object.world_info["infinite_tier"])].append((j_world, j_world_object))
@@ -441,8 +434,6 @@ class Level(object):
             else:
                 new_obj_type = new_noun_type.obj_type
                 world.new_obj(new_obj_type(obj.pos, obj.orient, world_info=obj.world_info, level_info=obj.level_info))
-    def same_float_prop(self, obj_1: objects.BmpObject, obj_2: objects.BmpObject):
-        return not (obj_1.has_prop(objects.TextFloat) ^ obj_2.has_prop(objects.TextFloat))
     def get_move_list(self, cause: type[objects.Property], world: worlds.World, obj: objects.BmpObject, orient: spaces.Orient, pos: Optional[spaces.Coord] = None, pushed: Optional[list[objects.BmpObject]] = None, passed: Optional[list[worlds.World]] = None, transnum: Optional[float] = None, depth: int = 0) -> Optional[list[tuple[objects.BmpObject, worlds.World, spaces.Coord, spaces.Orient]]]:
         if depth > 128:
             return None
@@ -640,14 +631,14 @@ class Level(object):
         return pushing_game
     def select(self, orient: spaces.PlayerOperation) -> Optional[str]:
         if orient == spaces.NullOrient.O:
+            level_objs: list[objects.LevelPointer] = []
             for world in self.world_list:
                 select_objs = [o for o in world.object_list if o.has_prop(objects.TextSelect)]
-                levels: list[objects.LevelPointer] = []
                 for obj in select_objs:
-                    levels.extend(world.get_levels_from_pos(obj.pos))
-                    if len(levels) != 0:
-                        self.sound_events.append("level")
-                        return levels[0].level_info["name"]
+                    level_objs.extend(world.get_levels_from_pos(obj.pos))
+            if len(level_objs) != 0:
+                self.sound_events.append("level")
+                return random.choice(level_objs).level_info["name"]
         else:
             for world in self.world_list:
                 select_objs = [o for o in world.object_list if o.has_prop(objects.TextSelect)]
@@ -702,7 +693,7 @@ class Level(object):
                 for obj in world.get_objs_from_pos(shift_obj.pos):
                     if obj == shift_obj:
                         continue
-                    if self.same_float_prop(obj, shift_obj):
+                    if objects.same_float_prop(obj, shift_obj):
                         new_move_list = self.get_move_list(objects.TextShift, world, obj, shift_obj.orient)
                         if new_move_list is not None:
                             move_list.extend(new_move_list)
@@ -736,7 +727,7 @@ class Level(object):
                 for obj in world.get_objs_from_pos(tele_obj.pos):
                     if obj == tele_obj:
                         continue
-                    if self.same_float_prop(obj, tele_obj):
+                    if objects.same_float_prop(obj, tele_obj):
                         other_tele_world, other_tele_obj = random.choice(other_tele_objs)
                         tele_list.append((world, obj, other_tele_world, other_tele_obj.pos))
         for old_world, obj, new_world, pos in tele_list:
@@ -757,7 +748,7 @@ class Level(object):
                     if obj == sink_obj:
                         continue
                     if obj.pos == sink_obj.pos:
-                        if self.same_float_prop(obj, sink_obj):
+                        if objects.same_float_prop(obj, sink_obj):
                             if obj not in delete_list and sink_obj not in delete_list:
                                 delete_list.append(obj)
                                 delete_list.append(sink_obj)
@@ -787,7 +778,7 @@ class Level(object):
             for hot_obj in hot_objs:
                 for melt_obj in melt_objs:
                     if hot_obj.pos == melt_obj.pos:
-                        if self.same_float_prop(hot_obj, melt_obj):
+                        if objects.same_float_prop(hot_obj, melt_obj):
                             if melt_obj not in delete_list:
                                 delete_list.append(melt_obj)
             for obj in delete_list:
@@ -812,7 +803,7 @@ class Level(object):
                         continue
                 for defeat_obj in defeat_objs:
                     if you_obj.pos == defeat_obj.pos:
-                        if self.same_float_prop(defeat_obj, you_obj):
+                        if objects.same_float_prop(defeat_obj, you_obj):
                             if you_obj not in delete_list:
                                 delete_list.append(you_obj)
             for obj in delete_list:
@@ -898,269 +889,6 @@ class Level(object):
                     else:
                         make_obj_type = make_noun_type.obj_type
                         world.new_obj(make_obj_type(obj.pos, obj.orient, world_info=obj.world_info, level_info=obj.level_info))
-    def transform(self) -> Optional[list[objects.BmpObject]]:
-        for world in self.world_list:
-            delete_object_list = []
-            for old_obj in world.object_list:
-                old_type = type(old_obj)
-                new_nouns = [n for n, c in old_obj.properties if issubclass(n, objects.Noun) and c % 2 == 0]
-                new_types = [t.obj_type for t in new_nouns]
-                not_new_nouns = [n for n, c in old_obj.properties if issubclass(n, objects.Noun) and c % 2 == 1]
-                not_new_types = [t.obj_type for t in not_new_nouns]
-                transform_success = False
-                old_type_is_old_type = False
-                old_type_is_not_old_type = False
-                for new_type in new_types:
-                    if isinstance(old_obj, new_type):
-                        old_type_is_old_type = True
-                for not_new_type in not_new_types:
-                    if isinstance(old_obj, not_new_type):
-                        old_type_is_not_old_type = True
-                if old_type_is_not_old_type:
-                    transform_success = True
-                if not old_type_is_old_type:
-                    if objects.All in new_types:
-                        new_types.remove(objects.All)
-                        all_nouns = [t for t in self.all_list if t not in not_new_types]
-                        new_types.extend([t.obj_type for t in all_nouns])
-                    for new_text_type in old_obj.write_text:
-                        new_obj = new_text_type(old_obj.pos, old_obj.orient, world_info=old_obj.world_info, level_info=old_obj.level_info)
-                        world.new_obj(new_obj)
-                        transform_success = True
-                    for new_type in new_types:
-                        pass_this_transform = False
-                        for not_new_type in not_new_types:
-                            if issubclass(new_type, not_new_type):
-                                pass_this_transform = True
-                        if pass_this_transform:
-                            pass
-                        elif issubclass(new_type, objects.Game):
-                            if isinstance(old_obj, objects.LevelPointer):
-                                self.new_games.append(objects.TextLevel)
-                            elif isinstance(old_obj, objects.World):
-                                self.new_games.append(objects.TextWorld)
-                            elif isinstance(old_obj, objects.Clone):
-                                self.new_games.append(objects.TextClone)
-                            else:
-                                self.new_games.append(old_type)
-                            transform_success = True
-                        elif issubclass(new_type, objects.LevelPointer):
-                            if isinstance(old_obj, objects.LevelPointer):
-                                pass
-                            elif isinstance(old_obj, objects.WorldPointer):
-                                self.created_levels.append(Level(old_obj.world_info["name"], self.world_list, self.name, old_obj.world_info["name"], old_obj.world_info["infinite_tier"], self.rule_list)) # type: ignore
-                                level_info: objects.LevelPointerExtraJson = {"name": old_obj.uuid.hex, "icon": {"name": "world", "color": world.color}}
-                                new_obj = objects.Level(old_obj.pos, old_obj.orient, world_info=old_obj.world_info, level_info=level_info)
-                                world.new_obj(new_obj)
-                                transform_success = True
-                            elif old_obj.level_info is not None:
-                                world.new_obj(objects.Level(old_obj.pos, old_obj.orient, world_info=old_obj.world_info, level_info=old_obj.level_info))
-                                transform_success = True
-                            else:
-                                world_color = colors.to_background_color(displays.sprite_colors[old_obj.sprite_name])
-                                new_world = worlds.World(old_obj.uuid.hex, (3, 3), 0, world_color)
-                                self.created_levels.append(Level(old_obj.uuid.hex, [new_world], super_level=self.name, rule_list=self.rule_list))
-                                new_world.new_obj(old_type((1, 1)))
-                                level_info: objects.LevelPointerExtraJson = {"name": old_obj.uuid.hex, "icon": {"name": old_obj.sprite_name, "color": displays.sprite_colors[old_obj.sprite_name]}}
-                                new_obj = objects.Level(old_obj.pos, old_obj.orient, world_info=old_obj.world_info, level_info=level_info)
-                                world.new_obj(new_obj)
-                                transform_success = True
-                        elif issubclass(new_type, objects.World):
-                            if isinstance(old_obj, objects.World):
-                                pass
-                            elif isinstance(old_obj, objects.Level):
-                                transform_info: objects.TransformInfoJson = {"from": {"type": objects.Level, "name": old_obj.level_info["name"]}, "to": {"type": new_type}} # type: ignore
-                                world.new_obj(objects.Transform(old_obj.pos, transform_info, old_obj.orient))
-                                transform_success = True
-                            elif isinstance(old_obj, objects.Clone):
-                                world.new_obj(objects.World(old_obj.pos, old_obj.orient, world_info=old_obj.world_info, level_info=old_obj.level_info)) # type: ignore
-                                transform_success = True
-                            elif old_obj.world_info is not None:
-                                world.new_obj(objects.World(old_obj.pos, old_obj.orient, world_info=old_obj.world_info, level_info=old_obj.level_info))
-                                transform_success = True
-                            else:
-                                world_color = colors.to_background_color(displays.sprite_colors[old_obj.sprite_name])
-                                new_world = worlds.World(old_obj.uuid.hex, (3, 3), 0, world_color)
-                                new_world.new_obj(old_type((1, 1), old_obj.orient))
-                                self.set_world(new_world)
-                                world_info: objects.WorldPointerExtraJson = {"name": old_obj.uuid.hex, "infinite_tier": 0}
-                                world.new_obj(objects.World(old_obj.pos, old_obj.orient, world_info=world_info, level_info=old_obj.level_info))
-                                transform_success = True
-                        elif issubclass(new_type, objects.Clone):
-                            if isinstance(old_obj, objects.Clone):
-                                pass
-                            elif isinstance(old_obj, objects.Level):
-                                transform_info = {"from": {"type": objects.Level, "name": old_obj.level_info["name"]}, "to": {"type": new_type}} # type: ignore
-                                world.new_obj(objects.Transform(old_obj.pos, transform_info, old_obj.orient))
-                                transform_success = True
-                            elif isinstance(old_obj, objects.World):
-                                world.new_obj(objects.Clone(old_obj.pos, old_obj.orient, world_info=old_obj.world_info, level_info=old_obj.level_info)) # type: ignore
-                                transform_success = True
-                            elif old_obj.world_info is not None:
-                                world.new_obj(objects.Clone(old_obj.pos, old_obj.orient, world_info=old_obj.world_info, level_info=old_obj.level_info))
-                                transform_success = True
-                            else:
-                                world_color = colors.to_background_color(displays.sprite_colors[old_obj.sprite_name])
-                                new_world = worlds.World(old_obj.uuid.hex, (3, 3), 0, world_color)
-                                new_world.new_obj(old_type((1, 1), old_obj.orient))
-                                self.set_world(new_world)
-                                world_info: objects.WorldPointerExtraJson = {"name": old_obj.uuid.hex, "infinite_tier": 0}
-                                world.new_obj(objects.World(old_obj.pos, old_obj.orient, world_info=world_info, level_info=old_obj.level_info))
-                                transform_success = True
-                        elif new_type == objects.Text:
-                            if not isinstance(old_obj, objects.Text):
-                                transform_success = True
-                                new_obj = objects.get_noun_from_obj(old_type)(old_obj.pos, old_obj.orient, world_info=old_obj.world_info, level_info=old_obj.level_info)
-                                world.new_obj(new_obj)
-                        else:
-                            transform_success = True
-                            new_obj = new_type(old_obj.pos, old_obj.orient, world_info=old_obj.world_info, level_info=old_obj.level_info)
-                            world.new_obj(new_obj)
-                if transform_success:
-                    delete_object_list.append(old_obj)
-            for delete_obj in delete_object_list: 
-                world.del_obj(delete_obj)
-        transform_to: dict[type[objects.BmpObject], list[objects.BmpObject]] = {}
-        special_new_types: dict[type[objects.BmpObject], list[type[objects.BmpObject]]] = {}
-        special_not_new_types: dict[type[objects.BmpObject], list[type[objects.BmpObject]]] = {}
-        special_new_types[objects.Level] = []
-        special_not_new_types[objects.Level] = []
-        transform_to[objects.Level] = []
-        for prop_type, prop_negated_count in self.properties:
-            if not issubclass(prop_type, objects.Noun):
-                continue
-            if issubclass(prop_type, objects.TextAll):
-                if prop_negated_count % 2 == 0:
-                    special_new_types[objects.Level].extend(objects.in_not_all)
-                else:
-                    special_not_new_types[objects.Level].extend(objects.in_not_all)
-            else:
-                new_type = prop_type.obj_type
-                if prop_negated_count % 2 == 0:
-                    special_new_types[objects.Level].append(new_type)
-                else:
-                    special_not_new_types[objects.Level].append(new_type)
-        for world in self.world_list:
-            for old_type in (objects.World, objects.Clone):
-                special_new_types[old_type] = []
-                special_not_new_types[old_type] = []
-                transform_to[old_type] = []
-            for prop_type, prop_negated_count in world.world_properties:
-                if not issubclass(prop_type, objects.Noun):
-                    continue
-                if issubclass(prop_type, objects.TextAll):
-                    if prop_negated_count % 2 == 0:
-                        special_new_types[objects.World].extend(objects.in_not_all)
-                    else:
-                        special_not_new_types[objects.World].extend(objects.in_not_all)
-                else:
-                    new_type = prop_type.obj_type
-                    if prop_negated_count % 2 == 0:
-                        special_new_types[objects.World].append(new_type)
-                    else:
-                        special_not_new_types[objects.World].append(new_type)
-            for prop_type, prop_negated_count in world.clone_properties:
-                if not issubclass(prop_type, objects.Noun):
-                    continue
-                if issubclass(prop_type, objects.TextAll):
-                    if prop_negated_count % 2 == 0:
-                        special_new_types[objects.Clone].extend(objects.in_not_all)
-                    else:
-                        special_not_new_types[objects.Clone].extend(objects.in_not_all)
-                else:
-                    new_type = prop_type.obj_type
-                    if prop_negated_count % 2 == 0:
-                        special_new_types[objects.Clone].append(new_type)
-                    else:
-                        special_not_new_types[objects.Clone].append(new_type)
-            for new_text_type in self.write_text:
-                new_obj = new_text_type(old_obj.pos, old_obj.orient)
-                transform_to[objects.Level].append(new_obj)
-            for new_text_type in world.world_write_text:
-                new_obj = new_text_type(old_obj.pos, old_obj.orient)
-                transform_to[objects.World].append(new_obj)
-            for new_text_type in world.clone_write_text:
-                new_obj = new_text_type(old_obj.pos, old_obj.orient)
-                transform_to[objects.Clone].append(new_obj)
-            for old_type in (objects.Level, objects.World, objects.Clone):
-                if old_type in special_not_new_types[old_type]:
-                    transform_to[old_type].append(objects.Empty((0, 0)))
-                for new_type in special_new_types[old_type]:
-                    if isinstance(old_obj, objects.Level):
-                        if issubclass(new_type, objects.Level):
-                            transform_to[objects.Level] = []
-                            break
-                        elif issubclass(new_type, objects.World):
-                            info: objects.TransformInfoJson = {"from": {"type": objects.Level, "name": self.name}, "to": {"type": objects.World}}
-                            transform_to[objects.Level].append(objects.Transform((0, 0), info))
-                        elif issubclass(new_type, objects.Clone):
-                            info: objects.TransformInfoJson = {"from": {"type": objects.Level, "name": self.name}, "to": {"type": objects.Clone}}
-                            transform_to[objects.Level].append(objects.Transform((0, 0), info))
-                        elif issubclass(new_type, objects.Game):
-                            transform_to[objects.Level].append(objects.Empty((0, 0)))
-                            self.new_games.append(objects.TextLevel)
-                        elif issubclass(new_type, objects.Text):
-                            transform_to[objects.Level].append(objects.TextLevel((0, 0)))
-                        else:
-                            transform_to[objects.Level].append(new_type((0, 0)))
-                    elif isinstance(old_obj, objects.World):
-                        if issubclass(new_type, objects.World):
-                            transform_to[objects.World] = []
-                            break
-                        elif issubclass(new_type, objects.Level):
-                            self.created_levels.append(Level(world.name, self.world_list, super_level=self.name, main_world_name=world.name, main_world_tier=world.infinite_tier, rule_list=self.rule_list))
-                            level_info: objects.LevelPointerExtraJson = {"name": world.name, "icon": {"name": "world", "color": world.color}}
-                            transform_to[objects.World].append(objects.Level((0, 0), level_info=level_info))
-                        elif issubclass(new_type, objects.Clone):
-                            world_info: objects.WorldPointerExtraJson = {"name": world.name, "infinite_tier": world.infinite_tier}
-                            transform_to[objects.World].append(objects.Clone((0, 0), world_info=world_info))
-                        elif issubclass(new_type, objects.Game):
-                            transform_to[objects.World].append(objects.Empty((0, 0)))
-                            self.new_games.append(objects.TextWorld)
-                        elif issubclass(new_type, objects.Text):
-                            transform_to[objects.World].append(objects.TextWorld((0, 0)))
-                        else:
-                            transform_to[objects.World].append(new_type((0, 0)))
-                    elif isinstance(old_obj, objects.Clone):
-                        if issubclass(new_type, objects.Clone):
-                            transform_to[objects.Clone] = []
-                            break
-                        elif issubclass(new_type, objects.Level):
-                            self.created_levels.append(Level(world.name, self.world_list, super_level=self.name, main_world_name=world.name, main_world_tier=world.infinite_tier, rule_list=self.rule_list))
-                            level_info: objects.LevelPointerExtraJson = {"name": world.name, "icon": {"name": "world", "color": world.color}}
-                            transform_to[objects.World].append(objects.Level((0, 0), level_info=level_info))
-                        elif issubclass(new_type, objects.World):
-                            world_info: objects.WorldPointerExtraJson = {"name": world.name, "infinite_tier": world.infinite_tier}
-                            transform_to[objects.World].append(objects.World((0, 0), world_info=world_info))
-                        elif issubclass(new_type, objects.Game):
-                            transform_to[objects.Clone].append(objects.Empty((0, 0)))
-                            self.new_games.append(objects.TextClone)
-                        elif issubclass(new_type, objects.Text):
-                            transform_to[objects.Clone].append(objects.TextClone((0, 0)))
-                        else:
-                            transform_to[objects.Clone].append(new_type((0, 0)))
-            delete_special_object_list: list[objects.BmpObject] = []
-            for super_world in self.world_list:
-                if len(transform_to[objects.World]) != 0:
-                    for world_obj in filter(lambda o: o.world_info["name"] == world.name and o.world_info["infinite_tier"] == world.infinite_tier, super_world.get_worlds()):
-                        delete_special_object_list.append(world_obj)
-                        for transform_obj in transform_to[objects.World]:
-                            transform_obj.pos = world_obj.pos
-                            transform_obj.orient = world_obj.orient
-                            super_world.new_obj(transform_obj)
-                if len(transform_to[objects.Clone]) != 0:
-                    for clone_obj in filter(lambda o: o.world_info["name"] == world.name and o.world_info["infinite_tier"] == world.infinite_tier, super_world.get_clones()):
-                        delete_special_object_list.append(clone_obj)
-                        for transform_obj in transform_to[objects.Clone]:
-                            transform_obj.pos = clone_obj.pos
-                            transform_obj.orient = clone_obj.orient
-                            super_world.new_obj(transform_obj)
-            for obj in delete_special_object_list:
-                super_world.del_obj(obj)
-        if len(transform_to[objects.Level]) != 0:
-            return transform_to[objects.Level]
-        else:
-            return None
     def text_plus_and_text_minus(self) -> None:
         for world in self.world_list:
             delete_list = []
@@ -1221,7 +949,7 @@ class Level(object):
                         return True
                 for win_obj in win_objs:
                     if you_obj.pos == win_obj.pos:
-                        if self.same_float_prop(you_obj, win_obj):
+                        if objects.same_float_prop(you_obj, win_obj):
                             self.sound_events.append("win")
                             return True
         return False
@@ -1236,7 +964,7 @@ class Level(object):
                         return True
                 for end_obj in end_objs:
                     if you_obj.pos == end_obj.pos:
-                        if self.same_float_prop(you_obj, end_obj):
+                        if objects.same_float_prop(you_obj, end_obj):
                             self.sound_events.append("end")
                             return True
         return False
@@ -1255,42 +983,6 @@ class Level(object):
                 success = True
         if success:
             self.sound_events.append("done")
-    def turn(self, op: spaces.PlayerOperation) -> ReTurnValue:
-        self.new_games = []
-        self.sound_events = []
-        self.created_levels = []
-        old_prop_dict: dict[uuid.UUID, list[tuple[type[objects.Text], int]]] = {}
-        for world in self.world_list:
-            for obj in world.object_list:
-                old_prop_dict[obj.uuid] = [t for t in obj.properties]
-                obj.moved = False
-        self.update_rules(old_prop_dict)
-        game_push = self.you(op)
-        game_push |= self.move()
-        self.update_rules(old_prop_dict)
-        game_push |= self.shift()
-        self.update_rules(old_prop_dict)
-        transform_to = self.transform()
-        self.text_plus_and_text_minus()
-        self.update_rules(old_prop_dict)
-        self.tele()
-        selected_level = self.select(op)
-        self.update_rules(old_prop_dict)
-        self.done()
-        self.sink()
-        self.hot_and_melt()
-        self.defeat()
-        self.open_and_shut()
-        self.update_rules(old_prop_dict)
-        self.make()
-        self.update_rules(old_prop_dict)
-        self.all_list_set()
-        win = self.win()
-        end = self.end()
-        return {"win": win, "end": end,
-                "game_push": game_push,
-                "selected_level": selected_level,
-                "transform_to": transform_to}
     def have_you(self) -> bool:
         for world in self.world_list:
             for obj in world.object_list:

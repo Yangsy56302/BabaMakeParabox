@@ -124,7 +124,6 @@ please considering shift + enter, or cut, copy, and paste.
 
 ### Not Implemented Yet
 
-- In level / world range: `LEVEL IS YOU`，`WORLD IS DEFEAT`, etc.
 - Complex grammar about `GAME`.
 
 ### Bug List
@@ -222,6 +221,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 3.401  | 2024.08.07 | Game feeling Done is Shut; Text_Text_ is More |
 | 3.41   | 2024.08.09 | Level is Map; Levelpack is not Restart |
 | 3.5    | 2024.08.24 | Rock is Push and not Enter and not Leave |
+| 3.6    | 2024.09.11 | Levelpack eat Logic |
 
 ## Bug Reports and Suggestions
 

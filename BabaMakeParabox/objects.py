@@ -711,6 +711,9 @@ class TextDone(Property):
 class Metatext(Noun):
     base_obj_type: type[Text]
     meta_tier: int
+    
+def same_float_prop(obj_1: BmpObject, obj_2: BmpObject):
+    return not (obj_1.has_prop(TextFloat) ^ obj_2.has_prop(TextFloat))
 
 noun_class_list: list[type[Noun]] = []
 noun_class_list.extend([TextBaba, TextKeke, TextMe, TextPatrick, TextSkull, TextGhost])
