@@ -222,6 +222,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 3.41   | 2024.08.09 | Level is Map; Levelpack is not Restart |
 | 3.5    | 2024.08.24 | Rock is Push and not Enter and not Leave |
 | 3.6    | 2024.09.11 | Levelpack eat Logic |
+| 3.61   | 2024.09.12 | World is More |
 
 ## Bug Reports and Suggestions
 

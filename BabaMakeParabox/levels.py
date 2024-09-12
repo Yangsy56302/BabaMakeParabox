@@ -82,38 +82,13 @@ class Level(object):
                 self.world_list[i] = world
                 return
         self.world_list.append(world)
-    def find_super_world(self, world_info: objects.WorldPointerExtraJson) -> Optional[tuple[worlds.World, objects.BmpObject]]:
+    def find_super_worlds(self, world_info: objects.WorldPointerExtraJson) -> list[tuple[worlds.World, objects.World]]:
+        return_value: list[tuple[worlds.World, objects.World]] = []
         for super_world in self.world_list:
             for obj in super_world.get_worlds():
-                if world_info["name"] == obj.world_info["name"] and world_info["infinite_tier"] == obj.world_info["infinite_tier"]:
-                    return (super_world, obj)
-        return None
-    def repeated_world_to_clone(self) -> None:
-        world_objs: list[tuple[worlds.World, objects.World]] = []
-        for world in self.world_list:
-            world_objs.extend([(world, o) for o in world.get_worlds()])
-        to_clone_obj_dict: dict[tuple[str, int], list[tuple[worlds.World, objects.World]]] = {}
-        for i, (i_world, i_world_object) in enumerate(world_objs):
-            for j, (j_world, j_world_object) in enumerate(world_objs):
-                if i == j:
-                    continue
-                if i_world_object.world_info == j_world_object.world_info:
-                    to_clone_obj_dict.setdefault((j_world_object.world_info["name"], j_world_object.world_info["infinite_tier"]), [])
-                    if (j_world, j_world_object) not in to_clone_obj_dict[(j_world_object.world_info["name"], j_world_object.world_info["infinite_tier"])]:
-                        to_clone_obj_dict[(j_world_object.world_info["name"], j_world_object.world_info["infinite_tier"])].append((j_world, j_world_object))
-        to_clone_obj_list: list[tuple[worlds.World, objects.World]] = []
-        for to_clone_objs in to_clone_obj_dict.values():
-            random.shuffle(to_clone_objs)
-            to_clone_obj_list.extend(to_clone_objs[1:])
-        for world, to_clone_obj in to_clone_obj_list:
-            world.new_obj(objects.Clone(to_clone_obj.pos, to_clone_obj.orient, world_info=to_clone_obj.world_info))
-            world.del_obj(to_clone_obj)
-    def selected_world_to_clone(self, name: str, infinite_tier: int) -> None:
-        for world in self.world_list:
-            for world_obj in world.get_worlds():
-                if name == world_obj.world_info["name"] and infinite_tier == world_obj.world_info["infinite_tier"]:
-                    world.new_obj(objects.Clone(world_obj.pos, world_obj.orient, world_info=world_obj.world_info))
-                    world.del_obj(world_obj)
+                if world_info == obj.world_info:
+                    return_value.append((super_world, obj))
+        return return_value
     def all_list_set(self) -> None:
         for world in self.world_list:
             for obj in world.object_list:
@@ -377,16 +352,20 @@ class Level(object):
         for obj, prop in new_prop_list:
             prop_type, prop_negated_count = prop
             obj.new_prop(prop_type, prop_negated_count)
-    def move_obj_between_worlds(self, old_world: worlds.World, obj: objects.BmpObject, new_world: worlds.World, new_pos: spaces.Coord) -> None:
-        old_world.object_pos_index[old_world.pos_to_index(obj.pos)].remove(obj)
-        old_world.object_list.remove(obj)
-        obj.pos = new_pos
-        new_world.object_list.append(obj)
-        new_world.object_pos_index[new_world.pos_to_index(obj.pos)].append(obj)
-    def move_obj_in_world(self, world: worlds.World, obj: objects.BmpObject, pos: spaces.Coord) -> None:
-        world.object_pos_index[world.pos_to_index(obj.pos)].remove(obj)
+    def move_obj_between_worlds(self, old_world: worlds.World, obj: objects.BmpObject, new_world: worlds.World, pos: spaces.Coord) -> None:
+        if obj in old_world.object_list:
+            old_world.del_obj(obj)
+        obj = copy.deepcopy(obj)
+        obj.reset_uuid()
         obj.pos = pos
-        world.object_pos_index[world.pos_to_index(obj.pos)].append(obj)
+        new_world.new_obj(obj)
+    def move_obj_in_world(self, world: worlds.World, obj: objects.BmpObject, pos: spaces.Coord) -> None:
+        if obj in world.object_list:
+            world.del_obj(obj)
+        obj = copy.deepcopy(obj)
+        obj.reset_uuid()
+        obj.pos = pos
+        world.new_obj(obj)
     def destroy_obj(self, world: worlds.World, obj: objects.BmpObject) -> None:
         world.del_obj(obj)
         for new_noun_type in obj.has_object:
@@ -434,7 +413,7 @@ class Level(object):
             else:
                 new_obj_type = new_noun_type.obj_type
                 world.new_obj(new_obj_type(obj.pos, obj.orient, world_info=obj.world_info, level_info=obj.level_info))
-    def get_move_list(self, cause: type[objects.Property], world: worlds.World, obj: objects.BmpObject, orient: spaces.Orient, pos: Optional[spaces.Coord] = None, pushed: Optional[list[objects.BmpObject]] = None, passed: Optional[list[worlds.World]] = None, transnum: Optional[float] = None, depth: int = 0) -> Optional[list[tuple[objects.BmpObject, worlds.World, spaces.Coord, spaces.Orient]]]:
+    def get_move_list(self, world: worlds.World, obj: objects.BmpObject, orient: spaces.Orient, pos: Optional[spaces.Coord] = None, pushed: Optional[list[objects.BmpObject]] = None, passed: Optional[list[worlds.World]] = None, transnum: Optional[float] = None, depth: int = 0) -> Optional[list[tuple[objects.BmpObject, worlds.World, spaces.Coord, spaces.Orient]]]:
         if depth > 128:
             return None
         depth += 1
@@ -450,36 +429,27 @@ class Level(object):
             exit_world = True
             # infinite exit
             if world in passed:
-                return_value = self.find_super_world({"name": world.name, "infinite_tier": world.infinite_tier + 1})
-                if return_value is None:
-                    exit_world = False
-                else:
-                    super_world, world_obj = return_value
+                return_value = self.find_super_worlds({"name": world.name, "infinite_tier": world.infinite_tier + 1})
+                for super_world, world_obj in return_value:
                     new_transnum = super_world.transnum_to_bigger_transnum(transnum, world_obj.pos, orient) if transnum is not None else world.pos_to_transnum(obj.pos, orient)
-                    new_move_list = self.get_move_list(cause, super_world, obj, orient, world_obj.pos, pushed, passed, new_transnum, depth)
+                    new_move_list = self.get_move_list(super_world, obj, orient, world_obj.pos, pushed, passed, new_transnum, depth)
                     if new_move_list is None:
                         exit_world = False
                     else:
                         exit_list.extend(new_move_list)
             # exit
             else:
-                return_value = self.find_super_world({"name": world.name, "infinite_tier": world.infinite_tier})
-                if return_value is None:
-                    exit_world = False
-                else:
-                    super_world, world_obj = return_value
+                return_value = self.find_super_worlds({"name": world.name, "infinite_tier": world.infinite_tier})
+                for super_world, world_obj in return_value:
                     new_transnum = super_world.transnum_to_bigger_transnum(transnum, world_obj.pos, orient) if transnum is not None else world.pos_to_transnum(obj.pos, orient)
                     passed.append(world)
-                    new_move_list = self.get_move_list(cause, super_world, obj, orient, world_obj.pos, pushed, passed, new_transnum, depth)
+                    new_move_list = self.get_move_list(super_world, obj, orient, world_obj.pos, pushed, passed, new_transnum, depth)
                     if new_move_list is None:
                         exit_world = False
                     else:
                         exit_list.extend(new_move_list)
         # push
         push_objects = [o for o in world.get_objs_from_pos(new_pos) if o.has_prop(objects.TextPush)]
-        you_objects = [o for o in world.get_objs_from_pos(new_pos) if o.has_prop(objects.TextYou)]
-        if not issubclass(cause, objects.TextYou):
-            push_objects.extend(you_objects)
         objects_that_cant_push: list[objects.BmpObject] = []
         push = False
         push_list = []
@@ -487,7 +457,7 @@ class Level(object):
             push = True
             for push_object in push_objects:
                 pushed.append(obj)
-                new_move_list = self.get_move_list(cause, world, push_object, orient, pushed=pushed, depth=depth)
+                new_move_list = self.get_move_list(world, push_object, orient, pushed=pushed, depth=depth)
                 pushed.pop()
                 if new_move_list is None:
                     objects_that_cant_push.append(push_object)
@@ -535,7 +505,7 @@ class Level(object):
                             break
                         input_pos = sub_world.default_input_position(orient)
                         pushed.append(obj)
-                        test_move_list = self.get_move_list(cause, sub_world, new_push_object, spaces.swap_orientation(orient), input_pos, pushed=pushed, depth=depth)
+                        test_move_list = self.get_move_list(sub_world, new_push_object, spaces.swap_orientation(orient), input_pos, pushed=pushed, depth=depth)
                         pushed.pop()
                         if test_move_list is None:
                             squeeze = False
@@ -558,12 +528,12 @@ class Level(object):
                     new_move_list = None
                     # infinite enter
                     if sub_world in passed:
-                        sub_sub_world = self.get_world({"name": sub_world.name, "infinite_tier": sub_world.infinite_tier - 1})
-                        if sub_sub_world is not None:
+                        inf_sub_world = self.get_world({"name": sub_world.name, "infinite_tier": sub_world.infinite_tier - 1})
+                        if inf_sub_world is not None:
                             new_transnum = 0.5
-                            input_pos = sub_sub_world.default_input_position(spaces.swap_orientation(orient))
+                            input_pos = inf_sub_world.default_input_position(spaces.swap_orientation(orient))
                             passed.append(world)
-                            new_move_list = self.get_move_list(cause, sub_sub_world, obj, orient, input_pos, pushed, passed, new_transnum, depth)
+                            new_move_list = self.get_move_list(inf_sub_world, obj, orient, input_pos, pushed, passed, new_transnum, depth)
                         else:
                             enter_world = False
                             break
@@ -572,7 +542,7 @@ class Level(object):
                         new_transnum = world.transnum_to_smaller_transnum(transnum, world_object.pos, spaces.swap_orientation(orient)) if transnum is not None else 0.5
                         input_pos = sub_world.transnum_to_pos(transnum, spaces.swap_orientation(orient)) if transnum is not None else sub_world.default_input_position(spaces.swap_orientation(orient))
                         passed.append(world)
-                        new_move_list = self.get_move_list(cause, sub_world, obj, orient, input_pos, pushed, passed, new_transnum, depth)
+                        new_move_list = self.get_move_list(sub_world, obj, orient, input_pos, pushed, passed, new_transnum, depth)
                     if new_move_list is not None:
                         enter_list.extend(new_move_list)
                     else:
@@ -612,7 +582,7 @@ class Level(object):
         for world in self.world_list:
             if world.has_world_prop(objects.TextYou) or self.has_prop(objects.TextYou):
                 for obj in world.object_list:
-                    new_move_list = self.get_move_list(objects.TextMove, world, obj, spaces.Orient.S)
+                    new_move_list = self.get_move_list(world, obj, spaces.Orient.S)
                     if new_move_list is not None:
                         move_list.extend(new_move_list)
                     else:
@@ -621,7 +591,7 @@ class Level(object):
             you_objs = [o for o in world.object_list if o.has_prop(objects.TextYou)]
             for obj in you_objs:
                 obj.orient = orient
-                new_move_list = self.get_move_list(objects.TextYou, world, obj, obj.orient)
+                new_move_list = self.get_move_list(world, obj, obj.orient)
                 if new_move_list is not None:
                     move_list.extend(new_move_list)
                 else:
@@ -653,7 +623,7 @@ class Level(object):
             if world.has_world_prop(objects.TextMove) or self.has_prop(objects.TextMove):
                 for obj in world.object_list:
                     if not obj.has_prop(objects.TextFloat):
-                        new_move_list = self.get_move_list(objects.TextMove, world, obj, spaces.Orient.S)
+                        new_move_list = self.get_move_list(world, obj, spaces.Orient.S)
                         if new_move_list is not None:
                             move_list.extend(new_move_list)
                         else:
@@ -662,12 +632,12 @@ class Level(object):
             move_objs = [o for o in world.object_list if o.has_prop(objects.TextMove)]
             for obj in move_objs:
                 move_list = []
-                new_move_list = self.get_move_list(objects.TextMove, world, obj, obj.orient)
+                new_move_list = self.get_move_list(world, obj, obj.orient)
                 if new_move_list is not None:
                     move_list = new_move_list
                 else:
                     obj.orient = spaces.swap_orientation(obj.orient)
-                    new_move_list = self.get_move_list(objects.TextMove, world, obj, obj.orient)
+                    new_move_list = self.get_move_list(world, obj, obj.orient)
                     if new_move_list is not None:
                         move_list = new_move_list
                     else:
@@ -682,7 +652,7 @@ class Level(object):
             if world.has_world_prop(objects.TextShift) or self.has_prop(objects.TextShift):
                 for obj in world.object_list:
                     if not obj.has_prop(objects.TextFloat):
-                        new_move_list = self.get_move_list(objects.TextShift, world, obj, spaces.Orient.D)
+                        new_move_list = self.get_move_list(world, obj, spaces.Orient.D)
                         if new_move_list is not None:
                             move_list.extend(new_move_list)
                         else:
@@ -694,7 +664,7 @@ class Level(object):
                     if obj == shift_obj:
                         continue
                     if objects.same_float_prop(obj, shift_obj):
-                        new_move_list = self.get_move_list(objects.TextShift, world, obj, shift_obj.orient)
+                        new_move_list = self.get_move_list(world, obj, shift_obj.orient)
                         if new_move_list is not None:
                             move_list.extend(new_move_list)
                         else:

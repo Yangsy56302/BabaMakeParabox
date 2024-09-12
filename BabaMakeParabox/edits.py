@@ -211,8 +211,6 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     else:
                         name = current_world.name
                         infinite_tier = current_world.infinite_tier
-                    if current_object_type == objects.World:
-                        current_level.selected_world_to_clone(name, infinite_tier)
                     world_info: objects.WorldPointerExtraJson = {"name": name, "infinite_tier": infinite_tier}
                     current_world.new_obj(current_object_type(current_cursor_pos, current_orient, world_info=world_info))
                 else:
@@ -344,8 +342,6 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             list(map(objects.BmpObject.reset_uuid, current_clipboard))
             for obj in current_clipboard:
                 obj.pos = current_cursor_pos
-                if type(obj) == objects.World:
-                    current_level.selected_world_to_clone(obj.world_info["name"], obj.world_info["infinite_tier"])
                 current_world.new_obj(obj)
                 if isinstance(obj, objects.WorldPointer):
                     name = obj.world_info["name"]

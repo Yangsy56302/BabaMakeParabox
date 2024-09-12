@@ -260,8 +260,6 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                         os.system(f"start /b python SubabaMakeParabox.py {obj_type.json_name}")
                 elif basics.current_os == basics.linux:
                     os.system(f"python ./SubabaMakeParabox.py {obj_type.json_name} &")
-            for level in levelpack.level_list:
-                level.repeated_world_to_clone()
             levelpack.set_level(current_level)
             if level_info["win"]:
                 print(languages.current_language["game.level.win"])
