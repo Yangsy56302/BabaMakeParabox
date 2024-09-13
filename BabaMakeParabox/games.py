@@ -118,6 +118,8 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 history[current_level.name].append(copy.deepcopy(current_level))
                 round_num += 1
                 level_info = levelpack.turn(current_level, spaces.NullOrient.O)
+                if objects.TextPush in current_level.game_properties and level_info["game_push"]:
+                    display_offset[0] += window.get_width() / current_world.height
                 refresh = True
             elif keys["ESCAPE"]:
                 level = copy.deepcopy(levelpack_backup.get_level(current_level.name))
@@ -225,6 +227,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     game_running = False
                     raise GameIsDoneError()
                 elif prop == objects.TextOpen:
+                    sounds.play("open")
                     if basics.current_os == basics.windows:
                         if os.path.exists("BabaMakeParabox.exe"):
                                 os.system("start BabaMakeParabox.exe")

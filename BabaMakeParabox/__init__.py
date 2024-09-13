@@ -133,4 +133,4 @@ def main() -> None:
         pygame.quit()
         print(languages.current_language["main.thank_you"])
 
-__all__ = ["basics", "languages", "spaces", "colors", "objects", "rules", "worlds", "displays", "levels", "edits", "games", "subgames", "main"]
+__all__ = ["basics", "languages", "spaces", "colors", "objects", "rules", "displays", "worlds", "levels", "levelpacks", "edits", "games", "subgames", "main"]

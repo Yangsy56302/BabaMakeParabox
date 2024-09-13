@@ -448,6 +448,8 @@ class Level(object):
                         exit_world = False
                     else:
                         exit_list.extend(new_move_list)
+            if len(return_value) == 0:
+                exit_world = False
         # push
         push_objects = [o for o in world.get_objs_from_pos(new_pos) if o.has_prop(objects.TextPush)]
         objects_that_cant_push: list[objects.BmpObject] = []
@@ -548,6 +550,11 @@ class Level(object):
                     else:
                         enter_world = False
                         break
+        print(f"{exit_world = }")
+        print(f"{push = }")
+        print(f"{enter_world = }")
+        print(f"{squeeze = }")
+        print(f"{simple = }")
         if exit_world:
             return basics.remove_same_elements(exit_list)
         elif push:
@@ -580,14 +587,6 @@ class Level(object):
         move_list = []
         pushing_game = False
         for world in self.world_list:
-            if world.has_world_prop(objects.TextYou) or self.has_prop(objects.TextYou):
-                for obj in world.object_list:
-                    new_move_list = self.get_move_list(world, obj, spaces.Orient.S)
-                    if new_move_list is not None:
-                        move_list.extend(new_move_list)
-                    else:
-                        pushing_game = True
-                continue
             you_objs = [o for o in world.object_list if o.has_prop(objects.TextYou)]
             for obj in you_objs:
                 obj.orient = orient

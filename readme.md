@@ -45,16 +45,16 @@ Please make sure you have a levelpack file, if not, you can [make one](#how-to-m
 
 ### How to Control
 
-- WSAD: You / Cursor move.
-- Space: You wait for something / Cursor select a level to play.
-- Z: Undo.
-- R: Restart the level.
-- Tab: Display gamerules.
-- Esc：Go back to the superlevel.
-- \- / =: Select world for camera to focus.
-- F1: Show FPS.
-- Close Pygame Window: Save and quit.
-- Close Terminal: Do not save, just quit.
++ WSAD: You / Cursor move.
++ Space: You wait for something / Cursor select a level to play.
++ Z: Undo.
++ R: Restart the level.
++ Tab: Display gamerules.
++ Esc：Go back to the superlevel.
++ \- / =: Select world for camera to focus.
++ F1: Show FPS.
++ Close Pygame Window: Save and quit.
++ Close Terminal: Do not save, just quit.
 
 ### How to Win
 
@@ -72,37 +72,39 @@ Please help me to translate this chapter from [the Chinese version of readme fil
 
 ## How to Make a Custom Levelpack
 
+This chapter is not a game design hint.
+
 ### How to Control
 
-- WSAD: Move cursor.
-- Shift + WSAD: Change orientation.
-- Q / E: Select object.
-- Tab: Select noun from object.
-- Shift + Tab: Select object from noun.
-- 0 ~ 9: Select object from palette.
-- Ctrl + 0 ~ Ctrl + 9: Set palette from selected object.
-- Enter: Place object on cursor.
-- Shift + Enter: Place object on cursor. \*
-- Ctrl + Enter: Force to place object on cursor.
-- Ctrl + Shift + Enter: Force to place object on cursor. \*
-- Backspace: Destroy all objects on cursor.
-- \- / =: Select world for camera to focus.
-- Shift + \- / Shift + =: Select level for camera to focus.
-- \\: New world. \*
-- Shift + \\: New level. \*
-- Delete: Delete current world. \*
-- Shift + Delete: Delete current level. \*
-- R: New global rules. \*
-- Shift + R: Delete global rules. \*
-- T: Rename Current World. \*
-- Shift + T: Rename Current Level. \*
-- Z: Undo.
-- X: Cut all objects on cursor.
-- C: Copy all objects on cursor.
-- V: Paste all objects on cursor.
-- F1: Show FPS.
-- Close Pygame Window: Save and quit.
-- Close Terminal: Do not save, just quit.
++ WSAD: Move cursor.
++ Shift + WSAD: Change orientation.
++ Q / E: Select object.
++ Tab: Select noun from object.
++ Shift + Tab: Select object from noun.
++ 0 ~ 9: Select object from palette.
++ Ctrl + 0 ~ Ctrl + 9: Set palette from selected object.
++ Enter: Place object on cursor.
++ Shift + Enter: Place object on cursor. \*
++ Ctrl + Enter: Force to place object on cursor.
++ Ctrl + Shift + Enter: Force to place object on cursor. \*
++ Backspace: Destroy all objects on cursor.
++ \- / =: Select world for camera to focus.
++ Shift + \- / Shift + =: Select level for camera to focus.
++ \\: New world. \*
++ Shift + \\: New level. \*
++ Delete: Delete current world. \*
++ Shift + Delete: Delete current level. \*
++ R: New global rules. \*
++ Shift + R: Delete global rules. \*
++ T: Rename Current World. \*
++ Shift + T: Rename Current Level. \*
++ Z: Undo.
++ X: Cut all objects on cursor.
++ C: Copy all objects on cursor.
++ V: Paste all objects on cursor.
++ F1: Show FPS.
++ Close Pygame Window: Save and quit.
++ Close Terminal: Do not save, just quit.
 
 **Important: Key descriptions with \* means you need to**
 **input some informations on terminal after pressing this key.**
@@ -117,18 +119,18 @@ please considering shift + enter, or cut, copy, and paste.
 
 ### Feature List
 
-- For all `NOT` before a property-like text, they negate other "weaker" rules first before negate itself.
-- `FEELING` only try once per round for avoiding halting problem.
-- `TEXT IS WORD` will make every text object also acts like `TEXT`.
-    - This will usually cause the rule right above can also be identified as `TEXT IS TEXT`.
++ For all `NOT` before a property-like text, they negate other "weaker" rules first before negate itself.
++ `FEELING` only try once per round for avoiding halting problem.
++ `TEXT IS WORD` will make every text object also acts like `TEXT`.
+    + This will usually cause the rule right above can also be identified as `TEXT IS TEXT`.
 
 ### Not Implemented Yet
 
-- Complex grammar about `GAME`.
++ Complex grammar about `GAME`.
 
 ### Bug List
 
-- A lot of `MOVE` problems because recursive movement system incomplete.
++ A lot of `MOVE` problems because recursive movement system incomplete.
 
 ### About options.json
 
@@ -223,6 +225,7 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 3.5    | 2024.08.24 | Rock is Push and not Enter and not Leave |
 | 3.6    | 2024.09.11 | Levelpack eat Logic |
 | 3.61   | 2024.09.12 | World is More |
+| 3.611  | 2024.09.13 | Bug on World feeling Push is Fix |
 
 ## Bug Reports and Suggestions
 

@@ -342,7 +342,8 @@ class Levelpack(object):
                 old_prop_dict[obj.uuid] = [t for t in obj.properties]
                 obj.moved = False
         level.update_rules(old_prop_dict)
-        game_push = level.you(op)
+        game_push = False
+        game_push |= level.you(op)
         game_push |= level.move()
         level.update_rules(old_prop_dict)
         game_push |= level.shift()
