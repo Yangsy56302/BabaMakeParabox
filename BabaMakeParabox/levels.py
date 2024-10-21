@@ -108,11 +108,10 @@ class Level(object):
             return_value = return_value and (meet_prefix_condition if not prefix_info[0] else not meet_prefix_condition)
         return return_value
     def meet_infix_conditions(self, world: worlds.World, obj: objects.BmpObject, infix_info_list: list[rules.InfixInfo], old_feeling: Optional[list[tuple[type[objects.Text], int]]] = None) -> bool:
-        return_value = True
-        matched_objs: list[objects.BmpObject] = [obj]
         for infix_info in infix_info_list:
             meet_infix_condition = True
             if infix_info[1] in (objects.TextOn, objects.TextNear, objects.TextNextto):
+                matched_objs: list[objects.BmpObject] = [obj]
                 if infix_info[1] == objects.TextOn:
                     find_range = [(obj.x, obj.y)]
                 elif infix_info[1] == objects.TextNear:
@@ -121,57 +120,56 @@ class Level(object):
                                   (obj.x - 1, obj.y + 1), (obj.x, obj.y + 1), (obj.x + 1, obj.y + 1)]
                 elif infix_info[1] == objects.TextNextto:
                     find_range = [(obj.x, obj.y - 1), (obj.x - 1, obj.y), (obj.x + 1, obj.y), (obj.x, obj.y + 1)]
-                match_type: type[objects.BmpObject] = infix_info[3].obj_type # type: ignore
-                if match_type == objects.All:
-                    if infix_info[2]:
-                        for new_match_type in [o for o in self.all_list if issubclass(o, objects.in_not_all)]:
-                            match_objs: list[objects.BmpObject] = []
-                            for pos in find_range:
-                                match_objs.extend([o for o in world.get_objs_from_pos_and_type(pos, new_match_type) if o not in matched_objs])
-                            if len(match_objs) == 0:
-                                meet_infix_condition = False
-                            else:
-                                matched_objs.append(match_objs[0])
-                    else:
-                        for new_match_type in [o for o in self.all_list if not issubclass(o, objects.not_in_all)]:
-                            match_objs: list[objects.BmpObject] = []
-                            for pos in find_range:
-                                match_objs.extend([o for o in world.get_objs_from_pos_and_type(pos, new_match_type) if o not in matched_objs])
-                            if len(match_objs) == 0:
-                                meet_infix_condition = False
-                            else:
-                                matched_objs.append(match_objs[0])
-                else:
-                    if infix_info[2]:
-                        for new_match_type in [o for o in self.all_list if (not issubclass(o, objects.not_in_all)) and not issubclass(o, match_type)]:
-                            match_objs: list[objects.BmpObject] = []
-                            for pos in find_range:
-                                match_objs.extend([o for o in world.get_objs_from_pos_and_type(pos, new_match_type) if o not in matched_objs])
-                            if len(match_objs) == 0:
-                                meet_infix_condition = False
-                            else:
-                                matched_objs.append(match_objs[0])
-                    else:
-                        match_objs: list[objects.BmpObject] = []
-                        for pos in find_range:
-                            match_objs.extend([o for o in world.get_objs_from_pos_and_type(pos, match_type) if o not in matched_objs])
-                        if len(match_objs) == 0:
-                            meet_infix_condition = False
+                for match_negated, match_type_text in infix_info[2]: # type: ignore
+                    match_type_text: type[objects.Noun]
+                    match_type = match_type_text.obj_type
+                    if match_type == objects.All:
+                        if match_negated:
+                            for new_match_type in [o for o in self.all_list if issubclass(o, objects.in_not_all)]:
+                                match_objs: list[objects.BmpObject] = []
+                                for pos in find_range:
+                                    match_objs.extend([o for o in world.get_objs_from_pos_and_type(pos, new_match_type) if o not in matched_objs])
+                                if len(match_objs) == 0:
+                                    meet_infix_condition = False
+                                else:
+                                    matched_objs.append(match_objs[0])
                         else:
-                            matched_objs.append(match_objs[0])
+                            for new_match_type in [o for o in self.all_list if not issubclass(o, objects.not_in_all)]:
+                                match_objs: list[objects.BmpObject] = []
+                                for pos in find_range:
+                                    match_objs.extend([o for o in world.get_objs_from_pos_and_type(pos, new_match_type) if o not in matched_objs])
+                                if len(match_objs) == 0:
+                                    meet_infix_condition = False
+                                else:
+                                    matched_objs.append(match_objs[0])
+                    else:
+                        if match_negated:
+                            for new_match_type in [o for o in self.all_list if (not issubclass(o, objects.not_in_all)) and not issubclass(o, match_type)]:
+                                match_objs: list[objects.BmpObject] = []
+                                for pos in find_range:
+                                    match_objs.extend([o for o in world.get_objs_from_pos_and_type(pos, new_match_type) if o not in matched_objs])
+                                if len(match_objs) == 0:
+                                    meet_infix_condition = False
+                                else:
+                                    matched_objs.append(match_objs[0])
+                        else:
+                            match_objs: list[objects.BmpObject] = []
+                            for pos in find_range:
+                                match_objs.extend([o for o in world.get_objs_from_pos_and_type(pos, match_type) if o not in matched_objs])
+                            if len(match_objs) == 0:
+                                meet_infix_condition = False
+                            else:
+                                matched_objs.append(match_objs[0])
             elif infix_info[1] == objects.TextFeeling:
                 if old_feeling is None:
                     meet_infix_condition = False
                 else:
-                    match_prop: type[objects.Property] = infix_info[3] # type: ignore
-                    if infix_info[2]:
-                        if match_prop not in [t[0] for t in old_feeling if t[1] % 2 == 1]:
+                    for match_negated, match_prop in infix_info[2]:
+                        if match_prop not in [t[0] for t in old_feeling if t[1] % 2 == int(match_negated)]:
                             meet_infix_condition = False
-                    else:
-                        if match_prop not in [t[0] for t in old_feeling if t[1] % 2 == 0]:
-                            meet_infix_condition = False
-            return_value = return_value and (meet_infix_condition if not infix_info[0] else not meet_infix_condition)
-        return return_value
+            if meet_infix_condition == infix_info[0]:
+                return False
+        return True
     def recursion_rules(self, world: worlds.World, rule_list: Optional[list[rules.Rule]] = None, passed: Optional[list[worlds.World]] = None) -> None:
         passed = passed if passed is not None else []
         if world in passed:
@@ -550,11 +548,6 @@ class Level(object):
                     else:
                         enter_world = False
                         break
-        print(f"{exit_world = }")
-        print(f"{push = }")
-        print(f"{enter_world = }")
-        print(f"{squeeze = }")
-        print(f"{simple = }")
         if exit_world:
             return basics.remove_same_elements(exit_list)
         elif push:

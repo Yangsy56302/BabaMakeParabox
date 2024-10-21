@@ -46,9 +46,9 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     window.fill("#000000")
     current_level: levels.Level = levelpack.get_exist_level(levelpack.main_level)
     current_world: worlds.World = current_level.get_exist_world({"name": current_level.main_world_name, "infinite_tier": current_level.main_world_tier})
-    default_level_info: levelpacks.ReTurnValue = {"win": False, "end": False, "transform": False, "game_push": False, "selected_level": None}
-    level_info: levelpacks.ReTurnValue = default_level_info.copy()
-    level_info_backup: levelpacks.ReTurnValue = default_level_info.copy()
+    default_levelpack_info: levelpacks.ReTurnValue = {"win": False, "end": False, "transform": False, "game_push": False, "selected_level": None}
+    levelpack_info: levelpacks.ReTurnValue = default_levelpack_info.copy()
+    levelpack_info_backup: levelpacks.ReTurnValue = default_levelpack_info.copy()
     history: dict[str, list[levels.Level]] = {l.name: [l] for l in levelpack_backup.level_list}
     level_changed = False
     world_changed = False
@@ -81,44 +81,44 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             if keys["W"]:
                 history[current_level.name].append(copy.deepcopy(current_level))
                 round_num += 1
-                level_info = levelpack.turn(current_level, spaces.Orient.W)
+                levelpack_info = levelpack.turn(current_level, spaces.Orient.W)
                 if objects.TextYou in current_level.game_properties:
                     display_offset[1] -= window.get_height() / current_world.width
-                if objects.TextPush in current_level.game_properties and level_info["game_push"]:
+                if objects.TextPush in current_level.game_properties and levelpack_info["game_push"]:
                     display_offset[1] -= window.get_height() / current_world.width
                 refresh = True
             elif keys["S"]:
                 history[current_level.name].append(copy.deepcopy(current_level))
                 round_num += 1
-                level_info = levelpack.turn(current_level, spaces.Orient.S)
+                levelpack_info = levelpack.turn(current_level, spaces.Orient.S)
                 if objects.TextYou in current_level.game_properties:
                     display_offset[1] += window.get_height() / current_world.width
-                if objects.TextPush in current_level.game_properties and level_info["game_push"]:
+                if objects.TextPush in current_level.game_properties and levelpack_info["game_push"]:
                     display_offset[1] += window.get_height() / current_world.width
                 refresh = True
             elif keys["A"]:
                 history[current_level.name].append(copy.deepcopy(current_level))
                 round_num += 1
-                level_info = levelpack.turn(current_level, spaces.Orient.A)
+                levelpack_info = levelpack.turn(current_level, spaces.Orient.A)
                 if objects.TextYou in current_level.game_properties:
                     display_offset[0] -= window.get_width() / current_world.height
-                if objects.TextPush in current_level.game_properties and level_info["game_push"]:
+                if objects.TextPush in current_level.game_properties and levelpack_info["game_push"]:
                     display_offset[0] -= window.get_width() / current_world.height
                 refresh = True
             elif keys["D"]:
                 history[current_level.name].append(copy.deepcopy(current_level))
                 round_num += 1
-                level_info = levelpack.turn(current_level, spaces.Orient.D)
+                levelpack_info = levelpack.turn(current_level, spaces.Orient.D)
                 if objects.TextYou in current_level.game_properties:
                     display_offset[0] += window.get_width() / current_world.height
-                if objects.TextPush in current_level.game_properties and level_info["game_push"]:
+                if objects.TextPush in current_level.game_properties and levelpack_info["game_push"]:
                     display_offset[0] += window.get_width() / current_world.height
                 refresh = True
             elif keys[" "]:
                 history[current_level.name].append(copy.deepcopy(current_level))
                 round_num += 1
-                level_info = levelpack.turn(current_level, spaces.NullOrient.O)
-                if objects.TextPush in current_level.game_properties and level_info["game_push"]:
+                levelpack_info = levelpack.turn(current_level, spaces.NullOrient.O)
+                if objects.TextPush in current_level.game_properties and levelpack_info["game_push"]:
                     display_offset[0] += window.get_width() / current_world.height
                 refresh = True
             elif keys["ESCAPE"]:
@@ -264,35 +264,35 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 elif basics.current_os == basics.linux:
                     os.system(f"python ./SubabaMakeParabox.py {obj_type.json_name} &")
             levelpack.set_level(current_level)
-            if level_info["win"]:
+            if levelpack_info["win"]:
                 print(languages.current_language["game.level.win"])
                 if freeze_time == -1:
-                    level_info_backup = copy.deepcopy(level_info)
+                    levelpack_info_backup = copy.deepcopy(levelpack_info)
                     freeze_time = basics.options["fps"]
-            elif level_info["end"]:
+            elif levelpack_info["end"]:
                 print(languages.current_language["game.levelpack.end"])
                 if freeze_time == -1:
-                    level_info_backup = copy.deepcopy(level_info)
+                    levelpack_info_backup = copy.deepcopy(levelpack_info)
                     freeze_time = basics.options["fps"]
-            elif level_info["transform"]:
+            elif levelpack_info["transform"]:
                 print(languages.current_language["game.level.transform"])
                 if freeze_time == -1:
-                    level_info_backup = copy.deepcopy(level_info)
+                    levelpack_info_backup = copy.deepcopy(levelpack_info)
                     freeze_time = basics.options["fps"]
-            elif level_info["selected_level"] is not None:
+            elif levelpack_info["selected_level"] is not None:
                 print(languages.current_language["game.level.enter"])
                 if freeze_time == -1:
-                    level_info_backup = copy.deepcopy(level_info)
+                    levelpack_info_backup = copy.deepcopy(levelpack_info)
                     freeze_time = basics.options["fps"]
             for level in levelpack.level_list:
                 for world in current_level.world_list:
                     world.object_list = list(filter(lambda o: not isinstance(o, objects.Empty), world.object_list))
                     world.set_sprite_states(round_num)
-            level_info = default_level_info.copy()
+            levelpack_info = default_levelpack_info.copy()
         if freeze_time == 0:
             level_changed = True
             world_changed = True
-            if level_info_backup["win"]:
+            if levelpack_info_backup["win"]:
                 level = copy.deepcopy(levelpack_backup.get_level(current_level.name))
                 if level is not None:
                     levelpack.set_level(level)
@@ -300,15 +300,15 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 super_level = levelpack.get_level(super_level_name if super_level_name is not None else levelpack.main_level)
                 current_level = levelpack.get_exist_level(super_level.name if super_level is not None else levelpack.main_level)
                 current_world = current_level.get_exist_world({"name": current_level.main_world_name, "infinite_tier": current_level.main_world_tier})
-            elif level_info_backup["end"]:
+            elif levelpack_info_backup["end"]:
                 game_running = False
-            elif level_info_backup["transform"]:
+            elif levelpack_info_backup["transform"]:
                 super_level_name = current_level.super_level
                 super_level = levelpack.get_level(super_level_name if super_level_name is not None else levelpack.main_level)
                 current_level = levelpack.get_exist_level(super_level.name if super_level is not None else levelpack.main_level)
                 current_world = current_level.get_exist_world({"name": current_level.main_world_name, "infinite_tier": current_level.main_world_tier})
-            elif level_info_backup["selected_level"] is not None:
-                current_level = levelpack.get_exist_level(level_info_backup["selected_level"])
+            elif levelpack_info_backup["selected_level"] is not None:
+                current_level = levelpack.get_exist_level(levelpack_info_backup["selected_level"])
                 current_world = current_level.get_exist_world({"name": current_level.main_world_name, "infinite_tier": current_level.main_world_tier})
                 round_num = 0
         if level_changed:

@@ -59,7 +59,8 @@ def to_atom_rules(rule_list: list[Rule]) -> list[Rule]:
                 return_value.append(noun + prop)
     return return_value
 
-InfixInfo = tuple[bool, type[objects.Infix], bool, type[objects.Noun] | type[objects.Property]]
+InfixNounInfo = tuple[bool, type[objects.Noun] | type[objects.Property]]
+InfixInfo = tuple[bool, type[objects.Infix], list[InfixNounInfo]]
 PrefixInfo = tuple[bool, type[objects.Prefix]]
 RuleInfo = list[tuple[list[PrefixInfo], bool, type[objects.Noun], list[InfixInfo], type[objects.Operator], int, type[objects.Noun] | type[objects.Property]]]
 
@@ -88,7 +89,7 @@ def analysis_rule(atom_rule: Rule) -> RuleInfo:
                 current_prefix_negated = not current_prefix_negated
             elif issubclass(obj_type, objects.TextAnd):
                 current_prefix_negated = False
-    infix_info_list = []
+    infix_info_list: list[InfixInfo] = []
     infix_slice = atom_rule[noun_index + 1:oper_index]
     if len(infix_slice) != 0:
         current_negated = False
@@ -101,6 +102,7 @@ def analysis_rule(atom_rule: Rule) -> RuleInfo:
                 current_infix_type = obj_type
                 current_infix_negated = current_negated
                 current_negated = False
+                infix_info_list.append((current_infix_negated, current_infix_type, []))
             elif issubclass(obj_type, objects.TextNot):
                 current_negated = not current_negated
             elif issubclass(obj_type, objects.TextAnd):
@@ -109,7 +111,7 @@ def analysis_rule(atom_rule: Rule) -> RuleInfo:
                 current_infix_noun = obj_type
                 current_infix_noun_negated = current_negated
                 current_negated = False
-                infix_info_list.append((current_infix_negated, current_infix_type, current_infix_noun_negated, current_infix_noun))
+                infix_info_list[-1][-1].append((current_infix_noun_negated, current_infix_noun)) # type: ignore
     return_value.append((prefix_info_list, noun_negated, noun_type, infix_info_list, oper_type, prop_negated_count, prop_type))
     return return_value
 

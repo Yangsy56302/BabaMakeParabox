@@ -810,14 +810,6 @@ def get_noun_from_obj(obj_type: type[BmpObject]) -> type[Noun]:
 if basics.options["metatext"]["enabled"]:
     generate_metatext_at_tier(basics.options["metatext"]["tier"])
 
-def is_correct_bmp_object_json(T):
-    def func(json_object: BmpObjectJson) -> TypeGuard[T]:
-        return True # i dk why this works
-    return func
-
-is_world_pointer_json = is_correct_bmp_object_json(LevelPointerExtraJson)
-is_level_json = is_correct_bmp_object_json(LevelPointerExtraJson)
-
 def json_to_object(json_object: BmpObjectJson, ver: Optional[str] = None) -> BmpObject:
     global current_metatext_tier
     global object_class_used, object_used, object_name, noun_class_list, text_class_list
