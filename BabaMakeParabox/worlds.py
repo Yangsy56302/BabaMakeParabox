@@ -419,8 +419,6 @@ class World(object):
                 return (self.width // 2, self.height)
             case spaces.Orient.D:
                 return (self.width, self.height // 2)
-            case _:
-                raise ValueError()
     def pos_to_transnum(self, pos: spaces.Coord, side: spaces.Orient) -> float:
         if side in (spaces.Orient.W, spaces.Orient.S):
             return (pos[0] + 0.5) / self.width
@@ -436,8 +434,6 @@ class World(object):
                 return (-1, int((num * self.height)))
             case spaces.Orient.D:
                 return (self.width, int((num * self.height)))
-            case _:
-                raise ValueError()
     def transnum_to_smaller_transnum(self, num: float, pos: spaces.Coord, side: spaces.Orient) -> float:
         if side in (spaces.Orient.W, spaces.Orient.S):
             return (num * self.width) - pos[0]

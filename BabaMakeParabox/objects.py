@@ -538,6 +538,16 @@ class TextGame(Noun):
     sprite_name: str = "text_game"
     display_name: str = "GAME"
 
+class TextOften(Prefix):
+    json_name: str = "text_often"
+    sprite_name: str = "text_often"
+    display_name: str = "OFTEN"
+
+class TextSeldom(Prefix):
+    json_name: str = "text_seldom"
+    sprite_name: str = "text_seldom"
+    display_name: str = "SELDOM"
+
 class TextMeta(Prefix):
     json_name: str = "text_meta"
     sprite_name: str = "text_meta"
@@ -561,7 +571,12 @@ class TextNear(Infix):
 class TextNextto(Infix):
     json_name: str = "text_nextto"
     sprite_name: str = "text_nextto"
-    display_name: str = "MEXTTO"
+    display_name: str = "NEXTTO"
+
+class TextWithout(Infix):
+    json_name: str = "text_without"
+    sprite_name: str = "text_without"
+    display_name: str = "WITHOUT"
 
 class TextFeeling(Infix):
     json_name: str = "text_feeling"
@@ -723,8 +738,8 @@ noun_class_list.extend([TextLine, TextDot, TextCursor, TextAll, TextText, TextLe
 
 text_class_list: list[type[Text]] = []
 text_class_list.extend(noun_class_list)
-text_class_list.extend([TextText_, TextMeta])
-text_class_list.extend([TextOn, TextNear, TextNextto, TextFeeling])
+text_class_list.extend([TextText_, TextOften, TextSeldom, TextMeta])
+text_class_list.extend([TextOn, TextNear, TextNextto, TextWithout, TextFeeling])
 text_class_list.extend([TextIs, TextHas, TextMake, TextWrite])
 text_class_list.extend([TextNot, TextAnd])
 text_class_list.extend([TextYou, TextMove, TextStop, TextPush, TextSink, TextFloat, TextOpen, TextShut, TextHot, TextMelt, TextWin, TextDefeat, TextShift, TextTele])

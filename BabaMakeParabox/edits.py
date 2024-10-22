@@ -83,12 +83,13 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 editor_running = False
-            if event.type == pygame.KEYDOWN:
+            elif event.type == pygame.KEYDOWN:
                 if event.key in keybinds.keys():
                     keys[keybinds[event.key]] = True
                 for n, key in keymods.items():
                     if event.mod & n:
                         keys[key] = True
+        # cursor move; object facing change (shift)
         if keys["W"]:
             if keys["LSHIFT"] or keys["RSHIFT"]:
                 current_orient = spaces.Orient.W
@@ -117,6 +118,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 new_cursor_pos = spaces.pos_facing(current_cursor_pos, spaces.Orient.D)
                 if not current_world.out_of_range(new_cursor_pos):
                     current_cursor_pos = new_cursor_pos
+        # object select from list
         elif keys["Q"]:
             current_object_type_list = list(objects.object_name.values())
             current_object_type_index = current_object_type_list.index(current_object_type)
@@ -125,6 +127,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             current_object_type_list = list(objects.object_name.values())
             current_object_type_index = current_object_type_list.index(current_object_type)
             current_object_type = current_object_type_list[current_object_type_index + 1 if current_object_type_index < len(current_object_type_list) - 1 else 0]
+        # object select from palette / save to palette (ctrl)
         elif keys["1"]:
             if keys["LCTRL"] or keys["RCTRL"]:
                 object_type_shortcuts[0] = current_object_type
@@ -185,6 +188,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 basics.options["object_type_shortcuts"][9] = {v: k for k, v in objects.object_name.items()}[current_object_type]
             else:
                 current_object_type = object_type_shortcuts[9]
+        # place object; with detail (shift); allow overlap (ctrl)
         elif keys["RETURN"]:
             if keys["LCTRL"] or keys["RCTRL"] or len(current_world.get_objs_from_pos(current_cursor_pos)) == 0:
                 history.append(copy.deepcopy(levelpack))
@@ -194,8 +198,14 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                         name = name if levelpack.get_level(name) is not None else current_level.name
                         icon_name = input(languages.current_language["editor.level.new.icon.name"])
                         icon_name = icon_name if icon_name != "" else "empty"
-                        icon_color = input(languages.current_language["editor.level.new.icon.color"])
-                        icon_color = colors.str_to_hex(icon_color) if icon_color != "" else colors.WHITE
+                        while True:
+                            icon_color = input(languages.current_language["editor.level.new.icon.color"])
+                            try:
+                                icon_color = colors.str_to_hex(icon_color) if icon_color != "" else colors.WHITE
+                            except ValueError:
+                                print(languages.current_language["warn.value.invalid"].format(val=icon_color, cls="color"))
+                            else:
+                                break
                     else:
                         name = current_level.name
                         icon_name = "empty"
@@ -205,8 +215,14 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 elif issubclass(current_object_type, objects.WorldPointer):
                     if keys["LSHIFT"] or keys["RSHIFT"]:
                         name = input(languages.current_language["editor.world.new.name"])
-                        infinite_tier = input(languages.current_language["editor.world.new.infinite_tier"])
-                        infinite_tier = int(infinite_tier) if infinite_tier != "" else 0
+                        while True:
+                            infinite_tier = input(languages.current_language["editor.world.new.infinite_tier"])
+                            try:
+                                infinite_tier = int(infinite_tier) if infinite_tier != "" else 0
+                            except ValueError:
+                                print(languages.current_language["warn.value.invalid"].format(val=infinite_tier, cls="int"))
+                            else:
+                                break
                         name, infinite_tier = (name, infinite_tier) if current_level.get_world({"name": name, "infinite_tier": infinite_tier}) is not None else (current_world.name, current_world.infinite_tier)
                     else:
                         name = current_world.name
@@ -215,6 +231,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     current_world.new_obj(current_object_type(current_cursor_pos, current_orient, world_info=world_info))
                 else:
                     current_world.new_obj(current_object_type(current_cursor_pos, current_orient))
+        # new world; new level (shift)
         elif keys["BACKSLASH"]:
             if keys["LSHIFT"] or keys["RSHIFT"]:
                 if input(languages.current_language["editor.level.new"]) in languages.yes:
@@ -223,15 +240,39 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     super_level = input(languages.current_language["editor.level.new.super_level.name"])
                     super_level = super_level if super_level != "" else current_level.name
                     name = input(languages.current_language["editor.world.new.name"])
-                    width = input(languages.current_language["editor.world.new.width"])
-                    width = int(width) if width != "" else basics.options["default_new_world"]["width"]
-                    height = input(languages.current_language["editor.world.new.height"])
-                    height = int(height) if height != "" else basics.options["default_new_world"]["height"]
+                    while True:
+                        width = input(languages.current_language["editor.world.new.width"])
+                        try:
+                            width = int(width) if width != "" else basics.options["default_new_world"]["width"]
+                        except ValueError:
+                            print(languages.current_language["warn.value.invalid"].format(val=width, cls="int"))
+                        else:
+                            break
+                    while True:
+                        height = input(languages.current_language["editor.world.new.height"])
+                        try:
+                            height = int(height) if height != "" else basics.options["default_new_world"]["height"]
+                        except ValueError:
+                            print(languages.current_language["warn.value.invalid"].format(val=height, cls="int"))
+                        else:
+                            break
                     size = (width, height)
-                    infinite_tier = input(languages.current_language["editor.world.new.infinite_tier"])
-                    infinite_tier = int(infinite_tier) if infinite_tier != "" else 0
-                    color = input(languages.current_language["editor.world.new.color"])
-                    color = colors.str_to_hex(color) if color != "" else basics.options["default_new_world"]["color"]
+                    while True:
+                        infinite_tier = input(languages.current_language["editor.world.new.infinite_tier"])
+                        try:
+                            infinite_tier = int(infinite_tier) if infinite_tier != "" else 0
+                        except ValueError:
+                            print(languages.current_language["warn.value.invalid"].format(val=infinite_tier, cls="int"))
+                        else:
+                            break
+                    while True:
+                        color = input(languages.current_language["editor.world.new.color"])
+                        try:
+                            color = colors.str_to_hex(color) if color != "" else basics.options["default_new_world"]["color"]
+                        except ValueError:
+                            print(languages.current_language["warn.value.invalid"].format(val=color, cls="color"))
+                        else:
+                            break
                     default_world = worlds.World(name, size, infinite_tier, color)
                     is_map = input(languages.current_language["editor.level.new.is_map"]) in languages.yes
                     levelpack.level_list.append(levels.Level(level_name, [default_world], super_level=super_level, main_world_name=name, main_world_tier=infinite_tier, is_map=is_map, rule_list=levelpack.rule_list))
@@ -243,18 +284,43 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 if input(languages.current_language["editor.world.new"]) in languages.yes:
                     history.append(copy.deepcopy(levelpack))
                     name = input(languages.current_language["editor.world.new.name"])
-                    width = input(languages.current_language["editor.world.new.width"])
-                    width = int(width) if width != "" else basics.options["default_new_world"]["width"]
-                    height = input(languages.current_language["editor.world.new.height"])
-                    height = int(height) if height != "" else basics.options["default_new_world"]["height"]
+                    while True:
+                        width = input(languages.current_language["editor.world.new.width"])
+                        try:
+                            width = int(width) if width != "" else basics.options["default_new_world"]["width"]
+                        except ValueError:
+                            print(languages.current_language["warn.value.invalid"].format(val=width, cls="int"))
+                        else:
+                            break
+                    while True:
+                        height = input(languages.current_language["editor.world.new.height"])
+                        try:
+                            height = int(height) if height != "" else basics.options["default_new_world"]["height"]
+                        except ValueError:
+                            print(languages.current_language["warn.value.invalid"].format(val=height, cls="int"))
+                        else:
+                            break
                     size = (width, height)
-                    infinite_tier = input(languages.current_language["editor.world.new.infinite_tier"])
-                    infinite_tier = int(infinite_tier) if infinite_tier != "" else 0
-                    color = input(languages.current_language["editor.world.new.color"])
-                    color = colors.str_to_hex(color) if color != "" else basics.options["default_new_world"]["color"]
+                    while True:
+                        infinite_tier = input(languages.current_language["editor.world.new.infinite_tier"])
+                        try:
+                            infinite_tier = int(infinite_tier) if infinite_tier != "" else 0
+                        except ValueError:
+                            print(languages.current_language["warn.value.invalid"].format(val=infinite_tier, cls="int"))
+                        else:
+                            break
+                    while True:
+                        color = input(languages.current_language["editor.world.new.color"])
+                        try:
+                            color = colors.str_to_hex(color) if color != "" else basics.options["default_new_world"]["color"]
+                        except ValueError:
+                            print(languages.current_language["warn.value.invalid"].format(val=color, cls="color"))
+                        else:
+                            break
                     current_level.world_list.append(worlds.World(name, size, infinite_tier, color))
                     current_world_index = len(current_level.world_list) - 1
                     world_changed = True
+        # delete current world / level (shift)
         elif keys["DELETE"]:
             if keys["LSHIFT"] or keys["RSHIFT"]:
                 if input(languages.current_language["editor.level.delete"]) in languages.yes:
@@ -268,6 +334,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     current_level.world_list.pop(current_world_index)
                     current_world_index -= 1
                     world_changed = True
+        # change global rule
         elif keys["R"]:
             text_rule = input(languages.current_language["editor.levelpack.new.rule"]).upper().split()
             type_rule: rules.Rule = []
@@ -302,14 +369,17 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 for obj_type in rule:
                     str_list.append(obj_type.display_name)
                 print(" ".join(str_list))
+        # rename world / level (shift)
         elif keys["T"]:
             if keys["LSHIFT"] or keys["RSHIFT"]:
                 current_level.name = input(languages.current_language["editor.level.rename"])
             else:
                 current_world.name = input(languages.current_language["editor.world.rename"])
+        # remove objects on cursor
         elif keys["BACKSPACE"]:
             history.append(copy.deepcopy(levelpack))
             current_world.del_objs_from_pos(current_cursor_pos)
+        # object to noun; noun to object (shift)
         elif keys["TAB"]:
             if keys["LSHIFT"] or keys["RSHIFT"]:
                 if issubclass(current_object_type, objects.Noun) and current_object_type.obj_type not in objects.not_in_editor:
@@ -318,6 +388,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 obj_to_noun = objects.get_noun_from_obj(current_object_type)
                 if obj_to_noun not in objects.not_in_editor:
                     current_object_type = obj_to_noun
+        # undo
         elif keys["Z"]:
             if len(history) > 1:
                 levelpack = copy.deepcopy(history.pop())
@@ -325,6 +396,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 levelpack = copy.deepcopy(history[0])
             world_changed = True
             level_changed = True
+        # cut, copy, paste
         elif keys["X"]:
             history.append(copy.deepcopy(levelpack))
             current_clipboard = current_world.get_objs_from_pos(current_cursor_pos)
@@ -351,6 +423,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                         if world is not None:
                             for new_world in level.world_list:
                                 current_level.set_world(new_world)
+        # change world / level
         elif keys["-"]:
             if keys["LSHIFT"] or keys["RSHIFT"]:
                 current_level_index -= 1
@@ -382,6 +455,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             print(languages.current_language["editor.world.current.name"], current_world.name, sep="")
             print(languages.current_language["editor.world.current.infinite_tier"], current_world.infinite_tier, sep="")
             world_changed = False
+        # display
         for world in current_level.world_list:
             world.set_sprite_states(0)
         window.fill("#000000")
@@ -390,10 +464,10 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         window.blit(pygame.transform.scale(current_world_surface, (window.get_height() * current_world.width // current_world.height, window.get_height())), (0, 0))
         if issubclass(current_object_type, objects.WorldPointer):
             if issubclass(current_object_type, objects.World):
-                current_object_surface = displays.set_surface_color_dark(current_world_surface, 0xCCCCCC)
+                current_object_surface = displays.set_surface_color_dark(current_world_surface, 0xC0C0C0)
                 current_object_surface = pygame.transform.scale(current_object_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
             elif issubclass(current_object_type, objects.Clone):
-                current_object_surface = displays.set_surface_color_light(current_world_surface, 0x444444)
+                current_object_surface = displays.set_surface_color_light(current_world_surface, 0x404040)
                 current_object_surface = pygame.transform.scale(current_object_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
         elif issubclass(current_object_type, objects.LevelPointer):
             current_object_surface = displays.sprites.get(current_object_type.sprite_name, 0, wiggle)
@@ -406,7 +480,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             tier_surface.fill("#00000000")
             for digit, char in enumerate(str(current_object_type.meta_tier)):
                 tier_surface.blit(displays.sprites.get("text_" + char, 0, wiggle), (displays.sprite_size * digit, 0))
-            tier_surface = displays.set_alpha(tier_surface, 0x88)
+            tier_surface = displays.set_alpha(tier_surface, 0x80)
             tier_surface = pygame.transform.scale(tier_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size / len(str(current_object_type.meta_tier))))
             tier_surface_pos = ((current_object_surface.get_width() - tier_surface.get_width()) // 2,
                                 (current_object_surface.get_height() - tier_surface.get_height()) // 2)
@@ -423,10 +497,10 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             obj_surface_pos = (window.get_width() + (index % 5 * displays.pixel_sprite_size) - (displays.pixel_sprite_size * 5),
                                window.get_height() + (index // 5 * displays.pixel_sprite_size) - (displays.pixel_sprite_size * 2))
             if isinstance(obj, objects.World):
-                obj_surface = displays.set_surface_color_dark(current_world_surface, 0xCCCCCC)
+                obj_surface = displays.set_surface_color_dark(current_world_surface, 0xC0C0C0)
                 obj_surface = pygame.transform.scale(obj_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
             elif isinstance(obj, objects.Clone):
-                obj_surface = displays.set_surface_color_light(current_world_surface, 0x444444)
+                obj_surface = displays.set_surface_color_light(current_world_surface, 0x404040)
                 obj_surface = pygame.transform.scale(obj_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
             elif isinstance(obj, objects.Metatext):
                 tier_surface = pygame.Surface((displays.sprite_size * len(str(obj.meta_tier)), displays.sprite_size), pygame.SRCALPHA)

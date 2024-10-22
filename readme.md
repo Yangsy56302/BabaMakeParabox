@@ -18,7 +18,7 @@ If you have some informations about the right of use for the game's textures or 
 
 The game's prototype was born at 2024.05.15, game's folder at UTC+0 04:12:15 (or UTC+8 12:12:15 in my time zone).
 
-## How to Download
+## Download
 
 For [Github](https://github.com/Yangsy56302/BabaMakeParabox),
 Click the green button say **Code**, then click **Download ZIP**.
@@ -29,7 +29,7 @@ Click the blue button say **Code**, then click **zip**.
 For [Gitee](https://gitee.com/Yangsy56302/BabaMakeParabox),
 or if you are from China, [Click me for more info](readme_cn.md).
 
-## How to Run
+## Run
 
 **This Game will run normally only if terminal window exists**
 **and no text is selected in terminal window.**
@@ -43,7 +43,7 @@ Please make sure you have a levelpack file, if not, you can [make one](#how-to-m
 For Windows users, if you need to make an exe for yourself, run `windows.bat`.
 For GNU/Linux users, run `.sh` with your distro name first.
 
-### How to Control
+### Control
 
 + WSAD: You / Cursor move.
 + Space: You wait for something / Cursor select a level to play.
@@ -74,7 +74,7 @@ Please help me to translate this chapter from [the Chinese version of readme fil
 
 This chapter is not a game design hint.
 
-### How to Control
+### Control
 
 + WSAD: Move cursor.
 + Shift + WSAD: Change orientation.
@@ -120,12 +120,14 @@ please considering shift + enter, or cut, copy, and paste.
 ### Feature List
 
 + For all `NOT` before a property-like text, they negate other "weaker" rules first before negate itself.
+    + `BABA IS NOT NOT YOU` disables `BABA IS NOT YOU`。
 + `FEELING` only try once per round for avoiding halting problem.
-+ `TEXT IS WORD` will make every text object also acts like `TEXT`.
++ `TEXT IS WORD` will make every text that isn't a metatext also acts like `TEXT`.
     + This will usually cause the rule right above can also be identified as `TEXT IS TEXT`.
 
 ### Not Implemented Yet
 
++ Stacking property.
 + Complex grammar about `GAME`.
 
 ### Bug List
@@ -227,11 +229,4 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 3.61   | 2024.09.12 | World is More |
 | 3.611  | 2024.09.13 | Bug on World feeling Push is Fix |
 | 3.62   | 2024.10.21 | Flag on Baba and Baba and on Keke and on Keke is Win |
-
-## Bug Reports and Suggestions
-
-Send your message to **yangsy56302@163.com**!
-
-## Support
-
-Not open for now.
+| 3.621  | 2024.10.22 | Game feeling not Safe is not Done |

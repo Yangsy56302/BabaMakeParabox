@@ -55,16 +55,19 @@ def hex_to_rgb(color: ColorHex) -> ColorRGB:
     return r, g, b
 
 def str_to_hex(string: str) -> ColorHex:
-    if string.startswith("0x"):
-        new_string = string[2:]
-    elif string.startswith("#"):
-        new_string = string[1:]
-    else:
-        new_string = string[:]
-    r = int(new_string[:2], base=16)
-    g = int(new_string[2:4], base=16)
-    b = int(new_string[4:], base=16)
-    return rgb_to_hex(r, g, b)
+    try:
+        if string.startswith("0x"):
+            new_string = string[2:]
+        elif string.startswith("#"):
+            new_string = string[1:]
+        else:
+            new_string = string[:]
+        r = int(new_string[:2], base=16)
+        g = int(new_string[2:4], base=16)
+        b = int(new_string[4:], base=16)
+        return rgb_to_hex(r, g, b)
+    except Exception:
+        raise ValueError(string)
 
 def random_hue() -> ColorHex:
     n = random.random()

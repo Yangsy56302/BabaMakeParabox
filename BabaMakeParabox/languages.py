@@ -1,13 +1,18 @@
 import json
 import os
+import warnings
 
 from BabaMakeParabox import basics
 
-language_dict: dict[str, dict[str, str]] = {}
+class Language(dict[str, str]):
+    def __getitem__(self, key: str) -> str:
+        return super().get(key, key)
+
+language_dict: dict[str, Language] = {}
 
 for name in [n for n in os.listdir("lang") if n.endswith(".json")]:
     with open(os.path.join("lang", name), "r", encoding="utf-8") as file:
-        language_dict[name[:-5]] = json.load(file)
+        language_dict[name[:-5]] = Language(json.load(file))
 
 current_language = language_dict[basics.options["lang"] if basics.options["lang"] != "id_FK" else "en_US"]
 

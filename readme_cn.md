@@ -43,7 +43,7 @@
 对于Windows用户，如果您需要自己将代码打包成EXE，请运行`windows.bat`。
 对于使用GNU/Linux系统的用户，请先运行对应发行版的`.sh`文件以安装前置。
 
-### 如何控制
+### 控制
 
 + WSAD：移动
 + Space：等待
@@ -173,7 +173,7 @@
 
 该章节暂时不提供有关游戏设计的相关信息。
 
-### 如何控制
+### 控制
 
 + WSAD：移动光标
 + Shift + WSAD：选择物体朝向
@@ -221,13 +221,14 @@
 #### 游戏特性
 
 + 对于属性词前和转换名词前的`NOT`，数量多者优先否定数量少者，其后否定自身。
-    + `BABA IS NOT NOT YOU`的优先级高于`BABA IS NOT YOU`。
+    + `BABA IS NOT NOT YOU`优先否定`BABA IS NOT YOU`。
 + `FEELING`每轮只检测一次，以避免检测停机问题。
-+ `TEXT IS WORD`有效。
++ `TEXT IS WORD`有效，导致非元文本被识别为`TEXT`。
     + 通常，这会导致该规则同时被识别成`TEXT IS TEXT`。
 
 #### 暂未实现
 
++ 属性堆叠。
 + `GAME`的复杂语法。
 
 #### 游戏漏洞
@@ -329,12 +330,4 @@
 | 3.61   | 2024.09.12 | World is More |
 | 3.611  | 2024.09.13 | Bug on World feeling Push is Fix |
 | 3.62   | 2024.10.21 | Flag on Baba and Baba and on Keke and on Keke is Win |
-
-## 报告漏洞和提出建议
-
-除了在Github等代码托管平台上汇报，您还可以发送邮件到**yangsy56302@163.com**，
-或者联系我的QQ：**2485385799**，毕竟中国国内没几个人用邮箱。
-
-## 支持作者
-
-暂时不开放。
+| 3.621  | 2024.10.22 | seldom and often Wall without Baba is not Push; Game feeling not Safe is not Done |

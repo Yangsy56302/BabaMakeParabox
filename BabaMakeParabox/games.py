@@ -179,6 +179,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
                 current_world = current_level.world_list[current_world_index]
                 world_changed = True
+            # game properties at every tick
             offset_used = False
             for prop, prop_negated_count in current_level.game_properties:
                 if prop_negated_count % 2 == 1:
@@ -201,6 +202,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         else:
             freeze_time -= 1
         if refresh:
+            # game properties at update
             game_is_hot = False
             game_is_melt = False
             game_is_you = False
@@ -263,6 +265,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                         os.system(f"start /b python SubabaMakeParabox.py {obj_type.json_name}")
                 elif basics.current_os == basics.linux:
                     os.system(f"python ./SubabaMakeParabox.py {obj_type.json_name} &")
+            # level state check
             levelpack.set_level(current_level)
             if levelpack_info["win"]:
                 print(languages.current_language["game.level.win"])
@@ -319,7 +322,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             print(languages.current_language["game.world.current.infinite_tier"], current_world.infinite_tier, sep="")
             world_changed = False
         pygame.mixer.music.set_volume(1.0 if current_level.have_you() else 0.5)
-        # world
+        # display
         window.fill("#000000")
         displays.set_pixel_size(window.get_size())
         world_display_size = (int(min(window.get_size()) * min(1, current_world.width / current_world.height)), int(min(window.get_size()) * min(1, current_world.height / current_world.width)))
@@ -333,11 +336,11 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             real_fps_string = str(int(real_fps))
             for i in range(len(real_fps_string)):
                 window.blit(displays.sprites.get(f"text_{real_fps_string[i]}", 0, wiggle), (i * displays.sprite_size, 0))
-        # game is baba
+        # game transform
         game_transform_to = [t[0] for t in current_level.game_properties if issubclass(t[0], objects.Noun) and t[1] % 2 == 0]
         if len(game_transform_to) != 0:
             transparent_black_background = pygame.Surface(window.get_size(), pygame.SRCALPHA)
-            transparent_black_background.fill("#00000088")
+            transparent_black_background.fill("#00000080")
             window.blit(transparent_black_background, (0, 0))
         game_transform_to = [o.obj_type for o in game_transform_to if o is not None]
         for obj_type in game_transform_to:
