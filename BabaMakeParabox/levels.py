@@ -27,9 +27,9 @@ class Level(object):
         self.main_world_tier: int = main_world_tier if main_world_tier is not None else world_list[0].infinite_tier
         self.rule_list: list[rules.Rule] = rule_list if rule_list is not None else rules.default_rule_list
         self.is_map: bool = is_map
-        self.game_properties: list[tuple[type[objects.BmpObject], int]] = []
+        self.game_properties: rules.PropertyDict = {}
         self.new_games: list[type[objects.BmpObject]] = []
-        self.properties: list[tuple[type[objects.BmpObject], int]] = []
+        self.properties: rules.PropertyDict = {}
         self.write_text: list[type[objects.Noun] | type[objects.Property]] = []
         self.created_levels: list["Level"] = []
         self.all_list: list[type[objects.Noun]] = []
@@ -37,23 +37,14 @@ class Level(object):
     def __eq__(self, level: "Level") -> bool:
         return self.name == level.name
     def new_prop(self, prop: type[objects.Text], negated_count: int = 0) -> None:
-        del_props = []
-        for old_prop, old_negated_count in self.properties:
-            if prop == old_prop:
-                if old_negated_count > negated_count:
-                    return
-                del_props.append((old_prop, old_negated_count))
-        for old_prop, old_negated_count in del_props:
-            self.properties.remove((old_prop, old_negated_count))
-        self.properties.append((prop, negated_count))
-    def del_prop(self, prop: type[objects.Text], negated_count: int = 0) -> None:
-        if (prop, negated_count) in self.properties:
-            self.properties.remove((prop, negated_count))
-    def has_prop(self, prop: type[objects.Text], negate: bool = False) -> bool:
-        for get_prop, get_negated_count in self.properties:
-            if get_prop == prop and get_negated_count % 2 == int(negate):
-                return True
-        return False
+        if self.properties.get(prop, -1) < negated_count:
+            self.properties[prop] = negated_count
+    def del_prop(self, prop: type[objects.Text], negated_count: Optional[int] = 0) -> None:
+        if self.properties.get(prop) == negated_count or negated_count is None:
+            self.properties.pop(prop)
+    def has_prop(self, prop: type[objects.Text], negated: bool = False) -> bool:
+        negated_count = self.properties.get(prop)
+        return negated_count is not None and negated_count % 2 == int(negated)
     def find_rules(self, *match_rule: Optional[type[objects.Text]]) -> list[rules.Rule]:
         found_rules = []
         for rule in self.rule_list:
@@ -230,11 +221,12 @@ class Level(object):
             sub_world = self.get_exist_world(sub_world_obj.world_info)
             self.recursion_rules(sub_world, rule_list, passed)
     def update_rules(self, old_prop_dict: dict[uuid.UUID, list[tuple[type[objects.Text], int]]]) -> None:
-        self.game_properties = []
-        self.properties = []
+        self.game_properties = {}
+        self.properties = {}
         self.write_text = []
         for world in self.world_list:
-            world.world_properties = []
+            world.world_properties = {}
+            world.clone_properties = {}
             for obj in world.object_list:
                 obj.clear_prop()
                 obj.has_object = []
@@ -277,7 +269,8 @@ class Level(object):
             prop_type, prop_negated_count = prop
             obj.new_prop(prop_type, prop_negated_count)
         for world in self.world_list:
-            world.world_properties = []
+            world.world_properties = {}
+            world.clone_properties = {}
             world.rule_list = rules.to_atom_rules(world.get_rules())
             for obj in world.object_list:
                 obj.clear_prop()
@@ -331,15 +324,8 @@ class Level(object):
                                         obj.write_text.append(prop_type)
                     elif obj_type == objects.Game and oper_type == objects.TextIs:
                         if (not noun_negated) and len(infix_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject((0, 0)), prefix_list, True):
-                            del_props = []
-                            for old_prop_type, old_prop_negated_count in self.game_properties:
-                                if prop_type == old_prop_type:
-                                    if old_prop_negated_count > prop_negated_count:
-                                        return
-                                    del_props.append((old_prop_type, old_prop_negated_count))
-                            for old_prop_type, old_prop_negated_count in del_props:
-                                self.game_properties.remove((old_prop_type, old_prop_negated_count))
-                            self.game_properties.append((prop_type, prop_negated_count))
+                            if self.game_properties.get(prop_type, -1) < prop_negated_count:
+                                self.game_properties[prop_type] = prop_negated_count
                     elif obj_type == objects.Level:
                         if (not noun_negated) and len(infix_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject((0, 0)), prefix_list, True):
                             if oper_type == objects.TextIs:
@@ -472,27 +458,37 @@ class Level(object):
             exit_world = True
             # infinite exit
             if world in passed:
-                return_value = self.find_super_worlds({"name": world.name, "infinite_tier": world.infinite_tier + 1})
-                for super_world, world_obj in return_value:
+                super_world_list = self.find_super_worlds({"name": world.name, "infinite_tier": world.infinite_tier + 1})
+                for super_world, world_obj in super_world_list:
+                    if isinstance(world_obj, objects.World) and not super_world.has_world_prop(objects.TextLeave):
+                        continue
+                    if isinstance(world_obj, objects.Clone) and not super_world.has_clone_prop(objects.TextLeave):
+                        continue
                     new_transnum = super_world.transnum_to_bigger_transnum(transnum, world_obj.pos, orient) if transnum is not None else world.pos_to_transnum(obj.pos, orient)
                     new_move_list = self.get_move_list(super_world, obj, orient, world_obj.pos, pushed, passed, new_transnum, depth)
                     if new_move_list is None:
                         exit_world = False
                     else:
                         exit_list.extend(new_move_list)
+                if len(super_world_list) == 0:
+                    exit_world = False
             # exit
             else:
-                return_value = self.find_super_worlds({"name": world.name, "infinite_tier": world.infinite_tier})
-                for super_world, world_obj in return_value:
-                    new_transnum = super_world.transnum_to_bigger_transnum(transnum, world_obj.pos, orient) if transnum is not None else world.pos_to_transnum(obj.pos, orient)
+                inf_super_world_list = self.find_super_worlds({"name": world.name, "infinite_tier": world.infinite_tier})
+                for inf_super_world, world_obj in inf_super_world_list:
+                    if isinstance(world_obj, objects.World) and not inf_super_world.has_world_prop(objects.TextLeave):
+                        continue
+                    if isinstance(world_obj, objects.Clone) and not inf_super_world.has_clone_prop(objects.TextLeave):
+                        continue
+                    new_transnum = inf_super_world.transnum_to_bigger_transnum(transnum, world_obj.pos, orient) if transnum is not None else world.pos_to_transnum(obj.pos, orient)
                     passed.append(world)
-                    new_move_list = self.get_move_list(super_world, obj, orient, world_obj.pos, pushed, passed, new_transnum, depth)
+                    new_move_list = self.get_move_list(inf_super_world, obj, orient, world_obj.pos, pushed, passed, new_transnum, depth)
                     if new_move_list is None:
                         exit_world = False
                     else:
                         exit_list.extend(new_move_list)
-            if len(return_value) == 0:
-                exit_world = False
+                if len(inf_super_world_list) == 0:
+                    exit_world = False
         # push
         push_objects = [o for o in world.get_objs_from_pos(new_pos) if o.has_prop(objects.TextPush)]
         objects_that_cant_push: list[objects.BmpObject] = []
@@ -537,7 +533,13 @@ class Level(object):
         squeeze_list = []
         if isinstance(obj, objects.WorldPointer) and obj.has_prop(objects.TextPush) and not world.out_of_range(new_pos):
             sub_world = self.get_world(obj.world_info)
-            if sub_world is not None:
+            if sub_world is None:
+                pass
+            elif isinstance(obj, objects.World) and not sub_world.has_world_prop(objects.TextEnter):
+                pass
+            elif isinstance(obj, objects.Clone) and not sub_world.has_clone_prop(objects.TextEnter):
+                pass
+            else:
                 new_push_objects = list(filter(lambda o: objects.BmpObject.has_prop(o, objects.TextPush), world.get_objs_from_pos(new_pos)))
                 if len(new_push_objects) != 0:
                     squeeze = True
@@ -564,35 +566,46 @@ class Level(object):
         worlds_that_cant_push = [o for o in objects_that_cant_push if isinstance(o, objects.WorldPointer)]
         if len(worlds_that_cant_push) != 0 and (not world.out_of_range(new_pos)) and not obj.has_prop(objects.TextEnter, negate=True):
             enter_world = True
-            for world_object in worlds_that_cant_push:
-                sub_world = self.get_world(world_object.world_info)
+            enter_atleast_one_world = False
+            for world_obj in worlds_that_cant_push:
+                sub_world = self.get_world(world_obj.world_info)
                 if sub_world is None:
                     enter_world = False
                     break
+                elif isinstance(world_obj, objects.World) and not sub_world.has_world_prop(objects.TextEnter):
+                    pass
+                elif isinstance(world_obj, objects.Clone) and not sub_world.has_clone_prop(objects.TextEnter):
+                    pass
                 else:
                     new_move_list = None
                     # infinite enter
                     if sub_world in passed:
                         inf_sub_world = self.get_world({"name": sub_world.name, "infinite_tier": sub_world.infinite_tier - 1})
-                        if inf_sub_world is not None:
+                        if inf_sub_world is None:
+                            enter_world = False
+                            break
+                        elif isinstance(world_obj, objects.World) and not inf_sub_world.has_world_prop(objects.TextEnter):
+                            pass
+                        elif isinstance(world_obj, objects.Clone) and not inf_sub_world.has_clone_prop(objects.TextEnter):
+                            pass
+                        else:
                             new_transnum = 0.5
                             input_pos = inf_sub_world.default_input_position(spaces.swap_orientation(orient))
                             passed.append(world)
                             new_move_list = self.get_move_list(inf_sub_world, obj, orient, input_pos, pushed, passed, new_transnum, depth)
-                        else:
-                            enter_world = False
-                            break
                     # enter
                     else:
-                        new_transnum = world.transnum_to_smaller_transnum(transnum, world_object.pos, spaces.swap_orientation(orient)) if transnum is not None else 0.5
+                        new_transnum = world.transnum_to_smaller_transnum(transnum, world_obj.pos, spaces.swap_orientation(orient)) if transnum is not None else 0.5
                         input_pos = sub_world.transnum_to_pos(transnum, spaces.swap_orientation(orient)) if transnum is not None else sub_world.default_input_position(spaces.swap_orientation(orient))
                         passed.append(world)
                         new_move_list = self.get_move_list(sub_world, obj, orient, input_pos, pushed, passed, new_transnum, depth)
                     if new_move_list is not None:
                         enter_list.extend(new_move_list)
+                        enter_atleast_one_world = True
                     else:
                         enter_world = False
                         break
+            enter_world &= enter_atleast_one_world
         if exit_world:
             return basics.remove_same_elements(exit_list)
         elif push:

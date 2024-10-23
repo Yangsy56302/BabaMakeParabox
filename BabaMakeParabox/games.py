@@ -181,7 +181,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 world_changed = True
             # game properties at every tick
             offset_used = False
-            for prop, prop_negated_count in current_level.game_properties:
+            for prop, prop_negated_count in current_level.game_properties.items():
                 if prop_negated_count % 2 == 1:
                     continue
                 if prop == objects.TextStop:
@@ -207,7 +207,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             game_is_melt = False
             game_is_you = False
             game_is_defeat = False
-            for prop, prop_negated_count in current_level.game_properties:
+            for prop, prop_negated_count in current_level.game_properties.items():
                 if prop_negated_count % 2 == 1:
                     continue
                 if prop == objects.TextWin:
@@ -337,7 +337,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             for i in range(len(real_fps_string)):
                 window.blit(displays.sprites.get(f"text_{real_fps_string[i]}", 0, wiggle), (i * displays.sprite_size, 0))
         # game transform
-        game_transform_to = [t[0] for t in current_level.game_properties if issubclass(t[0], objects.Noun) and t[1] % 2 == 0]
+        game_transform_to = [t for t, n in current_level.game_properties.items() if issubclass(t, objects.Noun) and n % 2 == 0]
         if len(game_transform_to) != 0:
             transparent_black_background = pygame.Surface(window.get_size(), pygame.SRCALPHA)
             transparent_black_background.fill("#00000080")

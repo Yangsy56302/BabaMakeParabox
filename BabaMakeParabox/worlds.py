@@ -22,8 +22,8 @@ class World(object):
         self.color: colors.ColorHex = color if color is not None else colors.random_world_color()
         self.object_list: list[objects.BmpObject] = []
         self.object_pos_index: list[list[objects.BmpObject]]
-        self.world_properties: list[tuple[type[objects.BmpObject], int]] = []
-        self.clone_properties: list[tuple[type[objects.BmpObject], int]] = []
+        self.world_properties: rules.PropertyDict = {}
+        self.clone_properties: rules.PropertyDict = {}
         self.world_write_text: list[type[objects.Noun] | type[objects.Property]] = []
         self.clone_write_text: list[type[objects.Noun] | type[objects.Property]] = []
         self.rule_list: list[rules.Rule] = []
@@ -31,41 +31,23 @@ class World(object):
     def __eq__(self, world: "World") -> bool:
         return self.name == world.name and self.infinite_tier == world.infinite_tier
     def new_world_prop(self, prop: type[objects.Text], negated_count: int = 0) -> None:
-        del_props = []
-        for old_prop, old_negated_count in self.world_properties:
-            if prop == old_prop:
-                if old_negated_count > negated_count:
-                    return
-                del_props.append((old_prop, old_negated_count))
-        for old_prop, old_negated_count in del_props:
-            self.world_properties.remove((old_prop, old_negated_count))
-        self.world_properties.append((prop, negated_count))
-    def del_world_prop(self, prop: type[objects.Text], negated_count: int = 0) -> None:
-        if (prop, negated_count) in self.world_properties:
-            self.world_properties.remove((prop, negated_count))
-    def has_world_prop(self, prop: type[objects.Text], negate: bool = False) -> bool:
-        for get_prop, get_negated_count in self.world_properties:
-            if get_prop == prop and get_negated_count % 2 == int(negate):
-                return True
-        return False
+        if self.world_properties.get(prop, -1) < negated_count:
+            self.world_properties[prop] = negated_count
+    def del_world_prop(self, prop: type[objects.Text], negated_count: Optional[int] = 0) -> None:
+        if self.world_properties.get(prop) == negated_count or negated_count is None:
+            self.world_properties.pop(prop)
+    def has_world_prop(self, prop: type[objects.Text], negated: bool = False) -> bool:
+        negated_count = self.world_properties.get(prop)
+        return negated_count is not None and negated_count % 2 == int(negated)
     def new_clone_prop(self, prop: type[objects.Text], negated_count: int = 0) -> None:
-        del_props = []
-        for old_prop, old_negated_count in self.clone_properties:
-            if prop == old_prop:
-                if old_negated_count > negated_count:
-                    return
-                del_props.append((old_prop, old_negated_count))
-        for old_prop, old_negated_count in del_props:
-            self.clone_properties.remove((old_prop, old_negated_count))
-        self.clone_properties.append((prop, negated_count))
-    def del_clone_prop(self, prop: type[objects.Text], negated_count: int = 0) -> None:
-        if (prop, negated_count) in self.clone_properties:
-            self.clone_properties.remove((prop, negated_count))
-    def has_clone_prop(self, prop: type[objects.Text], negate: bool = False) -> bool:
-        for get_prop, get_negated_count in self.clone_properties:
-            if get_prop == prop and get_negated_count % 2 == int(negate):
-                return True
-        return False
+        if self.clone_properties.get(prop, -1) < negated_count:
+            self.clone_properties[prop] = negated_count
+    def del_clone_prop(self, prop: type[objects.Text], negated_count: Optional[int] = 0) -> None:
+        if self.clone_properties.get(prop) == negated_count or negated_count is None:
+            self.clone_properties.pop(prop)
+    def has_clone_prop(self, prop: type[objects.Text], negated: bool = False) -> bool:
+        negated_count = self.clone_properties.get(prop)
+        return negated_count is not None and negated_count % 2 == int(negated)
     def out_of_range(self, coord: spaces.Coord) -> bool:
         return coord[0] < 0 or coord[1] < 0 or coord[0] >= self.width or coord[1] >= self.height
     def pos_to_index(self, pos) -> int:

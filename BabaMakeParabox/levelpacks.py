@@ -173,7 +173,7 @@ class Levelpack(object):
         special_new_types[objects.Level] = []
         special_not_new_types[objects.Level] = []
         transform_from[objects.Level] = []
-        for prop_type, prop_negated_count in level.properties:
+        for prop_type, prop_negated_count in level.properties.items():
             if not issubclass(prop_type, objects.Noun):
                 continue
             if issubclass(prop_type, objects.TextAll):
@@ -192,7 +192,7 @@ class Levelpack(object):
                 special_new_types[old_type] = []
                 special_not_new_types[old_type] = []
                 transform_from[old_type] = []
-            for prop_type, prop_negated_count in world.world_properties:
+            for prop_type, prop_negated_count in world.world_properties.items():
                 if not issubclass(prop_type, objects.Noun):
                     continue
                 if issubclass(prop_type, objects.TextAll):
@@ -206,7 +206,7 @@ class Levelpack(object):
                         special_new_types[objects.World].append(new_type)
                     else:
                         special_not_new_types[objects.World].append(new_type)
-            for prop_type, prop_negated_count in world.clone_properties:
+            for prop_type, prop_negated_count in world.clone_properties.items():
                 if not issubclass(prop_type, objects.Noun):
                     continue
                 if issubclass(prop_type, objects.TextAll):

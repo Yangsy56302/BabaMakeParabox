@@ -1,3 +1,5 @@
+from typing import TypedDict
+
 from BabaMakeParabox import objects
 
 Rule = list[type[objects.Text]]
@@ -116,8 +118,16 @@ def analysis_rule(atom_rule: Rule) -> RuleInfo:
     return return_value
 
 default_rule_list: list[Rule] = []
-default_rule_list.append([objects.TextCursor, objects.TextIs, objects.TextSelect])
 default_rule_list.append([objects.TextText, objects.TextIs, objects.TextPush])
+default_rule_list.append([objects.TextCursor, objects.TextIs, objects.TextSelect])
+default_rule_list.append([objects.TextMeta, objects.TextWorld, objects.TextIs,
+                          objects.TextEnter, objects.TextAnd, objects.TextLeave])
+default_rule_list.append([objects.TextMeta, objects.TextClone, objects.TextIs,
+                          objects.TextEnter])
 default_rule_list.append([objects.TextNot, objects.TextMeta, objects.TextWorld, objects.TextAnd,
                           objects.TextNot, objects.TextMeta, objects.TextClone, objects.TextIs, objects.TextPush])
 default_rule_list.append([objects.TextNot, objects.TextMeta, objects.TextLevel, objects.TextIs, objects.TextStop])
+
+PropertyList = list[tuple[type[objects.BmpObject], int]]
+
+PropertyDict = dict[type[objects.BmpObject], int]

@@ -2,7 +2,7 @@
 
 ![Game icon](BabaMakeParabox.png)
 
-**Baba Make Parabox** is a fan-made sokoban-like metagame by **Yangsy56302**.
+**Baba Make Parabox**, or **BMP** in short, is a fan-made sokoban-like metagame by **Yangsy56302**.
 The original games are [**Baba Is You**](https://hempuli.com/baba/) and [**Patrick's Parabox**](https://www.patricksparabox.com/),
 made separately by **Arvi Hempuli** and **Patrick Traynor**.
 
@@ -13,18 +13,20 @@ Therefore, I'm not providing any source code of Pygame, please get it by yoursel
 But I do provide the game program, build by [PyInstaller](https://pyinstaller.org/en/stable/index.html), using unmodified Pygame souce code.
 **PyInstaller used [GNU General Public License, version 2](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)。**
 
-**I DO NOT have the copyright of the game's textures.**
-If you have some informations about the right of use for the game's textures or something, please tell me.
+**I DO NOT have the copyright of the game's sprites.**
+If you have some informations about the right of use for the game's sprites or something, please tell me.
+This repository won't contain the original sprites of Baba Is You since 2024.10.23,
+Although you can still get them on the Release page of Github or somewhere.
 
 The game's prototype was born at 2024.05.15, game's folder at UTC+0 04:12:15 (or UTC+8 12:12:15 in my time zone).
 
 ## Download
 
 For [Github](https://github.com/Yangsy56302/BabaMakeParabox),
-Click the green button say **Code**, then click **Download ZIP**.
+Click **Releases** on the right side just below About, expand **Assets**, then click on these files you should download.
 
 For [Gitlab](https://gitlab.com/Yangsy56302/BabaMakeParabox),
-Click the blue button say **Code**, then click **zip**.
+It should be similar to the steps for Github above to download this game.
 
 For [Gitee](https://gitee.com/Yangsy56302/BabaMakeParabox),
 or if you are from China, [Click me for more info](readme_cn.md).
@@ -36,7 +38,7 @@ or if you are from China, [Click me for more info](readme_cn.md).
 If the game freeze, please confirm you are not
 selecting any text in terminal before you report this as an bug.
 
-Start `BabaMakeParabox.bat` or `BabaMakeParabox.sh` depends on your current operating system,
+Start `BabaMakeParabox.exe` or `BabaMakeParabox.sh` depends on your current operating system,
 then follow the terminal messages to start the game.
 Please make sure you have a levelpack file, if not, you can [make one](#how-to-make-a-custom-levelpack).
 
@@ -230,3 +232,4 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 3.611  | 2024.09.13 | Bug on World feeling Push is Fix |
 | 3.62   | 2024.10.21 | Flag on Baba and Baba and on Keke and on Keke is Win |
 | 3.621  | 2024.10.22 | Game feeling not Safe is not Done |
+| 3.622  | 2024.10.23 | Code has not Asset; Code on Property is Change |

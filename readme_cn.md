@@ -2,7 +2,7 @@
 
 ![游戏图标](BabaMakeParabox.png)
 
-**Baba Make Parabox**是一个二创同人推箱子元游戏，作者是**Yangsy56302**。
+**Baba Make Parabox**（简称 **BMP**）是一个二创同人推箱子元游戏，作者是**Yangsy56302**。
 取材游戏为[**Baba Is You**](https://hempuli.com/baba/)与[**Patrick's Parabox**](https://www.patricksparabox.com/)，
 作者分别为**Arvi Hempuli**和**Patrick Traynor**。
 
@@ -13,21 +13,26 @@
 但本人确实提供使用未经修改的Pygame版本经[PyInstaller](https://pyinstaller.org/en/stable/index.html)打包后形成的游戏程序。
 **PyInstaller使用[GNU通用公共许可证 第2版](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)。**
 
-**我并未拥有游戏贴图的版权。**
-如果您有关于游戏贴图的使用权等权利的更多信息，请尽快联系我。
+**我并未拥有游戏纹理的版权。**
+如果您有关于游戏纹理的使用权等权利的更多信息，请尽快联系我。
+从2024.10.23起，该仓库将不再附带Baba Is You的原创纹理，
+尽管您仍然可以从Github等平台的发布页附近下载这些纹理。
 
 该游戏的雏形诞生于2024.05.15，游戏文件夹创建时间为北京时间12:12:15。
 
-## 如何下载
+## 下载
 
 对于大多数玩家，请转到[Gitlab](https://gitlab.com/Yangsy56302/BabaMakeParabox)，
-点击蓝色的**Code**按钮，找到**zip**字样并点击。
+点击界面右侧的**Release**，展开**Assets**，然后点击以下载你需要的文件。
 
 如果您有[Gitee](https://gitee.com/Yangsy56302/BabaMakeParabox)账号，
-请点击橙色的**克隆/下载**按钮，然后点击弹出的新窗口里面的**下载**字样。
+那么您或许已经知道该怎么下载了。
 
 不建议到[Github](https://github.com/Yangsy56302/BabaMakeParabox)上下载，
-因为其版本可能不是最新的。因此这里不提供Github的下载步骤，请自行查看[英文文档](readme.md)。
+因为其版本可能不是最新的；可以模仿在Gitlab上下载的步骤下载。
+
+如果您不知道哪些文件是必须的，
+那么请下载带有**assets**和**windows**字样的文件。
 
 ## 如何运行
 
@@ -36,9 +41,9 @@
 如果游戏卡死，请先确保您
 没有在终端内选中任何文字，再汇报游戏漏洞。
 
-打开`BabaMakeParabox.bat`或者`BabaMakeParabox.sh`（取决于您使用的操作系统），
+打开`BabaMakeParabox.exe`或者`BabaMakeParabox.sh`（取决于您使用的操作系统），
 然后按照终端指示开始游戏。
-请确保您已经准备好了关卡包文件，若没有，可以选择[制作一个](#如何制作关卡包)。
+请确保您已经准备好了关卡包文件，若没有，可以选择[制作一个](#制作关卡包)。
 
 对于Windows用户，如果您需要自己将代码打包成EXE，请运行`windows.bat`。
 对于使用GNU/Linux系统的用户，请先运行对应发行版的`.sh`文件以安装前置。
@@ -331,3 +336,4 @@
 | 3.611  | 2024.09.13 | Bug on World feeling Push is Fix |
 | 3.62   | 2024.10.21 | Flag on Baba and Baba and on Keke and on Keke is Win |
 | 3.621  | 2024.10.22 | seldom and often Wall without Baba is not Push; Game feeling not Safe is not Done |
+| 3.622  | 2024.10.23 | Code has not Asset; Code on Property is Change |
