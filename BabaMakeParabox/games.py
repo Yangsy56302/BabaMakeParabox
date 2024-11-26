@@ -25,7 +25,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     display_offset = [0.0, 0.0]
     display_offset_speed = [0.0, 0.0]
     pygame.display.set_caption(f"Baba Make Parabox Version {basics.versions}")
-    pygame.display.set_icon(pygame.image.load("BabaMakeParabox.png"))
+    pygame.display.set_icon(pygame.image.load("bmp.ico.png"))
     displays.sprites.update()
     pygame.key.set_repeat()
     pygame.key.stop_text_input()
@@ -231,12 +231,12 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 elif prop == objects.TextOpen:
                     sounds.play("open")
                     if basics.current_os == basics.windows:
-                        if os.path.exists("BabaMakeParabox.exe"):
-                                os.system("start BabaMakeParabox.exe")
-                        elif os.path.exists("BabaMakeParabox.py"):
-                            os.system("start python BabaMakeParabox.py")
+                        if os.path.exists("bmp.exe"):
+                                os.system("start bmp.exe")
+                        elif os.path.exists("bmp.py"):
+                            os.system("start python bmp.py")
                     elif basics.current_os == basics.linux:
-                        os.system("python ./BabaMakeParabox.py &")
+                        os.system("python ./bmp.py &")
                 elif prop == objects.TextHot:
                     game_is_hot = True
                 elif prop == objects.TextMelt:

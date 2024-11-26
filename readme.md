@@ -1,6 +1,8 @@
 # Baba Make Parabox
 
-![Game icon](BabaMakeParabox.png)
+![Game icon](bmp.ico.png.bmp)
+
+**SOME OF THE INFORMATION INCLUDED IN THIS FILE IS OUTDATED.**
 
 **Baba Make Parabox**, or **BMP** in short, is a fan-made sokoban-like metagame by **Yangsy56302**.
 The original games are [**Baba Is You**](https://hempuli.com/baba/) and [**Patrick's Parabox**](https://www.patricksparabox.com/),
@@ -29,7 +31,7 @@ For [Gitlab](https://gitlab.com/Yangsy56302/BabaMakeParabox),
 It should be similar to the steps for Github above to download this game.
 
 For [Gitee](https://gitee.com/Yangsy56302/BabaMakeParabox),
-or if you are from China, [Click me for more info](readme_cn.md).
+or if you are from China, [Click me for more info](readme_cn.md#下载).
 
 ## Run
 
@@ -38,12 +40,12 @@ or if you are from China, [Click me for more info](readme_cn.md).
 If the game freeze, please confirm you are not
 selecting any text in terminal before you report this as an bug.
 
-Start `BabaMakeParabox.exe` or `BabaMakeParabox.sh` depends on your current operating system,
+Start `bmp.exe` or `bmp.sh` depends on your current operating system,
 then follow the terminal messages to start the game.
 Please make sure you have a levelpack file, if not, you can [make one](#how-to-make-a-custom-levelpack).
 
-For Windows users, if you need to make an exe for yourself, run `windows.bat`.
-For GNU/Linux users, run `.sh` with your distro name first.
+For Windows users, if you need to make an exe for yourself, run `inst-win.bat`.
+For GNU/Linux users, run `inst-arch.sh` or `inst-ubuntu.sh` first.
 
 ### Control
 

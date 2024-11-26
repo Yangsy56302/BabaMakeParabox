@@ -1,2 +1,0 @@
-python BabaMakeParabox.py
-pause

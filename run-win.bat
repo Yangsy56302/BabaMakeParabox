@@ -1,0 +1,2 @@
+python bmp.py
+pause

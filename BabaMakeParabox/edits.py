@@ -11,7 +11,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     history = [copy.deepcopy(levelpack)]
     window = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
     pygame.display.set_caption(f"Baba Make Parabox Editor Version {basics.versions}")
-    pygame.display.set_icon(pygame.image.load("BabaMakeParabox.png"))
+    pygame.display.set_icon(pygame.image.load("bmp.ico.png"))
     displays.sprites.update()
     pygame.key.set_repeat()
     pygame.key.stop_text_input()
