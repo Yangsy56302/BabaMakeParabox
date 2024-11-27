@@ -2,6 +2,7 @@ from typing import Any, NotRequired, Optional, TypeGuard, TypedDict
 import math
 import uuid
 from BabaMakeParabox import basics, colors, spaces
+from BabaMakeParabox.spaces import Coord
 
 class WorldPointerExtraJson(TypedDict):
     name: str
@@ -22,6 +23,75 @@ class BmpObjectJson(TypedDict):
     world: NotRequired[WorldPointerExtraJson]
     level: NotRequired[LevelPointerExtraJson]
 
+PropertiesDict = dict[type["BmpObject"], dict[int, int]]
+
+def temp_calc(negnum_list: list[int], negated_number: int = 0):
+    negnum_list.sort(reverse=True)
+    current_negnum = negnum_list[0]
+    current_count = 0
+    for n in negnum_list:
+        if n < negated_number:
+            break
+        elif n == current_negnum:
+            current_count += 1
+        elif current_negnum - n == 1:
+            current_count = min(0, -current_count) + 1
+            current_negnum = n
+        else:
+            current_count = 1
+            current_negnum = n
+    return max(0, current_count) if current_negnum == negated_number else 0
+
+class Properties(object):
+    def __init__(self, prop: Optional[PropertiesDict] = None) -> None:
+        self.__dict: PropertiesDict = prop if prop is not None else {}
+    @staticmethod
+    def calc_count(negnum_dict: dict[int, int], negated_number: int = 0) -> int:
+        negnum_list = []
+        for neg, num in negnum_dict.items():
+            negnum_list.extend([neg] * num)
+        negnum_list.sort(reverse=True)
+        current_negnum = negnum_list[0]
+        current_count = 0
+        for n in negnum_list:
+            if n < negated_number:
+                break
+            elif n == current_negnum:
+                current_count += 1
+            elif current_negnum - n == 1:
+                current_count = min(0, -current_count) + 1
+                current_negnum = n
+            else:
+                current_count = 1
+                current_negnum = n
+        return max(0, current_count) if current_negnum == negated_number else 0
+    def overwrite(self, prop: type["BmpObject"], negated: bool) -> None:
+        self.__dict[prop] = {int(negated): 1}
+    def update(self, prop: type["BmpObject"], negated_level: int) -> None:
+        self.__dict.setdefault(prop, {})
+        self.__dict[prop].setdefault(negated_level, 0)
+        self.__dict[prop][negated_level] += 1
+    def remove(self, prop: type["BmpObject"], *, negated_level: int) -> None:
+        self.__dict.setdefault(prop, {})
+        self.__dict[prop].setdefault(negated_level, 0)
+        self.__dict[prop][negated_level] -= 1
+    def exist(self, prop: type["BmpObject"]) -> bool:
+        return len(self.__dict.get(prop, {}).items()) != 0
+    def get(self, prop: type["BmpObject"], *, negated_number: int = 0) -> int:
+        if len(self.__dict.get(prop, {}).items()) == 0:
+            return 0
+        return self.calc_count(self.__dict[prop], negated_number)
+    def has(self, prop: type["BmpObject"], *, negated_number: int = 0) -> bool:
+        if len(self.__dict.get(prop, {}).items()) == 0:
+            return False
+        if self.calc_count(self.__dict[prop], negated_number) > 0:
+            return True
+        return False
+    def clear(self) -> None:
+        self.__dict.clear()
+    def to_dict(self) -> dict[type["BmpObject"], int]:
+        return {k: self.calc_count(v) for k, v in self.__dict.items()}
+
 class BmpObject(object):
     json_name: str
     sprite_name: str
@@ -33,7 +103,7 @@ class BmpObject(object):
         self.orient: spaces.Orient = orient
         self.world_info: Optional[WorldPointerExtraJson] = world_info
         self.level_info: Optional[LevelPointerExtraJson] = level_info
-        self.properties: list[tuple[type["Text"], int]] = []
+        self.properties: Properties = Properties()
         self.has_object: list[type["Noun"]] = []
         self.make_object: list[type["Noun"]] = []
         self.write_text: list[type["Noun"] | type["Property"]] = []
@@ -56,28 +126,8 @@ class BmpObject(object):
         del self.y
     def reset_uuid(self) -> None:
         self.uuid = uuid.uuid4()
-    def set_sprite(self) -> None:
+    def set_sprite(self, **kwds) -> None:
         self.sprite_state = 0
-    def new_prop(self, prop: type["Text"], negated_count: int = 0) -> None:
-        del_props = []
-        for old_prop, old_negated_count in self.properties:
-            if prop == old_prop:
-                if old_negated_count > negated_count:
-                    return
-                del_props.append((old_prop, old_negated_count))
-        for old_prop, old_negated_count in del_props:
-            self.properties.remove((old_prop, old_negated_count))
-        self.properties.append((prop, negated_count))
-    def del_prop(self, prop: type["Text"], negated_count: int = 0) -> None:
-        if (prop, negated_count) in self.properties:
-            self.properties.remove((prop, negated_count))
-    def has_prop(self, prop: type["Text"], negate: bool = False) -> bool:
-        for get_prop, get_negated_count in self.properties:
-            if get_prop == prop and get_negated_count % 2 == int(negate):
-                return True
-        return False
-    def clear_prop(self) -> None:
-        self.properties = []
     def to_json(self) -> BmpObjectJson:
         json_object: BmpObjectJson = {"type": self.json_name, "position": (self.x, self.y), "orientation": spaces.orient_to_str(self.orient)}
         if self.world_info is not None:
@@ -87,27 +137,28 @@ class BmpObject(object):
         return json_object
 
 class Static(BmpObject):
-    def set_sprite(self) -> None:
+    def set_sprite(self, **kwds) -> None:
         self.sprite_state = 0
 
 class Tiled(BmpObject):
-    def set_sprite(self, connected: dict[spaces.Orient, bool]) -> None:
+    def set_sprite(self, connected: Optional[dict[spaces.Orient, bool]] = None, **kwds) -> None:
+        connected = {spaces.Orient.W: False, spaces.Orient.S: False, spaces.Orient.A: False, spaces.Orient.D: False} if connected is None else connected
         self.sprite_state = (connected[spaces.Orient.D] * 0x1) | (connected[spaces.Orient.W] * 0x2) | (connected[spaces.Orient.A] * 0x4) | (connected[spaces.Orient.S] * 0x8)
 
 class Animated(BmpObject):
-    def set_sprite(self, round_num: int) -> None:
+    def set_sprite(self, round_num: int = 0, **kwds) -> None:
         self.sprite_state = round_num % 4
 
 class Directional(BmpObject):
-    def set_sprite(self) -> None:
+    def set_sprite(self, **kwds) -> None:
         self.sprite_state = int(math.log2(spaces.orient_to_int(self.orient))) * 0x8
 
 class AnimatedDirectional(BmpObject):
-    def set_sprite(self, round_num: int) -> None:
+    def set_sprite(self, round_num: int = 0, **kwds) -> None:
         self.sprite_state = int(math.log2(spaces.orient_to_int(self.orient))) * 0x8 | round_num % 4
 
 class Character(BmpObject):
-    def set_sprite(self) -> None:
+    def set_sprite(self, **kwds) -> None:
         sleeping = False
         if not sleeping:
             if self.moved:
@@ -289,26 +340,18 @@ class Clone(WorldPointer):
     sprite_name: str = "clone"
     display_name: str = "Clone"
 
-TransformFromJson = TypedDict("TransformFromJson", {"type": type[BmpObject], "name": str, "infinite_tier": NotRequired[int]})
-TransformToJson = TypedDict("TransformToJson", {"type": type[BmpObject]})
-TransformInfoJson = TypedDict("TransformInfoJson", {"from": TransformFromJson, "to": TransformToJson})
-
-class Transform(BmpObject):
-    def __init__(self, pos: spaces.Coord, info: TransformInfoJson, orient: spaces.Orient = spaces.Orient.S) -> None:
-        super().__init__(pos, orient)
-        self.from_type: type[BmpObject] = info["from"]["type"]
-        self.from_name: str = info["from"]["name"]
-        if issubclass(self.from_type, WorldPointer):
-            self.from_infinite_tier: int = info["from"].get("infinite_tier", 0)
-        self.to_type: type[BmpObject] = info["to"]["type"]
-
-class Sprite(BmpObject):
-    def __init__(self, pos: spaces.Coord, sprite_name: str, orient: spaces.Orient = spaces.Orient.S) -> None:
-        super().__init__(pos, orient)
-        self.sprite_name: str = sprite_name
-
 class Game(BmpObject):
-    pass
+    def __init__(self, pos: tuple[int, int], orient: spaces.Orient = spaces.Orient.S, *, obj_type: type[BmpObject], world_info: WorldPointerExtraJson | None = None, level_info: LevelPointerExtraJson | None = None) -> None:
+        super().__init__(pos, orient, world_info=world_info, level_info=level_info)
+        self.obj_type: type[BmpObject] = obj_type
+    @property
+    def sprite_name(self) -> str:
+        return self.obj_type.sprite_name
+    @sprite_name.getter
+    def sprite_name(self) -> str:
+        return self.obj_type.sprite_name
+    json_name: str = "game"
+    display_name: str = "Game"
 
 class Text(BmpObject):
     pass
@@ -608,6 +651,11 @@ class TextNot(Text):
     sprite_name: str = "text_not"
     display_name: str = "NOT"
 
+class TextNeg(Text):
+    json_name: str = "text_neg"
+    sprite_name: str = "text_neg"
+    display_name: str = "NEG"
+
 class TextAnd(Text):
     json_name: str = "text_and"
     sprite_name: str = "text_and"
@@ -728,7 +776,7 @@ class Metatext(Noun):
     meta_tier: int
     
 def same_float_prop(obj_1: BmpObject, obj_2: BmpObject):
-    return not (obj_1.has_prop(TextFloat) ^ obj_2.has_prop(TextFloat))
+    return not (obj_1.properties.has(TextFloat) ^ obj_2.properties.has(TextFloat))
 
 noun_class_list: list[type[Noun]] = []
 noun_class_list.extend([TextBaba, TextKeke, TextMe, TextPatrick, TextSkull, TextGhost])
@@ -741,7 +789,7 @@ text_class_list.extend(noun_class_list)
 text_class_list.extend([TextText_, TextOften, TextSeldom, TextMeta])
 text_class_list.extend([TextOn, TextNear, TextNextto, TextWithout, TextFeeling])
 text_class_list.extend([TextIs, TextHas, TextMake, TextWrite])
-text_class_list.extend([TextNot, TextAnd])
+text_class_list.extend([TextNot, TextNeg, TextAnd])
 text_class_list.extend([TextYou, TextMove, TextStop, TextPush, TextSink, TextFloat, TextOpen, TextShut, TextHot, TextMelt, TextWin, TextDefeat, TextShift, TextTele])
 text_class_list.extend([TextEnter, TextLeave, TextWord, TextSelect, TextTextPlus, TextTextMinus, TextEnd, TextDone])
 
@@ -757,9 +805,9 @@ object_class_used.extend([All, Empty, Text, Game, TextEmpty])
 
 object_name: dict[str, type[BmpObject]] = {t.json_name: t for t in object_used}
 
-not_in_all: tuple[type[BmpObject], ...] = (All, Empty, Text, Level, WorldPointer, Transform, Sprite, Game)
-in_not_all: tuple[type[BmpObject], ...] = (Text, Empty, Transform, Sprite, Game)
-not_in_editor: tuple[type[BmpObject], ...] = (All, Empty, TextEmpty, Text, Transform, Sprite, Game)
+not_in_all: tuple[type[BmpObject], ...] = (All, Empty, Text, Level, WorldPointer, Game)
+in_not_all: tuple[type[BmpObject], ...] = (Text, Empty, Game)
+not_in_editor: tuple[type[BmpObject], ...] = (All, Empty, TextEmpty, Text, Game)
 
 metatext_class_dict: dict[int, list[type[Metatext]]] = {}
 current_metatext_tier: int = basics.options["metatext"]["tier"]
@@ -807,7 +855,7 @@ def generate_metatext_at_tier(tier: int) -> list[type[Metatext]]:
         text_class_list.append(new_type)
     return new_metatext_class_list
 
-def get_noun_from_obj(obj_type: type[BmpObject]) -> type[Noun]:
+def get_noun_from_type(obj_type: type[BmpObject]) -> type[Noun]:
     global current_metatext_tier
     global object_class_used, object_used, object_name, noun_class_list, text_class_list
     return_value: type[Noun] = TextText
@@ -819,7 +867,7 @@ def get_noun_from_obj(obj_type: type[BmpObject]) -> type[Noun]:
     if return_value == TextText:
         current_metatext_tier += 1
         generate_metatext_at_tier(current_metatext_tier)
-        return get_noun_from_obj(obj_type)
+        return get_noun_from_type(obj_type)
     return return_value
 
 if basics.options["metatext"]["enabled"]:

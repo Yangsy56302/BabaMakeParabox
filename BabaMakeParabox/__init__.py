@@ -40,11 +40,64 @@ def update(input_filename: str, output_filename: str) -> None:
     with open(os.path.join("levelpacks", output_filename + ".json"), "w", encoding="utf-8") as file:
         json.dump(levelpack.to_json(), file, indent=None if basics.options["compressed_json_output"] else 4, separators=(",", ":") if basics.options["compressed_json_output"] else (", ", ": "))
 
-def main() -> None:
-    if os.environ.get("PYINSTALLER") == "TRUE":
-        return
+def pre_main_check() -> bool:
+    if os.environ.get(basics.pyinst_env) == "TRUE":
+        return False
     if basics.options.get("game_is_done"):
         raise games.GameIsDoneError()
+    return True
+
+def change_options() -> bool:
+    while True:
+        print(languages.current_language["main.change_options.fps"])
+        fps_preset = input(languages.current_language["input.number"])
+        try:
+            fps_preset = int(fps_preset)
+        except ValueError:
+            print(languages.current_language["warn.value.invalid"].format(val=fps_preset, cls="int"))
+        match int(fps_preset):
+            case 1:
+                basics.options.update({"fps": 5, "fpw": 1, "world_display_recursion_depth": 1})
+                break
+            case 2:
+                basics.options.update({"fps": 15, "fpw": 3, "world_display_recursion_depth": 2})
+                break
+            case 3:
+                basics.options.update({"fps": 30, "fpw": 5, "world_display_recursion_depth": 3})
+                break
+            case 4:
+                basics.options.update({"fps": 60, "fpw": 10, "world_display_recursion_depth": 4})
+                break
+            case _:
+                print(languages.current_language["warn.value.out_of_range"].format(min=1, max=4, val=fps_preset))
+    if input(languages.current_language["main.change_options.json"]) in languages.yes:
+        basics.options.update({"compressed_json_output": False})
+    else:
+        basics.options.update({"compressed_json_output": True})
+    if input(languages.current_language["main.change_options.bgm"]) in languages.yes:
+        basics.options.update({"bgm": {"enabled": True, "name": "rush_baba.mid"}})
+    else:
+        basics.options.update({"bgm": {"enabled": False, "name": "rush_baba.mid"}})
+    while True:
+        print(languages.current_language["main.change_options.metatext"])
+        metatext_tier = input(languages.current_language["input.number"])
+        try:
+            metatext_tier = int(metatext_tier)
+        except ValueError:
+            print(languages.current_language["warn.value.invalid"].format(val=metatext_tier, cls="int"))
+        else:
+            if metatext_tier < 0:
+                print(languages.current_language["warn.value.underflow"].format(min=0, val=metatext_tier))
+            elif metatext_tier == 0:
+                basics.options.update({"metatext": {"enabled": False, "tier": 0}})
+                break
+            else:
+                basics.options.update({"metatext": {"enabled": True, "tier": metatext_tier}})
+                break
+    print(languages.current_language["main.change_options.done"])
+    return True
+
+def main() -> None:
     if basics.options["lang"] not in languages.language_dict.keys():
         for lang in languages.language_dict.keys():
             print(languages.language_dict[lang]["language.select"])
@@ -83,53 +136,7 @@ def main() -> None:
                 edit(input_filename, output_filename)
                 break
             elif game_mode == 3:
-                while True:
-                    print(languages.current_language["main.change_options.fps"])
-                    fps_preset = input(languages.current_language["input.number"])
-                    try:
-                        fps_preset = int(fps_preset)
-                    except ValueError:
-                        print(languages.current_language["warn.value.invalid"].format(val=fps_preset, cls="int"))
-                    match int(fps_preset):
-                        case 1:
-                            basics.options.update({"fps": 5, "fpw": 1, "world_display_recursion_depth": 1})
-                            break
-                        case 2:
-                            basics.options.update({"fps": 15, "fpw": 3, "world_display_recursion_depth": 2})
-                            break
-                        case 3:
-                            basics.options.update({"fps": 30, "fpw": 5, "world_display_recursion_depth": 3})
-                            break
-                        case 4:
-                            basics.options.update({"fps": 60, "fpw": 10, "world_display_recursion_depth": 4})
-                            break
-                        case _:
-                            print(languages.current_language["warn.value.out_of_range"].format(min=1, max=4, val=fps_preset))
-                if input(languages.current_language["main.change_options.json"]) in languages.yes:
-                    basics.options.update({"compressed_json_output": False})
-                else:
-                    basics.options.update({"compressed_json_output": True})
-                if input(languages.current_language["main.change_options.bgm"]) in languages.yes:
-                    basics.options.update({"bgm": {"enabled": True, "name": "rush_baba.mid"}})
-                else:
-                    basics.options.update({"bgm": {"enabled": False, "name": "rush_baba.mid"}})
-                while True:
-                    print(languages.current_language["main.change_options.metatext"])
-                    metatext_tier = input(languages.current_language["input.number"])
-                    try:
-                        metatext_tier = int(metatext_tier)
-                    except ValueError:
-                        print(languages.current_language["warn.value.invalid"].format(val=metatext_tier, cls="int"))
-                    else:
-                        if metatext_tier < 0:
-                            print(languages.current_language["warn.value.underflow"].format(min=0, val=metatext_tier))
-                        elif metatext_tier == 0:
-                            basics.options.update({"metatext": {"enabled": False, "tier": 0}})
-                            break
-                        else:
-                            basics.options.update({"metatext": {"enabled": True, "tier": metatext_tier}})
-                            break
-                print(languages.current_language["main.change_options.done"])
+                change_options()
                 break
             elif game_mode == 4:
                 print(languages.current_language["main.open.levelpack"])

@@ -57,6 +57,8 @@ class Sprites(object):
         self.raw_sprites: dict[str, pygame.Surface] = {}
         self.sprites: dict[str, pygame.Surface] = {}
         for filename in os.listdir(os.path.join("sprites")):
+            if not os.path.isfile(os.path.join("sprites", filename)):
+                continue
             sprite = pygame.image.load(os.path.join("sprites", filename)).convert_alpha()
             sprite_name = os.path.splitext(filename)[0]
             sprite_basename = sprite_name
@@ -70,21 +72,6 @@ class Sprites(object):
         if raw_sprite:
             return self.raw_sprites["_".join([sprite_name, str(state), str(frame)])]
         return self.sprites["_".join([sprite_name, str(state), str(frame)])]
-
-def set_sprite_state(obj: objects.BmpObject, round_num: int = 0, wsad: Optional[dict[spaces.Orient, bool]] = None) -> objects.BmpObject:
-    if isinstance(obj, objects.Static):
-        obj.set_sprite()
-    if isinstance(obj, objects.Directional):
-        obj.set_sprite()
-    if isinstance(obj, objects.Animated):
-        obj.set_sprite(round_num)
-    if isinstance(obj, objects.AnimatedDirectional):
-        obj.set_sprite(round_num)
-    if isinstance(obj, objects.Character):
-        obj.set_sprite()
-    if isinstance(obj, objects.Tiled):
-        obj.set_sprite(wsad if wsad is not None else {spaces.Orient.W: False, spaces.Orient.S: False, spaces.Orient.A: False, spaces.Orient.D: False})
-    return obj
 
 sprite_colors: dict[str, colors.ColorHex] = {}
 
@@ -168,6 +155,7 @@ sprite_colors["text_has"] = colors.WHITE
 sprite_colors["text_make"] = colors.WHITE
 sprite_colors["text_write"] = colors.WHITE
 sprite_colors["text_not"] = colors.LIGHT_RED
+sprite_colors["text_neg"] = colors.LIGHT_GRAY
 sprite_colors["text_and"] = colors.WHITE
 sprite_colors["text_you"] = colors.MAGENTA
 sprite_colors["text_move"] = colors.LIGHT_GREEN

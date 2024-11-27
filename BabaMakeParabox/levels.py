@@ -1,3 +1,4 @@
+import os
 from typing import Any, NotRequired, Optional, TypedDict
 import random
 import copy
@@ -27,24 +28,14 @@ class Level(object):
         self.main_world_tier: int = main_world_tier if main_world_tier is not None else world_list[0].infinite_tier
         self.rule_list: list[rules.Rule] = rule_list if rule_list is not None else rules.default_rule_list
         self.is_map: bool = is_map
-        self.game_properties: rules.PropertyDict = {}
-        self.new_games: list[type[objects.BmpObject]] = []
-        self.properties: rules.PropertyDict = {}
+        self.game_properties: objects.Properties = objects.Properties()
+        self.properties: objects.Properties = objects.Properties()
         self.write_text: list[type[objects.Noun] | type[objects.Property]] = []
         self.created_levels: list["Level"] = []
         self.all_list: list[type[objects.Noun]] = []
         self.sound_events: list[str] = []
     def __eq__(self, level: "Level") -> bool:
         return self.name == level.name
-    def new_prop(self, prop: type[objects.Text], negated_count: int = 0) -> None:
-        if self.properties.get(prop, -1) < negated_count:
-            self.properties[prop] = negated_count
-    def del_prop(self, prop: type[objects.Text], negated_count: Optional[int] = 0) -> None:
-        if self.properties.get(prop) == negated_count or negated_count is None:
-            self.properties.pop(prop)
-    def has_prop(self, prop: type[objects.Text], negated: bool = False) -> bool:
-        negated_count = self.properties.get(prop)
-        return negated_count is not None and negated_count % 2 == int(negated)
     def find_rules(self, *match_rule: Optional[type[objects.Text]]) -> list[rules.Rule]:
         found_rules = []
         for rule in self.rule_list:
@@ -61,12 +52,27 @@ class Level(object):
                 continue
             found_rules.append(rule)
         return found_rules
+    @property
+    def main_world(self) -> worlds.World:
+        return self.get_exact_world({"name": self.main_world_name, "infinite_tier": self.main_world_tier})
+    @main_world.getter
+    def main_world(self) -> worlds.World:
+        return self.get_exact_world({"name": self.main_world_name, "infinite_tier": self.main_world_tier})
     def get_world(self, world_info: objects.WorldPointerExtraJson) -> Optional[worlds.World]:
-        world = list(filter(lambda l: l.name == world_info["name"] and l.infinite_tier == world_info["infinite_tier"], self.world_list))
-        return world[0] if len(world) != 0 else None
-    def get_exist_world(self, world_info: objects.WorldPointerExtraJson) -> worlds.World:
-        world = list(filter(lambda l: l.name == world_info["name"] and l.infinite_tier == world_info["infinite_tier"], self.world_list))
-        return world[0]
+        for world in self.world_list:
+            if world.name == world_info["name"] and world.infinite_tier == world_info["infinite_tier"]:
+                return world
+        return None
+    def get_world_or_default(self, world_info: objects.WorldPointerExtraJson, *, default: worlds.World) -> worlds.World:
+        world = self.get_world(world_info)
+        if world is None:
+            return default
+        return world
+    def get_exact_world(self, world_info: objects.WorldPointerExtraJson) -> worlds.World:
+        world = self.get_world(world_info)
+        if world is None:
+            raise KeyError(world_info)
+        return world
     def set_world(self, world: worlds.World) -> None:
         for i in range(len(self.world_list)):
             if world.name == self.world_list[i].name:
@@ -83,7 +89,7 @@ class Level(object):
     def all_list_set(self) -> None:
         for world in self.world_list:
             for obj in world.object_list:
-                noun_type = objects.get_noun_from_obj(type(obj))
+                noun_type = objects.get_noun_from_type(type(obj))
                 in_not_in_all = False
                 for not_all in objects.not_in_all:
                     if isinstance(obj, not_all):
@@ -94,26 +100,26 @@ class Level(object):
         return_value = True
         for prefix_info in prefix_info_list:
             meet_prefix_condition = True
-            if prefix_info[1] == objects.TextMeta:
+            if prefix_info.prefix_type == objects.TextMeta:
                 meet_prefix_condition = is_meta
-            elif prefix_info[1] == objects.TextOften:
+            elif prefix_info.prefix_type == objects.TextOften:
                 meet_prefix_condition = random.choice((True, True, True, False))
-            elif prefix_info[1] == objects.TextSeldom:
+            elif prefix_info.prefix_type == objects.TextSeldom:
                 meet_prefix_condition = random.choice((True, False, False, False, False, False))
-            return_value = return_value and (meet_prefix_condition if not prefix_info[0] else not meet_prefix_condition)
+            return_value = return_value and (meet_prefix_condition if not prefix_info.negated else not meet_prefix_condition)
         return return_value
-    def meet_infix_conditions(self, world: worlds.World, obj: objects.BmpObject, infix_info_list: list[rules.InfixInfo], old_feeling: Optional[list[tuple[type[objects.Text], int]]] = None) -> bool:
+    def meet_infix_conditions(self, world: worlds.World, obj: objects.BmpObject, infix_info_list: list[rules.InfixInfo], old_feeling: Optional[objects.Properties] = None) -> bool:
         for infix_info in infix_info_list:
             meet_infix_condition = True
-            if infix_info[1] in (objects.TextOn, objects.TextNear, objects.TextNextto):
+            if infix_info.infix_type in (objects.TextOn, objects.TextNear, objects.TextNextto):
                 matched_objs: list[objects.BmpObject] = [obj]
-                if infix_info[1] == objects.TextOn:
+                if infix_info.infix_type == objects.TextOn:
                     find_range = [(obj.x, obj.y)]
-                elif infix_info[1] == objects.TextNear:
+                elif infix_info.infix_type == objects.TextNear:
                     find_range = [(obj.x - 1, obj.y - 1), (obj.x, obj.y - 1), (obj.x + 1, obj.y - 1),
                                   (obj.x - 1, obj.y), (obj.x, obj.y), (obj.x + 1, obj.y),
                                   (obj.x - 1, obj.y + 1), (obj.x, obj.y + 1), (obj.x + 1, obj.y + 1)]
-                elif infix_info[1] == objects.TextNextto:
+                elif infix_info.infix_type == objects.TextNextto:
                     find_range = [(obj.x, obj.y - 1), (obj.x - 1, obj.y), (obj.x + 1, obj.y), (obj.x, obj.y + 1)]
                 for match_negated, match_type_text in infix_info[2]: # type: ignore
                     match_type_text: type[objects.Noun]
@@ -157,14 +163,14 @@ class Level(object):
                                 matched_objs.append(match_objs[0])
                     if not meet_infix_condition:
                         break
-            elif infix_info[1] == objects.TextFeeling:
+            elif infix_info.infix_type == objects.TextFeeling:
                 if old_feeling is None:
                     meet_infix_condition = False
                 else:
-                    for match_negated, match_prop in infix_info[2]:
-                        if match_prop not in [t[0] for t in old_feeling if t[1] % 2 == int(match_negated)]:
+                    for infix_noun_info in infix_info.infix_noun_info_list:
+                        if old_feeling.has(infix_noun_info.infix_noun_type) == infix_noun_info.negated:
                             meet_infix_condition = False
-            elif infix_info[1] == objects.TextWithout:
+            elif infix_info.infix_type == objects.TextWithout:
                 meet_infix_condition = True
                 matched_objs: list[objects.BmpObject] = [obj]
                 match_type_count: dict[tuple[bool, type[objects.Noun]], int] = {}
@@ -203,7 +209,7 @@ class Level(object):
                                 meet_infix_condition = False
                     if not meet_infix_condition:
                         break
-            if meet_infix_condition == infix_info[0]:
+            if meet_infix_condition == infix_info.negated:
                 return False
         return True
     def recursion_rules(self, world: worlds.World, rule_list: Optional[list[rules.Rule]] = None, passed: Optional[list[worlds.World]] = None) -> None:
@@ -218,88 +224,100 @@ class Level(object):
         if len(sub_world_objs) == 0:
             return
         for sub_world_obj in sub_world_objs:
-            sub_world = self.get_exist_world(sub_world_obj.world_info)
+            sub_world = self.get_exact_world(sub_world_obj.world_info)
             self.recursion_rules(sub_world, rule_list, passed)
-    def update_rules(self, old_prop_dict: dict[uuid.UUID, list[tuple[type[objects.Text], int]]]) -> None:
-        self.game_properties = {}
-        self.properties = {}
+    def update_rules(self, old_prop_dict: dict[uuid.UUID, objects.Properties]) -> None:
+        self.game_properties.clear()
+        self.properties.clear()
         self.write_text = []
         for world in self.world_list:
-            world.world_properties = {}
-            world.clone_properties = {}
+            world.world_properties.clear()
+            world.clone_properties.clear()
             for obj in world.object_list:
-                obj.clear_prop()
+                obj.properties.clear()
                 obj.has_object = []
                 obj.make_object = []
                 obj.write_text = []
         for world in self.world_list:
             self.recursion_rules(world)
         for world in self.world_list:
-            world.rule_list = rules.to_atom_rules(world.get_rules())
-            world.rule_list.extend(rules.to_atom_rules(self.rule_list))
-            world.rule_list = basics.remove_same_elements(world.rule_list)
+            world.rule_list = world.get_rules()
+            world.rule_list.extend(self.rule_list)
         new_prop_list: list[tuple[objects.BmpObject, tuple[type[objects.Text], int]]] = []
         for world in self.world_list:
             for rule in world.rule_list:
-                for prefix_list, noun_negated, noun_type, infix_list, oper_type, prop_negated_count, prop_type in rules.analysis_rule(rule):
+                for rule_info in rules.analysis_rule(rule):
+                    prefix_info_list = rule_info.prefix_info_list
+                    noun_negated_list = rule_info.noun_negated_list
+                    noun_type = rule_info.noun_type
+                    infix_info_list = rule_info.infix_info_list
+                    oper_type = rule_info.oper_type
+                    prop_negated_list = rule_info.prop_negated_list
+                    prop_type = rule_info.prop_type
                     if oper_type != objects.TextIs:
                         continue
                     if prop_type != objects.TextWord:
                         continue
                     obj_type = noun_type.obj_type
                     if obj_type == objects.All:
-                        if noun_negated:
+                        if len(noun_negated_list) % 2 == 1:
                             for obj in [o for o in world.object_list if isinstance(o, objects.in_not_all)]:
-                                if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
-                                    new_prop_list.append((obj, (objects.TextWord, prop_negated_count)))
+                                if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
+                                    new_prop_list.append((obj, (objects.TextWord, len(prop_negated_list))))
                         else:
                             for obj in [o for o in world.object_list if not isinstance(o, objects.not_in_all)]:
-                                if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
-                                    new_prop_list.append((obj, (objects.TextWord, prop_negated_count)))
+                                if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
+                                    new_prop_list.append((obj, (objects.TextWord, len(prop_negated_list))))
                     else:
-                        if noun_negated:
+                        if len(noun_negated_list) % 2 == 1:
                             for obj in [o for o in world.object_list if (not isinstance(o, objects.not_in_all)) and not isinstance(o, obj_type)]:
-                                if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
-                                    new_prop_list.append((obj, (objects.TextWord, prop_negated_count)))
+                                if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
+                                    new_prop_list.append((obj, (objects.TextWord, len(prop_negated_list))))
                         else:
                             for obj in world.get_objs_from_type(obj_type):
-                                if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
-                                    new_prop_list.append((obj, (objects.TextWord, prop_negated_count)))
+                                if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
+                                    new_prop_list.append((obj, (objects.TextWord, len(prop_negated_list))))
         for obj, prop in new_prop_list:
             prop_type, prop_negated_count = prop
-            obj.new_prop(prop_type, prop_negated_count)
+            obj.properties.update(prop_type, prop_negated_count)
         for world in self.world_list:
-            world.world_properties = {}
-            world.clone_properties = {}
-            world.rule_list = rules.to_atom_rules(world.get_rules())
+            world.world_properties.clear()
+            world.clone_properties.clear()
             for obj in world.object_list:
-                obj.clear_prop()
+                obj.properties.clear()
                 obj.has_object = []
                 obj.make_object = []
                 obj.write_text = []
         for world in self.world_list:
             self.recursion_rules(world)
         for world in self.world_list:
-            world.rule_list.extend(rules.to_atom_rules(self.rule_list))
-            world.rule_list = basics.remove_same_elements(world.rule_list)
+            world.rule_list = world.get_rules()
+            world.rule_list.extend(self.rule_list)
         new_prop_list = []
         for world in self.world_list:
             for rule in world.rule_list:
-                for prefix_list, noun_negated, noun_type, infix_list, oper_type, prop_negated_count, prop_type in rules.analysis_rule(rule):
+                for rule_info in rules.analysis_rule(rule):
+                    prefix_info_list = rule_info.prefix_info_list
+                    noun_negated_list = rule_info.noun_negated_list
+                    noun_type = rule_info.noun_type
+                    infix_info_list = rule_info.infix_info_list
+                    oper_type = rule_info.oper_type
+                    prop_negated_list = rule_info.prop_negated_list
+                    prop_type = rule_info.prop_type
                     obj_type = noun_type.obj_type
                     if obj_type == objects.All:
-                        if noun_negated:
+                        if len(noun_negated_list) % 2 == 1:
                             for obj in [o for o in world.object_list if isinstance(o, objects.in_not_all)]:
-                                if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
+                                if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
                                     if oper_type == objects.TextIs:
-                                        new_prop_list.append((obj, (prop_type, prop_negated_count)))
+                                        new_prop_list.append((obj, (prop_type, len(prop_negated_list))))
                                     elif oper_type == objects.TextHas:
-                                        if prop_type == objects.TextAll and noun_negated == False:
+                                        if prop_type == objects.TextAll and len(noun_negated_list) % 2 == 0:
                                             obj.has_object.extend(self.all_list)
                                         else:
                                             obj.has_object.append(prop_type) # type: ignore
                                     elif oper_type == objects.TextMake:
-                                        if prop_type == objects.TextAll and noun_negated == False:
+                                        if prop_type == objects.TextAll and len(noun_negated_list) % 2 == 0:
                                             obj.make_object.extend(self.all_list)
                                         else:
                                             obj.make_object.append(prop_type) # type: ignore
@@ -307,80 +325,79 @@ class Level(object):
                                         obj.write_text.append(prop_type)
                         else:
                             for obj in [o for o in world.object_list if not isinstance(o, objects.not_in_all)]:
-                                if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
+                                if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
                                     if oper_type == objects.TextIs:
-                                        new_prop_list.append((obj, (prop_type, prop_negated_count)))
-                                    elif oper_type == objects.TextHas and prop_negated_count % 2 == 0:
-                                        if prop_type == objects.TextAll and noun_negated == False:
+                                        new_prop_list.append((obj, (prop_type, len(prop_negated_list))))
+                                    elif oper_type == objects.TextHas and len(prop_negated_list) % 2 == 0:
+                                        if prop_type == objects.TextAll and len(noun_negated_list) % 2 == 0:
                                             obj.has_object.extend(self.all_list)
                                         else:
                                             obj.has_object.append(prop_type) # type: ignore
-                                    elif oper_type == objects.TextMake and prop_negated_count % 2 == 0:
-                                        if prop_type == objects.TextAll and noun_negated == False:
+                                    elif oper_type == objects.TextMake and len(prop_negated_list) % 2 == 0:
+                                        if prop_type == objects.TextAll and len(noun_negated_list) % 2 == 0:
                                             obj.make_object.extend(self.all_list)
                                         else:
                                             obj.make_object.append(prop_type) # type: ignore
-                                    elif oper_type == objects.TextWrite and prop_negated_count % 2 == 0:
+                                    elif oper_type == objects.TextWrite and len(prop_negated_list) % 2 == 0:
                                         obj.write_text.append(prop_type)
                     elif obj_type == objects.Game and oper_type == objects.TextIs:
-                        if (not noun_negated) and len(infix_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject((0, 0)), prefix_list, True):
-                            if self.game_properties.get(prop_type, -1) < prop_negated_count:
-                                self.game_properties[prop_type] = prop_negated_count
+                        if len(noun_negated_list) % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject((0, 0)), prefix_info_list, True):
+                            self.game_properties.update(prop_type, len(prop_negated_list))
                     elif obj_type == objects.Level:
-                        if (not noun_negated) and len(infix_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject((0, 0)), prefix_list, True):
+                        if len(noun_negated_list) % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject((0, 0)), prefix_info_list, True):
                             if oper_type == objects.TextIs:
-                                self.new_prop(prop_type, prop_negated_count)
-                            elif oper_type == objects.TextWrite and prop_negated_count % 2 == 0:
+                                self.properties.update(prop_type, len(prop_negated_list))
+                            elif oper_type == objects.TextWrite and len(prop_negated_list) % 2 == 0:
                                 self.write_text.append(prop_type)
                     elif obj_type == objects.World:
-                        if (not noun_negated) and len(infix_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject((0, 0)), prefix_list, True):
+                        if len(noun_negated_list) % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject((0, 0)), prefix_info_list, True):
                             if oper_type == objects.TextIs:
-                                world.new_world_prop(prop_type, prop_negated_count)
-                            elif oper_type == objects.TextWrite and prop_negated_count % 2 == 0:
+                                world.world_properties.update(prop_type, len(prop_negated_list))
+                            elif oper_type == objects.TextWrite and len(prop_negated_list) % 2 == 0:
                                 world.world_write_text.append(prop_type)
                     elif obj_type == objects.Clone:
-                        if (not noun_negated) and len(infix_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject((0, 0)), prefix_list, True):
+                        if len(noun_negated_list) % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject((0, 0)), prefix_info_list, True):
                             if oper_type == objects.TextIs:
-                                world.new_clone_prop(prop_type, prop_negated_count)
-                            elif oper_type == objects.TextWrite and prop_negated_count % 2 == 0:
+                                world.clone_properties.update(prop_type, len(prop_negated_list))
+                            elif oper_type == objects.TextWrite and len(prop_negated_list) % 2 == 0:
                                 world.clone_write_text.append(prop_type)
-                    if noun_negated:
+                    if len(noun_negated_list) % 2 == 1:
                         for obj in [o for o in world.object_list if (not isinstance(o, objects.not_in_all)) and not isinstance(o, obj_type)]:
-                            if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
+                            if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
                                 if oper_type == objects.TextIs:
-                                    new_prop_list.append((obj, (prop_type, prop_negated_count)))
-                                elif oper_type == objects.TextHas and prop_negated_count % 2 == 0:
-                                    if prop_type == objects.TextAll and noun_negated == False:
+                                    new_prop_list.append((obj, (prop_type, len(prop_negated_list))))
+                                elif oper_type == objects.TextHas and len(prop_negated_list) % 2 == 0:
+                                    if prop_type == objects.TextAll and len(noun_negated_list) % 2 == 0:
                                         obj.has_object.extend(self.all_list)
                                     else:
                                         obj.has_object.append(prop_type) # type: ignore
-                                elif oper_type == objects.TextMake and prop_negated_count % 2 == 0:
-                                    if prop_type == objects.TextAll and noun_negated == False:
+                                elif oper_type == objects.TextMake and len(prop_negated_list) % 2 == 0:
+                                    if prop_type == objects.TextAll and len(noun_negated_list) % 2 == 0:
                                         obj.make_object.extend(self.all_list)
                                     else:
                                         obj.make_object.append(prop_type) # type: ignore
-                                elif oper_type == objects.TextWrite and prop_negated_count % 2 == 0:
+                                elif oper_type == objects.TextWrite and len(prop_negated_list) % 2 == 0:
                                     obj.write_text.append(prop_type)
                     else:
                         for obj in world.get_objs_from_type(obj_type):
-                            if self.meet_infix_conditions(world, obj, infix_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_list):
+                            if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
                                 if oper_type == objects.TextIs:
-                                    new_prop_list.append((obj, (prop_type, prop_negated_count)))
-                                elif oper_type == objects.TextHas and prop_negated_count % 2 == 0:
-                                    if prop_type == objects.TextAll and noun_negated == False:
+                                    new_prop_list.append((obj, (prop_type, len(prop_negated_list))))
+                                elif oper_type == objects.TextHas and len(prop_negated_list) % 2 == 0:
+                                    if prop_type == objects.TextAll and len(noun_negated_list) % 2 == 0:
                                         obj.has_object.extend(self.all_list)
                                     else:
                                         obj.has_object.append(prop_type) # type: ignore
-                                elif oper_type == objects.TextMake and prop_negated_count % 2 == 0:
-                                    if prop_type == objects.TextAll and noun_negated == False:
+                                elif oper_type == objects.TextMake and len(prop_negated_list) % 2 == 0:
+                                    if prop_type == objects.TextAll and len(noun_negated_list) % 2 == 0:
                                         obj.make_object.extend(self.all_list)
                                     else:
                                         obj.make_object.append(prop_type) # type: ignore
-                                elif oper_type == objects.TextWrite and prop_negated_count % 2 == 0:
+                                elif oper_type == objects.TextWrite and len(prop_negated_list) % 2 == 0:
                                     obj.write_text.append(prop_type)
         for obj, prop in new_prop_list:
             prop_type, prop_negated_count = prop
-            obj.new_prop(prop_type, prop_negated_count)
+            obj.properties.update(prop_type, prop_negated_count)
     def move_obj_between_worlds(self, old_world: worlds.World, obj: objects.BmpObject, new_world: worlds.World, pos: spaces.Coord) -> None:
         if obj in old_world.object_list:
             old_world.del_obj(obj)
@@ -399,7 +416,10 @@ class Level(object):
         world.del_obj(obj)
         for new_noun_type in obj.has_object:
             if new_noun_type == objects.TextGame:
-                pass
+                if isinstance(obj, (objects.LevelPointer, objects.WorldPointer)):
+                    world.new_obj(objects.Game(obj.pos, obj.orient, obj_type=objects.get_noun_from_type(type(obj))))
+                else:
+                    world.new_obj(objects.Game(obj.pos, obj.orient, obj_type=type(obj)))
             elif new_noun_type == objects.TextLevel:
                 if obj.level_info is not None:
                     world.new_obj(objects.Level(obj.pos, obj.orient, world_info=obj.world_info, level_info=obj.level_info))
@@ -437,7 +457,7 @@ class Level(object):
                     world_info: objects.WorldPointerExtraJson = {"name": obj.uuid.hex, "infinite_tier": 0}
                     world.new_obj(objects.Clone(obj.pos, obj.orient, world_info=world_info))
             elif new_noun_type == objects.TextText:
-                new_obj_type = objects.get_noun_from_obj(type(obj))
+                new_obj_type = objects.get_noun_from_type(type(obj))
                 world.new_obj(new_obj_type(obj.pos, obj.orient, world_info=obj.world_info, level_info=obj.level_info))
             else:
                 new_obj_type = new_noun_type.obj_type
@@ -454,15 +474,15 @@ class Level(object):
         new_pos = spaces.pos_facing(pos, orient)
         exit_world = False
         exit_list = []
-        if world.out_of_range(new_pos) and not obj.has_prop(objects.TextLeave, negate=True):
+        if world.out_of_range(new_pos) and obj.properties.has(objects.TextLeave):
             exit_world = True
             # infinite exit
             if world in passed:
                 super_world_list = self.find_super_worlds({"name": world.name, "infinite_tier": world.infinite_tier + 1})
                 for super_world, world_obj in super_world_list:
-                    if isinstance(world_obj, objects.World) and not super_world.has_world_prop(objects.TextLeave):
+                    if isinstance(world_obj, objects.World) and not super_world.world_properties.has(objects.TextLeave):
                         continue
-                    if isinstance(world_obj, objects.Clone) and not super_world.has_clone_prop(objects.TextLeave):
+                    if isinstance(world_obj, objects.Clone) and not super_world.clone_properties.has(objects.TextLeave):
                         continue
                     new_transnum = super_world.transnum_to_bigger_transnum(transnum, world_obj.pos, orient) if transnum is not None else world.pos_to_transnum(obj.pos, orient)
                     new_move_list = self.get_move_list(super_world, obj, orient, world_obj.pos, pushed, passed, new_transnum, depth)
@@ -476,9 +496,9 @@ class Level(object):
             else:
                 inf_super_world_list = self.find_super_worlds({"name": world.name, "infinite_tier": world.infinite_tier})
                 for inf_super_world, world_obj in inf_super_world_list:
-                    if isinstance(world_obj, objects.World) and not inf_super_world.has_world_prop(objects.TextLeave):
+                    if isinstance(world_obj, objects.World) and not inf_super_world.world_properties.has(objects.TextLeave):
                         continue
-                    if isinstance(world_obj, objects.Clone) and not inf_super_world.has_clone_prop(objects.TextLeave):
+                    if isinstance(world_obj, objects.Clone) and not inf_super_world.clone_properties.has(objects.TextLeave):
                         continue
                     new_transnum = inf_super_world.transnum_to_bigger_transnum(transnum, world_obj.pos, orient) if transnum is not None else world.pos_to_transnum(obj.pos, orient)
                     passed.append(world)
@@ -490,7 +510,7 @@ class Level(object):
                 if len(inf_super_world_list) == 0:
                     exit_world = False
         # push
-        push_objects = [o for o in world.get_objs_from_pos(new_pos) if o.has_prop(objects.TextPush)]
+        push_objects = [o for o in world.get_objs_from_pos(new_pos) if o.properties.has(objects.TextPush)]
         objects_that_cant_push: list[objects.BmpObject] = []
         push = False
         push_list = []
@@ -511,18 +531,18 @@ class Level(object):
         not_stop_list = []
         simple = False
         if not world.out_of_range(new_pos):
-            stop_objects = [o for o in world.get_objs_from_pos(new_pos) if o.has_prop(objects.TextStop) and not o.has_prop(objects.TextPush)]
+            stop_objects = [o for o in world.get_objs_from_pos(new_pos) if o.properties.has(objects.TextStop) and not o.properties.has(objects.TextPush)]
             stop_objects.extend(objects_that_cant_push)
             if len(stop_objects) != 0:
-                if obj.has_prop(objects.TextOpen):
+                if obj.properties.has(objects.TextOpen):
                     simple = True
                     for stop_object in stop_objects:
-                        if not stop_object.has_prop(objects.TextShut):
+                        if not stop_object.properties.has(objects.TextShut):
                             simple = False
-                elif obj.has_prop(objects.TextShut):
+                elif obj.properties.has(objects.TextShut):
                     simple = True
                     for stop_object in stop_objects:
-                        if not stop_object.has_prop(objects.TextOpen):
+                        if not stop_object.properties.has(objects.TextOpen):
                             simple = False
             else:
                 simple = True
@@ -531,23 +551,23 @@ class Level(object):
         # squeeze
         squeeze = False
         squeeze_list = []
-        if isinstance(obj, objects.WorldPointer) and obj.has_prop(objects.TextPush) and not world.out_of_range(new_pos):
+        if isinstance(obj, objects.WorldPointer) and obj.properties.has(objects.TextPush) and not world.out_of_range(new_pos):
             sub_world = self.get_world(obj.world_info)
             if sub_world is None:
                 pass
-            elif isinstance(obj, objects.World) and not sub_world.has_world_prop(objects.TextEnter):
+            elif isinstance(obj, objects.World) and not sub_world.world_properties.has(objects.TextEnter):
                 pass
-            elif isinstance(obj, objects.Clone) and not sub_world.has_clone_prop(objects.TextEnter):
+            elif isinstance(obj, objects.Clone) and not sub_world.clone_properties.has(objects.TextEnter):
                 pass
             else:
-                new_push_objects = list(filter(lambda o: objects.BmpObject.has_prop(o, objects.TextPush), world.get_objs_from_pos(new_pos)))
+                new_push_objects = list(filter(lambda o: objects.Properties.has(o.properties, objects.TextPush), world.get_objs_from_pos(new_pos)))
                 if len(new_push_objects) != 0:
                     squeeze = True
                     temp_stop_object = objects.TextStop(spaces.pos_facing(pos, spaces.swap_orientation(orient)))
-                    temp_stop_object.new_prop(objects.TextStop)
+                    temp_stop_object.properties.update(objects.TextStop, 0)
                     world.new_obj(temp_stop_object)
                     for new_push_object in new_push_objects:
-                        if new_push_object.has_prop(objects.TextEnter, negate=True):
+                        if not new_push_object.properties.has(objects.TextEnter):
                             squeeze = False
                             break
                         input_pos = sub_world.default_input_position(orient)
@@ -564,7 +584,7 @@ class Level(object):
         enter_world = False
         enter_list = []
         worlds_that_cant_push = [o for o in objects_that_cant_push if isinstance(o, objects.WorldPointer)]
-        if len(worlds_that_cant_push) != 0 and (not world.out_of_range(new_pos)) and not obj.has_prop(objects.TextEnter, negate=True):
+        if len(worlds_that_cant_push) != 0 and (not world.out_of_range(new_pos)) and obj.properties.has(objects.TextEnter):
             enter_world = True
             enter_atleast_one_world = False
             for world_obj in worlds_that_cant_push:
@@ -572,9 +592,9 @@ class Level(object):
                 if sub_world is None:
                     enter_world = False
                     break
-                elif isinstance(world_obj, objects.World) and not sub_world.has_world_prop(objects.TextEnter):
+                elif isinstance(world_obj, objects.World) and not sub_world.world_properties.has(objects.TextEnter):
                     pass
-                elif isinstance(world_obj, objects.Clone) and not sub_world.has_clone_prop(objects.TextEnter):
+                elif isinstance(world_obj, objects.Clone) and not sub_world.clone_properties.has(objects.TextEnter):
                     pass
                 else:
                     new_move_list = None
@@ -584,9 +604,9 @@ class Level(object):
                         if inf_sub_world is None:
                             enter_world = False
                             break
-                        elif isinstance(world_obj, objects.World) and not inf_sub_world.has_world_prop(objects.TextEnter):
+                        elif isinstance(world_obj, objects.World) and not inf_sub_world.world_properties.has(objects.TextEnter):
                             pass
-                        elif isinstance(world_obj, objects.Clone) and not inf_sub_world.has_clone_prop(objects.TextEnter):
+                        elif isinstance(world_obj, objects.Clone) and not inf_sub_world.clone_properties.has(objects.TextEnter):
                             pass
                         else:
                             new_transnum = 0.5
@@ -638,7 +658,7 @@ class Level(object):
         move_list = []
         pushing_game = False
         for world in self.world_list:
-            you_objs = [o for o in world.object_list if o.has_prop(objects.TextYou)]
+            you_objs = [o for o in world.object_list if o.properties.has(objects.TextYou)]
             for obj in you_objs:
                 obj.orient = orient
                 new_move_list = self.get_move_list(world, obj, obj.orient)
@@ -653,7 +673,7 @@ class Level(object):
         if orient == spaces.NullOrient.O:
             level_objs: list[objects.LevelPointer] = []
             for world in self.world_list:
-                select_objs = [o for o in world.object_list if o.has_prop(objects.TextSelect)]
+                select_objs = [o for o in world.object_list if o.properties.has(objects.TextSelect)]
                 for obj in select_objs:
                     level_objs.extend(world.get_levels_from_pos(obj.pos))
             if len(level_objs) != 0:
@@ -661,7 +681,7 @@ class Level(object):
                 return random.choice(level_objs).level_info["name"]
         else:
             for world in self.world_list:
-                select_objs = [o for o in world.object_list if o.has_prop(objects.TextSelect)]
+                select_objs = [o for o in world.object_list if o.properties.has(objects.TextSelect)]
                 for obj in select_objs:
                     new_pos = spaces.pos_facing(obj.pos, orient)
                     if not world.out_of_range(new_pos):
@@ -670,16 +690,16 @@ class Level(object):
     def move(self) -> bool:
         pushing_game = False
         for world in self.world_list:
-            if world.has_world_prop(objects.TextMove) or self.has_prop(objects.TextMove):
+            if world.world_properties.has(objects.TextMove) or self.properties.has(objects.TextMove):
                 for obj in world.object_list:
-                    if not obj.has_prop(objects.TextFloat):
+                    if not obj.properties.has(objects.TextFloat):
                         new_move_list = self.get_move_list(world, obj, spaces.Orient.S)
                         if new_move_list is not None:
                             move_list.extend(new_move_list)
                         else:
                             pushing_game = True
                 continue
-            move_objs = [o for o in world.object_list if o.has_prop(objects.TextMove)]
+            move_objs = [o for o in world.object_list if o.properties.has(objects.TextMove)]
             for obj in move_objs:
                 move_list = []
                 new_move_list = self.get_move_list(world, obj, obj.orient)
@@ -699,16 +719,16 @@ class Level(object):
         move_list = []
         pushing_game = False
         for world in self.world_list:
-            if world.has_world_prop(objects.TextShift) or self.has_prop(objects.TextShift):
+            if world.world_properties.has(objects.TextShift) or self.properties.has(objects.TextShift):
                 for obj in world.object_list:
-                    if not obj.has_prop(objects.TextFloat):
+                    if not obj.properties.has(objects.TextFloat):
                         new_move_list = self.get_move_list(world, obj, spaces.Orient.D)
                         if new_move_list is not None:
                             move_list.extend(new_move_list)
                         else:
                             pushing_game = True
                 continue
-            shift_objs = [o for o in world.object_list if o.has_prop(objects.TextShift)]
+            shift_objs = [o for o in world.object_list if o.properties.has(objects.TextShift)]
             for shift_obj in shift_objs:
                 for obj in world.get_objs_from_pos(shift_obj.pos):
                     if obj == shift_obj:
@@ -723,16 +743,16 @@ class Level(object):
         self.move_objs_from_move_list(move_list)
         return pushing_game
     def tele(self) -> None:
-        if self.has_prop(objects.TextTele):
+        if self.properties.has(objects.TextTele):
             pass
         for world in self.world_list:
-            if world.has_world_prop(objects.TextTele):
+            if world.world_properties.has(objects.TextTele):
                 pass
         tele_list: list[tuple[worlds.World, objects.BmpObject, worlds.World, spaces.Coord]] = []
         object_list: list[tuple[worlds.World, objects.BmpObject]] = []
         for world in self.world_list:
             object_list.extend([(world, o) for o in world.object_list])
-        tele_objs = [t for t in object_list if t[1].has_prop(objects.TextTele)]
+        tele_objs = [t for t in object_list if t[1].properties.has(objects.TextTele)]
         tele_obj_types: dict[type[objects.BmpObject], list[tuple[worlds.World, objects.BmpObject]]] = {}
         for obj_type in [n.obj_type for n in objects.noun_class_list]:
             for tele_obj in tele_objs:
@@ -758,10 +778,10 @@ class Level(object):
         success = False
         for world in self.world_list:
             delete_list = []
-            sink_objs = [o for o in world.object_list if o.has_prop(objects.TextSink)]
-            if world.has_world_prop(objects.TextSink) or self.has_prop(objects.TextSink):
+            sink_objs = [o for o in world.object_list if o.properties.has(objects.TextSink)]
+            if world.world_properties.has(objects.TextSink) or self.properties.has(objects.TextSink):
                 for obj in world.object_list:
-                    if not obj.has_prop(objects.TextFloat):
+                    if not obj.properties.has(objects.TextFloat):
                         delete_list.append(obj)
             for sink_obj in sink_objs:
                 for obj in world.get_objs_from_pos(sink_obj.pos):
@@ -783,16 +803,16 @@ class Level(object):
         success = False
         for world in self.world_list:
             delete_list = []
-            melt_objs = [o for o in world.object_list if o.has_prop(objects.TextMelt)]
-            hot_objs = [o for o in world.object_list if o.has_prop(objects.TextHot)]
-            if len(hot_objs) != 0 and (world.has_world_prop(objects.TextMelt) or self.has_prop(objects.TextMelt)):
+            melt_objs = [o for o in world.object_list if o.properties.has(objects.TextMelt)]
+            hot_objs = [o for o in world.object_list if o.properties.has(objects.TextHot)]
+            if len(hot_objs) != 0 and (world.world_properties.has(objects.TextMelt) or self.properties.has(objects.TextMelt)):
                 for melt_obj in melt_objs:
-                    if not melt_obj.has_prop(objects.TextFloat):
+                    if not melt_obj.properties.has(objects.TextFloat):
                         delete_list.extend(world.object_list)
                 continue
-            if len(melt_objs) != 0 and (world.has_world_prop(objects.TextHot) or self.has_prop(objects.TextHot)):
+            if len(melt_objs) != 0 and (world.world_properties.has(objects.TextHot) or self.properties.has(objects.TextHot)):
                 for melt_obj in melt_objs:
-                    if not melt_obj.has_prop(objects.TextFloat):
+                    if not melt_obj.properties.has(objects.TextFloat):
                         delete_list.append(melt_obj)
                 continue
             for hot_obj in hot_objs:
@@ -811,13 +831,13 @@ class Level(object):
         success = False
         for world in self.world_list:
             delete_list = []
-            you_objs = [o for o in world.object_list if o.has_prop(objects.TextYou)]
-            defeat_objs = [o for o in world.object_list if o.has_prop(objects.TextDefeat)]
-            if len(defeat_objs) != 0 and (world.has_world_prop(objects.TextYou) or self.has_prop(objects.TextYou)):
+            you_objs = [o for o in world.object_list if o.properties.has(objects.TextYou)]
+            defeat_objs = [o for o in world.object_list if o.properties.has(objects.TextDefeat)]
+            if len(defeat_objs) != 0 and (world.world_properties.has(objects.TextYou) or self.properties.has(objects.TextYou)):
                 delete_list.extend(world.object_list)
                 continue
             for you_obj in you_objs:
-                if world.has_world_prop(objects.TextDefeat) or self.has_prop(objects.TextDefeat):
+                if world.world_properties.has(objects.TextDefeat) or self.properties.has(objects.TextDefeat):
                     if you_obj not in delete_list:
                         delete_list.append(you_obj)
                         continue
@@ -836,12 +856,12 @@ class Level(object):
         success = False
         for world in self.world_list:
             delete_list = []
-            shut_objs = [o for o in world.object_list if o.has_prop(objects.TextShut)]
-            open_objs = [o for o in world.object_list if o.has_prop(objects.TextOpen)]
-            if len(open_objs) != 0 and (world.has_world_prop(objects.TextShut) or self.has_prop(objects.TextShut)):
+            shut_objs = [o for o in world.object_list if o.properties.has(objects.TextShut)]
+            open_objs = [o for o in world.object_list if o.properties.has(objects.TextOpen)]
+            if len(open_objs) != 0 and (world.world_properties.has(objects.TextShut) or self.properties.has(objects.TextShut)):
                 delete_list.extend(world.object_list)
                 continue
-            if len(shut_objs) != 0 and (world.has_world_prop(objects.TextOpen) or self.has_prop(objects.TextOpen)):
+            if len(shut_objs) != 0 and (world.world_properties.has(objects.TextOpen) or self.properties.has(objects.TextOpen)):
                 delete_list.extend(world.object_list)
                 continue
             for open_obj in open_objs:
@@ -863,9 +883,14 @@ class Level(object):
             for obj in world.object_list:
                 for make_noun_type in obj.make_object:
                     if make_noun_type == objects.TextGame:
-                        pass
+                        if isinstance(obj, (objects.LevelPointer, objects.WorldPointer)):
+                            world.new_obj(objects.Game(obj.pos, obj.orient, obj_type=objects.get_noun_from_type(type(obj))))
+                        else:
+                            world.new_obj(objects.Game(obj.pos, obj.orient, obj_type=type(obj)))
                     elif make_noun_type == objects.TextLevel:
-                        if obj.level_info is not None:
+                        if len(world.get_objs_from_pos_and_type(obj.pos, objects.Level)) != 0:
+                            pass
+                        elif obj.level_info is not None:
                             world.new_obj(objects.Level(obj.pos, obj.orient, world_info=obj.world_info, level_info=obj.level_info))
                         else:
                             world_color = colors.to_background_color(displays.sprite_colors[obj.sprite_name])
@@ -878,6 +903,8 @@ class Level(object):
                             level_info: objects.LevelPointerExtraJson = {"name": obj.uuid.hex, "icon": {"name": obj.sprite_name, "color": displays.sprite_colors[obj.sprite_name]}}
                             world.new_obj(objects.Level(obj.pos, obj.orient, world_info=obj.world_info, level_info=level_info))
                     elif make_noun_type == objects.TextWorld:
+                        if len(world.get_objs_from_pos_and_type(obj.pos, objects.World)) != 0:
+                            pass
                         if obj.world_info is not None:
                             world.new_obj(objects.World(obj.pos, obj.orient, world_info=obj.world_info, level_info=obj.level_info))
                         else:
@@ -891,6 +918,8 @@ class Level(object):
                             world_info: objects.WorldPointerExtraJson = {"name": obj.uuid.hex, "infinite_tier": 0}
                             world.new_obj(objects.World(obj.pos, obj.orient, world_info=world_info, level_info=obj.level_info))
                     elif make_noun_type == objects.TextClone:
+                        if len(world.get_objs_from_pos_and_type(obj.pos, objects.Clone)) != 0:
+                            pass
                         if obj.world_info is not None:
                             world.new_obj(objects.Clone(obj.pos, obj.orient, world_info=obj.world_info, level_info=obj.level_info))
                         else:
@@ -904,20 +933,24 @@ class Level(object):
                             world_info: objects.WorldPointerExtraJson = {"name": obj.uuid.hex, "infinite_tier": 0}
                             world.new_obj(objects.Clone(obj.pos, obj.orient, world_info=world_info, level_info=obj.level_info))
                     elif make_noun_type == objects.TextText:
-                        make_obj_type = objects.get_noun_from_obj(type(obj))
+                        make_obj_type = objects.get_noun_from_type(type(obj))
+                        if len(world.get_objs_from_pos_and_type(obj.pos, make_obj_type)) != 0:
+                            pass
                         world.new_obj(make_obj_type(obj.pos, obj.orient, world_info=obj.world_info, level_info=obj.level_info))
                     else:
                         make_obj_type = make_noun_type.obj_type
+                        if len(world.get_objs_from_pos_and_type(obj.pos, make_obj_type)) != 0:
+                            pass
                         world.new_obj(make_obj_type(obj.pos, obj.orient, world_info=obj.world_info, level_info=obj.level_info))
     def text_plus_and_text_minus(self) -> None:
         for world in self.world_list:
             delete_list = []
-            text_plus_objs = [o for o in world.object_list if o.has_prop(objects.TextTextPlus)]
-            text_minus_objs = [o for o in world.object_list if o.has_prop(objects.TextTextMinus)]
+            text_plus_objs = [o for o in world.object_list if o.properties.has(objects.TextTextPlus)]
+            text_minus_objs = [o for o in world.object_list if o.properties.has(objects.TextTextMinus)]
             for text_plus_obj in text_plus_objs:
                 if text_plus_obj in text_minus_objs:
                     continue
-                new_type = objects.get_noun_from_obj(type(text_plus_obj))
+                new_type = objects.get_noun_from_type(type(text_plus_obj))
                 if new_type != objects.TextText:
                     delete_list.append(text_plus_obj)
                     world.new_obj(new_type(text_plus_obj.pos, text_plus_obj.orient, world_info=text_plus_obj.world_info, level_info=text_plus_obj.level_info))
@@ -931,7 +964,7 @@ class Level(object):
                     continue
                 delete_list.append(text_minus_obj)
                 if issubclass(new_type, objects.Game):
-                    self.new_games.append(objects.TextGame)
+                    world.new_obj(objects.Game(text_minus_obj.pos, text_minus_obj.orient, obj_type=objects.TextGame))
                 elif issubclass(new_type, objects.LevelPointer):
                     if text_minus_obj.level_info is not None:
                         world.new_obj(objects.Level(text_minus_obj.pos, text_minus_obj.orient, world_info=text_minus_obj.world_info, level_info=text_minus_obj.level_info))
@@ -958,13 +991,23 @@ class Level(object):
                     world.new_obj(new_type(text_minus_obj.pos, text_minus_obj.orient, world_info=text_minus_obj.world_info, level_info=text_minus_obj.level_info))
             for obj in delete_list:
                 self.destroy_obj(world, obj)
+    def new_games(self) -> None:
+        for world in self.world_list:
+            for game_obj in world.get_objs_from_type(objects.Game):
+                if basics.current_os == basics.windows:
+                    if os.path.exists("SubabaMakeParabox.exe"):
+                        os.system(f"start SubabaMakeParabox.exe {game_obj.obj_type.json_name}")
+                    elif os.path.exists("SubabaMakeParabox.py"):
+                        os.system(f"start /b python SubabaMakeParabox.py {game_obj.obj_type.json_name}")
+                elif basics.current_os == basics.linux:
+                    os.system(f"python ./SubabaMakeParabox.py {game_obj.obj_type.json_name} &")
     def win(self) -> bool:
         for world in self.world_list:
-            you_objs = [o for o in world.object_list if o.has_prop(objects.TextYou)]
-            win_objs = [o for o in world.object_list if o.has_prop(objects.TextWin)]
+            you_objs = [o for o in world.object_list if o.properties.has(objects.TextYou)]
+            win_objs = [o for o in world.object_list if o.properties.has(objects.TextWin)]
             for you_obj in you_objs:
-                if world.has_world_prop(objects.TextWin) or self.has_prop(objects.TextWin):
-                    if not you_obj.has_prop(objects.TextFloat):
+                if world.world_properties.has(objects.TextWin) or self.properties.has(objects.TextWin):
+                    if not you_obj.properties.has(objects.TextFloat):
                         self.sound_events.append("win")
                         return True
                 for win_obj in win_objs:
@@ -975,11 +1018,11 @@ class Level(object):
         return False
     def end(self) -> bool:
         for world in self.world_list:
-            you_objs = [o for o in world.object_list if o.has_prop(objects.TextYou)]
-            end_objs = [o for o in world.object_list if o.has_prop(objects.TextEnd)]
+            you_objs = [o for o in world.object_list if o.properties.has(objects.TextYou)]
+            end_objs = [o for o in world.object_list if o.properties.has(objects.TextEnd)]
             for you_obj in you_objs:
-                if world.has_world_prop(objects.TextEnd) or self.has_prop(objects.TextEnd):
-                    if not you_obj.has_prop(objects.TextFloat):
+                if world.world_properties.has(objects.TextEnd) or self.properties.has(objects.TextEnd):
+                    if not you_obj.properties.has(objects.TextFloat):
                         self.sound_events.append("end")
                         return True
                 for end_obj in end_objs:
@@ -992,10 +1035,10 @@ class Level(object):
         success = False
         for world in self.world_list:
             delete_list = []
-            if world.has_world_prop(objects.TextDone) or self.has_prop(objects.TextDone):
+            if world.world_properties.has(objects.TextDone) or self.properties.has(objects.TextDone):
                 delete_list.extend(world.object_list)
             for obj in world.object_list:
-                if obj.has_prop(objects.TextDone):
+                if obj.properties.has(objects.TextDone):
                     delete_list.append(obj)
             for obj in delete_list:
                 world.del_obj(obj)
@@ -1006,7 +1049,7 @@ class Level(object):
     def have_you(self) -> bool:
         for world in self.world_list:
             for obj in world.object_list:
-                if obj.has_prop(objects.TextYou):
+                if obj.properties.has(objects.TextYou):
                     return True
         return False
     def show_world(self, world: worlds.World, frame: int, layer: int = 0, cursor: Optional[spaces.Coord] = None) -> pygame.Surface:

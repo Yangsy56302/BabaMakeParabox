@@ -10,6 +10,7 @@ class ReTurnValue(TypedDict):
     transform: bool
     game_push: bool
     selected_level: Optional[str]
+default_levelpack_info: ReTurnValue = {"win": False, "end": False, "transform": False, "game_push": False, "selected_level": None}
 
 class LevelpackJson(TypedDict):
     ver: str
@@ -40,14 +41,14 @@ class Levelpack(object):
                 self.level_list[i] = level
                 return
         self.level_list.append(level)
-    def transform(self, level: levels.Level) -> bool:
+    def transform(self, level: levels.Level) -> None:
         for world in level.world_list:
             delete_object_list = []
             for old_obj in world.object_list:
                 old_type = type(old_obj)
-                new_nouns = [n for n, c in old_obj.properties if issubclass(n, objects.Noun) and c % 2 == 0]
+                new_nouns = [n for n, c in old_obj.properties.to_dict().items() if issubclass(n, objects.Noun) and not c]
                 new_types = [t.obj_type for t in new_nouns]
-                not_new_nouns = [n for n, c in old_obj.properties if issubclass(n, objects.Noun) and c % 2 == 1]
+                not_new_nouns = [n for n, c in old_obj.properties.to_dict().items() if issubclass(n, objects.Noun) and c]
                 not_new_types = [t.obj_type for t in not_new_nouns]
                 transform_success = False
                 old_type_is_old_type = False
@@ -77,14 +78,10 @@ class Levelpack(object):
                         if pass_this_transform:
                             pass
                         elif issubclass(new_type, objects.Game):
-                            if isinstance(old_obj, objects.Level):
-                                level.new_games.append(objects.TextLevel)
-                            elif isinstance(old_obj, objects.World):
-                                level.new_games.append(objects.TextWorld)
-                            elif isinstance(old_obj, objects.Clone):
-                                level.new_games.append(objects.TextClone)
+                            if isinstance(old_obj, (objects.LevelPointer, objects.WorldPointer)):
+                                world.new_obj(objects.Game(old_obj.pos, old_obj.orient, obj_type=objects.get_noun_from_type(old_type)))
                             else:
-                                level.new_games.append(old_type)
+                                world.new_obj(objects.Game(old_obj.pos, old_obj.orient, obj_type=old_type))
                             transform_success = True
                         elif issubclass(new_type, objects.Level):
                             if isinstance(old_obj, objects.Level):
@@ -157,7 +154,7 @@ class Levelpack(object):
                         elif new_type == objects.Text:
                             if not isinstance(old_obj, objects.Text):
                                 transform_success = True
-                                new_obj = objects.get_noun_from_obj(old_type)(old_obj.pos, old_obj.orient, world_info=old_obj.world_info, level_info=old_obj.level_info)
+                                new_obj = objects.get_noun_from_type(old_type)(old_obj.pos, old_obj.orient, world_info=old_obj.world_info, level_info=old_obj.level_info)
                                 world.new_obj(new_obj)
                         else:
                             transform_success = True
@@ -167,23 +164,24 @@ class Levelpack(object):
                     delete_object_list.append(old_obj)
             for delete_obj in delete_object_list: 
                 world.del_obj(delete_obj)
+    def special_transform(self, level: levels.Level) -> bool:
         transform_from: dict[type[objects.BmpObject], list[objects.BmpObject]] = {}
         special_new_types: dict[type[objects.BmpObject], list[type[objects.BmpObject]]] = {}
         special_not_new_types: dict[type[objects.BmpObject], list[type[objects.BmpObject]]] = {}
         special_new_types[objects.Level] = []
         special_not_new_types[objects.Level] = []
         transform_from[objects.Level] = []
-        for prop_type, prop_negated_count in level.properties.items():
+        for prop_type, prop_negated in level.properties.to_dict().items():
             if not issubclass(prop_type, objects.Noun):
                 continue
             if issubclass(prop_type, objects.TextAll):
-                if prop_negated_count % 2 == 0:
+                if prop_negated:
                     special_new_types[objects.Level].extend(objects.in_not_all)
                 else:
                     special_not_new_types[objects.Level].extend(objects.in_not_all)
             else:
                 new_type = prop_type.obj_type
-                if prop_negated_count % 2 == 0:
+                if prop_negated:
                     special_new_types[objects.Level].append(new_type)
                 else:
                     special_not_new_types[objects.Level].append(new_type)
@@ -192,31 +190,31 @@ class Levelpack(object):
                 special_new_types[old_type] = []
                 special_not_new_types[old_type] = []
                 transform_from[old_type] = []
-            for prop_type, prop_negated_count in world.world_properties.items():
+            for prop_type, prop_negated in world.world_properties.to_dict().items():
                 if not issubclass(prop_type, objects.Noun):
                     continue
                 if issubclass(prop_type, objects.TextAll):
-                    if prop_negated_count % 2 == 0:
+                    if prop_negated:
                         special_new_types[objects.World].extend(objects.in_not_all)
                     else:
                         special_not_new_types[objects.World].extend(objects.in_not_all)
                 else:
                     new_type = prop_type.obj_type
-                    if prop_negated_count % 2 == 0:
+                    if prop_negated:
                         special_new_types[objects.World].append(new_type)
                     else:
                         special_not_new_types[objects.World].append(new_type)
-            for prop_type, prop_negated_count in world.clone_properties.items():
+            for prop_type, prop_negated in world.clone_properties.to_dict().items():
                 if not issubclass(prop_type, objects.Noun):
                     continue
                 if issubclass(prop_type, objects.TextAll):
-                    if prop_negated_count % 2 == 0:
+                    if prop_negated:
                         special_new_types[objects.Clone].extend(objects.in_not_all)
                     else:
                         special_not_new_types[objects.Clone].extend(objects.in_not_all)
                 else:
                     new_type = prop_type.obj_type
-                    if prop_negated_count % 2 == 0:
+                    if prop_negated:
                         special_new_types[objects.Clone].append(new_type)
                     else:
                         special_not_new_types[objects.Clone].append(new_type)
@@ -244,14 +242,14 @@ class Levelpack(object):
                             new_obj = objects.Clone((0, 0), world_info={"name": level.main_world_name, "infinite_tier": level.main_world_tier})
                             transform_from[objects.Level].append(new_obj)
                         elif issubclass(new_type, objects.Game):
-                            transform_from[objects.Level].append(objects.Empty((0, 0)))
-                            level.new_games.append(objects.TextLevel)
+                            new_obj = objects.Game((0, 0), obj_type=objects.TextLevel)
+                            transform_from[objects.Level].append(new_obj)
                         elif issubclass(new_type, objects.Text):
-                            level_color: colors.ColorHex = level.get_exist_world({"name": level.main_world_name, "infinite_tier": level.main_world_tier}).color
+                            level_color: colors.ColorHex = level.get_exact_world({"name": level.main_world_name, "infinite_tier": level.main_world_tier}).color
                             level_info: objects.LevelPointerExtraJson = {"name": level.name, "icon": {"name": "text_level", "color": level_color}}
                             transform_from[objects.Level].append(objects.TextLevel((0, 0), level_info=level_info))
                         else:
-                            level_color: colors.ColorHex = level.get_exist_world({"name": level.main_world_name, "infinite_tier": level.main_world_tier}).color
+                            level_color: colors.ColorHex = level.get_exact_world({"name": level.main_world_name, "infinite_tier": level.main_world_tier}).color
                             level_info: objects.LevelPointerExtraJson = {"name": level.name, "icon": {"name": "text_level", "color": level_color}}
                             transform_from[objects.Level].append(new_type((0, 0), level_info=level_info))
                     elif issubclass(old_type, objects.World):
@@ -267,8 +265,8 @@ class Levelpack(object):
                             world_info: objects.WorldPointerExtraJson = {"name": world.name, "infinite_tier": world.infinite_tier}
                             transform_from[objects.World].append(objects.Clone((0, 0), world_info=world_info))
                         elif issubclass(new_type, objects.Game):
-                            transform_from[objects.World].append(objects.Empty((0, 0)))
-                            level.new_games.append(objects.TextWorld)
+                            new_obj = objects.Game((0, 0), obj_type=objects.TextWorld)
+                            transform_from[objects.Level].append(new_obj)
                         elif issubclass(new_type, objects.Text):
                             world_info: objects.WorldPointerExtraJson = {"name": world.name, "infinite_tier": world.infinite_tier}
                             transform_from[objects.World].append(objects.TextWorld((0, 0), world_info=world_info))
@@ -288,8 +286,8 @@ class Levelpack(object):
                             world_info: objects.WorldPointerExtraJson = {"name": world.name, "infinite_tier": world.infinite_tier}
                             transform_from[objects.Clone].append(objects.World((0, 0), world_info=world_info))
                         elif issubclass(new_type, objects.Game):
-                            transform_from[objects.Clone].append(objects.Empty((0, 0)))
-                            level.new_games.append(objects.TextClone)
+                            new_obj = objects.Game((0, 0), obj_type=objects.TextClone)
+                            transform_from[objects.Level].append(new_obj)
                         elif issubclass(new_type, objects.Text):
                             world_info: objects.WorldPointerExtraJson = {"name": world.name, "infinite_tier": world.infinite_tier}
                             transform_from[objects.Clone].append(objects.TextClone((0, 0), world_info=world_info))
@@ -333,13 +331,12 @@ class Levelpack(object):
                         world.del_obj(obj)
         return len(transform_from[objects.Level]) != 0
     def turn(self, level: levels.Level, op: spaces.PlayerOperation) -> ReTurnValue:
-        level.new_games = []
         level.sound_events = []
         level.created_levels = []
-        old_prop_dict: dict[uuid.UUID, list[tuple[type[objects.Text], int]]] = {}
+        old_prop_dict: dict[uuid.UUID, objects.Properties] = {}
         for world in level.world_list:
             for obj in world.object_list:
-                old_prop_dict[obj.uuid] = [t for t in obj.properties]
+                old_prop_dict[obj.uuid] = copy.deepcopy(obj.properties)
                 obj.moved = False
         level.update_rules(old_prop_dict)
         game_push = False
@@ -348,7 +345,9 @@ class Levelpack(object):
         level.update_rules(old_prop_dict)
         game_push |= level.shift()
         level.update_rules(old_prop_dict)
-        transform = self.transform(level)
+        self.transform(level)
+        transform = self.special_transform(level)
+        level.new_games()
         level.text_plus_and_text_minus()
         level.update_rules(old_prop_dict)
         level.tele()
@@ -368,8 +367,7 @@ class Levelpack(object):
         win = level.win()
         end = level.end()
         return {"win": win, "end": end, "transform": transform,
-                "game_push": game_push,
-                "selected_level": selected_level}
+                "game_push": game_push, "selected_level": selected_level}
     def to_json(self) -> LevelpackJson:
         json_object: LevelpackJson = {"ver": basics.versions, "name": self.name, "level_list": [], "main_level": self.main_level, "rule_list": []}
         for level in self.level_list:

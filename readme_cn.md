@@ -245,9 +245,9 @@
 
 #### 游戏特性
 
-+ 对于属性词前和转换名词前的`NOT`，数量多者优先否定数量少者，其后否定自身。
-    + `BABA IS NOT NOT YOU`优先否定`BABA IS NOT YOU`。
-        + 该特性在未来的版本会被更改为类似“仅否定少一个`NOT`的规则而不会否定自身”的特性机制。
++ 相对宽松的`NOT`变体：`NEG`。
+    + 属性前带有多个`NEG`的规则只会否定一条恰好缺少一个`NEG`的规则。
+        + 例如，`BABA IS NEG YOU`否定一条`BABA IS YOU`；`BABA IS NEG NEG YOU`否定一条`BABA IS NEG YOU`，可能导致已有的`BABA IS YOU`不再被那条`BABA IS NEG YOU`否定。
 + `FEELING`每轮只检测一次，以试图避免检测停机问题。
 + `TEXT IS WORD`有效，导致非元文本被识别为`TEXT`。
     + 通常，这会导致该规则同时被识别成`TEXT IS TEXT`。
@@ -255,7 +255,8 @@
 #### 暂未实现
 
 + 属性堆叠。
-+ `GAME`的复杂语法。
++ `GAME`的复杂语法（目前对`GAME`应用修饰词会使其不指代任何物体）。
++ 关卡完成情况的记录，特殊物体`PATH`，与之相对应的`CURSOR`移动机制。
 
 #### 游戏漏洞
 
@@ -359,3 +360,4 @@
 | 3.621  | 2024.10.22 | seldom and often Wall without Baba is not Push; Game feeling not Safe is not Done |
 | 3.622  | 2024.10.23 | Code has not Asset; Code on Property is Change |
 | 3.623  | 2024.11.26 | File is Rename |
+| 3.63   | 2024.11.27 | Baba feeling You and not not not You is You; Keke not feeling Move and feeling not not Move is not Move |

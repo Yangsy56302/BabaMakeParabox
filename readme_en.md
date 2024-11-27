@@ -123,8 +123,12 @@ please considering shift + enter, or cut, copy, and paste.
 
 ### Feature List
 
-+ For all `NOT` before a property-like text, they negate other "weaker" rules first before negate itself.
-    + `BABA IS NOT NOT YOU` disables `BABA IS NOT YOU`。
++ less strictly varient of `NOT`: `NEG`.
+    + `NEG`s before a property-like text only negates exactly 1 rule that has exactly 1 less `NEG` on the exactly same property, and nothing else.
+    + `NEG`s in other positions still acts same as the `NOT`s by now.
+    + Like, `BABA IS NEG NEG NEG YOU` only disables 1 `BABA IS NEG NEG YOU` rule if exist, and won't do anything with `BABA IS YOU`.
+    + `BABA IS NEG NEG YOU` won't make Baba `YOU` either: it disables a `BABA IS NEG YOU` rule.
+        + Although, if there is also a `BABA IS YOU` rule, the rule with 2 `NEG`s will disable the rule with 1 `NEG`s, causes `BABA IS YOU` enabled again.
 + `FEELING` only try once per round for avoiding halting problem.
 + `TEXT IS WORD` will make every text that isn't a metatext also acts like `TEXT`.
     + This will usually cause the rule right above can also be identified as `TEXT IS TEXT`.
@@ -235,3 +239,5 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 3.62   | 2024.10.21 | Flag on Baba and Baba and on Keke and on Keke is Win |
 | 3.621  | 2024.10.22 | Game feeling not Safe is not Done |
 | 3.622  | 2024.10.23 | Code has not Asset; Code on Property is Change |
+| 3.623  | 2024.11.26 | File is Rename |
+| 3.63   | 2024.11.27 | Baba feeling You and not not not You is You; Keke not feeling Move and feeling not not Move is not Move |

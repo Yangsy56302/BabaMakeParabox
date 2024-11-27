@@ -59,7 +59,8 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     current_world = current_level.world_list[current_world_index]
     current_object_type = objects.Baba
     current_orient = spaces.Orient.S
-    current_object = displays.set_sprite_state(current_object_type((0, 0), current_orient))
+    current_object = current_object_type((0, 0), current_orient)
+    current_object.set_sprite()
     current_cursor_pos = (0, 0)
     current_clipboard = []
     object_type_shortcuts: dict[int, type[objects.BmpObject]] = {k: objects.object_name[v] for k, v in enumerate(basics.options["object_type_shortcuts"])}
@@ -223,7 +224,8 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                                 print(languages.current_language["warn.value.invalid"].format(val=infinite_tier, cls="int"))
                             else:
                                 break
-                        name, infinite_tier = (name, infinite_tier) if current_level.get_world({"name": name, "infinite_tier": infinite_tier}) is not None else (current_world.name, current_world.infinite_tier)
+                        if current_level.get_world({"name": name, "infinite_tier": infinite_tier}) is None:
+                            name, infinite_tier = current_world.name, current_world.infinite_tier
                     else:
                         name = current_world.name
                         infinite_tier = current_world.infinite_tier
@@ -385,7 +387,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 if issubclass(current_object_type, objects.Noun) and current_object_type.obj_type not in objects.not_in_editor:
                     current_object_type = current_object_type.obj_type
             else:
-                obj_to_noun = objects.get_noun_from_obj(current_object_type)
+                obj_to_noun = objects.get_noun_from_type(current_object_type)
                 if obj_to_noun not in objects.not_in_editor:
                     current_object_type = obj_to_noun
         # undo
@@ -473,7 +475,8 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             current_object_surface = displays.sprites.get(current_object_type.sprite_name, 0, wiggle)
             current_object_surface = pygame.transform.scale(current_object_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
         elif issubclass(current_object_type, objects.Metatext):
-            current_object = displays.set_sprite_state(current_object_type((0, 0), current_orient, level_info=None, world_info=None))
+            current_object = current_object_type((0, 0), current_orient, level_info=None, world_info=None)
+            current_object.set_sprite()
             current_object_surface = displays.sprites.get(current_object_type.sprite_name, current_object.sprite_state, wiggle)
             current_object_surface = pygame.transform.scale(current_object_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
             tier_surface = pygame.Surface((displays.sprite_size * len(str(current_object_type.meta_tier)), displays.sprite_size), pygame.SRCALPHA)
@@ -486,12 +489,14 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                                 (current_object_surface.get_height() - tier_surface.get_height()) // 2)
             current_object_surface.blit(tier_surface, tier_surface_pos)
         else:
-            current_object = displays.set_sprite_state(current_object_type((0, 0), current_orient, level_info=None, world_info=None))
+            current_object = current_object_type((0, 0), current_orient, level_info=None, world_info=None)
+            current_object.set_sprite()
             current_object_surface = displays.sprites.get(current_object_type.sprite_name, current_object.sprite_state, wiggle)
             current_object_surface = pygame.transform.scale(current_object_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
         window.blit(current_object_surface, (window.get_width() - displays.pixel_sprite_size, 0))
         for index, obj_type in object_type_shortcuts.items():
-            obj = displays.set_sprite_state(obj_type((0, 0), spaces.Orient.S))
+            obj = obj_type((0, 0), spaces.Orient.S)
+            obj.set_sprite()
             obj_surface = displays.sprites.get(obj_type.sprite_name, obj.sprite_state, wiggle)
             obj_surface = pygame.transform.scale(obj_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
             obj_surface_pos = (window.get_width() + (index % 5 * displays.pixel_sprite_size) - (displays.pixel_sprite_size * 5),

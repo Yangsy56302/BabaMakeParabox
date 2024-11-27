@@ -1,121 +1,179 @@
-from typing import TypedDict
+from dataclasses import dataclass
+from typing import Any, Callable, Never, TypedDict
 
 from BabaMakeParabox import objects
 
 Rule = list[type[objects.Text]]
 
-def handle_text_text_(rule: Rule) -> Rule:
-    new_rule = []
-    counter = 0
-    for text_type in rule:
-        if text_type == objects.TextText_:
-            counter += 1
-        elif counter != 0:
-            new_text_type = text_type
-            for _ in range(counter):
-                new_text_type = objects.get_noun_from_obj(new_text_type)
-            new_rule.append(new_text_type)
-            counter = 0
-        else:
-            new_rule.append(text_type)
-    return new_rule
+@dataclass(init=True)
+class PrefixInfo():
+    negated: bool
+    prefix_type: type[objects.Prefix]
 
-def to_atom_rules(rule_list: list[Rule]) -> list[Rule]:
-    return_value: list[Rule] = []
-    for rule in rule_list:
-        rule = handle_text_text_(rule)
-        noun_list: list[list[type[objects.Text]]] = [[]]
-        prop_list: list[list[type[objects.Text]]] = [[]]
-        current_oper = objects.TextIs
-        stage = objects.Noun
-        for text_type in rule:
-            if stage == objects.Noun:
-                if issubclass(text_type, objects.Operator):
-                    stage = objects.Property
-                    current_oper = text_type
-                elif issubclass(text_type, objects.Infix):
-                    stage = objects.Infix
-                    noun_list = [l + [text_type] for l in noun_list]
-                elif issubclass(text_type, objects.TextAnd):
-                    noun_list.append([])
-                else:
-                    noun_list[-1].append(text_type)
-            elif stage == objects.Infix:
-                if issubclass(text_type, objects.Operator):
-                    stage = objects.Property
-                    current_oper = text_type
-                else:
-                    noun_list = [l + [text_type] for l in noun_list]
-            elif stage == objects.Property:
-                if issubclass(text_type, objects.TextAnd):
-                    prop_list.append([])
-                elif len(prop_list[-1]) == 0 and issubclass(text_type, objects.Operator):
-                    current_oper = text_type
-                elif len(prop_list[-1]) == 0 and not issubclass(text_type, objects.Operator):
-                    prop_list[-1].append(current_oper)
-                    prop_list[-1].append(text_type)
-                else:
-                    prop_list[-1].append(text_type)
-        for noun in noun_list:
-            for prop in prop_list:
-                return_value.append(noun + prop)
-    return return_value
+@dataclass(init=True)
+class InfixNounInfo():
+    negated: bool
+    infix_noun_type: type[objects.Noun | objects.Property]
 
-InfixNounInfo = tuple[bool, type[objects.Noun] | type[objects.Property]]
-InfixInfo = tuple[bool, type[objects.Infix], list[InfixNounInfo]]
-PrefixInfo = tuple[bool, type[objects.Prefix]]
-RuleInfo = list[tuple[list[PrefixInfo], bool, type[objects.Noun], list[InfixInfo], type[objects.Operator], int, type[objects.Noun] | type[objects.Property]]]
+@dataclass(init=True)
+class InfixInfo():
+    negated: bool
+    infix_type: type[objects.Infix]
+    infix_noun_info_list: list[InfixNounInfo]
 
-def analysis_rule(atom_rule: Rule) -> RuleInfo:
-    return_value: RuleInfo = []
-    prefix_indexes = list(map(lambda t: issubclass(t, objects.Prefix), reversed(atom_rule)))
-    last_prefix_index = len(atom_rule) - prefix_indexes.index(True) - 1 if True in prefix_indexes else -1
-    noun_index = list(map(lambda t: issubclass(t, objects.Noun), atom_rule)).index(True)
-    noun_type: type[objects.Noun] = atom_rule[noun_index] # type: ignore
-    noun_negated = atom_rule[last_prefix_index + 1:noun_index].count(objects.TextNot) % 2 == 1
-    oper_index = list(map(lambda t: issubclass(t, objects.Operator), atom_rule)).index(True)
-    oper_type: type[objects.Operator] = atom_rule[oper_index] # type: ignore
-    prop_index = list(map(lambda t: issubclass(t, (objects.Noun, objects.Property)), atom_rule[oper_index:])).index(True)
-    prop_type: type[objects.Noun] | type[objects.Property] = atom_rule[prop_index + oper_index] # type: ignore
-    prop_negated_count = atom_rule[oper_index:].count(objects.TextNot)
-    prefix_info_list = []
-    prefix_slice = atom_rule[:last_prefix_index + 1]
-    if len(prefix_slice) != 0:
-        current_prefix_type = objects.Prefix
-        current_prefix_negated = False
-        for obj_type in prefix_slice:
-            if issubclass(obj_type, objects.Prefix):
-                current_prefix_type = obj_type
-                prefix_info_list.append((current_prefix_negated, current_prefix_type))
-            elif issubclass(obj_type, objects.TextNot):
-                current_prefix_negated = not current_prefix_negated
-            elif issubclass(obj_type, objects.TextAnd):
-                current_prefix_negated = False
-    infix_info_list: list[InfixInfo] = []
-    infix_slice = atom_rule[noun_index + 1:oper_index]
-    if len(infix_slice) != 0:
-        current_negated = False
-        current_infix_type = objects.Infix
-        current_infix_negated = False
-        current_infix_noun = objects.BmpObject
-        current_infix_noun_negated = False
-        for obj_type in infix_slice:
-            if issubclass(obj_type, objects.Infix):
-                current_infix_type = obj_type
-                current_infix_negated = current_negated
-                current_negated = False
-                infix_info_list.append((current_infix_negated, current_infix_type, []))
-            elif issubclass(obj_type, objects.TextNot):
-                current_negated = not current_negated
-            elif issubclass(obj_type, objects.TextAnd):
-                pass
-            else:
-                current_infix_noun = obj_type
-                current_infix_noun_negated = current_negated
-                current_negated = False
-                infix_info_list[-1][-1].append((current_infix_noun_negated, current_infix_noun)) # type: ignore
-    return_value.append((prefix_info_list, noun_negated, noun_type, infix_info_list, oper_type, prop_negated_count, prop_type))
-    return return_value
+@dataclass(init=True)
+class RuleInfo():
+    prefix_info_list: list[PrefixInfo]
+    noun_negated_list: list[type[objects.TextNot | objects.TextNeg]]
+    noun_type: type[objects.Noun]
+    infix_info_list: list[InfixInfo]
+    oper_type: type[objects.Operator]
+    prop_negated_list: list[type[objects.TextNot | objects.TextNeg]]
+    prop_type: type[objects.Noun | objects.Property]
+
+def do_nothing(info: RuleInfo, placeholder: type[objects.Text]) -> RuleInfo:
+    return info
+
+def set_prefix(info: RuleInfo, prefix_type: type[objects.Prefix]) -> RuleInfo:
+    info.prefix_info_list.insert(0, PrefixInfo(False, prefix_type))
+    return info
+
+def set_infix(info: RuleInfo, infix_type: type[objects.Infix]) -> RuleInfo:
+    info.infix_info_list[0].infix_type = infix_type
+    return info
+
+def set_infix_noun(info: RuleInfo, infix_noun_type: type[objects.Noun | objects.Property]) -> RuleInfo:
+    if len(info.infix_info_list) == 0:
+        info.infix_info_list.insert(0, InfixInfo(False, objects.Infix, []))
+    elif info.infix_info_list[0].infix_type != objects.Infix:
+        info.infix_info_list.insert(0, InfixInfo(False, objects.Infix, []))
+    info.infix_info_list[0].infix_noun_info_list.insert(0, InfixNounInfo(False, infix_noun_type))
+    return info
+
+def set_noun(info: RuleInfo, noun_type: type[objects.Noun]) -> RuleInfo:
+    info.noun_type = noun_type
+    return info
+
+def set_oper(info: RuleInfo, oper_type: type[objects.Operator]) -> RuleInfo:
+    info.oper_type = oper_type
+    return info
+
+def set_prop(info: RuleInfo, prop_type: type[objects.Noun | objects.Property]) -> RuleInfo:
+    info.prop_type = prop_type
+    return info
+
+def negate_prefix(info: RuleInfo, negate_type: type[objects.TextNot | objects.TextNeg]) -> RuleInfo:
+    if len(info.prefix_info_list) != 0:
+        info.prefix_info_list[0].negated = not info.prefix_info_list[0].negated
+    else:
+        info.noun_negated_list.insert(0, negate_type)
+    return info
+
+def negate_infix(info: RuleInfo, negate_type: type[objects.TextNot | objects.TextNeg]) -> RuleInfo:
+    info.infix_info_list[0].negated = not info.infix_info_list[0].negated
+    return info
+
+def negate_infix_noun(info: RuleInfo, negate_type: type[objects.TextNot | objects.TextNeg]) -> RuleInfo:
+    info.infix_info_list[0].infix_noun_info_list[0].negated = not info.infix_info_list[0].infix_noun_info_list[0].negated
+    return info
+
+def negate_noun(info: RuleInfo, negate_type: type[objects.TextNot | objects.TextNeg]) -> RuleInfo:
+    info.noun_negated_list.insert(0, negate_type)
+    return info
+
+def negate_prop(info: RuleInfo, negate_type: type[objects.TextNot | objects.TextNeg]) -> RuleInfo:
+    info.prop_negated_list.insert(0, negate_type)
+    return info
+
+def text_text_noun(info: RuleInfo, placeholder: type[objects.Text]) -> RuleInfo:
+    info.noun_type = objects.get_noun_from_type(info.noun_type)
+    return info
+
+def text_text_infix_noun(info: RuleInfo, placeholder: type[objects.Text]) -> RuleInfo:
+    info.infix_info_list[0].infix_noun_info_list[0].infix_noun_type = objects.get_noun_from_type(info.infix_info_list[0].infix_noun_info_list[0].infix_noun_type)
+    return info
+
+def text_text_prop(info: RuleInfo, placeholder: type[objects.Text]) -> RuleInfo:
+    info.prop_type = objects.get_noun_from_type(info.noun_type)
+    return info
+
+def analysis_rule(rule: Rule, stage: str = "before prefix") -> list[RuleInfo]:
+    match_list: list[tuple[list[type[objects.Text]], list[type[objects.Text]], str, Callable[[RuleInfo, Any], RuleInfo]]] = []
+    info_list: list[RuleInfo] = []
+    if stage == "before prefix": # start, before prefix, or noun
+        match_list = [
+            ([objects.TextNot, objects.TextNeg], [], "before prefix", negate_prefix),
+            ([objects.Prefix], [], "after prefix", set_prefix),
+            ([objects.TextText_], [], "text_ noun", text_text_noun),
+            ([objects.Noun], [], "before infix", set_noun),
+        ]
+    elif stage == "after prefix": # after prefix, before new prefix, or noun
+        match_list = [
+            ([objects.TextNot, objects.TextNeg], [], "after prefix", negate_noun),
+            ([objects.TextAnd], [], "before prefix", do_nothing),
+            ([objects.TextText_], [], "text_ noun", text_text_noun),
+            ([objects.Noun], [], "before infix", set_noun),
+        ]
+    elif stage == "before infix": # after noun, before infix type, new noun, and operator
+        match_list = [
+            ([objects.TextNot, objects.TextNeg], [], "before infix", negate_infix),
+            ([objects.Infix], [], "in infix", set_infix),
+            ([objects.TextAnd], [], "before prefix", text_text_prop),
+            ([objects.Operator], [], "before property", set_oper),
+        ]
+    elif stage == "in infix": # after infix type, before infix noun
+        match_list = [
+            ([objects.TextNot, objects.TextNeg], [], "in infix", set_infix),
+            ([objects.TextText_], [], "text_ infix", text_text_infix_noun),
+            ([objects.Noun, objects.Property], [], "after infix", set_infix_noun),
+        ]
+    elif stage == "after infix": # after infix noun, before operator, or new infix
+        match_list = [
+            ([objects.TextAnd], [], "new infix", do_nothing),
+            ([objects.Operator], [], "before property", set_oper),
+        ]
+    elif stage == "new infix": # before new infix type, or new infix noun
+        match_list = [
+            ([objects.Infix], [], "in infix", set_infix),
+            ([objects.TextText_], [], "text_ infix", text_text_infix_noun),
+            ([objects.Noun, objects.Property], [], "after infix", set_infix_noun),
+        ]
+    elif stage == "before property": # after operator, before property
+        match_list = [
+            ([objects.TextNot, objects.TextNeg], [], "before property", negate_prop),
+            ([objects.TextText_], [], "text_ property", text_text_prop),
+            ([objects.Noun, objects.Property], [], "after property", set_prop),
+        ]
+    elif stage == "after property": # after property, may before new property
+        match_list = [
+            ([objects.TextAnd], [], "before property", do_nothing),
+        ]
+        info_list = [RuleInfo([], [], objects.Noun, [], objects.Operator, [], objects.Property)]
+    elif stage == "text_ noun": # metatext
+        match_list = [
+            ([objects.TextText_], [], "text_ noun", text_text_noun),
+            ([objects.Text], [objects.TextText_], "before infix", set_noun),
+        ]
+    elif stage == "text_ infix": # metatext
+        match_list = [
+            ([objects.TextText_], [], "text_ infix", text_text_infix_noun),
+            ([objects.Text], [objects.TextText_], "after infix", set_infix_noun),
+        ]
+    elif stage == "text_ property": # metatext
+        match_list = [
+            ([objects.TextText_], [], "text_ property", text_text_prop),
+            ([objects.Text], [objects.TextText_], "after property", set_prop),
+        ]
+    else:
+        raise ValueError(stage)
+    if len(rule) == 0:
+        return info_list
+    for match_type, unmatch_type, next_stage, func in match_list:
+        if issubclass(rule[0], tuple(match_type)):
+            if len(unmatch_type) == 0 or issubclass(rule[0], tuple(unmatch_type)):
+                info_list = analysis_rule(rule[1:], next_stage)
+                info_list = [func(i, rule[0]) for i in info_list]
+    return info_list # rest in piece, more-than-200-lines-long-and-extremely-fucking-confusing function(BabaMakeParabox.worlds.World.get_rules_from_pos_and_orient)
 
 default_rule_list: list[Rule] = []
 default_rule_list.append([objects.TextText, objects.TextIs, objects.TextPush])
@@ -129,5 +187,3 @@ default_rule_list.append([objects.TextNot, objects.TextMeta, objects.TextWorld, 
 default_rule_list.append([objects.TextNot, objects.TextMeta, objects.TextLevel, objects.TextIs, objects.TextStop])
 
 PropertyList = list[tuple[type[objects.BmpObject], int]]
-
-PropertyDict = dict[type[objects.BmpObject], int]

@@ -1,13 +1,25 @@
-from typing import Literal, TypedDict, NotRequired
+from typing import Literal, Optional, TypedDict, NotRequired
 import os
 import json
 import copy
 import platform
 
+def clampi(__min: int, __num: int, __max: int, /) -> int:
+    return min(__max, max(__num, __min))
+
+def absclampi(__num: int, __lim: int, /) -> int:
+    return min(abs(__lim), max(__num, -abs(__lim)))
+
+def clampf(__min: float, __num: float, __max: float, /) -> float:
+    return min(__max, max(__num, __min))
+
+def absclampf(__num: float, __lim: float, /) -> float:
+    return min(abs(__lim), max(__num, -abs(__lim)))
+
 import pygame
 pygame.init()
 
-versions = "3.623"
+versions = "3.63"
 def compare_versions(ver_1: str, ver_2: str) -> Literal[-1, 0, 1]:
     for char_1, char_2 in zip(ver_1, ver_2):
         if ord(char_1) > ord(char_2):
@@ -20,6 +32,8 @@ def compare_versions(ver_1: str, ver_2: str) -> Literal[-1, 0, 1]:
         return 1
     else:
         return -1
+
+pyinst_env = "PYINST"
 
 options_filename = "options.json"
 
@@ -72,10 +86,19 @@ default_options: Options = {
         "name": "rush_baba.mid"
     }
 }
+options: Options = copy.deepcopy(default_options)
+
+class _JsonDumpKwds(TypedDict):
+    indent: Optional[int]
+    separators: tuple[str, str]
+    
+def get_json_dump_kwds() -> _JsonDumpKwds:
+    return {"indent": None if options["compressed_json_output"] else 4,
+            "separators": (",", ":") if options["compressed_json_output"] else (", ", ": ")}
 
 def save_options(new_options: Options) -> None:
     with open(options_filename, "w", encoding="utf-8") as file:
-        json.dump(new_options, file, indent=None if options["compressed_json_output"] else 4, separators=(",", ":") if options["compressed_json_output"] else (", ", ": "))
+        json.dump(new_options, file, **get_json_dump_kwds())
 
 def update_options(old_options: Options) -> Options:
     new_options = old_options.copy()
@@ -90,7 +113,6 @@ windows = "Windows"
 linux = "Linux"
 
 os.makedirs("levelpacks", exist_ok=True)
-options: Options = copy.deepcopy(default_options)
 if os.path.exists(options_filename):
     with open(options_filename, "r", encoding="utf-8") as file:
         options = json.load(file)
