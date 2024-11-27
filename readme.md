@@ -100,11 +100,12 @@
         + 修饰词：指代限定条件类型。
             + 前缀修饰词：`SELDOM`，`OFTEN`和`META`。
             + 中缀修饰词：`ON`，`NEAR`，`NEXTTO`，`WITHOUT`和`FEELING`。
-        + 元文本修饰词`TEXT_`。
+        + 元文本修饰词：`TEXT_`。
             + 尽管`TEXT_`的作用方式类似于前缀修饰词，然而数据层面上`TEXT_`并不属于修饰词。
                 + `TEXT_`在源代码内的类名为`TextText_`，其直接继承自`Text`类（文本）而非`Prefix`类（前缀修饰词）。
-        + 并列词`AND`。
-        + 否定词`NOT`。
+                + `TEXT_`暂时无法修饰其他`TEXT_`。
+        + 并列词：`AND`。
+        + 否定词：`NOT`和`NEG`。
     + 初步检测时允许的语法：
         + 并列泛名词 介词 并列泛属性词
             + 并列泛名词 := 并列泛名词 并列词 泛名词 *或者* 泛名词
@@ -258,8 +259,8 @@
 
 #### 游戏漏洞
 
-+ 由于`NOT`的代码被`NEG`覆盖后使用，二者表现并无区别。
-+ 由于递归移动系统完成度很低，导致`MOVE`出现的诸多与原版Baba Is You不一致的现象。
++ 由于`NOT`的代码被`NEG`覆盖后使用，两者的机制现在并无区别。
++ 移动系统的完成度很低，会导致诸多与原版Baba Is You不一致的移动现象。
 
 ### 关于 options.json
 
@@ -359,4 +360,4 @@
 | 3.621  | 2024.10.22 | seldom and often Wall without Baba is not Push; Game feeling not Safe is not Done |
 | 3.622  | 2024.10.23 | Code has not Asset; Code on Property is Change |
 | 3.623  | 2024.11.26 | File is Rename |
-| 3.7    | 2024.11.27 | Baba feeling You and neg neg neg You is You; Keke neg feeling Move and feeling neg neg Move is not Move |
+| 3.7    | 2024.11.27 | Baba feeling You and You and not You is You |
