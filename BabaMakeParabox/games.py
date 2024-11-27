@@ -265,7 +265,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 window.blit(displays.sprites.get(f"text_{real_fps_string[i]}", 0, wiggle), (i * displays.sprite_size, 0))
             del real_fps_string
         # game transform
-        game_transform_to = [t for t, n in current_level.game_properties.to_dict().items() if issubclass(t, objects.Noun) and not n]
+        game_transform_to = [t for t, n in current_level.game_properties.enabled_dict().items() if issubclass(t, objects.Noun) and not n]
         if len(game_transform_to) != 0:
             transparent_black_background = pygame.Surface(window.get_size(), pygame.SRCALPHA)
             transparent_black_background.fill("#00000080")

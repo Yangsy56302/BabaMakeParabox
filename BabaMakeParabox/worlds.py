@@ -22,10 +22,8 @@ class World(object):
         self.color: colors.ColorHex = color if color is not None else colors.random_world_color()
         self.object_list: list[objects.BmpObject] = []
         self.object_pos_index: list[list[objects.BmpObject]]
-        self.world_properties: objects.Properties = objects.Properties()
-        self.clone_properties: objects.Properties = objects.Properties()
-        self.world_write_text: list[type[objects.Noun] | type[objects.Property]] = []
-        self.clone_write_text: list[type[objects.Noun] | type[objects.Property]] = []
+        self.properties: dict[type[objects.WorldPointer], objects.Properties] = {objects.World: objects.Properties(), objects.Clone: objects.Properties()}
+        self.special_operator_properties: dict[type[objects.WorldPointer], dict[type[objects.Operator], objects.Properties]] = {objects.World: {}, objects.Clone: {}}
         self.rule_list: list[rules.Rule] = []
         self.refresh_index()
     def __eq__(self, world: "World") -> bool:
@@ -98,6 +96,7 @@ class World(object):
     def get_rules_from_pos_and_orient(self, pos: spaces.Coord, orient: spaces.Orient, stage: str = "before prefix") -> list[rules.Rule]:
         match_list: list[tuple[list[type[objects.Text]], list[type[objects.Text]], str]] = []
         rule_list: list[rules.Rule] = []
+        discard_parse: bool = False
         if stage == "before prefix": # start, before prefix, or noun
             match_list = [
                 ([objects.TextNot, objects.TextNeg], [], "before prefix"),
@@ -146,7 +145,6 @@ class World(object):
             match_list = [
                 ([objects.TextAnd], [], "before property"),
             ]
-            rule_list = [[]]
         elif stage == "text_ noun": # metatext
             match_list = [
                 ([objects.TextText_], [], "text_ noun"),
@@ -175,6 +173,8 @@ class World(object):
                 for rule_after_this in rule_list_after_this:
                     for matched_text in matched_list:
                         rule_list.append([matched_text] + rule_after_this)
+            elif stage == "after property":
+                rule_list = [[]]
         return rule_list # rest in piece, more-than-200-lines-long-and-extremely-fucking-confusing function(BabaMakeParabox.worlds.World.get_rules_from_pos_and_orient)
     def get_rules(self) -> list[rules.Rule]:
         rule_list: list[rules.Rule] = []

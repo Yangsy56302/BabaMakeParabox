@@ -63,8 +63,6 @@
 双击运行`play-win.bat`，这将会间接运行`bmp.exe`，启动游戏程序。
 也可以直接运行`bmp.exe`，但程序故障后会直接关闭终端窗口，所以不推荐。
 
-游戏程序第一次运行时可能会让您选择语言。
-
 **游戏仅在终端窗口存在**
 **并且未选中窗口内部文本时正常运行。**
 如果游戏卡死，请先确保您
@@ -260,7 +258,8 @@
 
 #### 游戏漏洞
 
-+ 由于递归移动系统完成度不高导致`MOVE`出现的诸多问题。
++ 由于`NOT`的代码被`NEG`覆盖后使用，二者表现并无区别。
++ 由于递归移动系统完成度很低，导致`MOVE`出现的诸多与原版Baba Is You不一致的现象。
 
 ### 关于 options.json
 
@@ -360,4 +359,4 @@
 | 3.621  | 2024.10.22 | seldom and often Wall without Baba is not Push; Game feeling not Safe is not Done |
 | 3.622  | 2024.10.23 | Code has not Asset; Code on Property is Change |
 | 3.623  | 2024.11.26 | File is Rename |
-| 3.63   | 2024.11.27 | Baba feeling You and not not not You is You; Keke not feeling Move and feeling not not Move is not Move |
+| 3.7    | 2024.11.27 | Baba feeling You and neg neg neg You is You; Keke neg feeling Move and feeling neg neg Move is not Move |

@@ -5,23 +5,23 @@ from BabaMakeParabox import objects
 
 Rule = list[type[objects.Text]]
 
-@dataclass(init=True)
+@dataclass(init=True, repr=True)
 class PrefixInfo():
     negated: bool
     prefix_type: type[objects.Prefix]
 
-@dataclass(init=True)
+@dataclass(init=True, repr=True)
 class InfixNounInfo():
     negated: bool
     infix_noun_type: type[objects.Noun | objects.Property]
 
-@dataclass(init=True)
+@dataclass(init=True, repr=True)
 class InfixInfo():
     negated: bool
     infix_type: type[objects.Infix]
     infix_noun_info_list: list[InfixNounInfo]
 
-@dataclass(init=True)
+@dataclass(init=True, repr=True)
 class RuleInfo():
     prefix_info_list: list[PrefixInfo]
     noun_negated_list: list[type[objects.TextNot | objects.TextNeg]]
@@ -97,7 +97,49 @@ def text_text_prop(info: RuleInfo, placeholder: type[objects.Text]) -> RuleInfo:
     info.prop_type = objects.get_noun_from_type(info.noun_type)
     return info
 
-def analysis_rule(rule: Rule, stage: str = "before prefix") -> list[RuleInfo]:
+def handle_text_text_(rule: Rule) -> Rule:
+    metanumber = 0
+    new_rule = []
+    for text_type in rule:
+        if text_type == objects.TextText_:
+            metanumber += 1
+        elif metanumber != 0:
+            new_text_type = text_type
+            for _ in range(metanumber):
+                new_text_type = objects.get_noun_from_type(new_text_type)
+            new_rule.append(new_text_type)
+            metanumber = 0
+        else:
+            new_rule.append(text_type)
+    return new_rule
+
+def to_atom_rules(rule: Rule) -> list[Rule]:
+    rule = handle_text_text_(rule)
+    first_oper_pos = [issubclass(t, objects.Operator) for t in rule].index(True)
+    current_oper: type[objects.Operator] = rule[first_oper_pos] # type: ignore
+    noun_list = []
+    prop_list = []
+    last_strip_pos = 0
+    for i in range(first_oper_pos):
+        if rule[i] == objects.TextAnd:
+            noun_list.append(rule[last_strip_pos:i])
+            last_strip_pos = i + 1
+    noun_list.append(rule[last_strip_pos:first_oper_pos])
+    for i in range(first_oper_pos, len(rule)):
+        if rule[i] == objects.TextAnd:
+            prop_list.append([current_oper] + rule[last_strip_pos:i])
+            last_strip_pos = i + 1
+        elif issubclass(rule[i], objects.Operator):
+            current_oper = rule[i] # type: ignore
+            last_strip_pos = i + 1
+    prop_list.append([current_oper] + rule[last_strip_pos:])
+    atom_rule_list: list[Rule] = []
+    for noun in noun_list:
+        for prop in prop_list:
+            atom_rule_list.append(noun + prop)
+    return atom_rule_list
+
+def analysis_rule(atom_rule: Rule, stage: str = "before prefix") -> list[RuleInfo]:
     match_list: list[tuple[list[type[objects.Text]], list[type[objects.Text]], str, Callable[[RuleInfo, Any], RuleInfo]]] = []
     info_list: list[RuleInfo] = []
     if stage == "before prefix": # start, before prefix, or noun
@@ -166,13 +208,13 @@ def analysis_rule(rule: Rule, stage: str = "before prefix") -> list[RuleInfo]:
         ]
     else:
         raise ValueError(stage)
-    if len(rule) == 0:
+    if len(atom_rule) == 0:
         return info_list
     for match_type, unmatch_type, next_stage, func in match_list:
-        if issubclass(rule[0], tuple(match_type)):
-            if len(unmatch_type) == 0 or issubclass(rule[0], tuple(unmatch_type)):
-                info_list = analysis_rule(rule[1:], next_stage)
-                info_list = [func(i, rule[0]) for i in info_list]
+        if issubclass(atom_rule[0], tuple(match_type)):
+            if len(unmatch_type) == 0 or issubclass(atom_rule[0], tuple(unmatch_type)):
+                info_list = analysis_rule(atom_rule[1:], next_stage)
+                info_list = [func(i, atom_rule[0]) for i in info_list]
     return info_list # rest in piece, more-than-200-lines-long-and-extremely-fucking-confusing function(BabaMakeParabox.worlds.World.get_rules_from_pos_and_orient)
 
 default_rule_list: list[Rule] = []

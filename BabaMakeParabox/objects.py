@@ -23,7 +23,7 @@ class BmpObjectJson(TypedDict):
     world: NotRequired[WorldPointerExtraJson]
     level: NotRequired[LevelPointerExtraJson]
 
-PropertiesDict = dict[type["BmpObject"], dict[int, int]]
+PropertiesDict = dict[type["Text"], dict[int, int]]
 
 def temp_calc(negnum_list: list[int], negated_number: int = 0):
     negnum_list.sort(reverse=True)
@@ -65,23 +65,27 @@ class Properties(object):
                 current_count = 1
                 current_negnum = n
         return max(0, current_count) if current_negnum == negated_number else 0
-    def overwrite(self, prop: type["BmpObject"], negated: bool) -> None:
+    def overwrite(self, prop: type["Text"], negated: bool) -> None:
         self.__dict[prop] = {int(negated): 1}
-    def update(self, prop: type["BmpObject"], negated_level: int) -> None:
+    def update(self, prop: type["Text"], negated_level: int) -> None:
         self.__dict.setdefault(prop, {})
         self.__dict[prop].setdefault(negated_level, 0)
         self.__dict[prop][negated_level] += 1
-    def remove(self, prop: type["BmpObject"], *, negated_level: int) -> None:
+    def remove(self, prop: type["Text"], *, negated_level: int) -> None:
         self.__dict.setdefault(prop, {})
         self.__dict[prop].setdefault(negated_level, 0)
         self.__dict[prop][negated_level] -= 1
-    def exist(self, prop: type["BmpObject"]) -> bool:
+    def exist(self, prop: type["Text"]) -> bool:
         return len(self.__dict.get(prop, {}).items()) != 0
-    def get(self, prop: type["BmpObject"], *, negated_number: int = 0) -> int:
+    def get_raw(self, prop: type["Text"], *, negated_number: int = 0) -> int:
+        if len(self.__dict.get(prop, {}).items()) == 0:
+            return 0
+        return self.__dict[prop].get(negated_number, 0)
+    def get(self, prop: type["Text"], *, negated_number: int = 0) -> int:
         if len(self.__dict.get(prop, {}).items()) == 0:
             return 0
         return self.calc_count(self.__dict[prop], negated_number)
-    def has(self, prop: type["BmpObject"], *, negated_number: int = 0) -> bool:
+    def has(self, prop: type["Text"], *, negated_number: int = 0) -> bool:
         if len(self.__dict.get(prop, {}).items()) == 0:
             return False
         if self.calc_count(self.__dict[prop], negated_number) > 0:
@@ -89,8 +93,12 @@ class Properties(object):
         return False
     def clear(self) -> None:
         self.__dict.clear()
-    def to_dict(self) -> dict[type["BmpObject"], int]:
+    def enabled_dict(self) -> dict[type["Text"], int]:
         return {k: self.calc_count(v) for k, v in self.__dict.items()}
+    def disabled_dict(self) -> dict[type["Text"], int]:
+        return {k: self.calc_count(v, 1) for k, v in self.__dict.items()}
+
+special_operators: list[type["Operator"]] = []
 
 class BmpObject(object):
     json_name: str
@@ -104,10 +112,8 @@ class BmpObject(object):
         self.world_info: Optional[WorldPointerExtraJson] = world_info
         self.level_info: Optional[LevelPointerExtraJson] = level_info
         self.properties: Properties = Properties()
-        self.has_object: list[type["Noun"]] = []
-        self.make_object: list[type["Noun"]] = []
-        self.write_text: list[type["Noun"] | type["Property"]] = []
-        self.moved: bool = False
+        self.special_operator_properties: dict[type["Operator"], Properties] = {o: Properties() for o in special_operators}
+        self.move_number: int = 0
         self.sprite_state: int = 0
     def __eq__(self, obj: "BmpObject") -> bool:
         return self.uuid == obj.uuid
@@ -161,7 +167,7 @@ class Character(BmpObject):
     def set_sprite(self, **kwds) -> None:
         sleeping = False
         if not sleeping:
-            if self.moved:
+            if self.move_number > 0:
                 temp_state = (self.sprite_state & 0x3) + 1 if (self.sprite_state & 0x3) != 0x3 else 0x0
                 self.sprite_state = int(math.log2(spaces.orient_to_int(self.orient))) * 0x8 | temp_state
             else:
@@ -777,6 +783,8 @@ class Metatext(Noun):
     
 def same_float_prop(obj_1: BmpObject, obj_2: BmpObject):
     return not (obj_1.properties.has(TextFloat) ^ obj_2.properties.has(TextFloat))
+
+special_operators = [TextHas, TextMake, TextWrite]
 
 noun_class_list: list[type[Noun]] = []
 noun_class_list.extend([TextBaba, TextKeke, TextMe, TextPatrick, TextSkull, TextGhost])

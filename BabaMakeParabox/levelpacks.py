@@ -46,10 +46,14 @@ class Levelpack(object):
             delete_object_list = []
             for old_obj in world.object_list:
                 old_type = type(old_obj)
-                new_nouns = [n for n, c in old_obj.properties.to_dict().items() if issubclass(n, objects.Noun) and not c]
-                new_types = [t.obj_type for t in new_nouns]
-                not_new_nouns = [n for n, c in old_obj.properties.to_dict().items() if issubclass(n, objects.Noun) and c]
-                not_new_types = [t.obj_type for t in not_new_nouns]
+                new_types = []
+                for noun, count in old_obj.properties.enabled_dict().items():
+                    if issubclass(noun, objects.Noun):
+                        new_types.extend([noun.obj_type] * count)
+                not_new_types = []
+                for noun, count in old_obj.properties.disabled_dict().items():
+                    if issubclass(noun, objects.Noun):
+                        not_new_types.extend([noun.obj_type] * count)
                 transform_success = False
                 old_type_is_old_type = False
                 old_type_is_not_old_type = False
@@ -66,9 +70,10 @@ class Levelpack(object):
                         new_types.remove(objects.All)
                         all_nouns = [t for t in level.all_list if t not in not_new_types]
                         new_types.extend([t.obj_type for t in all_nouns])
-                    for new_text_type in old_obj.write_text:
-                        new_obj = new_text_type(old_obj.pos, old_obj.orient, world_info=old_obj.world_info, level_info=old_obj.level_info)
-                        world.new_obj(new_obj)
+                    for new_text_type, new_text_count in old_obj.special_operator_properties.get(objects.TextWrite, objects.Properties()).enabled_dict().items():
+                        for _ in range(new_text_count):
+                            new_obj = new_text_type(old_obj.pos, old_obj.orient, world_info=old_obj.world_info, level_info=old_obj.level_info)
+                            world.new_obj(new_obj)
                         transform_success = True
                     for new_type in new_types:
                         pass_this_transform = False
@@ -171,62 +176,47 @@ class Levelpack(object):
         special_new_types[objects.Level] = []
         special_not_new_types[objects.Level] = []
         transform_from[objects.Level] = []
-        for prop_type, prop_negated in level.properties.to_dict().items():
+        for prop_type, prop_count in level.properties.enabled_dict().items():
             if not issubclass(prop_type, objects.Noun):
                 continue
             if issubclass(prop_type, objects.TextAll):
-                if prop_negated:
-                    special_new_types[objects.Level].extend(objects.in_not_all)
-                else:
-                    special_not_new_types[objects.Level].extend(objects.in_not_all)
+                special_not_new_types[objects.Level].extend(objects.in_not_all * prop_count)
             else:
                 new_type = prop_type.obj_type
-                if prop_negated:
-                    special_new_types[objects.Level].append(new_type)
-                else:
-                    special_not_new_types[objects.Level].append(new_type)
+                special_not_new_types[objects.Level].extend([new_type] * prop_count)
         for world in level.world_list:
             for old_type in (objects.World, objects.Clone):
                 special_new_types[old_type] = []
                 special_not_new_types[old_type] = []
                 transform_from[old_type] = []
-            for prop_type, prop_negated in world.world_properties.to_dict().items():
+            for prop_type, prop_count in world.properties[objects.World].enabled_dict().items():
                 if not issubclass(prop_type, objects.Noun):
                     continue
                 if issubclass(prop_type, objects.TextAll):
-                    if prop_negated:
-                        special_new_types[objects.World].extend(objects.in_not_all)
-                    else:
-                        special_not_new_types[objects.World].extend(objects.in_not_all)
+                    special_not_new_types[objects.World].extend(objects.in_not_all * prop_count)
                 else:
                     new_type = prop_type.obj_type
-                    if prop_negated:
-                        special_new_types[objects.World].append(new_type)
-                    else:
-                        special_not_new_types[objects.World].append(new_type)
-            for prop_type, prop_negated in world.clone_properties.to_dict().items():
+                    special_not_new_types[objects.World].extend([new_type] * prop_count)
+            for prop_type, prop_count in world.properties[objects.Clone].enabled_dict().items():
                 if not issubclass(prop_type, objects.Noun):
                     continue
                 if issubclass(prop_type, objects.TextAll):
-                    if prop_negated:
-                        special_new_types[objects.Clone].extend(objects.in_not_all)
-                    else:
-                        special_not_new_types[objects.Clone].extend(objects.in_not_all)
+                    special_not_new_types[objects.Clone].extend(objects.in_not_all * prop_count)
                 else:
                     new_type = prop_type.obj_type
-                    if prop_negated:
-                        special_new_types[objects.Clone].append(new_type)
-                    else:
-                        special_not_new_types[objects.Clone].append(new_type)
-            for new_text_type in level.write_text:
-                new_obj = new_text_type((0, 0))
-                transform_from[objects.Level].append(new_obj)
-            for new_text_type in world.world_write_text:
-                new_obj = new_text_type((0, 0))
-                transform_from[objects.World].append(new_obj)
-            for new_text_type in world.clone_write_text:
-                new_obj = new_text_type((0, 0))
-                transform_from[objects.Clone].append(new_obj)
+                    special_not_new_types[objects.Clone].extend([new_type] * prop_count)
+            for new_text_type, new_text_count in level.special_operator_properties[objects.TextWrite].enabled_dict().items():
+                for _ in range(new_text_count):
+                    new_obj = new_text_type((0, 0))
+                    transform_from[objects.Level].append(new_obj)
+            for new_text_type, new_text_count in world.special_operator_properties[objects.World][objects.TextWrite].enabled_dict().items():
+                for _ in range(new_text_count):
+                    new_obj = new_text_type((0, 0))
+                    transform_from[objects.World].append(new_obj)
+            for new_text_type, new_text_count in world.special_operator_properties[objects.Clone][objects.TextWrite].enabled_dict().items():
+                for _ in range(new_text_count):
+                    new_obj = new_text_type((0, 0))
+                    transform_from[objects.Clone].append(new_obj)
             for old_type in (objects.Level, objects.World, objects.Clone):
                 if old_type in special_not_new_types[old_type]:
                     transform_from[old_type].append(objects.Empty((0, 0)))
@@ -337,7 +327,7 @@ class Levelpack(object):
         for world in level.world_list:
             for obj in world.object_list:
                 old_prop_dict[obj.uuid] = copy.deepcopy(obj.properties)
-                obj.moved = False
+                obj.move_number = 0
         level.update_rules(old_prop_dict)
         game_push = False
         game_push |= level.you(op)
@@ -347,7 +337,7 @@ class Levelpack(object):
         level.update_rules(old_prop_dict)
         self.transform(level)
         transform = self.special_transform(level)
-        level.new_games()
+        level.game()
         level.text_plus_and_text_minus()
         level.update_rules(old_prop_dict)
         level.tele()
