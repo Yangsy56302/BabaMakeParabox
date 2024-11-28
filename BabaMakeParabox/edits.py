@@ -11,7 +11,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     history = [copy.deepcopy(levelpack)]
     window = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
     pygame.display.set_caption(f"Baba Make Parabox Editor Version {basics.versions}")
-    pygame.display.set_icon(pygame.image.load("bmp.ico.png"))
+    pygame.display.set_icon(pygame.image.load("bmp.png"))
     displays.sprites.update()
     pygame.key.set_repeat()
     pygame.key.stop_text_input()
@@ -195,16 +195,16 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 history.append(copy.deepcopy(levelpack))
                 if issubclass(current_object_type, objects.LevelPointer):
                     if keys["LSHIFT"] or keys["RSHIFT"]:
-                        name = input(languages.current_language["editor.level.new.name"])
+                        name = languages.lang_input("editor.level.new.name")
                         name = name if levelpack.get_level(name) is not None else current_level.name
-                        icon_name = input(languages.current_language["editor.level.new.icon.name"])
+                        icon_name = languages.lang_input("editor.level.new.icon.name")
                         icon_name = icon_name if icon_name != "" else "empty"
                         while True:
-                            icon_color = input(languages.current_language["editor.level.new.icon.color"])
+                            icon_color = languages.lang_input("editor.level.new.icon.color")
                             try:
                                 icon_color = colors.str_to_hex(icon_color) if icon_color != "" else colors.WHITE
                             except ValueError:
-                                print(languages.current_language["warn.value.invalid"].format(val=icon_color, cls="color"))
+                                languages.lang_print("warn.value.invalid", val=icon_color, cls="color")
                             else:
                                 break
                     else:
@@ -215,13 +215,13 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     current_world.new_obj(current_object_type(current_cursor_pos, current_orient, level_info=level_info))
                 elif issubclass(current_object_type, objects.WorldPointer):
                     if keys["LSHIFT"] or keys["RSHIFT"]:
-                        name = input(languages.current_language["editor.world.new.name"])
+                        name = languages.lang_input("editor.world.new.name")
                         while True:
-                            infinite_tier = input(languages.current_language["editor.world.new.infinite_tier"])
+                            infinite_tier = languages.lang_input("editor.world.new.infinite_tier")
                             try:
                                 infinite_tier = int(infinite_tier) if infinite_tier != "" else 0
                             except ValueError:
-                                print(languages.current_language["warn.value.invalid"].format(val=infinite_tier, cls="int"))
+                                languages.lang_print("warn.value.invalid", val=infinite_tier, cls="int")
                             else:
                                 break
                         if current_level.get_world({"name": name, "infinite_tier": infinite_tier}) is None:
@@ -236,87 +236,87 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         # new world; new level (shift)
         elif keys["BACKSLASH"]:
             if keys["LSHIFT"] or keys["RSHIFT"]:
-                if input(languages.current_language["editor.level.new"]) in languages.yes:
+                if languages.lang_input("editor.level.new") in languages.yes:
                     history.append(copy.deepcopy(levelpack))
-                    level_name = input(languages.current_language["editor.level.new.name"])
-                    super_level = input(languages.current_language["editor.level.new.super_level.name"])
+                    level_name = languages.lang_input("editor.level.new.name")
+                    super_level = languages.lang_input("editor.level.new.super_level.name")
                     super_level = super_level if super_level != "" else current_level.name
-                    name = input(languages.current_language["editor.world.new.name"])
+                    name = languages.lang_input("editor.world.new.name")
                     while True:
-                        width = input(languages.current_language["editor.world.new.width"])
+                        width = languages.lang_input("editor.world.new.width")
                         try:
                             width = int(width) if width != "" else basics.options["default_new_world"]["width"]
                         except ValueError:
-                            print(languages.current_language["warn.value.invalid"].format(val=width, cls="int"))
+                            languages.lang_print("warn.value.invalid", val=width, cls="int")
                         else:
                             break
                     while True:
-                        height = input(languages.current_language["editor.world.new.height"])
+                        height = languages.lang_input("editor.world.new.height")
                         try:
                             height = int(height) if height != "" else basics.options["default_new_world"]["height"]
                         except ValueError:
-                            print(languages.current_language["warn.value.invalid"].format(val=height, cls="int"))
+                            languages.lang_print("warn.value.invalid", val=height, cls="int")
                         else:
                             break
                     size = (width, height)
                     while True:
-                        infinite_tier = input(languages.current_language["editor.world.new.infinite_tier"])
+                        infinite_tier = languages.lang_input("editor.world.new.infinite_tier")
                         try:
                             infinite_tier = int(infinite_tier) if infinite_tier != "" else 0
                         except ValueError:
-                            print(languages.current_language["warn.value.invalid"].format(val=infinite_tier, cls="int"))
+                            languages.lang_print("warn.value.invalid", val=infinite_tier, cls="int")
                         else:
                             break
                     while True:
-                        color = input(languages.current_language["editor.world.new.color"])
+                        color = languages.lang_input("editor.world.new.color")
                         try:
                             color = colors.str_to_hex(color) if color != "" else basics.options["default_new_world"]["color"]
                         except ValueError:
-                            print(languages.current_language["warn.value.invalid"].format(val=color, cls="color"))
+                            languages.lang_print("warn.value.invalid", val=color, cls="color")
                         else:
                             break
                     default_world = worlds.World(name, size, infinite_tier, color)
-                    is_map = input(languages.current_language["editor.level.new.is_map"]) in languages.yes
+                    is_map = languages.lang_input("editor.level.new.is_map") in languages.yes
                     levelpack.level_list.append(levels.Level(level_name, [default_world], super_level=super_level, main_world_name=name, main_world_tier=infinite_tier, is_map=is_map, rule_list=levelpack.rule_list))
                     current_level_index = len(levelpack.level_list) - 1
                     current_world_index = 0
                     level_changed = True
                     world_changed = True
             else:
-                if input(languages.current_language["editor.world.new"]) in languages.yes:
+                if languages.lang_input("editor.world.new") in languages.yes:
                     history.append(copy.deepcopy(levelpack))
-                    name = input(languages.current_language["editor.world.new.name"])
+                    name = languages.lang_input("editor.world.new.name")
                     while True:
-                        width = input(languages.current_language["editor.world.new.width"])
+                        width = languages.lang_input("editor.world.new.width")
                         try:
                             width = int(width) if width != "" else basics.options["default_new_world"]["width"]
                         except ValueError:
-                            print(languages.current_language["warn.value.invalid"].format(val=width, cls="int"))
+                            languages.lang_print("warn.value.invalid", val=width, cls="int")
                         else:
                             break
                     while True:
-                        height = input(languages.current_language["editor.world.new.height"])
+                        height = languages.lang_input("editor.world.new.height")
                         try:
                             height = int(height) if height != "" else basics.options["default_new_world"]["height"]
                         except ValueError:
-                            print(languages.current_language["warn.value.invalid"].format(val=height, cls="int"))
+                            languages.lang_print("warn.value.invalid", val=height, cls="int")
                         else:
                             break
                     size = (width, height)
                     while True:
-                        infinite_tier = input(languages.current_language["editor.world.new.infinite_tier"])
+                        infinite_tier = languages.lang_input("editor.world.new.infinite_tier")
                         try:
                             infinite_tier = int(infinite_tier) if infinite_tier != "" else 0
                         except ValueError:
-                            print(languages.current_language["warn.value.invalid"].format(val=infinite_tier, cls="int"))
+                            languages.lang_print("warn.value.invalid", val=infinite_tier, cls="int")
                         else:
                             break
                     while True:
-                        color = input(languages.current_language["editor.world.new.color"])
+                        color = languages.lang_input("editor.world.new.color")
                         try:
                             color = colors.str_to_hex(color) if color != "" else basics.options["default_new_world"]["color"]
                         except ValueError:
-                            print(languages.current_language["warn.value.invalid"].format(val=color, cls="color"))
+                            languages.lang_print("warn.value.invalid", val=color, cls="color")
                         else:
                             break
                     current_level.world_list.append(worlds.World(name, size, infinite_tier, color))
@@ -325,20 +325,20 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         # delete current world / level (shift)
         elif keys["DELETE"]:
             if keys["LSHIFT"] or keys["RSHIFT"]:
-                if input(languages.current_language["editor.level.delete"]) in languages.yes:
+                if languages.lang_input("editor.level.delete") in languages.yes:
                     levelpack.level_list.pop(current_level_index)
                     current_level_index -= 1
                     current_world_index = 0
                     level_changed = True
                     world_changed = True
             else:
-                if input(languages.current_language["editor.world.delete"]) in languages.yes:
+                if languages.lang_input("editor.world.delete") in languages.yes:
                     current_level.world_list.pop(current_world_index)
                     current_world_index -= 1
                     world_changed = True
         # change global rule
         elif keys["R"]:
-            text_rule = input(languages.current_language["editor.levelpack.new.rule"]).upper().split()
+            text_rule = languages.lang_input("editor.levelpack.new.rule").upper().split()
             type_rule: rules.Rule = []
             valid_input = True
             for text in text_rule:
@@ -365,7 +365,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 else:
                     if not (keys["LSHIFT"] or keys["RSHIFT"]):
                         levelpack.rule_list.append(list(type_rule))
-            print(languages.current_language["editor.levelpack.rule_list"])
+            languages.lang_print("editor.levelpack.rule_list")
             for rule in levelpack.rule_list:
                 str_list = []
                 for obj_type in rule:
@@ -374,9 +374,9 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         # rename world / level (shift)
         elif keys["T"]:
             if keys["LSHIFT"] or keys["RSHIFT"]:
-                current_level.name = input(languages.current_language["editor.level.rename"])
+                current_level.name = languages.lang_input("editor.level.rename")
             else:
-                current_world.name = input(languages.current_language["editor.world.rename"])
+                current_world.name = languages.lang_input("editor.world.rename")
         # remove objects on cursor
         elif keys["BACKSPACE"]:
             history.append(copy.deepcopy(levelpack))
@@ -527,4 +527,5 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 window.blit(displays.sprites.get(f"text_{real_fps_string[i]}", 0, wiggle), (i * displays.sprite_size, 0))
         pygame.display.flip()
         milliseconds = clock.tick(basics.options["fps"])
+    pygame.display.quit()
     return levelpack

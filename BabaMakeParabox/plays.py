@@ -1,7 +1,5 @@
-from typing import Any, Optional, TypedDict
 import random
 import copy
-import uuid
 import os
 
 from BabaMakeParabox import basics, languages, sounds, spaces, objects, displays, worlds, levels, levelpacks
@@ -22,7 +20,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     display_offset = [0.0, 0.0]
     display_offset_speed = [0.0, 0.0]
     pygame.display.set_caption(f"Baba Make Parabox Version {basics.versions}")
-    pygame.display.set_icon(pygame.image.load("bmp.ico.png"))
+    pygame.display.set_icon(pygame.image.load("bmp.png"))
     displays.sprites.update()
     pygame.key.set_repeat()
     pygame.key.stop_text_input()
@@ -72,8 +70,8 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     keys[keybinds[event.key]] = True
         refresh = False
         if freeze_time == -1:
-            for key, (negkey, op, (dx, dy)) in movement_value.items():
-                if keys[key] and not keys.get(negkey, False):
+            for key, (negative_key, op, (dx, dy)) in movement_value.items():
+                if keys[key] and not keys.get(negative_key, False):
                     history[current_level.name].append(copy.deepcopy(current_level))
                     levelpack_info = levelpack.turn(current_level, op)
                     if current_level.game_properties.has(objects.TextYou):
@@ -107,7 +105,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     current_world = current_level.get_world_or_default({"name": current_world.name, "infinite_tier": current_world.infinite_tier}, default=current_level.main_world)
                     refresh = True
             elif keys["R"]:
-                print(languages.current_language["game.level.restart"])
+                languages.lang_print("game.level.restart")
                 sounds.play("restart")
                 current_level = copy.deepcopy(history[current_level.name][0])
                 current_world = current_level.get_world_or_default({"name": current_world.name, "infinite_tier": current_world.infinite_tier}, default=current_level.main_world)
@@ -115,13 +113,13 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 world_changed = True
                 refresh = True
             elif keys["TAB"]:
-                print(languages.current_language["game.levelpack.rule_list"])
+                languages.lang_print("game.levelpack.rule_list")
                 for rule in levelpack.rule_list:
                     str_list = []
                     for obj_type in rule:
                         str_list.append(obj_type.display_name)
                     print(" ".join(str_list))
-                print(languages.current_language["game.world.rule_list"])
+                languages.lang_print("game.world.rule_list")
                 for rule in current_world.rule_list:
                     str_list = []
                     for obj_type in rule:
@@ -162,14 +160,14 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         if refresh:
             # game properties at update
             if current_level.game_properties.has(objects.TextWin):
-                print(languages.current_language["game.win"])
+                languages.lang_print("game.win")
                 sounds.play("win")
                 game_running = False
             if current_level.game_properties.has(objects.TextShut):
                 sounds.play("defeat")
                 game_running = False
             if current_level.game_properties.has(objects.TextEnd):
-                print(languages.current_language["game.end"])
+                languages.lang_print("game.end")
                 sounds.play("end")
                 basics.options["game_is_end"] = True
                 game_running = False
@@ -202,19 +200,19 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             # level state check
             levelpack.set_level(current_level)
             if levelpack_info["win"]:
-                print(languages.current_language["game.level.win"])
+                languages.lang_print("game.level.win")
                 if freeze_time == -1:
                     freeze_time = basics.options["fps"]
             elif levelpack_info["end"]:
-                print(languages.current_language["game.levelpack.end"])
+                languages.lang_print("game.levelpack.end")
                 if freeze_time == -1:
                     freeze_time = basics.options["fps"]
             elif levelpack_info["transform"]:
-                print(languages.current_language["game.level.transform"])
+                languages.lang_print("game.level.transform")
                 if freeze_time == -1:
                     freeze_time = basics.options["fps"]
             elif levelpack_info["selected_level"] is not None:
-                print(languages.current_language["game.level.enter"])
+                languages.lang_print("game.level.enter")
                 if freeze_time == -1:
                     freeze_time = basics.options["fps"]
             for level in levelpack.level_list:
@@ -289,4 +287,5 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             window.blit(window_surface, [int(display_offset[0] - window.get_width()), int(display_offset[1] - window.get_height())])
         pygame.display.flip()
         milliseconds = clock.tick(basics.options["fps"])
+    pygame.display.quit()
     return levelpack

@@ -99,28 +99,28 @@ class World(object):
         discard_parse: bool = False
         if stage == "before prefix": # start, before prefix, or noun
             match_list = [
-                ([objects.TextNot, objects.TextNeg], [], "before prefix"),
+                ([objects.TextNot], [], "before prefix"),
                 ([objects.Prefix], [], "after prefix"),
                 ([objects.TextText_], [], "text_ noun"),
                 ([objects.Noun], [], "before infix"),
             ]
         elif stage == "after prefix": # after prefix, before new prefix, or noun
             match_list = [
-                ([objects.TextNot, objects.TextNeg], [], "after prefix"),
+                ([objects.TextNot], [], "after prefix"),
                 ([objects.TextAnd], [], "before prefix"),
                 ([objects.TextText_], [], "text_ noun"),
                 ([objects.Noun], [], "before infix"),
             ]
         elif stage == "before infix": # after noun, before infix type, new noun, and operator
             match_list = [
-                ([objects.TextNot, objects.TextNeg], [], "before infix"),
+                ([objects.TextNot], [], "before infix"),
                 ([objects.Infix], [], "in infix"),
                 ([objects.TextAnd], [], "before prefix"),
                 ([objects.Operator], [], "before property"),
             ]
         elif stage == "in infix": # after infix type, before infix noun
             match_list = [
-                ([objects.TextNot, objects.TextNeg], [], "in infix"),
+                ([objects.TextNot], [], "in infix"),
                 ([objects.TextText_], [], "text_ infix"),
                 ([objects.Noun, objects.Property], [], "after infix"),
             ]
@@ -137,7 +137,7 @@ class World(object):
             ]
         elif stage == "before property": # after operator, before property
             match_list = [
-                ([objects.TextNot, objects.TextNeg], [], "before property"),
+                ([objects.TextNot], [], "before property"),
                 ([objects.TextText_], [], "text_ property"),
                 ([objects.Noun, objects.Property], [], "after property"),
             ]

@@ -657,11 +657,6 @@ class TextNot(Text):
     sprite_name: str = "text_not"
     display_name: str = "NOT"
 
-class TextNeg(Text):
-    json_name: str = "text_neg"
-    sprite_name: str = "text_neg"
-    display_name: str = "NEG"
-
 class TextAnd(Text):
     json_name: str = "text_and"
     sprite_name: str = "text_and"
@@ -797,7 +792,7 @@ text_class_list.extend(noun_class_list)
 text_class_list.extend([TextText_, TextOften, TextSeldom, TextMeta])
 text_class_list.extend([TextOn, TextNear, TextNextto, TextWithout, TextFeeling])
 text_class_list.extend([TextIs, TextHas, TextMake, TextWrite])
-text_class_list.extend([TextNot, TextNeg, TextAnd])
+text_class_list.extend([TextNot, TextAnd])
 text_class_list.extend([TextYou, TextMove, TextStop, TextPush, TextSink, TextFloat, TextOpen, TextShut, TextHot, TextMelt, TextWin, TextDefeat, TextShift, TextTele])
 text_class_list.extend([TextEnter, TextLeave, TextWord, TextSelect, TextTextPlus, TextTextMinus, TextEnd, TextDone])
 

@@ -1,6 +1,6 @@
 # Baba Make Parabox
 
-![Game icon](bmp.ico.png.bmp)
+![Game icon](bmp.bmp)
 
 **SOME OF THE INFORMATION INCLUDED IN THIS FILE IS OUTDATED.**
 
@@ -240,4 +240,5 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 3.621  | 2024.10.22 | Game feeling not Safe is not Done |
 | 3.622  | 2024.10.23 | Code has not Asset; Code on Property is Change |
 | 3.623  | 2024.11.26 | File is Rename |
-| 3.63   | 2024.11.27 | Baba feeling You and not not not You is You; Keke not feeling Move and feeling not not Move is not Move |
+| 3.7    | 2024.11.27 | Baba feeling You and You and not You is You |
+| 3.701  | 2024.11.28 | Text_Neg is not Text; Image is Rename; Text on Window feeling Black is More |

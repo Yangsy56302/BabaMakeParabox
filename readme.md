@@ -1,6 +1,6 @@
 # Baba Make Parabox
 
-![游戏图标](bmp.ico.png.bmp)
+![游戏图标](bmp.bmp)
 
 **Baba Make Parabox**（简称 **BMP**）是一个二创同人推箱子元游戏，作者是**Yangsy56302**。
 取材游戏为[**Baba Is You**](https://hempuli.com/baba/)与[**Patrick's Parabox**](https://www.patricksparabox.com/)，
@@ -105,7 +105,7 @@
                 + `TEXT_`在源代码内的类名为`TextText_`，其直接继承自`Text`类（文本）而非`Prefix`类（前缀修饰词）。
                 + `TEXT_`暂时无法修饰其他`TEXT_`。
         + 并列词：`AND`。
-        + 否定词：`NOT`和`NEG`。
+        + 否定词：`NOT`。
     + 初步检测时允许的语法：
         + 并列泛名词 介词 并列泛属性词
             + 并列泛名词 := 并列泛名词 并列词 泛名词 *或者* 泛名词
@@ -244,23 +244,21 @@
 
 #### 游戏特性
 
-+ 相对宽松的`NOT`变体：`NEG`。
-    + 属性前带有多个`NEG`的规则只会否定一条恰好缺少一个`NEG`的规则。
-        + 例如，`BABA IS NEG YOU`否定一条`BABA IS YOU`；`BABA IS NEG NEG YOU`否定一条`BABA IS NEG YOU`，可能导致已有的`BABA IS YOU`不再被那条`BABA IS NEG YOU`否定。
++ 属性前带有多个`NOT`的规则只会否定一条恰好缺少一个`NOT`的规则。
+    + 例如，`BABA IS NOT YOU`否定一条`BABA IS YOU`；`BABA IS NOT NOT YOU`否定一条`BABA IS NOT YOU`，可能导致已有的`BABA IS YOU`不再被那条`BABA IS NOT YOU`否定。
 + `FEELING`每轮只检测一次，以试图避免检测停机问题。
 + `TEXT IS WORD`有效，导致非元文本被识别为`TEXT`。
     + 通常，这会导致该规则同时被识别成`TEXT IS TEXT`。
 
 #### 暂未实现
 
-+ 属性堆叠。
-+ `GAME`的复杂语法（目前对`GAME`应用修饰词会使其不指代任何物体）。
++ `GAME`的复杂语法。
+    + 目前对`GAME`应用修饰词会使其不指代任何物体。
 + 关卡完成情况的记录，特殊物体`PATH`，与之相对应的`CURSOR`移动机制。
 
 #### 游戏漏洞
 
-+ 由于`NOT`的代码被`NEG`覆盖后使用，两者的机制现在并无区别。
-+ 移动系统的完成度很低，会导致诸多与原版Baba Is You不一致的移动现象。
++ 移动系统的完成度很低，会导致诸多与Baba Is You内不一致的现象。
 
 ### 关于 options.json
 
@@ -361,3 +359,4 @@
 | 3.622  | 2024.10.23 | Code has not Asset; Code on Property is Change |
 | 3.623  | 2024.11.26 | File is Rename |
 | 3.7    | 2024.11.27 | Baba feeling You and You and not You is You |
+| 3.701  | 2024.11.28 | Text_Neg is not Text; Image is Rename; Text on Window feeling Black is More |

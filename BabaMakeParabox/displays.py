@@ -155,7 +155,6 @@ sprite_colors["text_has"] = colors.WHITE
 sprite_colors["text_make"] = colors.WHITE
 sprite_colors["text_write"] = colors.WHITE
 sprite_colors["text_not"] = colors.LIGHT_RED
-sprite_colors["text_neg"] = colors.LIGHT_GRAY
 sprite_colors["text_and"] = colors.WHITE
 sprite_colors["text_you"] = colors.MAGENTA
 sprite_colors["text_move"] = colors.LIGHT_GREEN

@@ -24,11 +24,11 @@ class InfixInfo():
 @dataclass(init=True, repr=True)
 class RuleInfo():
     prefix_info_list: list[PrefixInfo]
-    noun_negated_list: list[type[objects.TextNot | objects.TextNeg]]
+    noun_negated_tier: int
     noun_type: type[objects.Noun]
     infix_info_list: list[InfixInfo]
     oper_type: type[objects.Operator]
-    prop_negated_list: list[type[objects.TextNot | objects.TextNeg]]
+    prop_negated_tier: int
     prop_type: type[objects.Noun | objects.Property]
 
 def do_nothing(info: RuleInfo, placeholder: type[objects.Text]) -> RuleInfo:
@@ -62,27 +62,27 @@ def set_prop(info: RuleInfo, prop_type: type[objects.Noun | objects.Property]) -
     info.prop_type = prop_type
     return info
 
-def negate_prefix(info: RuleInfo, negate_type: type[objects.TextNot | objects.TextNeg]) -> RuleInfo:
+def negate_prefix(info: RuleInfo, placeholder: type[objects.Text]) -> RuleInfo:
     if len(info.prefix_info_list) != 0:
         info.prefix_info_list[0].negated = not info.prefix_info_list[0].negated
     else:
-        info.noun_negated_list.insert(0, negate_type)
+        info.noun_negated_tier += 1
     return info
 
-def negate_infix(info: RuleInfo, negate_type: type[objects.TextNot | objects.TextNeg]) -> RuleInfo:
+def negate_infix(info: RuleInfo, placeholder: type[objects.Text]) -> RuleInfo:
     info.infix_info_list[0].negated = not info.infix_info_list[0].negated
     return info
 
-def negate_infix_noun(info: RuleInfo, negate_type: type[objects.TextNot | objects.TextNeg]) -> RuleInfo:
+def negate_infix_noun(info: RuleInfo, placeholder: type[objects.Text]) -> RuleInfo:
     info.infix_info_list[0].infix_noun_info_list[0].negated = not info.infix_info_list[0].infix_noun_info_list[0].negated
     return info
 
-def negate_noun(info: RuleInfo, negate_type: type[objects.TextNot | objects.TextNeg]) -> RuleInfo:
-    info.noun_negated_list.insert(0, negate_type)
+def negate_noun(info: RuleInfo, placeholder: type[objects.Text]) -> RuleInfo:
+    info.noun_negated_tier += 1
     return info
 
-def negate_prop(info: RuleInfo, negate_type: type[objects.TextNot | objects.TextNeg]) -> RuleInfo:
-    info.prop_negated_list.insert(0, negate_type)
+def negate_prop(info: RuleInfo, placeholder: type[objects.Text]) -> RuleInfo:
+    info.prop_negated_tier += 1
     return info
 
 def text_text_noun(info: RuleInfo, placeholder: type[objects.Text]) -> RuleInfo:
@@ -144,28 +144,28 @@ def analysis_rule(atom_rule: Rule, stage: str = "before prefix") -> list[RuleInf
     info_list: list[RuleInfo] = []
     if stage == "before prefix": # start, before prefix, or noun
         match_list = [
-            ([objects.TextNot, objects.TextNeg], [], "before prefix", negate_prefix),
+            ([objects.TextNot], [], "before prefix", negate_prefix),
             ([objects.Prefix], [], "after prefix", set_prefix),
             ([objects.TextText_], [], "text_ noun", text_text_noun),
             ([objects.Noun], [], "before infix", set_noun),
         ]
     elif stage == "after prefix": # after prefix, before new prefix, or noun
         match_list = [
-            ([objects.TextNot, objects.TextNeg], [], "after prefix", negate_noun),
+            ([objects.TextNot], [], "after prefix", negate_noun),
             ([objects.TextAnd], [], "before prefix", do_nothing),
             ([objects.TextText_], [], "text_ noun", text_text_noun),
             ([objects.Noun], [], "before infix", set_noun),
         ]
     elif stage == "before infix": # after noun, before infix type, new noun, and operator
         match_list = [
-            ([objects.TextNot, objects.TextNeg], [], "before infix", negate_infix),
+            ([objects.TextNot], [], "before infix", negate_infix),
             ([objects.Infix], [], "in infix", set_infix),
             ([objects.TextAnd], [], "before prefix", text_text_prop),
             ([objects.Operator], [], "before property", set_oper),
         ]
     elif stage == "in infix": # after infix type, before infix noun
         match_list = [
-            ([objects.TextNot, objects.TextNeg], [], "in infix", set_infix),
+            ([objects.TextNot], [], "in infix", set_infix),
             ([objects.TextText_], [], "text_ infix", text_text_infix_noun),
             ([objects.Noun, objects.Property], [], "after infix", set_infix_noun),
         ]
@@ -182,7 +182,7 @@ def analysis_rule(atom_rule: Rule, stage: str = "before prefix") -> list[RuleInf
         ]
     elif stage == "before property": # after operator, before property
         match_list = [
-            ([objects.TextNot, objects.TextNeg], [], "before property", negate_prop),
+            ([objects.TextNot], [], "before property", negate_prop),
             ([objects.TextText_], [], "text_ property", text_text_prop),
             ([objects.Noun, objects.Property], [], "after property", set_prop),
         ]
@@ -190,7 +190,7 @@ def analysis_rule(atom_rule: Rule, stage: str = "before prefix") -> list[RuleInf
         match_list = [
             ([objects.TextAnd], [], "before property", do_nothing),
         ]
-        info_list = [RuleInfo([], [], objects.Noun, [], objects.Operator, [], objects.Property)]
+        info_list = [RuleInfo([], 0, objects.Noun, [], objects.Operator, 0, objects.Property)]
     elif stage == "text_ noun": # metatext
         match_list = [
             ([objects.TextText_], [], "text_ noun", text_text_noun),

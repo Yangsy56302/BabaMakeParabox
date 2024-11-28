@@ -1,6 +1,5 @@
 import json
 import os
-import warnings
 
 from BabaMakeParabox import basics
 
@@ -22,3 +21,22 @@ def set_current_language(name: str) -> None:
 
 yes = ["y", "Y", "yes", "Yes", "YES"]
 no = ["n", "N", "no", "No", "NO"]
+
+def lang_print(message_id: str, /, **formats) -> None:
+    if len(formats) == 0:
+        print(current_language[message_id])
+    else:
+        print(current_language[message_id].format(**formats))
+
+def lang_input(message_id: str, /, **formats) -> str:
+    if len(formats) == 0:
+        ret = input(current_language[message_id])
+    else:
+        ret = input(current_language[message_id].format(**formats))
+    return ret
+
+def cls() -> None:
+    if basics.current_os == basics.windows:
+        print("\x1B[2J\x1B[0f", end=None)
+    else:
+        print("\x1B[2J\x1B[3J\x1B[H", end=None)
