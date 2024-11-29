@@ -14,25 +14,28 @@
     + **`NEG`**
         + 添加。
         + 类似于`NOT`，用于更为宽松的否定用途。
+            + *这词在代码里总共也就存在了一天的时间，甚至连设定都是残废状态……*
 + **技术性**
     + **`rules.analysis_rule`，`get_rules_from_pos_and_orient`**
-        + 彻底重写 _，这下不仅能很快理解还更容易扩展了_ 。
-    + **`objects.Transform`及其相关代码，`objects.Sprite`**
-        + 移除。
+        + 彻底重写。
+            + *这下不仅很快就能理解，还容易扩展多了。* 
     + **`objects.Properties`**
         + 添加。
         + 用于管理物体、世界、关卡和“游戏”的一般属性，同时附带管理其余运算符文本所添加的特殊属性的功能。
-            + 代替了多个毫不相干的类型中几乎所有用于存储属性词的硬编码变量。
+            + *代替了多个毫不相干的类型中几乎所有用于存储属性词的硬编码变量。*
     + **`objects.Game`**
         + 现在作为“用于指出需要创建新窗口的临时物体”的类被使用，而不再仅是`objects.TextGame`的指代对象。
     + **`basics.get_json_dump_kwds`**
         + 添加。
-            + 但未被使用。
+            + *但被我忘了。*
         + 用于获取JSON文件的存储格式参数（是否格式化）。
     + **`objects.BmpObject.set_sprite`**
         + 现在可以接受并忽略多余的关键词参数，以简化纹理显示流程。
     + **`objects.get_noun_from_obj`**
         + 重命名为`objects.get_noun_from_type`。
+    + **`objects.Transform`和`objects.Sprite`**
+        + 移除。
+        + *旧版本的遗留。*
     + 将许多零散的相似代码提取到了新的函数中，或者用条件分支取代。
         + 变化幅度较大的部分包括`levels.Level.update_rules`，`games.play`等。
     + 将用于处理特殊转换的代码从`levelpacks.Levelpack.transform`移至`levelpacks.Levelpack.special_transform`。
@@ -45,15 +48,18 @@
     + **`NEG`**
         + 移除。
 + **控制台**
-    + 输入文件名时又需要包含后缀名了。
     + 现在部分情况下（选择关卡包文件等）会自动显示文件夹内的指定类型文件。
+    + 输入文件名时又需要包含后缀名了。
+    + 更新了许多文本。
     + **分隔线**
         + 添加。
         + 用于标注一段新的文本的开始。
-    + 更新了许多文本。
 + **漏洞**
     + 部分还原了`3.7`中对`NOT`的更改。
 + **技术性**
+    + **`languages.lang_print`和`languages.lang_input`**
+        + 添加。
+        + 用于输出格式化翻译文本和使用格式化翻译文本请求输入的自定义函数。
     + **`games`**
         + 重命名为`plays`。
     + **`subgames`**
@@ -62,9 +68,6 @@
         + 重新用于存储否定次数而非否定词列表，且因此重命名`list`到`tier`。
     + 游戏图标的文件名不再包含多余的后缀。
     + 启动器的许多逻辑被拆分到了新的函数内部。
-    + **`languages.lang_print`和`languages.lang_input`**
-        + 添加。
-        + 用于输出格式化翻译文本和使用格式化翻译文本请求输入的自定义函数。
 
 ##### 3.702
 
@@ -75,15 +78,8 @@
     + 将翻译字段内的`main`重命名为`launch`。
 + **漏洞**
     + 修复了没有被显式赋予`ENTER`/`LEAVE`属性的物体无法进入/退出世界的Bug。
-    + 修复了子游戏所用的程序文件在代码中仍被标记为`SubabaMakeParabox`导致将其他物体转换为`GAME`无法产生新窗口的Bug。
+    + 修复了尽管子游戏所用的程序名已经被重命名，但代码内的常量并未同步改动，导致将其他物体转换为`GAME`无法产生新窗口的Bug。
 + **技术性**
-    + **`basics.get_json_dump_kwds`**
-        + 在添加后首次被使用。
-    + **`levels.Level.find_rules`**
-        + 移除。
-    + **`objects.temp_calc`**
-        + 移除。
-            + 曾用于测试否定词新逻辑，且未被及时删除的临时函数。
     + **`objects.Properties`**
         + **`enabled`，`disabled`**
             + 添加。
@@ -91,5 +87,12 @@
     + **`languages.lang_format`**
         + 添加。
         + 单独用于格式化翻译文本的自定义函数。
+    + **`basics.get_json_dump_kwds`**
+        + 在添加后首次被使用。
+    + **`levels.Level.find_rules`**
+        + 移除。
+    + **`objects.temp_calc`**
+        + 移除。
+        + *曾用于测试否定词新逻辑，且未被及时删除的临时函数。*
     + 移除了部分无用函数。
     + 再次拆分了启动器的逻辑。
