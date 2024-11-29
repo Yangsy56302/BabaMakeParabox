@@ -9,6 +9,7 @@ The original games are [**Baba Is You**](https://hempuli.com/baba/) and [**Patri
 made separately by **Arvi Hempuli** and **Patrick Traynor**.
 
 **This game used [The MIT License](https://opensource.org/license/MIT/).**
+Kinda.
 
 **This game used [Pygame](https://www.pygame.org/news/) for game engine, and Pygame used [GNU Lesser General Public License, version 2.1](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html)。**
 Therefore, I'm not providing any source code of Pygame, please get it by yourself.
