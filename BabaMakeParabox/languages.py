@@ -22,18 +22,14 @@ def set_current_language(name: str) -> None:
 yes = ["y", "Y", "yes", "Yes", "YES"]
 no = ["n", "N", "no", "No", "NO"]
 
+def lang_format(message_id: str, /, **formats) -> str:
+    return current_language[message_id].format(lang = current_language[message_id], **formats)
+
 def lang_print(message_id: str, /, **formats) -> None:
-    if len(formats) == 0:
-        print(current_language[message_id])
-    else:
-        print(current_language[message_id].format(**formats))
+    print(current_language[message_id].format(lang = current_language[message_id], **formats))
 
 def lang_input(message_id: str, /, **formats) -> str:
-    if len(formats) == 0:
-        ret = input(current_language[message_id])
-    else:
-        ret = input(current_language[message_id].format(**formats))
-    return ret
+    return input(current_language[message_id].format(lang = current_language[message_id], **formats))
 
 def cls() -> None:
     if basics.current_os == basics.windows:

@@ -38,22 +38,6 @@ class Level(object):
         self.sound_events: list[str] = []
     def __eq__(self, level: "Level") -> bool:
         return self.name == level.name
-    def find_rules(self, *match_rule: Optional[type[objects.Text]]) -> list[rules.Rule]:
-        found_rules = []
-        for rule in self.rule_list:
-            if len(rule) != len(match_rule):
-                continue
-            not_match = False
-            for i in range(len(rule)):
-                text_type = match_rule[i]
-                if text_type is not None:
-                    if not issubclass(rule[i], text_type):
-                        not_match = True
-                        break
-            if not_match:
-                continue
-            found_rules.append(rule)
-        return found_rules
     @property
     def main_world(self) -> worlds.World:
         return self.get_exact_world({"name": self.main_world_name, "infinite_tier": self.main_world_tier})
@@ -439,15 +423,15 @@ class Level(object):
         new_pos = spaces.pos_facing(pos, orient)
         exit_world = False
         exit_list = []
-        if world.out_of_range(new_pos) and obj.properties.has(objects.TextLeave):
+        if world.out_of_range(new_pos) and not obj.properties.disabled(objects.TextLeave):
             exit_world = True
             # infinite exit
             if world in passed:
                 super_world_list = self.find_super_worlds({"name": world.name, "infinite_tier": world.infinite_tier + 1})
                 for super_world, world_obj in super_world_list:
-                    if isinstance(world_obj, objects.World) and not super_world.properties[objects.World].has(objects.TextLeave):
+                    if isinstance(world_obj, objects.World) and not super_world.properties[objects.World].disabled(objects.TextLeave):
                         continue
-                    if isinstance(world_obj, objects.Clone) and not super_world.properties[objects.Clone].has(objects.TextLeave):
+                    if isinstance(world_obj, objects.Clone) and not super_world.properties[objects.Clone].disabled(objects.TextLeave):
                         continue
                     new_transnum = super_world.transnum_to_bigger_transnum(transnum, world_obj.pos, orient) if transnum is not None else world.pos_to_transnum(obj.pos, orient)
                     new_move_list = self.get_move_list(super_world, obj, orient, world_obj.pos, pushed, passed, new_transnum, depth)
@@ -461,9 +445,9 @@ class Level(object):
             else:
                 inf_super_world_list = self.find_super_worlds({"name": world.name, "infinite_tier": world.infinite_tier})
                 for inf_super_world, world_obj in inf_super_world_list:
-                    if isinstance(world_obj, objects.World) and not inf_super_world.properties[objects.World].has(objects.TextLeave):
+                    if isinstance(world_obj, objects.World) and not inf_super_world.properties[objects.World].disabled(objects.TextLeave):
                         continue
-                    if isinstance(world_obj, objects.Clone) and not inf_super_world.properties[objects.Clone].has(objects.TextLeave):
+                    if isinstance(world_obj, objects.Clone) and not inf_super_world.properties[objects.Clone].disabled(objects.TextLeave):
                         continue
                     new_transnum = inf_super_world.transnum_to_bigger_transnum(transnum, world_obj.pos, orient) if transnum is not None else world.pos_to_transnum(obj.pos, orient)
                     passed.append(world)
@@ -520,9 +504,9 @@ class Level(object):
             sub_world = self.get_world(obj.world_info)
             if sub_world is None:
                 pass
-            elif isinstance(obj, objects.World) and not sub_world.properties[objects.World].has(objects.TextEnter):
+            elif isinstance(obj, objects.World) and not sub_world.properties[objects.World].disabled(objects.TextEnter):
                 pass
-            elif isinstance(obj, objects.Clone) and not sub_world.properties[objects.Clone].has(objects.TextEnter):
+            elif isinstance(obj, objects.Clone) and not sub_world.properties[objects.Clone].disabled(objects.TextEnter):
                 pass
             else:
                 new_push_objects = list(filter(lambda o: objects.Properties.has(o.properties, objects.TextPush), world.get_objs_from_pos(new_pos)))
@@ -532,7 +516,7 @@ class Level(object):
                     temp_stop_object.properties.update(objects.TextStop, 0)
                     world.new_obj(temp_stop_object)
                     for new_push_object in new_push_objects:
-                        if not new_push_object.properties.has(objects.TextEnter):
+                        if new_push_object.properties.disabled(objects.TextEnter):
                             squeeze = False
                             break
                         input_pos = sub_world.default_input_position(orient)
@@ -549,7 +533,7 @@ class Level(object):
         enter_world = False
         enter_list = []
         worlds_that_cant_push = [o for o in objects_that_cant_push if isinstance(o, objects.WorldPointer)]
-        if len(worlds_that_cant_push) != 0 and (not world.out_of_range(new_pos)) and obj.properties.has(objects.TextEnter):
+        if len(worlds_that_cant_push) != 0 and (not world.out_of_range(new_pos)) and not obj.properties.disabled(objects.TextEnter):
             enter_world = True
             enter_atleast_one_world = False
             for world_obj in worlds_that_cant_push:
@@ -557,9 +541,9 @@ class Level(object):
                 if sub_world is None:
                     enter_world = False
                     break
-                elif isinstance(world_obj, objects.World) and not sub_world.properties[objects.World].has(objects.TextEnter):
+                elif isinstance(world_obj, objects.World) and not sub_world.properties[objects.World].disabled(objects.TextEnter):
                     pass
-                elif isinstance(world_obj, objects.Clone) and not sub_world.properties[objects.Clone].has(objects.TextEnter):
+                elif isinstance(world_obj, objects.Clone) and not sub_world.properties[objects.Clone].disabled(objects.TextEnter):
                     pass
                 else:
                     new_move_list = None
@@ -569,9 +553,9 @@ class Level(object):
                         if inf_sub_world is None:
                             enter_world = False
                             break
-                        elif isinstance(world_obj, objects.World) and not inf_sub_world.properties[objects.World].has(objects.TextEnter):
+                        elif isinstance(world_obj, objects.World) and not inf_sub_world.properties[objects.World].disabled(objects.TextEnter):
                             pass
-                        elif isinstance(world_obj, objects.Clone) and not inf_sub_world.properties[objects.Clone].has(objects.TextEnter):
+                        elif isinstance(world_obj, objects.Clone) and not inf_sub_world.properties[objects.Clone].disabled(objects.TextEnter):
                             pass
                         else:
                             new_transnum = 0.5
@@ -997,12 +981,12 @@ class Level(object):
         for world in self.world_list:
             for game_obj in world.get_objs_from_type(objects.Game):
                 if basics.current_os == basics.windows:
-                    if os.path.exists("SubabaMakeParabox.exe"):
-                        os.system(f"start SubabaMakeParabox.exe {game_obj.obj_type.json_name}")
-                    elif os.path.exists("SubabaMakeParabox.py"):
-                        os.system(f"start /b python SubabaMakeParabox.py {game_obj.obj_type.json_name}")
+                    if os.path.exists("submp.exe"):
+                        os.system(f"start submp.exe {game_obj.obj_type.json_name}")
+                    elif os.path.exists("submp.py"):
+                        os.system(f"start /b python submp.py {game_obj.obj_type.json_name}")
                 elif basics.current_os == basics.linux:
-                    os.system(f"python ./SubabaMakeParabox.py {game_obj.obj_type.json_name} &")
+                    os.system(f"python ./submp.py {game_obj.obj_type.json_name} &")
     def win(self) -> bool:
         for world in self.world_list:
             you_objs = [o for o in world.object_list if o.properties.has(objects.TextYou)]

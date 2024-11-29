@@ -25,28 +25,15 @@ class BmpObjectJson(TypedDict):
 
 PropertiesDict = dict[type["Text"], dict[int, int]]
 
-def temp_calc(negnum_list: list[int], negated_number: int = 0):
-    negnum_list.sort(reverse=True)
-    current_negnum = negnum_list[0]
-    current_count = 0
-    for n in negnum_list:
-        if n < negated_number:
-            break
-        elif n == current_negnum:
-            current_count += 1
-        elif current_negnum - n == 1:
-            current_count = min(0, -current_count) + 1
-            current_negnum = n
-        else:
-            current_count = 1
-            current_negnum = n
-    return max(0, current_count) if current_negnum == negated_number else 0
-
 class Properties(object):
     def __init__(self, prop: Optional[PropertiesDict] = None) -> None:
         self.__dict: PropertiesDict = prop if prop is not None else {}
     @staticmethod
     def calc_count(negnum_dict: dict[int, int], negated_number: int = 0) -> int:
+        if len(negnum_dict) == 0:
+            return 0
+        if len(negnum_dict) == 1:
+            return list(negnum_dict.values())[0]
         negnum_list = []
         for neg, num in negnum_dict.items():
             negnum_list.extend([neg] * num)
@@ -93,8 +80,12 @@ class Properties(object):
         return False
     def clear(self) -> None:
         self.__dict.clear()
+    def enabled(self, prop: type["Text"]) -> bool:
+        return self.calc_count(self.__dict.get(prop, {}), 0) > 0
+    def disabled(self, prop: type["Text"]) -> bool:
+        return self.calc_count(self.__dict.get(prop, {}), 1) > 0
     def enabled_dict(self) -> dict[type["Text"], int]:
-        return {k: self.calc_count(v) for k, v in self.__dict.items()}
+        return {k: self.calc_count(v, 0) for k, v in self.__dict.items()}
     def disabled_dict(self) -> dict[type["Text"], int]:
         return {k: self.calc_count(v, 1) for k, v in self.__dict.items()}
 

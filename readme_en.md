@@ -242,3 +242,4 @@ For example, `fps` means frames per second (theoretically, it is), and `fpw` mea
 | 3.623  | 2024.11.26 | File is Rename |
 | 3.7    | 2024.11.27 | Baba feeling You and You and not You is You |
 | 3.701  | 2024.11.28 | Text_Neg is not Text; Image is Rename; Text on Window feeling Black is More |
+| 3.702  | 2024.11.29 | See changelog.md |

@@ -105,7 +105,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     current_world = current_level.get_world_or_default({"name": current_world.name, "infinite_tier": current_world.infinite_tier}, default=current_level.main_world)
                     refresh = True
             elif keys["R"]:
-                languages.lang_print("game.level.restart")
+                languages.lang_print("play.level.restart")
                 sounds.play("restart")
                 current_level = copy.deepcopy(history[current_level.name][0])
                 current_world = current_level.get_world_or_default({"name": current_world.name, "infinite_tier": current_world.infinite_tier}, default=current_level.main_world)
@@ -113,13 +113,13 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 world_changed = True
                 refresh = True
             elif keys["TAB"]:
-                languages.lang_print("game.levelpack.rule_list")
+                languages.lang_print("seperator.title", text=languages.lang_format("title.levelpack.rule_list"))
                 for rule in levelpack.rule_list:
                     str_list = []
                     for obj_type in rule:
                         str_list.append(obj_type.display_name)
                     print(" ".join(str_list))
-                languages.lang_print("game.world.rule_list")
+                languages.lang_print("seperator.title", text=languages.lang_format("title.world.rule_list"))
                 for rule in current_world.rule_list:
                     str_list = []
                     for obj_type in rule:
@@ -160,14 +160,14 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         if refresh:
             # game properties at update
             if current_level.game_properties.has(objects.TextWin):
-                languages.lang_print("game.win")
+                languages.lang_print("play.win")
                 sounds.play("win")
                 game_running = False
             if current_level.game_properties.has(objects.TextShut):
                 sounds.play("defeat")
                 game_running = False
             if current_level.game_properties.has(objects.TextEnd):
-                languages.lang_print("game.end")
+                languages.lang_print("play.end")
                 sounds.play("end")
                 basics.options["game_is_end"] = True
                 game_running = False
@@ -200,19 +200,19 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             # level state check
             levelpack.set_level(current_level)
             if levelpack_info["win"]:
-                languages.lang_print("game.level.win")
+                languages.lang_print("play.level.win")
                 if freeze_time == -1:
                     freeze_time = basics.options["fps"]
             elif levelpack_info["end"]:
-                languages.lang_print("game.levelpack.end")
+                languages.lang_print("play.levelpack.end")
                 if freeze_time == -1:
                     freeze_time = basics.options["fps"]
             elif levelpack_info["transform"]:
-                languages.lang_print("game.level.transform")
+                languages.lang_print("play.level.transform")
                 if freeze_time == -1:
                     freeze_time = basics.options["fps"]
             elif levelpack_info["selected_level"] is not None:
-                languages.lang_print("game.level.enter")
+                languages.lang_print("play.level.enter")
                 if freeze_time == -1:
                     freeze_time = basics.options["fps"]
             for level in levelpack.level_list:
@@ -240,11 +240,11 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 current_level = levelpack.get_exist_level(levelpack_info["selected_level"])
                 current_world = current_level.get_exact_world({"name": current_level.main_world_name, "infinite_tier": current_level.main_world_tier})
         if level_changed:
-            print(languages.current_language["game.level.current.name"], current_level.name, sep="")
+            print(languages.current_language["play.level.current.name"], current_level.name, sep="")
             level_changed = False
         if world_changed:
-            print(languages.current_language["game.world.current.name"], current_world.name, sep="")
-            print(languages.current_language["game.world.current.infinite_tier"], current_world.infinite_tier, sep="")
+            print(languages.current_language["play.world.current.name"], current_world.name, sep="")
+            print(languages.current_language["play.world.current.infinite_tier"], current_world.infinite_tier, sep="")
             world_changed = False
         pygame.mixer.music.set_volume(1.0 if current_level.have_you() else 0.5)
         # display

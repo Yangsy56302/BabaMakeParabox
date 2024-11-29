@@ -19,42 +19,38 @@ def show_dir(path: str, filter_func: Optional[Callable[[str], bool]] = None, tab
             show_dir(os.path.abspath(filelike.path), filter_func, tab + 1)
 
 def pre_play() -> bool:
-    languages.lang_print("line")
-    languages.lang_print("output.directory")
+    languages.lang_print("seperator.title", text=languages.lang_format("title.directory", dir="levelpacks"))
     show_dir("levelpacks", lambda s: s.endswith(".json"))
-    languages.lang_print("output.end")
-    languages.lang_print("line")
-    languages.lang_print("main.open.levelpack")
+    languages.lang_print("seperator.title", text=languages.lang_format("title.open.file"))
+    languages.lang_print("launch.open.levelpack")
     input_filename = languages.lang_input("input.file.name")
     if not os.path.isfile(os.path.join("levelpacks", input_filename)):
         languages.lang_print("warn.file.not_found", file=input_filename)
         return False
     with open(os.path.join("levelpacks", input_filename), "r", encoding="utf-8") as file:
         levelpack_json = json.load(file)
-        languages.lang_print("main.open.levelpack.done", file=input_filename)
+        languages.lang_print("launch.open.levelpack.done", file=input_filename)
         levelpack = levelpacks.json_to_levelpack(levelpack_json)
-    languages.lang_print("game.start")
+    languages.lang_print("play.start")
     levelpack = plays.play(levelpack)
-    languages.lang_print("line")
-    languages.lang_print("main.save.levelpack")
-    languages.lang_print("main.save.levelpack.empty.game")
+    languages.lang_print("seperator.title", text=languages.lang_format("title.save.file"))
+    languages.lang_print("launch.save.levelpack")
+    languages.lang_print("launch.save.levelpack.empty.game")
     output_filename = languages.lang_input("input.file.name")
     if output_filename != "":
         if not os.path.isfile(os.path.join("levelpacks", output_filename)):
             languages.lang_print("warn.file.not_found", file=input_filename)
             return False
         with open(os.path.join("levelpacks", output_filename), "w", encoding="utf-8") as file:
-            json.dump(levelpack.to_json(), file, indent=None if basics.options["compressed_json_output"] else 4, separators=(",", ":") if basics.options["compressed_json_output"] else (", ", ": "))
+            json.dump(levelpack.to_json(), file, **basics.get_json_dump_kwds())
     return True
 
 def pre_edit() -> bool:
-    languages.lang_print("line")
-    languages.lang_print("output.directory")
+    languages.lang_print("seperator.title", text=languages.lang_format("title.directory", dir="levelpacks"))
     show_dir("levelpacks", lambda s: s.endswith(".json"))
-    languages.lang_print("output.end")
-    languages.lang_print("line")
-    languages.lang_print("main.open.levelpack")
-    languages.lang_print("main.open.levelpack.empty.editor")
+    languages.lang_print("seperator.title", text=languages.lang_format("title.open.file"))
+    languages.lang_print("launch.open.levelpack")
+    languages.lang_print("launch.open.levelpack.empty.editor")
     input_filename = languages.lang_input("input.file.name")
     default_new_world_settings = basics.options["default_new_world"]
     size = (default_new_world_settings["width"], default_new_world_settings["height"])
@@ -65,60 +61,51 @@ def pre_edit() -> bool:
             return False
         with open(os.path.join("levelpacks", input_filename), "r", encoding="utf-8") as file:
             levelpack_json = json.load(file)
-            languages.lang_print("main.open.levelpack.done", file=input_filename)
+            languages.lang_print("launch.open.levelpack.done", file=input_filename)
             levelpack = levelpacks.json_to_levelpack(levelpack_json)
     else:
         world = worlds.World("main", size, color=color)
         level = levels.Level("main", [world])
         levelpack = levelpacks.Levelpack("main", [level])
     levelpack = edits.levelpack_editor(levelpack)
-    languages.lang_print("line")
-    languages.lang_print("main.save.levelpack")
-    languages.lang_print("main.save.levelpack.empty.editor")
+    languages.lang_print("seperator.title", text=languages.lang_format("title.save.file"))
+    languages.lang_print("launch.save.levelpack")
+    languages.lang_print("launch.save.levelpack.empty.editor")
     output_filename = languages.lang_input("input.file.name")
     if output_filename != "":
         with open(os.path.join("levelpacks", output_filename), "w", encoding="utf-8") as file:
-            json.dump(levelpack.to_json(), file, indent=None if basics.options["compressed_json_output"] else 4, separators=(",", ":") if basics.options["compressed_json_output"] else (", ", ": "))
-            languages.lang_print("main.save.levelpack.done", file=output_filename)
+            json.dump(levelpack.to_json(), file, **basics.get_json_dump_kwds())
+            languages.lang_print("launch.save.levelpack.done", file=output_filename)
     return True
 
 def update_levelpack() -> bool:
-    languages.lang_print("line")
-    languages.lang_print("output.directory")
+    languages.lang_print("seperator.title", text=languages.lang_format("title.directory", dir="levelpacks"))
     show_dir("levelpacks", lambda s: s.endswith(".json"))
-    languages.lang_print("output.end")
-    languages.lang_print("line")
-    languages.lang_print("main.open.levelpack")
+    languages.lang_print("seperator.title", text=languages.lang_format("title.open.file"))
+    languages.lang_print("launch.open.levelpack")
     input_filename = languages.lang_input("input.file.name")
     if not os.path.isfile(os.path.join("levelpacks", input_filename)):
         languages.lang_print("warn.file.not_found", file=input_filename)
         return False
     with open(os.path.join("levelpacks", input_filename), "r", encoding="utf-8") as file:
             levelpack_json = json.load(file)
-            languages.lang_print("main.open.levelpack.done", file=input_filename)
+            languages.lang_print("launch.open.levelpack.done", file=input_filename)
             levelpack = levelpacks.json_to_levelpack(levelpack_json)
-    languages.lang_print("line")
-    languages.lang_print("main.save.levelpack")
-    languages.lang_print("main.save.levelpack.empty.update")
+    languages.lang_print("seperator.title", text=languages.lang_format("title.save.file"))
+    languages.lang_print("launch.save.levelpack")
+    languages.lang_print("launch.save.levelpack.empty.update")
     output_filename = languages.lang_input("input.file.name")
     if output_filename == "":
         output_filename = input_filename
     with open(os.path.join("levelpacks", output_filename), "w", encoding="utf-8") as file:
-        json.dump(levelpack.to_json(), file, indent=None if basics.options["compressed_json_output"] else 4, separators=(",", ":") if basics.options["compressed_json_output"] else (", ", ": "))
-        languages.lang_print("main.save.levelpack.done", file=output_filename)
-    return True
-
-def pre_main_check() -> bool:
-    if os.environ.get(basics.pyinst_env) == "TRUE":
-        return False
-    if basics.options.get("game_is_done"):
-        raise plays.GameIsDoneError()
+        json.dump(levelpack.to_json(), file, **basics.get_json_dump_kwds())
+        languages.lang_print("launch.save.levelpack.done", file=output_filename)
     return True
 
 def change_options() -> bool:
-    languages.lang_print("line")
+    languages.lang_print("seperator.title", text=languages.lang_format("title.change_options"))
     while True:
-        languages.lang_print("main.change_options.fps")
+        languages.lang_print("launch.change_options.fps")
         fps_preset = languages.lang_input("input.number")
         try:
             fps_preset = int(fps_preset)
@@ -139,16 +126,16 @@ def change_options() -> bool:
                 break
             case _:
                 languages.lang_print("warn.value.out_of_range", min=1, max=4, val=fps_preset)
-    if languages.lang_input("main.change_options.json") in languages.yes:
+    if languages.lang_input("launch.change_options.json") in languages.yes:
         basics.options.update({"compressed_json_output": False})
     else:
         basics.options.update({"compressed_json_output": True})
-    if languages.lang_input("main.change_options.bgm") in languages.yes:
+    if languages.lang_input("launch.change_options.bgm") in languages.yes:
         basics.options.update({"bgm": {"enabled": True, "name": "rush_baba.mid"}})
     else:
         basics.options.update({"bgm": {"enabled": False, "name": "rush_baba.mid"}})
     while True:
-        languages.lang_print("main.change_options.metatext")
+        languages.lang_print("launch.change_options.metatext")
         metatext_tier = languages.lang_input("input.number")
         try:
             metatext_tier = int(metatext_tier)
@@ -163,10 +150,18 @@ def change_options() -> bool:
             else:
                 basics.options.update({"metatext": {"enabled": True, "tier": metatext_tier}})
                 break
-    languages.lang_print("main.change_options.done")
+    languages.lang_print("launch.change_options.done")
     return True
 
-def main() -> None:
+def pre_main_check() -> bool:
+    if os.environ.get(basics.pyinst_env) == "TRUE":
+        return False
+    if basics.options.get("game_is_done"):
+        raise plays.GameIsDoneError()
+    return True
+
+def pre_main() -> None:
+    os.makedirs("levelpacks", exist_ok=True)
     if basics.options["lang"] not in languages.language_dict.keys():
         for lang in languages.language_dict.keys():
             print(languages.language_dict[lang]["language.select"])
@@ -175,12 +170,17 @@ def main() -> None:
         basics.options["lang"] = lang
     else:
         languages.set_current_language(basics.options["lang"])
+
+def main() -> None:
+    if not pre_main_check():
+        return
+    pre_main()
     try:
-        languages.lang_print("main.welcome")
+        languages.lang_print("launch.welcome")
         while True:
-            languages.lang_print("line")
+            languages.lang_print("seperator.title", text=languages.lang_format("title.game.name"))
             for n in map(lambda x: x + 1, range(4)):
-                print(languages.current_language[f"main.game_mode.{n}"])
+                print(languages.current_language[f"launch.game_mode.{n}"])
             game_mode = languages.lang_input("input.number")
             try:
                 game_mode = int(game_mode)
@@ -202,24 +202,22 @@ def main() -> None:
             else:
                 languages.lang_print("warn.value.out_of_range", min=1, max=4, val=game_mode)
     except KeyboardInterrupt:
-        print()
-        languages.lang_print("main.keyboard_interrupt")
-        languages.lang_print("main.keyboard_interrupt.insert")
-        languages.lang_print("main.exit")
+        languages.lang_print("seperator.title", text=languages.lang_format("title.warning"))
+        languages.lang_print("launch.keyboard_interrupt")
+        languages.lang_print("launch.keyboard_interrupt.insert")
         basics.save_options(basics.options)
-        pygame.quit()
-        languages.lang_print("main.thank_you")
     except Exception as e:
-        print()
-        languages.lang_print("main.exception")
-        languages.lang_print("main.exception.report")
-        languages.lang_print("main.exception.record")
-        raise e
+        languages.lang_print("seperator.title", text=languages.lang_format("title.exception"))
+        languages.lang_print("launch.exception")
+        languages.lang_print("launch.exception.report")
+        languages.lang_print("launch.exception.record")
+        print(repr(e))
     else:
-        print()
-        languages.lang_print("main.exit")
+        languages.lang_print("seperator.title", text=languages.lang_format("title.game.name"))
         basics.save_options(basics.options)
+    finally:
+        languages.lang_print("launch.exit")
         pygame.quit()
-        languages.lang_print("main.thank_you")
+        languages.lang_print("launch.thank_you")
 
 __all__ = ["basics", "languages", "spaces", "colors", "objects", "rules", "displays", "worlds", "levels", "levelpacks", "edits", "plays", "subs", "main"]
