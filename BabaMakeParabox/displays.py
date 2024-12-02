@@ -51,133 +51,41 @@ def set_surface_color_light(surface: pygame.Surface, color: colors.ColorHex) -> 
     return new_surface
 
 class Sprites(object):
-    def __init__(self, sprite_colors: dict[str, colors.ColorHex]) -> None:
-        self.sprite_colors = sprite_colors
+    def __init__(self) -> None:
+        pass
     def update(self) -> None:
-        self.raw_sprites: dict[str, pygame.Surface] = {}
-        self.sprites: dict[str, pygame.Surface] = {}
-        for filename in os.listdir(os.path.join("sprites")):
-            if not os.path.isfile(os.path.join("sprites", filename)):
+        self.raw_sprites: dict[str, dict[int, dict[int, pygame.Surface]]] = {}
+        self.sprites: dict[str, dict[int, dict[int, pygame.Surface]]] = {}
+        for obj_type in objects.object_used:
+            sprite_name: str = getattr(obj_type, "sprite_name", "")
+            if sprite_name == "":
                 continue
-            sprite = pygame.image.load(os.path.join("sprites", filename)).convert_alpha()
-            sprite_name = os.path.splitext(filename)[0]
-            sprite_basename = sprite_name
-            sprite_basename = sprite_basename[:sprite_basename.rfind("_")]
-            sprite_basename = sprite_basename[:sprite_basename.rfind("_")]
-            sprite_color = self.sprite_colors.get(sprite_basename)
-            sprite_color = colors.WHITE if sprite_color is None else sprite_color
-            self.raw_sprites[sprite_name] = sprite.copy()
-            self.sprites[sprite_name] = set_surface_color_dark(sprite, sprite_color)
-    def get(self, sprite_name: str, state: int, frame: int = 0, raw_sprite: bool = False) -> pygame.Surface:
+            sprite_color: colors.ColorHex = getattr(obj_type, "sprite_color", colors.WHITE)
+            sprite_varients: list[int] = getattr(obj_type, "sprite_varients")
+            self.raw_sprites.setdefault(sprite_name, {})
+            self.sprites.setdefault(sprite_name, {})
+            for varient_number in sprite_varients:
+                self.raw_sprites[sprite_name].setdefault(varient_number, {})
+                self.sprites[sprite_name].setdefault(varient_number, {})
+                for frame in range(1, 4):
+                    filename = "_".join([sprite_name, str(varient_number), str(frame)]) + ".png"
+                    sprite = pygame.image.load(os.path.join("sprites", filename)).convert_alpha()
+                    self.raw_sprites[sprite_name][int(varient_number)][int(frame)] = sprite.copy()
+                    self.sprites[sprite_name][int(varient_number)][int(frame)] = set_surface_color_dark(sprite, sprite_color)
+        special_sprite_name: list[str] = ["empty", "text_infinite", "text_epsilon"]
+        special_sprite_name.extend(["text_" + str(i) for i in range(10)])
+        for sprite_name in special_sprite_name:
+            self.raw_sprites.setdefault(sprite_name, {0: {}})
+            self.sprites.setdefault(sprite_name, {0: {}})
+            for frame in range(1, 4):
+                filename = "_".join([sprite_name, str(varient_number), str(frame)]) + ".png"
+                sprite = pygame.image.load(os.path.join("sprites", filename)).convert_alpha()
+                self.raw_sprites[sprite_name][0][int(frame)] = sprite.copy()
+                self.sprites[sprite_name][0][int(frame)] = set_surface_color_dark(sprite, sprite_color)
+    def get(self, name: str, varient: int, frame: int = 0, raw_sprite: bool = False) -> pygame.Surface:
         if raw_sprite:
-            return self.raw_sprites["_".join([sprite_name, str(state), str(frame)])]
-        return self.sprites["_".join([sprite_name, str(state), str(frame)])]
-
-sprite_colors: dict[str, colors.ColorHex] = {}
-
-sprite_colors["baba"] = colors.WHITE
-sprite_colors["keke"] = colors.LIGHT_RED
-sprite_colors["me"] = colors.LIGHT_PURPLE
-sprite_colors["patrick"] = colors.MAGENTA
-sprite_colors["skull"] = colors.DARKER_RED
-sprite_colors["ghost"] = colors.PINK
-sprite_colors["wall"] = colors.DARK_GRAY_BLUE
-sprite_colors["hedge"] = colors.DARK_GREEN
-sprite_colors["ice"] = colors.LIGHT_GRAY_BLUE
-sprite_colors["tile"] = colors.DARK_GRAY
-sprite_colors["grass"] = colors.DARK_GRAY_GREEN
-sprite_colors["water"] = colors.LIGHT_GRAY_BLUE
-sprite_colors["lava"] = colors.LIGHT_ORANGE
-sprite_colors["door"] = colors.LIGHT_RED
-sprite_colors["key"] = colors.LIGHT_YELLOW
-sprite_colors["box"] = colors.BROWN
-sprite_colors["rock"] = colors.LIGHT_BROWN
-sprite_colors["fruit"] = colors.LIGHT_RED
-sprite_colors["belt"] = colors.DARK_GRAY_BLUE
-sprite_colors["sun"] = colors.LIGHT_YELLOW
-sprite_colors["moon"] = colors.LIGHT_YELLOW
-sprite_colors["star"] = colors.LIGHT_YELLOW
-sprite_colors["what"] = colors.WHITE
-sprite_colors["love"] = colors.PINK
-sprite_colors["flag"] = colors.LIGHT_YELLOW
-sprite_colors["line"] = colors.WHITE
-sprite_colors["dot"] = colors.WHITE
-sprite_colors["cursor"] = colors.PINK
-sprite_colors["level"] = colors.WHITE
-sprite_colors["world"] = colors.LIGHT_GRAY_BLUE
-sprite_colors["clone"] = colors.LIGHTER_GRAY_BLUE
-sprite_colors["text_baba"] = colors.MAGENTA
-sprite_colors["text_keke"] = colors.LIGHT_RED
-sprite_colors["text_me"] = colors.LIGHT_PURPLE
-sprite_colors["text_patrick"] = colors.MAGENTA
-sprite_colors["text_skull"] = colors.DARKER_RED
-sprite_colors["text_ghost"] = colors.PINK
-sprite_colors["text_wall"] = colors.LIGHT_GRAY
-sprite_colors["text_hedge"] = colors.DARK_GREEN
-sprite_colors["text_ice"] = colors.LIGHT_GRAY_BLUE
-sprite_colors["text_tile"] = colors.LIGHT_GRAY
-sprite_colors["text_grass"] = colors.LIGHT_GRAY_GREEN
-sprite_colors["text_water"] = colors.LIGHT_GRAY_BLUE
-sprite_colors["text_lava"] = colors.LIGHT_ORANGE
-sprite_colors["text_door"] = colors.LIGHT_RED
-sprite_colors["text_key"] = colors.LIGHT_YELLOW
-sprite_colors["text_box"] = colors.BROWN
-sprite_colors["text_rock"] = colors.BROWN
-sprite_colors["text_fruit"] = colors.LIGHT_RED
-sprite_colors["text_belt"] = colors.LIGHT_GRAY_BLUE
-sprite_colors["text_sun"] = colors.LIGHT_YELLOW
-sprite_colors["text_moon"] = colors.LIGHT_YELLOW
-sprite_colors["text_star"] = colors.LIGHT_YELLOW
-sprite_colors["text_what"] = colors.WHITE
-sprite_colors["text_love"] = colors.PINK
-sprite_colors["text_flag"] = colors.LIGHT_YELLOW
-sprite_colors["text_line"] = colors.WHITE
-sprite_colors["text_dot"] = colors.WHITE
-sprite_colors["text_cursor"] = colors.LIGHT_YELLOW
-sprite_colors["text_all"] = colors.WHITE
-sprite_colors["text_empty"] = colors.WHITE
-sprite_colors["text_text"] = colors.MAGENTA
-sprite_colors["text_level"] = colors.MAGENTA
-sprite_colors["text_world"] = colors.LIGHT_GRAY_BLUE
-sprite_colors["text_clone"] = colors.LIGHTER_GRAY_BLUE
-sprite_colors["text_game"] = colors.PINK
-sprite_colors["text_often"] = colors.LIGHT_GRAY_GREEN
-sprite_colors["text_seldom"] = colors.GRAY_BLUE
-sprite_colors["text_meta"] = colors.MAGENTA
-sprite_colors["text_text_underline"] = colors.MAGENTA
-sprite_colors["text_on"] = colors.WHITE
-sprite_colors["text_near"] = colors.WHITE
-sprite_colors["text_nextto"] = colors.WHITE
-sprite_colors["text_without"] = colors.WHITE
-sprite_colors["text_feeling"] = colors.WHITE
-sprite_colors["text_is"] = colors.WHITE
-sprite_colors["text_has"] = colors.WHITE
-sprite_colors["text_make"] = colors.WHITE
-sprite_colors["text_write"] = colors.WHITE
-sprite_colors["text_not"] = colors.LIGHT_RED
-sprite_colors["text_and"] = colors.WHITE
-sprite_colors["text_you"] = colors.MAGENTA
-sprite_colors["text_move"] = colors.LIGHT_GREEN
-sprite_colors["text_stop"] = colors.DARK_GREEN
-sprite_colors["text_push"] = colors.BROWN
-sprite_colors["text_sink"] = colors.LIGHT_GRAY_BLUE
-sprite_colors["text_float"] = colors.LIGHTER_GRAY_BLUE
-sprite_colors["text_open"] = colors.LIGHT_YELLOW
-sprite_colors["text_shut"] = colors.LIGHT_RED
-sprite_colors["text_hot"] = colors.LIGHT_ORANGE
-sprite_colors["text_melt"] = colors.LIGHT_GRAY_BLUE
-sprite_colors["text_win"] = colors.LIGHT_YELLOW
-sprite_colors["text_defeat"] = colors.DARK_RED
-sprite_colors["text_shift"] = colors.LIGHT_GRAY_BLUE
-sprite_colors["text_tele"] = colors.LIGHTER_GRAY_BLUE
-sprite_colors["text_enter"] = colors.LIGHT_GREEN
-sprite_colors["text_leave"] = colors.LIGHT_RED
-sprite_colors["text_word"] = colors.WHITE
-sprite_colors["text_select"] = colors.LIGHT_YELLOW
-sprite_colors["text_text_plus"] = colors.MAGENTA
-sprite_colors["text_text_minus"] = colors.PINK
-sprite_colors["text_end"] = colors.WHITE
-sprite_colors["text_done"] = colors.WHITE
+            return self.raw_sprites[name][varient][frame]
+        return self.sprites[name][varient][frame]
 
 order = [objects.Cursor,
          objects.Operator,
@@ -194,4 +102,4 @@ order = [objects.Cursor,
          objects.WorldPointer,
          objects.BmpObject]
 
-sprites = Sprites(sprite_colors)
+sprites = Sprites()

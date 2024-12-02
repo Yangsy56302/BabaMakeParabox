@@ -1,22 +1,20 @@
 from typing import Any, Optional, TypedDict
 import random
 
-from BabaMakeParabox import basics, colors, spaces, objects, rules, displays
+from BabaMakeParabox import basics, refs, colors, spaces, objects, rules
 
 def match_pos(obj: objects.BmpObject, pos: spaces.Coord) -> bool:
     return obj.pos == pos
 
 class WorldJson(TypedDict):
-    name: str
-    infinite_tier: int
+    id: refs.WorldIDJson
     size: spaces.Coord
     color: colors.ColorHex
     object_list: list[objects.BmpObjectJson]
 
 class World(object):
-    def __init__(self, name: str, size: tuple[int, int], infinite_tier: int = 0, color: Optional[colors.ColorHex] = None) -> None:
-        self.name: str = name
-        self.infinite_tier: int = infinite_tier
+    def __init__(self, world_id: refs.WorldID, size: tuple[int, int], color: Optional[colors.ColorHex] = None) -> None:
+        self.world_id: refs.WorldID = world_id
         self.width: int = size[0]
         self.height: int = size[1]
         self.color: colors.ColorHex = color if color is not None else colors.random_world_color()
@@ -27,7 +25,7 @@ class World(object):
         self.rule_list: list[rules.Rule] = []
         self.refresh_index()
     def __eq__(self, world: "World") -> bool:
-        return self.name == world.name and self.infinite_tier == world.infinite_tier
+        return self.world_id == world.world_id
     def out_of_range(self, coord: spaces.Coord) -> bool:
         return coord[0] < 0 or coord[1] < 0 or coord[0] >= self.width or coord[1] >= self.height
     def pos_to_index(self, pos) -> int:
@@ -260,14 +258,17 @@ class World(object):
         else:
             return (num + pos[1]) / self.height
     def to_json(self) -> WorldJson:
-        json_object: WorldJson = {"name": self.name, "infinite_tier": self.infinite_tier, "size": (self.width, self.height), "color": self.color, "object_list": []}
+        json_object: WorldJson = {"id": self.world_id.to_json(), "size": (self.width, self.height), "color": self.color, "object_list": []}
         for obj in self.object_list:
             json_object["object_list"].append(obj.to_json())
         return json_object
 
 def json_to_world(json_object: WorldJson, ver: Optional[str] = None) -> World:
-    new_world = World(name=json_object["name"],
-                      infinite_tier=json_object["infinite_tier"],
+    if basics.compare_versions(ver if ver is not None else "0.0", "3.8") == -1:
+        world_id: refs.WorldID = refs.WorldID(json_object["name"], json_object["infinite_tier"]) # type: ignore
+    else:
+        world_id: refs.WorldID = refs.WorldID(**json_object["id"])
+    new_world = World(world_id=world_id,
                       size=json_object["size"],
                       color=json_object["color"])
     for obj in json_object["object_list"]:

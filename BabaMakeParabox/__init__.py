@@ -4,7 +4,7 @@ import json
 
 import pygame
 
-from BabaMakeParabox import basics, languages, spaces, colors, objects, rules, displays, worlds, levels, levelpacks, plays, edits, subs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   # monika was there ;)
+from BabaMakeParabox import basics, languages, refs, spaces, colors, objects, collects, rules, displays, worlds, levels, levelpacks, plays, edits, subs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   # monika was there ;)
 
 def show_dir(path: str, filter_func: Optional[Callable[[str], bool]] = None, tab: int = 0) -> None:
     def default_filter_func(filename: str) -> bool:
@@ -20,7 +20,7 @@ def show_dir(path: str, filter_func: Optional[Callable[[str], bool]] = None, tab
 
 def pre_play() -> bool:
     languages.lang_print("seperator.title", text=languages.lang_format("title.directory", dir="levelpacks"))
-    show_dir("levelpacks", lambda s: s.endswith(".json"))
+    show_dir("levelpacks") # lambda s: s.endswith(".json")
     languages.lang_print("seperator.title", text=languages.lang_format("title.open.file"))
     languages.lang_print("launch.open.levelpack")
     input_filename = languages.lang_input("input.file.name")
@@ -38,16 +38,14 @@ def pre_play() -> bool:
     languages.lang_print("launch.save.levelpack.empty.game")
     output_filename = languages.lang_input("input.file.name")
     if output_filename != "":
-        if not os.path.isfile(os.path.join("levelpacks", output_filename)):
-            languages.lang_print("warn.file.not_found", file=input_filename)
-            return False
         with open(os.path.join("levelpacks", output_filename), "w", encoding="utf-8") as file:
             json.dump(levelpack.to_json(), file, **basics.get_json_dump_kwds())
+            languages.lang_print("launch.save.levelpack.done", file=output_filename)
     return True
 
 def pre_edit() -> bool:
     languages.lang_print("seperator.title", text=languages.lang_format("title.directory", dir="levelpacks"))
-    show_dir("levelpacks", lambda s: s.endswith(".json"))
+    show_dir("levelpacks") # lambda s: s.endswith(".json")
     languages.lang_print("seperator.title", text=languages.lang_format("title.open.file"))
     languages.lang_print("launch.open.levelpack")
     languages.lang_print("launch.open.levelpack.empty.editor")
@@ -64,8 +62,8 @@ def pre_edit() -> bool:
             languages.lang_print("launch.open.levelpack.done", file=input_filename)
             levelpack = levelpacks.json_to_levelpack(levelpack_json)
     else:
-        world = worlds.World("main", size, color=color)
-        level = levels.Level("main", [world])
+        world = worlds.World(refs.WorldID("main"), size, color=color)
+        level = levels.Level(refs.LevelID("main"), [world])
         levelpack = levelpacks.Levelpack("main", [level])
     levelpack = edits.levelpack_editor(levelpack)
     languages.lang_print("seperator.title", text=languages.lang_format("title.save.file"))
@@ -80,7 +78,7 @@ def pre_edit() -> bool:
 
 def update_levelpack() -> bool:
     languages.lang_print("seperator.title", text=languages.lang_format("title.directory", dir="levelpacks"))
-    show_dir("levelpacks", lambda s: s.endswith(".json"))
+    show_dir("levelpacks") # lambda s: s.endswith(".json")
     languages.lang_print("seperator.title", text=languages.lang_format("title.open.file"))
     languages.lang_print("launch.open.levelpack")
     input_filename = languages.lang_input("input.file.name")
@@ -110,7 +108,7 @@ def change_options() -> bool:
         try:
             fps_preset = int(fps_preset)
         except ValueError:
-            languages.lang_print("warn.value.invalid", val=fps_preset, cls="int")
+            languages.lang_print("warn.value.invalid", value=fps_preset, cls="int")
         match int(fps_preset):
             case 1:
                 basics.options.update({"fps": 5, "fpw": 1, "world_display_recursion_depth": 1})
@@ -125,7 +123,7 @@ def change_options() -> bool:
                 basics.options.update({"fps": 60, "fpw": 10, "world_display_recursion_depth": 4})
                 break
             case _:
-                languages.lang_print("warn.value.out_of_range", min=1, max=4, val=fps_preset)
+                languages.lang_print("warn.value.out_of_range", min=1, max=4, value=fps_preset)
     if languages.lang_input("launch.change_options.json") in languages.yes:
         basics.options.update({"compressed_json_output": False})
     else:
@@ -140,10 +138,10 @@ def change_options() -> bool:
         try:
             metatext_tier = int(metatext_tier)
         except ValueError:
-            languages.lang_print("warn.value.invalid", val=metatext_tier, cls="int")
+            languages.lang_print("warn.value.invalid", value=metatext_tier, cls="int")
         else:
             if metatext_tier < 0:
-                languages.lang_print("warn.value.underflow", min=0, val=metatext_tier)
+                languages.lang_print("warn.value.underflow", min=0, value=metatext_tier)
             elif metatext_tier == 0:
                 basics.options.update({"metatext": {"enabled": False, "tier": 0}})
                 break
@@ -185,7 +183,7 @@ def main() -> None:
             try:
                 game_mode = int(game_mode)
             except ValueError:
-                languages.lang_print("warn.value.invalid", val=game_mode, cls="int")
+                languages.lang_print("warn.value.invalid", value=game_mode, cls="int")
                 continue
             if game_mode == 1:
                 if pre_play():
@@ -200,24 +198,27 @@ def main() -> None:
                 if update_levelpack():
                     break
             else:
-                languages.lang_print("warn.value.out_of_range", min=1, max=4, val=game_mode)
+                languages.lang_print("warn.value.out_of_range", min=1, max=4, value=game_mode)
     except KeyboardInterrupt:
         languages.lang_print("seperator.title", text=languages.lang_format("title.warning"))
         languages.lang_print("launch.keyboard_interrupt")
         languages.lang_print("launch.keyboard_interrupt.insert")
         basics.save_options(basics.options)
+        languages.lang_print("launch.exit")
+        pygame.quit()
+        languages.lang_print("launch.thank_you")
     except Exception as e:
+        pygame.quit()
         languages.lang_print("seperator.title", text=languages.lang_format("title.exception"))
         languages.lang_print("launch.exception")
         languages.lang_print("launch.exception.report")
         languages.lang_print("launch.exception.record")
-        print(repr(e))
+        raise e
     else:
         languages.lang_print("seperator.title", text=languages.lang_format("title.game.name"))
         basics.save_options(basics.options)
-    finally:
         languages.lang_print("launch.exit")
         pygame.quit()
         languages.lang_print("launch.thank_you")
 
-__all__ = ["basics", "languages", "spaces", "colors", "objects", "rules", "displays", "worlds", "levels", "levelpacks", "edits", "plays", "subs", "main"]
+__all__ = ["basics", "refs", "languages", "spaces", "colors", "objects", "collects", "rules", "displays", "worlds", "levels", "levelpacks", "edits", "plays", "subs", "main"]

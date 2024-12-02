@@ -215,7 +215,7 @@ def analysis_rule(atom_rule: Rule, stage: str = "before prefix") -> list[RuleInf
             if len(unmatch_type) == 0 or issubclass(atom_rule[0], tuple(unmatch_type)):
                 info_list = analysis_rule(atom_rule[1:], next_stage)
                 info_list = [func(i, atom_rule[0]) for i in info_list]
-    return info_list # rest in piece, more-than-200-lines-long-and-extremely-fucking-confusing function(BabaMakeParabox.worlds.World.get_rules_from_pos_and_orient)
+    return info_list # rest in peas, exactly-50-lines-long-and-fucking-confusing function(BabaMakeParabox.rules.analysis_rule)
 
 default_rule_list: list[Rule] = []
 default_rule_list.append([objects.TextText, objects.TextIs, objects.TextPush])
