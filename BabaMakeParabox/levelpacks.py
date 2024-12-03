@@ -4,13 +4,13 @@ import uuid
 
 from BabaMakeParabox import basics, colors, displays, objects, collects, refs, rules, levels, spaces, worlds
 
-class ReTurnValue(TypedDict):
+class ReturnInfo(TypedDict):
     win: bool
     end: bool
     transform: bool
     game_push: bool
     selected_level: Optional[refs.LevelID]
-default_levelpack_info: ReTurnValue = {"win": False, "end": False, "transform": False, "game_push": False, "selected_level": None}
+default_levelpack_info: ReturnInfo = {"win": False, "end": False, "transform": False, "game_push": False, "selected_level": None}
 
 class LevelpackJson(TypedDict):
     ver: str
@@ -21,10 +21,10 @@ class LevelpackJson(TypedDict):
     rule_list: list[list[str]]
 
 class Levelpack(object):
-    def __init__(self, name: str, level_list: list[levels.Level], main_level: Optional[refs.LevelID] = None, collectibles: Optional[set[collects.Collectible]] = None, rule_list: Optional[list[rules.Rule]] = None) -> None:
+    def __init__(self, name: str, level_list: list[levels.Level], main_level_id: Optional[refs.LevelID] = None, collectibles: Optional[set[collects.Collectible]] = None, rule_list: Optional[list[rules.Rule]] = None) -> None:
         self.name: str = name
         self.level_list: list[levels.Level] = list(level_list)
-        self.main_level: refs.LevelID = main_level if main_level is not None else self.level_list[0].level_id
+        self.main_level_id: refs.LevelID = main_level_id if main_level_id is not None else self.level_list[0].level_id
         self.collectibles: set[collects.Collectible] = collectibles if collectibles is not None else set()
         self.rule_list: list[rules.Rule] = rule_list if rule_list is not None else rules.default_rule_list
         if rule_list is not None:
@@ -72,19 +72,13 @@ class Levelpack(object):
                         new_types.remove(objects.All)
                         all_nouns = [t for t in level.all_list if t not in not_new_types]
                         new_types.extend([t.obj_type for t in all_nouns])
-                    for new_text_type, new_text_count in old_obj.special_operator_properties.get(objects.TextWrite, objects.Properties()).enabled_dict().items():
+                    for new_text_type, new_text_count in old_obj.special_operator_properties[objects.TextWrite].enabled_dict().items():
                         for _ in range(new_text_count):
                             new_obj = new_text_type(old_obj.pos, old_obj.orient, world_id=old_obj.world_id, level_id=old_obj.level_id)
                             world.new_obj(new_obj)
                         transform_success = True
                     for new_type in new_types:
-                        pass_this_transform = False
-                        for not_new_type in not_new_types:
-                            if issubclass(new_type, not_new_type):
-                                pass_this_transform = True
-                        if pass_this_transform:
-                            pass
-                        elif issubclass(new_type, objects.Game):
+                        if issubclass(new_type, objects.Game):
                             if isinstance(old_obj, (objects.LevelPointer, objects.WorldPointer)):
                                 world.new_obj(objects.Game(old_obj.pos, old_obj.orient, obj_type=objects.get_noun_from_type(old_type)))
                             else:
@@ -347,7 +341,7 @@ class Levelpack(object):
                 path.unlocked = unlocked
         level.update_rules(old_prop_dict)
         return old_prop_dict
-    def turn(self, level: levels.Level, op: spaces.PlayerOperation) -> ReTurnValue:
+    def turn(self, level: levels.Level, op: spaces.PlayerOperation) -> ReturnInfo:
         old_prop_dict: dict[uuid.UUID, objects.Properties] = self.prepare(level)
         level.sound_events = []
         level.created_levels = []
@@ -379,6 +373,13 @@ class Levelpack(object):
         level.bonus()
         end = level.end()
         win = level.win()
+        for world in level.world_list:
+            for path in world.get_objs_from_type(objects.Path):
+                unlocked = True
+                for bonus_type, bonus_counts in path.conditions.items():
+                    if len({c for c in self.collectibles if isinstance(c, bonus_type)}) < bonus_counts:
+                        unlocked = False
+                path.unlocked = unlocked
         if level.collected[collects.Bonus] and win:
             self.collectibles.add(collects.Bonus(level.level_id))
         return {"win": win, "end": end, "transform": transform,
@@ -387,7 +388,7 @@ class Levelpack(object):
         json_object: LevelpackJson = {
             "ver": basics.versions,
             "name": self.name,
-            "main_level": self.main_level.to_json(),
+            "main_level": self.main_level_id.to_json(),
             "collectibles": list(map(collects.Collectible.to_json, self.collectibles)),
             "level_list": list(map(levels.Level.to_json, self.level_list)),
             "rule_list": []
@@ -417,7 +418,7 @@ def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
         for collectible in json_object["collectibles"]:
             collectibles.add(reversed_collectible_dict[collectible["type"]](source=refs.LevelID(collectible["source"]["name"])))
     return Levelpack(name=json_object["name"],
-                     main_level=main_level_id,
+                     main_level_id=main_level_id,
                      level_list=level_list,
                      collectibles=collectibles,
                      rule_list=rule_list)

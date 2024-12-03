@@ -1,4 +1,3 @@
-from typing import Optional
 import os
 
 from BabaMakeParabox import colors, objects, spaces

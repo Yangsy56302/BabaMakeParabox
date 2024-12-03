@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import TypedDict
 
 class WorldIDJson(TypedDict):

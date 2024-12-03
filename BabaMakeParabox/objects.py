@@ -27,6 +27,8 @@ PropertiesDict = dict[type["Text"], dict[int, int]]
 class Properties(object):
     def __init__(self, prop: Optional[PropertiesDict] = None) -> None:
         self.__dict: PropertiesDict = prop if prop is not None else {}
+    def __bool__(self) -> bool:
+        return len(self.__dict) != 0
     @staticmethod
     def calc_count(negnum_dict: dict[int, int], negated_number: int = 0) -> int:
         if len(negnum_dict) == 0:

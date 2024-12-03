@@ -9,21 +9,31 @@ import pygame
 class GameIsDoneError(Exception):
     pass
 
-movement_value: dict[str, tuple[str, spaces.PlayerOperation, spaces.Coord]] = {"W": ("S", spaces.Orient.W, (0, -1)), "S": ("W", spaces.Orient.S, (0, 1)), "A": ("D", spaces.Orient.A, (-1, 0)), "D": ("A", spaces.Orient.D, (1, 0)), " ": ("None", spaces.NullOrient.O, (0, 0))}
+movements: dict[str, tuple[str, spaces.PlayerOperation, spaces.Coord]] = {"W": ("S", spaces.Orient.W, (0, -1)), "S": ("W", spaces.Orient.S, (0, 1)), "A": ("D", spaces.Orient.A, (-1, 0)), "D": ("A", spaces.Orient.D, (1, 0)), " ": ("None", spaces.NullOrient.O, (0, 0))}
 
 def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     for level in levelpack.level_list:
         for world in level.world_list:
             world.set_sprite_states(0)
-    levelpack.prepare(levelpack.get_exact_level(levelpack.main_level))
+    levelpack.prepare(levelpack.get_exact_level(levelpack.main_level_id))
     levelpack_backup = copy.deepcopy(levelpack)
+    current_level: levels.Level = levelpack.get_exact_level(levelpack.main_level_id)
+    current_world: worlds.World = current_level.get_exact_world(current_level.main_world_id)
+    levelpack_info: levelpacks.ReturnInfo = levelpacks.default_levelpack_info.copy()
+    history: list[tuple[levelpacks.Levelpack, levelpacks.ReturnInfo, refs.LevelID, refs.WorldID]] = [(
+        copy.deepcopy(levelpack),
+        levelpack_info.copy(),
+        current_level.level_id,
+        current_world.world_id
+    )]
+    savepoint_dict: dict[str, tuple[levelpacks.Levelpack, levelpacks.ReturnInfo, refs.LevelID, refs.WorldID]] = {}
+    default_savepoint_name = "_"
     window = pygame.display.set_mode((720, 720), pygame.RESIZABLE)
     display_offset = [0.0, 0.0]
     display_offset_speed = [0.0, 0.0]
     pygame.display.set_caption(f"Baba Make Parabox Version {basics.versions}")
     pygame.display.set_icon(pygame.image.load("bmp.png"))
-    displays.sprites.update()
-    pygame.key.set_repeat()
+    window.fill("#000000")
     pygame.key.stop_text_input()
     clock = pygame.time.Clock()
     keybinds = {
@@ -33,24 +43,30 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         pygame.K_d: "D",
         pygame.K_z: "Z",
         pygame.K_r: "R",
+        pygame.K_o: "O",
+        pygame.K_p: "P",
         pygame.K_TAB: "TAB",
         pygame.K_ESCAPE: "ESCAPE",
         pygame.K_MINUS: "-",
         pygame.K_EQUALS: "=",
         pygame.K_SPACE: " ",
-        pygame.K_F1: "F1"
+        pygame.K_F1: "F1",
+    }
+    keymods = {
+        pygame.KMOD_LSHIFT: "LSHIFT",
+        pygame.KMOD_RSHIFT: "RSHIFT",
+        pygame.KMOD_LCTRL: "LCTRL",
+        pygame.KMOD_RCTRL: "RCTRL",
+        pygame.KMOD_LALT: "LALT",
+        pygame.KMOD_RALT: "RALT",
     }
     keys = {v: False for v in keybinds.values()}
-    window.fill("#000000")
-    current_level: levels.Level = levelpack.get_exact_level(levelpack.main_level)
-    current_world: worlds.World = current_level.main_world
-    levelpack_info: levelpacks.ReTurnValue = levelpacks.default_levelpack_info.copy()
-    history: dict[refs.LevelID, list[levels.Level]] = {l.level_id: [l] for l in levelpack_backup.level_list}
+    keys.update({v: False for v in keymods.values()})
+    displays.sprites.update()
     level_changed = False
     world_changed = False
     frame = 1
     wiggle = 1
-    freeze_time = -1
     milliseconds = 1000 // basics.options["fps"]
     real_fps = basics.options["fps"]
     show_fps = False
@@ -58,6 +74,9 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         pygame.mixer.music.load(os.path.join("midi", basics.options["bgm"]["name"]))
         pygame.mixer.music.play(-1)
     game_running = True
+    display_refresh = False
+    levelpack_refresh = False
+    press_key_to_continue = False
     while game_running:
         frame += 1
         if frame >= basics.options["fpw"]:
@@ -65,94 +84,155 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             wiggle = wiggle % 3 + 1
         for key in keybinds.values():
             keys[key] = False
+        for key in keymods.values():
+            keys[key] = False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game_running = False
-            if event.type == pygame.KEYDOWN:
+            elif event.type == pygame.KEYDOWN:
                 if event.key in keybinds.keys():
                     keys[keybinds[event.key]] = True
-        refresh = False
-        if freeze_time == -1:
-            for key, (negative_key, op, (dx, dy)) in movement_value.items():
+                for n, key in keymods.items():
+                    if event.mod & n:
+                        keys[key] = True
+        if not press_key_to_continue:
+            for key, (negative_key, op, (dx, dy)) in movements.items():
                 if keys[key] and not keys.get(negative_key, False):
-                    history[current_level.level_id].append(copy.deepcopy(current_level))
-                    levelpack_info = levelpack.turn(current_level, op)
+                    new_history: tuple[levelpacks.Levelpack, levelpacks.ReturnInfo, refs.LevelID, refs.WorldID] = (
+                        copy.deepcopy(levelpack),
+                        levelpack.turn(current_level, op),
+                        current_level.level_id,
+                        current_world.world_id
+                    )
+                    history.append(new_history)
+                    levelpack_info, current_level_id, current_world_id = new_history[1:]
+                    current_level = levelpack.get_exact_level(current_level_id)
+                    current_world = current_level.get_exact_world(current_world_id)
                     if current_level.game_properties.has(objects.TextYou):
                         display_offset[0] += dx * window.get_width() / current_world.width
                         display_offset[1] += dy * window.get_height() / current_world.height
                     if current_level.game_properties.has(objects.TextPush) and levelpack_info["game_push"]:
                         display_offset[0] += dx * window.get_width() / current_world.width
                         display_offset[1] += dy * window.get_height() / current_world.height
-                    refresh = True
+                    for level in levelpack.level_list:
+                        for world in current_level.world_list:
+                            world.set_sprite_states(len(history))
+                    display_refresh = True
+                    levelpack_refresh = True
                     break
-            if refresh == True:
-                pass
-            elif keys["ESCAPE"]:
-                level = copy.deepcopy(levelpack_backup.get_level(current_level.level_id))
-                if level is not None:
-                    levelpack.set_level(level)
-                    history[current_level.level_id].append(copy.deepcopy(current_level))
-                current_level.level_id = current_level.super_level_id if current_level.super_level_id is not None else levelpack.main_level
-                current_level = levelpack.get_exact_level(current_level.level_id)
-                current_world = current_level.main_world
+        else:
+            for key in movements.keys():
+                if keys[key]:
+                    display_refresh = True
+                    levelpack_refresh = True
+                    break
+        if levelpack_refresh:
+            pass
+        elif keys["ESCAPE"]:
+            for index, (old_levelpack, old_levelpack_info, old_level_id, old_world_id) in reversed(list(enumerate(history))):
+                if old_levelpack_info["selected_level"] is not None:
+                    levelpack = copy.deepcopy(old_levelpack)
+                    levelpack_info = levelpacks.default_levelpack_info.copy()
+                    current_level = levelpack.get_exact_level(old_level_id)
+                    current_world = current_level.get_exact_world(old_world_id)
+                    history = history[:index]
+                    level_changed = True
+                    world_changed = True
+                    display_refresh = True
+        elif keys["Z"]:
+            if len(history) >= 1:
+                levelpack = copy.deepcopy(history[-1][0])
+                levelpack_info = levelpacks.default_levelpack_info.copy()
+                current_level = levelpack.get_exact_level(history[-1][2])
+                current_world = current_level.get_exact_world(history[-1][3])
+                if len(history) != 1:
+                    history.pop()
                 level_changed = True
                 world_changed = True
-                refresh = True
-            elif keys["Z"]:
-                if len(history[current_level.level_id]) > 1:
-                    current_level = copy.deepcopy(history[current_level.level_id].pop())
-                    current_world = current_level.get_world_or_default(current_world.world_id, default=current_level.main_world)
-                    refresh = True
-                elif len(history[current_level.level_id]) == 1:
-                    current_level = copy.deepcopy(history[current_level.level_id][0])
-                    current_world = current_level.get_world_or_default(current_world.world_id, default=current_level.main_world)
-                    refresh = True
-            elif keys["R"]:
+                display_refresh = True
+        elif keys["R"]:
+            if keys["LCTRL"] or keys["RCTRL"]:
                 languages.lang_print("play.level.restart")
                 sounds.play("restart")
-                current_level = copy.deepcopy(history[current_level.level_id][0])
-                current_world = current_level.get_world_or_default(current_world.world_id, default=current_level.main_world)
-                history[current_level.level_id] = [copy.deepcopy(current_level)]
+                levelpack = copy.deepcopy(levelpack_backup)
+                levelpack_info = levelpacks.default_levelpack_info.copy()
+                current_level = copy.deepcopy(levelpack.get_exact_level(levelpack.main_level_id))
+                current_world = current_level.get_exact_world(current_level.main_world_id)
+                history = [(
+                    copy.deepcopy(levelpack),
+                    levelpack_info.copy(),
+                    current_level.level_id,
+                    current_world.world_id
+                )]
+                level_changed = True
                 world_changed = True
-                refresh = True
-            elif keys["TAB"]:
-                languages.lang_print("seperator.title", text=languages.lang_format("title.info"))
-                languages.lang_print("play.level.current.name", value=current_level.level_id.name)
-                languages.lang_print("play.world.current.name", value=current_world.world_id.name)
-                languages.lang_print("play.world.current.infinite_tier", value=current_world.world_id.infinite_tier)
-                languages.lang_print("seperator.title", text=languages.lang_format("title.world.rule_list"))
-                for rule in current_world.rule_list:
-                    str_list = []
-                    for obj_type in rule:
-                        str_list.append(obj_type.display_name)
-                    print(" ".join(str_list))
-                languages.lang_print("seperator.title", text=languages.lang_format("title.levelpack.rule_list"))
-                for rule in levelpack.rule_list:
-                    str_list = []
-                    for obj_type in rule:
-                        str_list.append(obj_type.display_name)
-                    print(" ".join(str_list))
-                languages.lang_print("seperator.title", text=languages.lang_format("title.collectibles"))
-                if len(levelpack.collectibles) == 0:
-                    languages.lang_print("play.levelpack.collectibles.empty")
-                else:
-                    for collects_type in collects.collectible_dict.keys():
-                        collects_number = len({c for c in levelpack.collectibles if isinstance(c, collects_type)})
-                        if collects_number != 0:
-                            languages.lang_print("play.levelpack.collectibles", key=collects_type.json_name, value=collects_number)
-            elif keys["-"]:
-                current_world_index = current_level.world_list.index(current_world)
-                current_world_index -= 1
-                current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
-                current_world = current_level.world_list[current_world_index]
+                display_refresh = True
+        elif keys["O"]:
+            languages.lang_print("seperator.title", text=languages.lang_format("title.savepoint"))
+            savepoint_name = ""
+            if keys["LCTRL"] or keys["RCTRL"]:
+                savepoint_name = languages.lang_input("input.savepoint.name")
+            savepoint_name = savepoint_name if savepoint_name != "" else default_savepoint_name
+            savepoint = savepoint_dict.get(savepoint_name)
+            if savepoint is not None:
+                levelpack = savepoint[0]
+                levelpack_info = levelpacks.default_levelpack_info.copy()
+                current_level = copy.deepcopy(levelpack.get_exact_level(savepoint[2]))
+                current_world = current_level.get_exact_world(savepoint[3])
+                languages.lang_print("play.savepoint.loaded", value=savepoint_name)
+                level_changed = True
                 world_changed = True
-            elif keys["="]:
-                current_world_index = current_level.world_list.index(current_world)
-                current_world_index += 1
-                current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
-                current_world = current_level.world_list[current_world_index]
-                world_changed = True
-            # game properties at every tick
+                display_refresh = True
+            else:
+                languages.lang_print("warn.savepoint.not_found", value=savepoint_name)
+        elif keys["P"]:
+            languages.lang_print("seperator.title", text=languages.lang_format("title.savepoint"))
+            savepoint_name = ""
+            if keys["LCTRL"] or keys["RCTRL"]:
+                savepoint_name = languages.lang_input("input.savepoint.name")
+            savepoint_name = savepoint_name if savepoint_name != "" else default_savepoint_name
+            savepoint_dict[savepoint_name] = (copy.deepcopy(levelpack), levelpack_info.copy(), current_level.level_id, current_world.world_id)
+            languages.lang_print("play.savepoint.saved", value=savepoint_name)
+        elif keys["TAB"]:
+            languages.lang_print("seperator.title", text=languages.lang_format("title.info"))
+            languages.lang_print("play.level.current.name", value=current_level.level_id.name)
+            languages.lang_print("play.world.current.name", value=current_world.world_id.name)
+            languages.lang_print("play.world.current.infinite_tier", value=current_world.world_id.infinite_tier)
+            languages.lang_print("seperator.title", text=languages.lang_format("title.world.rule_list"))
+            for rule in current_world.rule_list:
+                str_list = []
+                for obj_type in rule:
+                    str_list.append(obj_type.display_name)
+                print(" ".join(str_list))
+            languages.lang_print("seperator.title", text=languages.lang_format("title.levelpack.rule_list"))
+            for rule in levelpack.rule_list:
+                str_list = []
+                for obj_type in rule:
+                    str_list.append(obj_type.display_name)
+                print(" ".join(str_list))
+            languages.lang_print("seperator.title", text=languages.lang_format("title.collectibles"))
+            if len(levelpack.collectibles) == 0:
+                languages.lang_print("play.levelpack.collectibles.empty")
+            else:
+                for collects_type in collects.collectible_dict.keys():
+                    collects_number = len({c for c in levelpack.collectibles if isinstance(c, collects_type)})
+                    if collects_number != 0:
+                        languages.lang_print("play.levelpack.collectibles", key=collects_type.json_name, value=collects_number)
+        elif keys["-"] and not keys["="]:
+            current_world_index = current_level.world_list.index(current_world)
+            current_world_index -= 1
+            current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
+            current_world = current_level.world_list[current_world_index]
+            world_changed = True
+            display_refresh = True
+        elif keys["="] and not keys["-"]:
+            current_world_index = current_level.world_list.index(current_world)
+            current_world_index += 1
+            current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
+            current_world = current_level.world_list[current_world_index]
+            world_changed = True
+            display_refresh = True
+        if current_level.game_properties:
             offset_used = False
             if current_level.game_properties.has(objects.TextStop):
                 wiggle = 1
@@ -170,10 +250,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 display_offset_speed[0] = display_offset_speed[0] / 2
                 display_offset_speed[1] = display_offset_speed[1] / 2
             del offset_used
-        else:
-            freeze_time -= 1
-        if refresh:
-            # game properties at update
+        if display_refresh:
             if current_level.game_properties.has(objects.TextWin):
                 languages.lang_print("play.win")
                 sounds.play("win")
@@ -210,51 +287,49 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             if current_level.game_properties.has(objects.TextYou) and current_level.game_properties.has(objects.TextDefeat):
                 sounds.play("defeat")
                 game_running = False
-            for event in current_level.sound_events:
-                sounds.play(event)
-            # level state check
-            levelpack.set_level(current_level)
-            if levelpack_info["win"]:
-                languages.lang_print("play.level.win")
-                if freeze_time == -1:
-                    freeze_time = basics.options["fps"]
-            elif levelpack_info["end"]:
-                languages.lang_print("play.levelpack.end")
-                if freeze_time == -1:
-                    freeze_time = basics.options["fps"]
-            elif levelpack_info["transform"]:
-                languages.lang_print("play.level.transform")
-                if freeze_time == -1:
-                    freeze_time = basics.options["fps"]
-            elif levelpack_info["selected_level"] is not None:
-                languages.lang_print("play.level.enter")
-                if freeze_time == -1:
-                    freeze_time = basics.options["fps"]
-            for level in levelpack.level_list:
-                for world in current_level.world_list:
-                    world.set_sprite_states(len(history[current_level.level_id]))
-        if freeze_time == 0:
-            level_changed = True
-            world_changed = True
-            if levelpack_info["win"]:
-                level = copy.deepcopy(levelpack_backup.get_level(current_level.level_id))
-                if level is not None:
-                    levelpack.set_level(level)
-                super_level_id = current_level.super_level_id
-                super_level = levelpack.get_level(super_level_id if super_level_id is not None else levelpack.main_level)
-                current_level = levelpack.get_exact_level(super_level.level_id if super_level is not None else levelpack.main_level)
-                current_world = current_level.main_world
-            elif levelpack_info["end"]:
-                game_running = False
-            elif levelpack_info["transform"]:
-                super_level_id = current_level.super_level_id
-                super_level = levelpack.get_level(super_level_id if super_level_id is not None else levelpack.main_level)
-                current_level = levelpack.get_exact_level(super_level.level_id if super_level is not None else levelpack.main_level)
-                current_world = current_level.main_world
-            elif levelpack_info["selected_level"] is not None:
-                current_level = levelpack.get_exact_level(levelpack_info["selected_level"])
-                current_world = current_level.main_world
-            levelpack.prepare(current_level)
+            display_refresh = False
+        if levelpack_refresh:
+            if not press_key_to_continue:
+                for event in current_level.sound_events:
+                    sounds.play(event)
+                if levelpack_info["win"]:
+                    languages.lang_print("play.level.win")
+                    languages.lang_print("press_any_key_to_continue")
+                    press_key_to_continue = True
+                elif levelpack_info["end"]:
+                    languages.lang_print("play.levelpack.end")
+                    languages.lang_print("press_any_key_to_continue")
+                    press_key_to_continue = True
+                elif levelpack_info["transform"]:
+                    languages.lang_print("play.level.transform")
+                    languages.lang_print("press_any_key_to_continue")
+                    press_key_to_continue = True
+                elif levelpack_info["selected_level"] is not None:
+                    languages.lang_print("play.level.enter")
+                    languages.lang_print("press_any_key_to_continue")
+                    press_key_to_continue = True
+            else:
+                press_key_to_continue = False
+                level_changed = True
+                world_changed = True
+                if levelpack_info["win"]:
+                    level = copy.deepcopy(levelpack_backup.get_level(current_level.level_id))
+                    if level is not None:
+                        levelpack.set_level(level)
+                    super_level = levelpack.get_level(current_level.super_level_id) if current_level.super_level_id is not None else levelpack.get_exact_level(levelpack.main_level_id)
+                    current_level = super_level if super_level is not None else levelpack.get_exact_level(levelpack.main_level_id)
+                    current_world = current_level.main_world
+                elif levelpack_info["end"]:
+                    game_running = False
+                elif levelpack_info["transform"]:
+                    super_level = levelpack.get_level(current_level.super_level_id) if current_level.super_level_id is not None else levelpack.get_exact_level(levelpack.main_level_id)
+                    current_level = super_level if super_level is not None else levelpack.get_exact_level(levelpack.main_level_id)
+                    current_world = current_level.main_world
+                elif levelpack_info["selected_level"] is not None:
+                    current_level = levelpack.get_exact_level(levelpack_info["selected_level"])
+                    current_world = current_level.main_world
+                levelpack.prepare(current_level)
+            levelpack_refresh = False
         if level_changed:
             languages.lang_print("seperator.title", text=languages.lang_format("title.level"))
             languages.lang_print("play.level.current.name", value=current_level.level_id.name)

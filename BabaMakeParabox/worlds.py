@@ -94,7 +94,6 @@ class World(object):
     def get_rules_from_pos_and_orient(self, pos: spaces.Coord, orient: spaces.Orient, stage: str = "before prefix") -> list[rules.Rule]:
         match_list: list[tuple[list[type[objects.Text]], list[type[objects.Text]], str]] = []
         rule_list: list[rules.Rule] = []
-        discard_parse: bool = False
         if stage == "before prefix": # start, before prefix, or noun
             match_list = [
                 ([objects.TextNot], [], "before prefix"),

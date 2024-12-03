@@ -4,5 +4,6 @@ temp/
 /.vscode/
 /sprites/
 /sprites_old/
-/levelpacks/
+/levelpacks/*
+!/levelpacks/*.json
 /options.json
