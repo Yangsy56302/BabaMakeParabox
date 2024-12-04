@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Final
 
 from BabaMakeParabox import basics
 
@@ -11,25 +12,26 @@ language_dict: dict[str, Language] = {}
 
 for name in [n for n in os.listdir("lang") if n.endswith(".json")]:
     with open(os.path.join("lang", name), "r", encoding="utf-8") as file:
-        language_dict[name[:-5]] = Language(json.load(file))
+        language_dict[os.path.splitext(os.path.basename(name))[0]] = Language(json.load(file))
 
-current_language = language_dict[basics.options["lang"] if basics.options["lang"] != "id_FK" else "en_US"]
+english: str = "en_US"
+current_language_name: str = basics.options["lang"] if basics.options["lang"] != "" else english
 
 def set_current_language(name: str) -> None:
-    global current_language
-    current_language = language_dict.get(name, language_dict["en_US"])
+    global current_language_name
+    current_language_name = name if name in list(language_dict.keys()) else english
 
-yes = ["y", "Y", "yes", "Yes", "YES"]
-no = ["n", "N", "no", "No", "NO"]
+yes = ("y", "Y", "yes", "Yes", "YES")
+no = ("n", "N", "no", "No", "NO")
 
 def lang_format(message_id: str, /, **formats) -> str:
-    return current_language[message_id].format(lang = current_language[message_id], **formats)
+    return language_dict[current_language_name][message_id].format(**formats)
 
 def lang_print(message_id: str, /, **formats) -> None:
-    print(current_language[message_id].format(lang = current_language[message_id], **formats))
+    print(language_dict[current_language_name][message_id].format(**formats))
 
 def lang_input(message_id: str, /, **formats) -> str:
-    return input(current_language[message_id].format(lang = current_language[message_id], **formats))
+    return input(language_dict[current_language_name][message_id].format(**formats))
 
 def cls() -> None:
     if basics.current_os == basics.windows:

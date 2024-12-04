@@ -20,8 +20,8 @@ class World(object):
         self.color: colors.ColorHex = color if color is not None else colors.random_world_color()
         self.object_list: list[objects.BmpObject] = []
         self.object_pos_index: list[list[objects.BmpObject]]
-        self.properties: dict[type[objects.WorldPointer], objects.Properties] = {objects.World: objects.Properties(), objects.Clone: objects.Properties()}
-        self.special_operator_properties: dict[type[objects.WorldPointer], dict[type[objects.Operator], objects.Properties]] = {objects.World: {}, objects.Clone: {}}
+        self.properties: dict[type[objects.WorldPointer], objects.Properties] = {p: objects.Properties() for p in objects.world_pointers}
+        self.special_operator_properties: dict[type[objects.WorldPointer], dict[type[objects.Operator], objects.Properties]] = {p: {o: objects.Properties() for o in objects.special_operators} for p in objects.world_pointers}
         self.rule_list: list[rules.Rule] = []
         self.refresh_index()
     def __eq__(self, world: "World") -> bool:
@@ -73,18 +73,12 @@ class World(object):
             self.object_list.remove(obj)
         self.object_pos_index[self.pos_to_index(pos)].clear()
         return deleted
-    def get_worlds(self) -> list[objects.World]:
-        return [o for o in self.object_list if isinstance(o, objects.World)]
-    def get_worlds_from_pos(self, pos: spaces.Coord) -> list[objects.World]:
+    def get_worlds(self) -> list[objects.WorldPointer]:
+        return [o for o in self.object_list if isinstance(o, objects.WorldPointer)]
+    def get_worlds_from_pos(self, pos: spaces.Coord) -> list[objects.WorldPointer]:
         if self.out_of_range(pos):
             return []
-        return [o for o in self.pos_to_objs(pos) if isinstance(o, objects.World)]
-    def get_clones(self) -> list[objects.Clone]:
-        return [o for o in self.object_list if isinstance(o, objects.Clone)]
-    def get_clones_from_pos(self, pos: spaces.Coord) -> list[objects.Clone]:
-        if self.out_of_range(pos):
-            return []
-        return [o for o in self.pos_to_objs(pos) if isinstance(o, objects.Clone)]
+        return [o for o in self.pos_to_objs(pos) if isinstance(o, objects.WorldPointer)]
     def get_levels(self) -> list[objects.LevelPointer]:
         return [o for o in self.object_list if isinstance(o, objects.LevelPointer)]
     def get_levels_from_pos(self, pos: spaces.Coord) -> list[objects.LevelPointer]:

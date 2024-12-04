@@ -34,7 +34,7 @@ class Properties(object):
         if len(negnum_dict) == 0:
             return 0
         if len(negnum_dict) == 1:
-            return list(negnum_dict.values())[0]
+            return int(list(negnum_dict.keys())[0] == negated_number)
         negnum_list = []
         for neg, num in negnum_dict.items():
             negnum_list.extend([neg] * num)
@@ -82,9 +82,13 @@ class Properties(object):
     def clear(self) -> None:
         self.__dict.clear()
     def enabled(self, prop: type["Text"]) -> bool:
-        return self.calc_count(self.__dict.get(prop, {}), 0) > 0
+        if self.__dict.get(prop) is None:
+            return False
+        return self.calc_count(self.__dict[prop], 0) > 0
     def disabled(self, prop: type["Text"]) -> bool:
-        return self.calc_count(self.__dict.get(prop, {}), 1) > 0
+        if self.__dict.get(prop) is None:
+            return False
+        return self.calc_count(self.__dict[prop], 1) > 0
     def enabled_dict(self) -> dict[type["Text"], int]:
         return {k: self.calc_count(v, 0) for k, v in self.__dict.items()}
     def disabled_dict(self) -> dict[type["Text"], int]:
@@ -359,6 +363,8 @@ class Empty(BmpObject):
     pass
 
 class WorldPointer(BmpObject):
+    light_overlay: colors.ColorHex = 0x000000
+    dark_overlay: colors.ColorHex = 0xFFFFFF
     def __init__(self, pos: tuple[int, int], orient: spaces.Orient = spaces.Orient.S, *, world_id: refs.WorldID, level_id: Optional[refs.LevelID] = None, world_pointer_extra: WorldPointerExtra = default_world_pointer_extra) -> None:
         self.world_id: refs.WorldID
         super().__init__(pos, orient, world_id=world_id, level_id=level_id)
@@ -367,16 +373,21 @@ class WorldPointer(BmpObject):
         return {**super().to_json(), "world_pointer_extra": self.world_pointer_extra}
 
 class World(WorldPointer):
+    dark_overlay: colors.ColorHex = 0xC0C0C0
     json_name: str = "world"
     sprite_name: str = "world"
     display_name: str = "World"
     sprite_color: colors.ColorHex = colors.LIGHT_GRAY_BLUE
         
 class Clone(WorldPointer):
+    light_overlay: colors.ColorHex = 0x404040
     json_name: str = "clone"
     sprite_name: str = "clone"
     display_name: str = "Clone"
     sprite_color: colors.ColorHex = colors.LIGHTER_GRAY_BLUE
+
+world_pointers: list[type[WorldPointer]] = [World, Clone]
+default_world_pointer: type[WorldPointer] = World
 
 class LevelPointer(BmpObject):
     def __init__(self, pos: tuple[int, int], orient: spaces.Orient = spaces.Orient.S, *, world_id: Optional[refs.WorldID] = None, level_id: refs.LevelID, level_pointer_extra: LevelPointerExtra = default_level_pointer_extra) -> None:
@@ -391,6 +402,9 @@ class Level(LevelPointer):
     sprite_name: str = "level"
     display_name: str = "Level"
     sprite_color: colors.ColorHex = colors.MAGENTA
+
+level_pointers: list[type[LevelPointer]] = [Level]
+default_level_pointer: type[LevelPointer] = Level
 
 class Path(Tiled):
     json_name: str = "path"
@@ -549,27 +563,16 @@ class TextText(Noun):
 
 class TextWorld(Noun):
     obj_type: type[BmpObject] = World
-    json_name: str = "text_world"
-    sprite_name: str = "text_world"
-    display_name: str = "WORLD"
 
 class TextClone(Noun):
     obj_type: type[BmpObject] = Clone
-    json_name: str = "text_clone"
-    sprite_name: str = "text_clone"
-    display_name: str = "CLONE"
 
 class TextLevel(Noun):
     obj_type: type[BmpObject] = Level
-    json_name: str = "text_level"
-    sprite_name: str = "text_level"
-    display_name: str = "LEVEL"
 
 class TextPath(Noun):
     obj_type: type[BmpObject] = Path
-    json_name: str = "text_path"
-    sprite_name: str = "text_line"
-    display_name: str = "PATH"
+    sprite_name: str = "text_path"
 
 class TextGame(Noun):
     obj_type: type[BmpObject] = Game

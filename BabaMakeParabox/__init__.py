@@ -178,7 +178,7 @@ def main() -> None:
         while True:
             languages.lang_print("seperator.title", text=languages.lang_format("title.game.name"))
             for n in map(lambda x: x + 1, range(4)):
-                print(languages.current_language[f"launch.game_mode.{n}"])
+                languages.lang_print(f"launch.game_mode.{n}")
             game_mode = languages.lang_input("input.number")
             try:
                 game_mode = int(game_mode)
