@@ -225,4 +225,4 @@ default_rule_list.append([objects.TextNot, objects.TextMeta, objects.TextWorld, 
 default_rule_list.append([objects.TextNot, objects.TextMeta, objects.TextClone, objects.TextIs, objects.TextPush])
 default_rule_list.append([objects.TextMeta, objects.TextClone, objects.TextIs, objects.TextNot, objects.TextLeave])
 
-PropertyList = list[tuple[type[objects.BmpObject], int]]
+PropertyList = list[tuple[type[objects.Object], int]]

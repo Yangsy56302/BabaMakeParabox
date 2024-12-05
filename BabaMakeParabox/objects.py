@@ -96,7 +96,7 @@ class Properties(object):
 
 special_operators: list[type["Operator"]] = []
 
-class BmpObjectJson(TypedDict):
+class ObjectJson(TypedDict):
     type: str
     position: spaces.CoordTuple
     orientation: spaces.OrientStr
@@ -113,7 +113,8 @@ class OldObjectState(object):
         self.world: Optional[refs.WorldID] = world
         self.level: Optional[refs.LevelID] = level
 
-class BmpObject(object):
+class Object(object):
+    ref_type: Optional[type["Object"]] = None
     json_name: str
     sprite_name: str
     display_name: str
@@ -130,42 +131,62 @@ class BmpObject(object):
         self.special_operator_properties: dict[type["Operator"], Properties] = {o: Properties() for o in special_operators}
         self.move_number: int = 0
         self.sprite_state: int = 0
-    def __eq__(self, obj: "BmpObject") -> bool:
+    def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
+    def isinstanceof(self, other: type["Object"]) -> bool:
+        result: bool = False
+        result |= isinstance(self, other)
+        return result
+    def isreferenceof(self, other: type["Object"]) -> bool:
+        result: bool = False
+        if other.ref_type is not None:
+            result |= isinstance(self, other.ref_type)
+        return result
+    @classmethod
+    def issubclassof(cls, other: type["Object"]) -> bool:
+        result: bool = False
+        result |= issubclass(cls, other)
+        return result
+    @classmethod
+    def isrefclassof(cls, other: type["Object"]) -> bool:
+        result: bool = False
+        if other.ref_type is not None:
+            result |= issubclass(cls, other.ref_type)
+        return result
     def reset_uuid(self) -> None:
         self.uuid = uuid.uuid4()
     def set_sprite(self, **kwds) -> None:
         self.sprite_state = 0
-    def to_json(self) -> BmpObjectJson:
-        json_object: BmpObjectJson = {"type": self.json_name, "position": tuple(self.pos), "orientation": spaces.orient_to_str(self.orient)}
+    def to_json(self) -> ObjectJson:
+        json_object: ObjectJson = {"type": self.json_name, "position": tuple(self.pos), "orientation": spaces.orient_to_str(self.orient)}
         if self.world_id is not None:
             json_object = {**json_object, "world_id": self.world_id.to_json()}
         if self.level_id is not None:
             json_object = {**json_object, "level_id": self.level_id.to_json()}
         return json_object
 
-class Static(BmpObject):
+class Static(Object):
     sprite_varients: tuple[int, ...] = (0x0, )
     def set_sprite(self, **kwds) -> None:
         self.sprite_state = 0
 
-class Tiled(BmpObject):
+class Tiled(Object):
     sprite_varients: tuple[int, ...] = tuple(i for i in range(0x10))
     def set_sprite(self, connected: Optional[dict[spaces.Orient, bool]] = None, **kwds) -> None:
         connected = {spaces.Orient.W: False, spaces.Orient.S: False, spaces.Orient.A: False, spaces.Orient.D: False} if connected is None else connected
         self.sprite_state = (connected[spaces.Orient.D] * 0x1) | (connected[spaces.Orient.W] * 0x2) | (connected[spaces.Orient.A] * 0x4) | (connected[spaces.Orient.S] * 0x8)
 
-class Animated(BmpObject):
+class Animated(Object):
     sprite_varients: tuple[int, ...] = tuple(i for i in range(0x4))
     def set_sprite(self, round_num: int = 0, **kwds) -> None:
         self.sprite_state = round_num % 0x4
 
-class Directional(BmpObject):
+class Directional(Object):
     sprite_varients: tuple[int, ...] = tuple(i * 0x8 for i in range(0x4))
     def set_sprite(self, **kwds) -> None:
         self.sprite_state = int(math.log2(spaces.orient_to_int(self.orient))) * 0x8
 
-class AnimatedDirectional(BmpObject):
+class AnimatedDirectional(Object):
     sprite_varients: tuple[int, ...] = \
         tuple(i * 0x8 for i in range(0x4)) + \
         tuple(i * 0x8 + 0x1 for i in range(0x4)) + \
@@ -174,7 +195,7 @@ class AnimatedDirectional(BmpObject):
     def set_sprite(self, round_num: int = 0, **kwds) -> None:
         self.sprite_state = int(math.log2(spaces.orient_to_int(self.orient))) * 0x8 | round_num % 4
 
-class Character(BmpObject):
+class Character(Object):
     sprite_varients: tuple[int, ...] = \
         tuple(i * 0x8 for i in range(0x4)) + \
         tuple(i * 0x8 + 0x1 for i in range(0x4)) + \
@@ -361,20 +382,20 @@ class Cursor(Static):
     display_name: str = "Cursor"
     sprite_color: colors.ColorHex = colors.PINK
 
-class All(BmpObject):
+class All(Object):
     pass
 
-class Empty(BmpObject):
+class Empty(Object):
     pass
 
-class WorldPointer(BmpObject):
+class WorldPointer(Object):
     light_overlay: colors.ColorHex = 0x000000
     dark_overlay: colors.ColorHex = 0xFFFFFF
     def __init__(self, pos: spaces.Coord, orient: spaces.Orient = spaces.Orient.S, *, world_id: refs.WorldID, level_id: Optional[refs.LevelID] = None, world_pointer_extra: WorldPointerExtra = default_world_pointer_extra) -> None:
         self.world_id: refs.WorldID
         super().__init__(pos, orient, world_id=world_id, level_id=level_id)
         self.world_pointer_extra: WorldPointerExtra = world_pointer_extra
-    def to_json(self) -> BmpObjectJson:
+    def to_json(self) -> ObjectJson:
         return {**super().to_json(), "world_pointer_extra": self.world_pointer_extra}
 
 class World(WorldPointer):
@@ -394,12 +415,12 @@ class Clone(WorldPointer):
 world_pointers: list[type[WorldPointer]] = [World, Clone]
 default_world_pointer: type[WorldPointer] = World
 
-class LevelPointer(BmpObject):
+class LevelPointer(Object):
     def __init__(self, pos: spaces.Coord, orient: spaces.Orient = spaces.Orient.S, *, world_id: Optional[refs.WorldID] = None, level_id: refs.LevelID, level_pointer_extra: LevelPointerExtra = default_level_pointer_extra) -> None:
         self.level_id: refs.LevelID
         super().__init__(pos, orient, world_id=world_id, level_id=level_id)
         self.level_pointer_extra: LevelPointerExtra = level_pointer_extra
-    def to_json(self) -> BmpObjectJson:
+    def to_json(self) -> ObjectJson:
         return {**super().to_json(), "level_pointer_extra": self.level_pointer_extra}
 
 class Level(LevelPointer):
@@ -420,22 +441,22 @@ class Path(Tiled):
         super().__init__(pos, orient, world_id=world_pointer_info, level_id=level_pointer_info)
         self.unlocked: bool = unlocked
         self.conditions: dict[type[collects.Collectible], int] = conditions if conditions is not None else {}
-    def to_json(self) -> BmpObjectJson:
+    def to_json(self) -> ObjectJson:
         return {**super().to_json(), "path_extra": {"unlocked": self.unlocked, "conditions": {k.json_name: v for k, v in self.conditions.items()}}}
 
-class Game(BmpObject):
-    def __init__(self, pos: spaces.Coord, orient: spaces.Orient = spaces.Orient.S, *, world_id: Optional[refs.WorldID] = None, level_id: Optional[refs.LevelID] = None, obj_type: type[BmpObject], world_pointer_info: refs.WorldID | None = None, level_pointer_info: refs.LevelID | None = None) -> None:
+class Game(Object):
+    def __init__(self, pos: spaces.Coord, orient: spaces.Orient = spaces.Orient.S, *, world_id: Optional[refs.WorldID] = None, level_id: Optional[refs.LevelID] = None, ref_type: type[Object], world_pointer_info: refs.WorldID | None = None, level_pointer_info: refs.LevelID | None = None) -> None:
         super().__init__(pos, orient, world_id=world_pointer_info, level_id=level_pointer_info)
-        self.obj_type: type[BmpObject] = obj_type
+        self.ref_type: type[Object] = ref_type
     json_name: str = "game"
     display_name: str = "Game"
     sprite_color: colors.ColorHex = colors.PINK
 
-class Text(BmpObject):
+class Text(Object):
     pass
 
 class Noun(Text):
-    obj_type: type[BmpObject]
+    ref_type: type["Object"]
     json_name: str
     sprite_name: str
     display_name: str
@@ -454,133 +475,133 @@ class Property(Text):
     pass
 
 class TextBaba(Noun):
-    obj_type: type[BmpObject] = Baba
+    ref_type: type[Object] = Baba
     sprite_color: colors.ColorHex = colors.MAGENTA
 
 class TextKeke(Noun):
-    obj_type: type[BmpObject] = Keke
+    ref_type: type[Object] = Keke
     
 class TextMe(Noun):
-    obj_type: type[BmpObject] = Me
+    ref_type: type[Object] = Me
 
 class TextPatrick(Noun):
-    obj_type: type[BmpObject] = Patrick
+    ref_type: type[Object] = Patrick
 
 class TextSkull(Noun):
-    obj_type: type[BmpObject] = Skull
+    ref_type: type[Object] = Skull
 
 class TextGhost(Noun):
-    obj_type: type[BmpObject] = Ghost
+    ref_type: type[Object] = Ghost
 
 class TextWall(Noun):
-    obj_type: type[BmpObject] = Wall
+    ref_type: type[Object] = Wall
     sprite_color: colors.ColorHex = colors.LIGHT_GRAY
 
 class TextHedge(Noun):
-    obj_type: type[BmpObject] = Hedge
+    ref_type: type[Object] = Hedge
 
 class TextIce(Noun):
-    obj_type: type[BmpObject] = Ice
+    ref_type: type[Object] = Ice
     sprite_color: colors.ColorHex = colors.LIGHT_GRAY_BLUE
 
 class TextTile(Noun):
-    obj_type: type[BmpObject] = Tile
+    ref_type: type[Object] = Tile
     sprite_color: colors.ColorHex = colors.LIGHT_GRAY
 
 class TextGrass(Noun):
-    obj_type: type[BmpObject] = Grass
+    ref_type: type[Object] = Grass
 
 class TextWater(Noun):
-    obj_type: type[BmpObject] = Water
+    ref_type: type[Object] = Water
 
 class TextLava(Noun):
-    obj_type: type[BmpObject] = Lava
+    ref_type: type[Object] = Lava
     sprite_name: str = "text_lava"
 
 class TextDoor(Noun):
-    obj_type: type[BmpObject] = Door
+    ref_type: type[Object] = Door
 
 class TextKey(Noun):
-    obj_type: type[BmpObject] = Key
+    ref_type: type[Object] = Key
 
 class TextBox(Noun):
-    obj_type: type[BmpObject] = Box
+    ref_type: type[Object] = Box
 
 class TextRock(Noun):
-    obj_type: type[BmpObject] = Rock
+    ref_type: type[Object] = Rock
     sprite_color: colors.ColorHex = colors.BROWN
 
 class TextFruit(Noun):
-    obj_type: type[BmpObject] = Fruit
+    ref_type: type[Object] = Fruit
 
 class TextBelt(Noun):
-    obj_type: type[BmpObject] = Belt
+    ref_type: type[Object] = Belt
     sprite_color: colors.ColorHex = colors.LIGHT_GRAY_BLUE
 
 class TextSun(Noun):
-    obj_type: type[BmpObject] = Sun
+    ref_type: type[Object] = Sun
 
 class TextMoon(Noun):
-    obj_type: type[BmpObject] = Moon
+    ref_type: type[Object] = Moon
 
 class TextStar(Noun):
-    obj_type: type[BmpObject] = Star
+    ref_type: type[Object] = Star
 
 class TextWhat(Noun):
-    obj_type: type[BmpObject] = What
+    ref_type: type[Object] = What
 
 class TextLove(Noun):
-    obj_type: type[BmpObject] = Love
+    ref_type: type[Object] = Love
 
 class TextFlag(Noun):
-    obj_type: type[BmpObject] = Flag
+    ref_type: type[Object] = Flag
 
 class TextLine(Noun):
-    obj_type: type[BmpObject] = Line
+    ref_type: type[Object] = Line
 
 class TextDot(Noun):
-    obj_type: type[BmpObject] = Dot
+    ref_type: type[Object] = Dot
 
 class TextCursor(Noun):
-    obj_type: type[BmpObject] = Cursor
+    ref_type: type[Object] = Cursor
     sprite_color: colors.ColorHex = colors.LIGHT_YELLOW
 
 class TextAll(Noun):
-    obj_type: type[BmpObject] = All
+    ref_type: type[Object] = All
     json_name: str = "text_all"
     sprite_name: str = "text_all"
     display_name: str = "ALL"
     sprite_color: colors.ColorHex = colors.WHITE
 
 class TextEmpty(Noun):
-    obj_type: type[BmpObject] = Empty
+    ref_type: type[Object] = Empty
     json_name: str = "text_empty"
     sprite_name: str = "text_empty"
     display_name: str = "EMPTY"
     sprite_color: colors.ColorHex = colors.LIGHT_GRAY
 
 class TextText(Noun):
-    obj_type: type[BmpObject] = Text
+    ref_type: type[Object] = Text
     json_name: str = "text_text"
     sprite_name: str = "text_text"
     display_name: str = "TEXT"
     sprite_color: colors.ColorHex = colors.MAGENTA
 
 class TextWorld(Noun):
-    obj_type: type[BmpObject] = World
+    ref_type: type[Object] = World
 
 class TextClone(Noun):
-    obj_type: type[BmpObject] = Clone
+    ref_type: type[Object] = Clone
 
 class TextLevel(Noun):
-    obj_type: type[BmpObject] = Level
+    ref_type: type[Object] = Level
 
 class TextPath(Noun):
-    obj_type: type[BmpObject] = Path
+    ref_type: type[Object] = Path
     sprite_name: str = "text_path"
 
 class TextGame(Noun):
-    obj_type: type[BmpObject] = Game
+    ref_type: type[Object] = Game
     json_name: str = "text_game"
     sprite_name: str = "text_game"
     display_name: str = "GAME"
@@ -811,10 +832,10 @@ class TextDone(Property):
     sprite_color: colors.ColorHex = colors.WHITE
 
 class Metatext(Noun):
-    base_obj_type: type[Text]
+    _base_ref_type: type[Text]
     meta_tier: int
     
-def same_float_prop(obj_1: BmpObject, obj_2: BmpObject):
+def same_float_prop(obj_1: Object, obj_2: Object):
     return not (obj_1.properties.has(TextFloat) ^ obj_2.properties.has(TextFloat))
 
 special_operators = [TextHas, TextMake, TextWrite]
@@ -828,13 +849,13 @@ noun_class_list.extend([TextWorld, TextClone, TextLevel, TextPath, TextGame])
 
 for noun_class in noun_class_list:
     if not hasattr(noun_class, "json_name"):
-        setattr(noun_class, "json_name", "text_" + noun_class.obj_type.json_name)
+        setattr(noun_class, "json_name", "text_" + noun_class.ref_type.json_name)
     if not hasattr(noun_class, "sprite_name"):
-        setattr(noun_class, "sprite_name", "text_" + noun_class.obj_type.sprite_name)
+        setattr(noun_class, "sprite_name", "text_" + noun_class.ref_type.sprite_name)
     if not hasattr(noun_class, "display_name"):
-        setattr(noun_class, "display_name", noun_class.obj_type.display_name.upper())
+        setattr(noun_class, "display_name", noun_class.ref_type.display_name.upper())
     if not hasattr(noun_class, "sprite_color"):
-        setattr(noun_class, "sprite_color", noun_class.obj_type.sprite_color)
+        setattr(noun_class, "sprite_color", noun_class.ref_type.sprite_color)
 
 text_class_list: list[type[Text]] = []
 text_class_list.extend(noun_class_list)
@@ -845,7 +866,7 @@ text_class_list.extend([TextNot, TextAnd])
 text_class_list.extend([TextYou, TextMove, TextStop, TextPush, TextSink, TextFloat, TextOpen, TextShut, TextHot, TextMelt, TextWin, TextDefeat, TextShift, TextTele])
 text_class_list.extend([TextEnter, TextLeave, TextBonus, TextHide, TextWord, TextSelect, TextTextPlus, TextTextMinus, TextEnd, TextDone])
 
-object_used: list[type[BmpObject]] = []
+object_used: list[type[Object]] = []
 object_used.extend([Baba, Keke, Me, Patrick, Skull, Ghost])
 object_used.extend([Wall, Hedge, Ice, Tile, Grass, Water, Lava])
 object_used.extend([Door, Key, Box, Rock, Fruit, Belt, Sun, Moon, Star, What, Love, Flag])
@@ -855,11 +876,11 @@ object_used.extend(text_class_list)
 object_class_used = object_used[:]
 object_class_used.extend([All, Empty, Text, Game, TextEmpty])
 
-object_name: dict[str, type[BmpObject]] = {t.json_name: t for t in object_used}
+object_name: dict[str, type[Object]] = {t.json_name: t for t in object_used}
 
-not_in_all: tuple[type[BmpObject], ...] = (All, Empty, Text, Level, WorldPointer, Game)
-in_not_all: tuple[type[BmpObject], ...] = (Text, Empty, Game)
-not_in_editor: tuple[type[BmpObject], ...] = (All, Empty, TextEmpty, Text, Game)
+not_in_all: tuple[type[Object], ...] = (All, Empty, Text, Level, WorldPointer, Game)
+in_not_all: tuple[type[Object], ...] = (Text, Empty, Game)
+not_in_editor: tuple[type[Object], ...] = (All, Empty, TextEmpty, Text, Game)
 
 metatext_class_dict: dict[int, list[type[Metatext]]] = {}
 current_metatext_tier: int = basics.options["metatext"]["tier"]
@@ -867,12 +888,12 @@ current_metatext_tier: int = basics.options["metatext"]["tier"]
 def generate_metatext(T: type[Text]) -> type[Metatext]:
     new_type_name = "Text" + T.__name__
     new_type_tier = new_type_name.count("Text") - (1 if new_type_name[-4:] != "Text" and new_type_name[-5:] != "Text_" else 2)
-    new_type_base = T.base_obj_type if issubclass(T, Metatext) else T
+    new_type_base = T._base_ref_type if issubclass(T, Metatext) else T
     new_type_vars: dict[str, Any] = {
         "json_name": "text_" + T.json_name,
         "sprite_name": T.sprite_name,
-        "obj_type": T,
-        "base_obj_type": new_type_base,
+        "ref_type": T,
+        "_base_ref_type": new_type_base,
         "meta_tier": new_type_tier,
         "display_name": "TEXT_" + T.display_name,
         "sprite_color": T.sprite_color
@@ -910,25 +931,25 @@ def generate_metatext_at_tier(tier: int) -> list[type[Metatext]]:
         text_class_list.append(new_type)
     return new_metatext_class_list
 
-def get_noun_from_type(obj_type: type[BmpObject]) -> type[Noun]:
+def get_noun_from_type(object_type: type[Object]) -> type[Noun]:
     global current_metatext_tier
     global object_class_used, object_used, object_name, noun_class_list, text_class_list
     return_value: type[Noun] = TextText
     for noun_type in noun_class_list:
-        if obj_type.__name__ == noun_type.obj_type.__name__:
+        if object_type.__name__ == noun_type.ref_type.__name__:
             return noun_type
-        if issubclass(obj_type, noun_type.obj_type):
+        if issubclass(object_type, noun_type.ref_type):
             return_value = noun_type
     if return_value == TextText:
         current_metatext_tier += 1
         generate_metatext_at_tier(current_metatext_tier)
-        return get_noun_from_type(obj_type)
+        return get_noun_from_type(object_type)
     return return_value
 
 if basics.options["metatext"]["enabled"]:
     generate_metatext_at_tier(basics.options["metatext"]["tier"])
 
-def json_to_object(json_object: BmpObjectJson, ver: Optional[str] = None) -> BmpObject:
+def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object:
     global current_metatext_tier
     global object_class_used, object_used, object_name, noun_class_list, text_class_list
     world_id: Optional[refs.WorldID] = None
@@ -954,42 +975,42 @@ def json_to_object(json_object: BmpObjectJson, ver: Optional[str] = None) -> Bmp
         level_pointer_extra = json_object.get("level_pointer_extra")
     world_pointer_extra = world_pointer_extra if world_pointer_extra is not None else default_world_pointer_extra
     level_pointer_extra = level_pointer_extra if level_pointer_extra is not None else default_level_pointer_extra
-    obj_type = object_name.get(json_object["type"])
-    if obj_type is None:
+    object_type = object_name.get(json_object["type"])
+    if object_type is None:
         if json_object["type"].startswith("text_text_"):
             current_metatext_tier += 1
             generate_metatext_at_tier(current_metatext_tier)
             return json_to_object(json_object, ver)
         raise ValueError(json_object["type"])
-    if issubclass(obj_type, LevelPointer):
+    if issubclass(object_type, LevelPointer):
         if level_id is not None:
-            return obj_type(pos=spaces.Coord(*json_object["position"]),
+            return object_type(pos=spaces.Coord(*json_object["position"]),
                             orient=spaces.str_to_orient(json_object["orientation"]),
                             world_id=world_id,
                             level_id=level_id,
                             level_pointer_extra=level_pointer_extra)
         raise ValueError(level_id)
-    if issubclass(obj_type, WorldPointer):
+    if issubclass(object_type, WorldPointer):
         if world_id is not None:
-            return obj_type(pos=spaces.Coord(*json_object["position"]),
+            return object_type(pos=spaces.Coord(*json_object["position"]),
                             orient=spaces.str_to_orient(json_object["orientation"]),
                             world_id=world_id,
                             level_id=level_id,
                             world_pointer_extra=world_pointer_extra)
         raise ValueError(world_id)
-    if issubclass(obj_type, Path):
+    if issubclass(object_type, Path):
         path_extra = json_object.get("path_extra")
         if path_extra is None:
             path_extra = {"unlocked": False, "conditions": {}}
         reversed_collectible_dict = {v: k for k, v in collects.collectible_dict.items()}
         conditions: dict[type[collects.Collectible], int] = {reversed_collectible_dict[k]: v for k, v in path_extra["conditions"].items()}
-        return obj_type(pos=spaces.Coord(*json_object["position"]),
+        return object_type(pos=spaces.Coord(*json_object["position"]),
                         orient=spaces.str_to_orient(json_object["orientation"]),
                         world_id=world_id,
                         level_id=level_id,
                         unlocked=path_extra["unlocked"],
                         conditions=conditions)
-    return obj_type(pos=spaces.Coord(*json_object["position"]),
+    return object_type(pos=spaces.Coord(*json_object["position"]),
                     orient=spaces.str_to_orient(json_object["orientation"]),
                     world_id=world_id,
                     level_id=level_id)

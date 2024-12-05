@@ -3,22 +3,22 @@ import random
 
 from BabaMakeParabox import basics, refs, colors, spaces, objects, rules
 
-def match_pos(obj: objects.BmpObject, pos: spaces.Coord) -> bool:
+def match_pos(obj: objects.Object, pos: spaces.Coord) -> bool:
     return obj.pos == pos
 
 class WorldJson(TypedDict):
     id: refs.WorldIDJson
     size: spaces.CoordTuple
     color: colors.ColorHex
-    object_list: list[objects.BmpObjectJson]
+    object_list: list[objects.ObjectJson]
 
 class World(object):
     def __init__(self, world_id: refs.WorldID, size: spaces.Coord, color: Optional[colors.ColorHex] = None) -> None:
         self.world_id: refs.WorldID = world_id
         self.size: spaces.Coord = size
         self.color: colors.ColorHex = color if color is not None else colors.random_world_color()
-        self.object_list: list[objects.BmpObject] = []
-        self.object_pos_index: list[list[objects.BmpObject]]
+        self.object_list: list[objects.Object] = []
+        self.object_pos_index: list[list[objects.Object]]
         self.properties: dict[type[objects.WorldPointer], objects.Properties] = {p: objects.Properties() for p in objects.world_pointers}
         self.special_operator_properties: dict[type[objects.WorldPointer], dict[type[objects.Operator], objects.Properties]] = {p: {o: objects.Properties() for o in objects.special_operators} for p in objects.world_pointers}
         self.rule_list: list[rules.Rule] = []
@@ -41,41 +41,41 @@ class World(object):
         return coord[0] < 0 or coord[1] < 0 or coord[0] >= self.width or coord[1] >= self.height
     def pos_to_index(self, pos) -> int:
         return pos[1] * self.width + pos[0]
-    def pos_to_objs(self, pos) -> list[objects.BmpObject]:
+    def pos_to_objs(self, pos) -> list[objects.Object]:
         return self.object_pos_index[self.pos_to_index(pos)]
     def refresh_index(self) -> None:
         self.object_pos_index = [[] for _ in range(self.width * self.height)]
         for obj in self.object_list:
             if not self.out_of_range(obj.pos):
                 self.pos_to_objs(obj.pos).append(obj)
-    def new_obj(self, obj: objects.BmpObject) -> None:
+    def new_obj(self, obj: objects.Object) -> None:
         self.object_list.append(obj)
         if not self.out_of_range(obj.pos):
             self.pos_to_objs(obj.pos).append(obj)
-    def get_objs_from_pos(self, pos: spaces.Coord) -> list[objects.BmpObject]:
+    def get_objs_from_pos(self, pos: spaces.Coord) -> list[objects.Object]:
         if self.out_of_range(pos):
             return []
         return self.pos_to_objs(pos)
-    def get_objs_from_pos_and_type[T: objects.BmpObject](self, pos: spaces.Coord, obj_type: type[T]) -> list[T]:
+    def get_objs_from_pos_and_type[T: objects.Object](self, pos: spaces.Coord, object_type: type[T]) -> list[T]:
         if self.out_of_range(pos):
             return []
-        return [o for o in self.pos_to_objs(pos) if isinstance(o, obj_type)]
-    def get_objs_from_type[T: objects.BmpObject](self, obj_type: type[T]) -> list[T]:
-        return [o for o in self.object_list if isinstance(o, obj_type)]
-    def del_obj(self, obj: objects.BmpObject) -> None:
+        return [o for o in self.pos_to_objs(pos) if isinstance(o, object_type)]
+    def get_objs_from_type[T: objects.Object](self, object_type: type[T]) -> list[T]:
+        return [o for o in self.object_list if isinstance(o, object_type)]
+    def del_obj(self, obj: objects.Object) -> None:
         if not self.out_of_range(obj.pos):
             self.pos_to_objs(obj.pos).remove(obj)
         self.object_list.remove(obj)
-    def del_obj_from_pos_and_type(self, pos: spaces.Coord, obj_type: type) -> bool:
+    def del_obj_from_pos_and_type(self, pos: spaces.Coord, object_type: type) -> bool:
         for obj in self.pos_to_objs(pos):
-            if isinstance(obj, obj_type):
+            if isinstance(obj, object_type):
                 self.object_list.remove(obj)
                 if not self.out_of_range(obj.pos):
                     self.pos_to_objs(pos).remove(obj)
                 return True
         return False
-    def del_objs_from_pos_and_type(self, pos: spaces.Coord, obj_type: type) -> bool:
-        del_objects = filter(lambda o: isinstance(o, obj_type), self.pos_to_objs(pos))
+    def del_objs_from_pos_and_type(self, pos: spaces.Coord, object_type: type) -> bool:
+        del_objects = filter(lambda o: isinstance(o, object_type), self.pos_to_objs(pos))
         deleted = False
         for obj in del_objects:
             deleted = True

@@ -51,11 +51,11 @@ class Levelpack(object):
                 new_types = []
                 for noun, count in old_obj.properties.enabled_dict().items():
                     if issubclass(noun, objects.Noun):
-                        new_types.extend([noun.obj_type] * count)
+                        new_types.extend([noun.ref_type] * count)
                 not_new_types = []
                 for noun, count in old_obj.properties.disabled_dict().items():
                     if issubclass(noun, objects.Noun):
-                        not_new_types.extend([noun.obj_type] * count)
+                        not_new_types.extend([noun.ref_type] * count)
                 transform_success = False
                 old_type_is_old_type = False
                 old_type_is_not_old_type = False
@@ -71,7 +71,7 @@ class Levelpack(object):
                     if objects.All in new_types:
                         new_types.remove(objects.All)
                         all_nouns = [t for t in active_level.all_list if t not in not_new_types]
-                        new_types.extend([t.obj_type for t in all_nouns])
+                        new_types.extend([t.ref_type for t in all_nouns])
                     for new_text_type, new_text_count in old_obj.special_operator_properties[objects.TextWrite].enabled_dict().items():
                         for _ in range(new_text_count):
                             new_obj = new_text_type(old_obj.pos, old_obj.orient, world_id=old_obj.world_id, level_id=old_obj.level_id)
@@ -80,9 +80,9 @@ class Levelpack(object):
                     for new_type in new_types:
                         if issubclass(new_type, objects.Game):
                             if isinstance(old_obj, (objects.LevelPointer, objects.WorldPointer)):
-                                world.new_obj(objects.Game(old_obj.pos, old_obj.orient, obj_type=objects.get_noun_from_type(old_type)))
+                                world.new_obj(objects.Game(old_obj.pos, old_obj.orient, ref_type=objects.get_noun_from_type(old_type)))
                             else:
-                                world.new_obj(objects.Game(old_obj.pos, old_obj.orient, obj_type=old_type))
+                                world.new_obj(objects.Game(old_obj.pos, old_obj.orient, ref_type=old_type))
                             transform_success = True
                         elif issubclass(new_type, objects.LevelPointer):
                             if isinstance(old_obj, new_type):
@@ -150,7 +150,7 @@ class Levelpack(object):
                 world.del_obj(delete_obj)
     def world_transform(self, active_level: levels.Level) -> None:
         old_obj_list: dict[type[objects.WorldPointer], list[tuple[refs.WorldID, objects.WorldPointer]]]
-        new_type_list: dict[type[objects.WorldPointer], list[type[objects.BmpObject]]]
+        new_type_list: dict[type[objects.WorldPointer], list[type[objects.Object]]]
         for world_pointer_type in objects.world_pointers:
             for world in active_level.world_list:
                 old_obj_list = {p: [] for p in objects.world_pointers}
@@ -165,7 +165,7 @@ class Levelpack(object):
                     if issubclass(prop_type, objects.TextAll):
                         new_type_list[world_pointer_type].extend(objects.in_not_all * prop_count)
                     else:
-                        new_type_list[world_pointer_type].extend([prop_type.obj_type] * prop_count)
+                        new_type_list[world_pointer_type].extend([prop_type.ref_type] * prop_count)
                 for new_text_type, new_text_count in world.special_operator_properties[world_pointer_type][objects.TextWrite].enabled_dict().items():
                     new_type_list[world_pointer_type].extend([new_text_type] * new_text_count)
                 for old_world_id, old_obj in old_obj_list[world_pointer_type]:
@@ -185,7 +185,7 @@ class Levelpack(object):
                             self.set_level(levels.Level(new_level_id, active_level.world_list, super_level_id=active_level.level_id, main_world_id=old_obj.world_id))
                             new_obj = new_type(old_obj.pos, old_obj.orient, level_id=new_level_id, level_pointer_extra=new_level_pointer_extra)
                         elif issubclass(new_type, objects.Game):
-                            new_obj = objects.Game(old_obj.pos, old_obj.orient, obj_type=objects.get_noun_from_type(world_pointer_type))
+                            new_obj = objects.Game(old_obj.pos, old_obj.orient, ref_type=objects.get_noun_from_type(world_pointer_type))
                         elif issubclass(new_type, objects.Text):
                             new_obj = objects.get_noun_from_type(world_pointer_type)(old_obj.pos, old_obj.orient, world_id=old_obj.world_id)
                         else:
@@ -195,7 +195,7 @@ class Levelpack(object):
                         old_world.del_obj(old_obj)
     def level_transform(self, active_level: levels.Level) -> bool:
         old_obj_list: dict[type[objects.LevelPointer], list[tuple[refs.LevelID, refs.WorldID, objects.LevelPointer]]]
-        new_type_list: dict[type[objects.LevelPointer], list[type[objects.BmpObject]]]
+        new_type_list: dict[type[objects.LevelPointer], list[type[objects.Object]]]
         transform_success = False
         for level_pointer_type in objects.level_pointers:
             old_obj_list = {p: [] for p in objects.level_pointers}
@@ -211,7 +211,7 @@ class Levelpack(object):
                 if issubclass(prop_type, objects.TextAll):
                     new_type_list[level_pointer_type].extend(objects.in_not_all * prop_count)
                 else:
-                    new_type_list[level_pointer_type].extend([prop_type.obj_type] * prop_count)
+                    new_type_list[level_pointer_type].extend([prop_type.ref_type] * prop_count)
             for new_text_type, new_text_count in active_level.special_operator_properties[level_pointer_type][objects.TextWrite].enabled_dict().items():
                 new_type_list[level_pointer_type].extend([new_text_type] * new_text_count)
             for old_level_id, old_world_id, old_obj in old_obj_list[level_pointer_type]:
@@ -230,7 +230,7 @@ class Levelpack(object):
                                 old_level.set_world(new_world)
                         new_obj = new_type(old_obj.pos, old_obj.orient, world_id=active_level.main_world_id)
                     elif issubclass(new_type, objects.Game):
-                        new_obj = objects.Game(old_obj.pos, old_obj.orient, obj_type=objects.get_noun_from_type(level_pointer_type))
+                        new_obj = objects.Game(old_obj.pos, old_obj.orient, ref_type=objects.get_noun_from_type(level_pointer_type))
                     elif issubclass(new_type, objects.Text):
                         new_obj = objects.get_noun_from_type(level_pointer_type)(old_obj.pos, old_obj.orient, level_id=active_level.level_id)
                     else:
@@ -333,8 +333,8 @@ def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
     rule_list: list[rules.Rule] = []
     for rule in json_object["rule_list"]:
         rule_list.append([])
-        for obj_type in rule:
-            rule_list[-1].append(objects.object_name[obj_type]) # type: ignore
+        for object_type in rule:
+            rule_list[-1].append(objects.object_name[object_type]) # type: ignore
     if basics.compare_versions(ver if ver is not None else "0.0", "3.8") == -1:
         main_level_id: refs.LevelID = refs.LevelID(json_object["main_level"]) # type: ignore
     else:

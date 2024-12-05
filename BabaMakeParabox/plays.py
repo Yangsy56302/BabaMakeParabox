@@ -268,20 +268,20 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 languages.lang_print("seperator.title", text=languages.lang_format("title.world.rule_list"))
                 for rule in current_world.rule_list:
                     str_list = []
-                    for obj_type in rule:
-                        str_list.append(obj_type.display_name)
+                    for object_type in rule:
+                        str_list.append(object_type.display_name)
                     print(" ".join(str_list))
                 languages.lang_print("seperator.title", text=languages.lang_format("title.level.rule_list"))
                 for rule in current_level.recursion_rules(current_world):
                     str_list = []
-                    for obj_type in rule:
-                        str_list.append(obj_type.display_name)
+                    for object_type in rule:
+                        str_list.append(object_type.display_name)
                     print(" ".join(str_list))
                 languages.lang_print("seperator.title", text=languages.lang_format("title.levelpack.rule_list"))
                 for rule in levelpack.rule_list:
                     str_list = []
-                    for obj_type in rule:
-                        str_list.append(obj_type.display_name)
+                    for object_type in rule:
+                        str_list.append(object_type.display_name)
                     print(" ".join(str_list))
                 languages.lang_print("seperator.title", text=languages.lang_format("title.collectibles"))
                 if len(levelpack.collectibles) == 0:
@@ -438,9 +438,9 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             transparent_black_background = pygame.Surface(window.get_size(), pygame.SRCALPHA)
             transparent_black_background.fill("#00000080")
             window.blit(transparent_black_background, (0, 0))
-        game_transform_to = [o.obj_type for o in game_transform_to if o is not None]
-        for obj_type in game_transform_to:
-            window.blit(pygame.transform.scale(displays.sprites.get(obj_type.sprite_name, 0, wiggle), window.get_size()), (0, 0))
+        game_transform_to = [o.ref_type for o in game_transform_to if o is not None]
+        for object_type in game_transform_to:
+            window.blit(pygame.transform.scale(displays.sprites.get(object_type.sprite_name, 0, wiggle), window.get_size()), (0, 0))
         del game_transform_to
         # offset
         display_offset_speed[0] = basics.absclampf(display_offset_speed[0], window.get_width() / basics.options["fps"] * 4)

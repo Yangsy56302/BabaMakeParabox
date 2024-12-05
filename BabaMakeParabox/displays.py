@@ -60,22 +60,22 @@ class Sprites(object):
     def update(self) -> None:
         self.raw_sprites: dict[str, dict[int, dict[int, pygame.Surface]]] = {}
         self.sprites: dict[str, dict[int, dict[int, pygame.Surface]]] = {}
-        for obj_type in objects.object_used:
-            sprite_name: str = getattr(obj_type, "sprite_name", "")
+        for object_type in objects.object_used:
+            sprite_name: str = getattr(object_type, "sprite_name", "")
             if sprite_name == "":
                 continue
-            sprite_color: colors.ColorHex = getattr(obj_type, "sprite_color", colors.WHITE)
-            sprite_varients: list[int] = getattr(obj_type, "sprite_varients")
-            self.raw_sprites.setdefault(obj_type.json_name, {})
-            self.sprites.setdefault(obj_type.json_name, {})
+            sprite_color: colors.ColorHex = getattr(object_type, "sprite_color", colors.WHITE)
+            sprite_varients: list[int] = getattr(object_type, "sprite_varients")
+            self.raw_sprites.setdefault(object_type.json_name, {})
+            self.sprites.setdefault(object_type.json_name, {})
             for varient_number in sprite_varients:
-                self.raw_sprites[obj_type.json_name].setdefault(varient_number, {})
-                self.sprites[obj_type.json_name].setdefault(varient_number, {})
+                self.raw_sprites[object_type.json_name].setdefault(varient_number, {})
+                self.sprites[object_type.json_name].setdefault(varient_number, {})
                 for wiggle in range(1, 4):
                     filename = "_".join([sprite_name, str(varient_number), str(wiggle)]) + ".png"
                     sprite = pygame.image.load(os.path.join("sprites", filename)).convert_alpha()
-                    self.raw_sprites[obj_type.json_name][int(varient_number)][int(wiggle)] = sprite.copy()
-                    self.sprites[obj_type.json_name][int(varient_number)][int(wiggle)] = set_surface_color_dark(sprite, sprite_color)
+                    self.raw_sprites[object_type.json_name][int(varient_number)][int(wiggle)] = sprite.copy()
+                    self.sprites[object_type.json_name][int(varient_number)][int(wiggle)] = set_surface_color_dark(sprite, sprite_color)
         special_sprite_name: list[str] = ["empty", "text_infinite", "text_epsilon"]
         special_sprite_name.extend(["text_" + str(i) for i in range(10)])
         for sprite_name in special_sprite_name:
@@ -92,22 +92,22 @@ class Sprites(object):
         return self.sprites[name][varient][wiggle]
 sprites = Sprites()
 
-def simple_type_to_surface(obj_type: type[objects.BmpObject], varient: int = 0, wiggle: int = 1, default_surface: Optional[pygame.Surface] = None, debug: bool = False) -> pygame.Surface:
-    if issubclass(obj_type, objects.WorldPointer):
+def simple_type_to_surface(object_type: type[objects.Object], varient: int = 0, wiggle: int = 1, default_surface: Optional[pygame.Surface] = None, debug: bool = False) -> pygame.Surface:
+    if issubclass(object_type, objects.WorldPointer):
         if default_surface is not None:
             obj_surface = default_surface.copy()
         else:
             obj_surface = pygame.Surface((pixel_sprite_size, pixel_sprite_size), pygame.SRCALPHA)
-            obj_surface.fill(obj_type.sprite_color)
-        obj_surface = set_surface_color_light(obj_surface, obj_type.light_overlay)
-        obj_surface = set_surface_color_dark(obj_surface, obj_type.dark_overlay)
+            obj_surface.fill(object_type.sprite_color)
+        obj_surface = set_surface_color_light(obj_surface, object_type.light_overlay)
+        obj_surface = set_surface_color_dark(obj_surface, object_type.dark_overlay)
     else:
-        obj_surface = sprites.get(obj_type.json_name, varient, wiggle).copy()
-        if issubclass(obj_type, objects.Metatext):
-            obj_surface = pygame.transform.scale(obj_surface, (sprite_size * len(str(obj_type.meta_tier)), sprite_size * len(str(obj_type.meta_tier))))
-            tier_surface = pygame.Surface((sprite_size * len(str(obj_type.meta_tier)), sprite_size), pygame.SRCALPHA)
+        obj_surface = sprites.get(object_type.json_name, varient, wiggle).copy()
+        if issubclass(object_type, objects.Metatext):
+            obj_surface = pygame.transform.scale(obj_surface, (sprite_size * len(str(object_type.meta_tier)), sprite_size * len(str(object_type.meta_tier))))
+            tier_surface = pygame.Surface((sprite_size * len(str(object_type.meta_tier)), sprite_size), pygame.SRCALPHA)
             tier_surface.fill("#00000000")
-            for digit, char in enumerate(str(obj_type.meta_tier)):
+            for digit, char in enumerate(str(object_type.meta_tier)):
                 tier_surface.blit(sprites.get("text_" + char, varient, wiggle), (sprite_size * digit, 0))
             tier_surface = set_alpha(tier_surface, 0x80)
             tier_surface_pos = ((obj_surface.get_width() - tier_surface.get_width()) // 2,
@@ -115,7 +115,7 @@ def simple_type_to_surface(obj_type: type[objects.BmpObject], varient: int = 0, 
             obj_surface.blit(tier_surface, tier_surface_pos)
     return obj_surface
 
-def simple_object_to_surface(obj: objects.BmpObject, wiggle: int = 1, default_surface: Optional[pygame.Surface] = None, debug: bool = False) -> pygame.Surface:
+def simple_object_to_surface(obj: objects.Object, wiggle: int = 1, default_surface: Optional[pygame.Surface] = None, debug: bool = False) -> pygame.Surface:
     if isinstance(obj, objects.LevelPointer):
         obj_surface = set_surface_color_dark(sprites.get(obj.json_name, obj.sprite_state, wiggle, raw=True).copy(), obj.level_pointer_extra["icon"]["color"])
         icon_surface = sprites.get(obj.level_pointer_extra["icon"]["name"], 0, wiggle, raw=True).copy()
@@ -133,7 +133,7 @@ def simple_object_to_surface(obj: objects.BmpObject, wiggle: int = 1, default_su
                     obj_surface.fill("#00000000")
     return obj_surface
 
-order: tuple[type[objects.BmpObject], ...] = (
+order: tuple[type[objects.Object], ...] = (
     objects.Cursor,
     objects.Operator,
     objects.Noun,
@@ -147,5 +147,5 @@ order: tuple[type[objects.BmpObject], ...] = (
     objects.Animated,
     objects.Tiled,
     objects.WorldPointer,
-    objects.BmpObject
+    objects.Object
 )

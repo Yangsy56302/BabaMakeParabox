@@ -74,7 +74,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     world_surface_pos = (0, 0)
     displays.sprites.update()
     window.fill("#000000")
-    object_type_shortcuts: dict[int, type[objects.BmpObject]] = {k: objects.object_name[v] for k, v in enumerate(basics.options["object_type_shortcuts"])}
+    object_type_shortcuts: dict[int, type[objects.Object]] = {k: objects.object_name[v] for k, v in enumerate(basics.options["object_type_shortcuts"])}
     level_changed = True
     world_changed = True
     frame = 0
@@ -260,8 +260,8 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                             current_world_index += 1
                             world_changed = True
                     elif keys["LSHIFT"] or keys["RSHIFT"]:
-                        if issubclass(current_object_type, objects.Noun) and current_object_type.obj_type not in objects.not_in_editor:
-                            current_object_type = current_object_type.obj_type
+                        if issubclass(current_object_type, objects.Noun) and current_object_type.ref_type not in objects.not_in_editor:
+                            current_object_type = current_object_type.ref_type
                     else:
                         current_object_type_list = [t for t in objects.object_name.values() if t not in objects.not_in_editor]
                         current_object_type_index = current_object_type_list.index(current_object_type)
@@ -395,10 +395,10 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             type_rule: rules.Rule = []
             valid_input = True
             for text in text_rule:
-                obj_type = objects.object_name.get(text)
-                if obj_type is not None:
-                    if issubclass(obj_type, objects.Text):
-                        type_rule.append(obj_type)
+                object_type = objects.object_name.get(text)
+                if object_type is not None:
+                    if issubclass(object_type, objects.Text):
+                        type_rule.append(object_type)
                     else:
                         valid_input = False
                         break
@@ -413,8 +413,8 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             languages.lang_print("seperator.title", text=languages.lang_format("title.levelpack.rule_list"))
             for rule in levelpack.rule_list:
                 str_list = []
-                for obj_type in rule:
-                    str_list.append(obj_type.display_name)
+                for object_type in rule:
+                    str_list.append(object_type.display_name)
                 print(" ".join(str_list))
         # edit id for current world / level (alt)
         elif keys["T"]:
@@ -443,17 +443,17 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             history.append(copy.deepcopy(levelpack))
             current_clipboard = current_world.get_objs_from_pos(current_cursor_pos)
             current_clipboard = copy.deepcopy(current_clipboard)
-            list(map(objects.BmpObject.reset_uuid, current_clipboard))
+            list(map(objects.Object.reset_uuid, current_clipboard))
             current_world.del_objs_from_pos(current_cursor_pos)
         elif keys["C"] and (keys["LCTRL"] or keys["RCTRL"]):
             history.append(copy.deepcopy(levelpack))
             current_clipboard = current_world.get_objs_from_pos(current_cursor_pos)
             current_clipboard = copy.deepcopy(current_clipboard)
-            list(map(objects.BmpObject.reset_uuid, current_clipboard))
+            list(map(objects.Object.reset_uuid, current_clipboard))
         elif keys["V"] and (keys["LCTRL"] or keys["RCTRL"]):
             history.append(copy.deepcopy(levelpack))
             current_clipboard = copy.deepcopy(current_clipboard)
-            list(map(objects.BmpObject.reset_uuid, current_clipboard))
+            list(map(objects.Object.reset_uuid, current_clipboard))
             for obj in current_clipboard:
                 obj.pos = current_cursor_pos
                 current_world.new_obj(obj)
@@ -497,12 +497,12 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 obj_surface = displays.simple_type_to_surface(current_object_type, wiggle=wiggle, default_surface=world_surface, debug=True)
         obj_surface = pygame.transform.scale(obj_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
         window.blit(obj_surface, (window.get_width() - displays.pixel_sprite_size, 0))
-        for index, obj_type in object_type_shortcuts.items():
-            obj_surface = displays.simple_type_to_surface(obj_type, wiggle=wiggle, debug=True)
-            if issubclass(obj_type, objects.WorldPointer):
+        for index, object_type in object_type_shortcuts.items():
+            obj_surface = displays.simple_type_to_surface(object_type, wiggle=wiggle, debug=True)
+            if issubclass(object_type, objects.WorldPointer):
                 world = current_level.get_world(current_world.world_id)
                 if world is not None:
-                    obj_surface = displays.simple_type_to_surface(obj_type, wiggle=wiggle, default_surface=world_surface, debug=True)
+                    obj_surface = displays.simple_type_to_surface(object_type, wiggle=wiggle, default_surface=world_surface, debug=True)
             obj_surface = pygame.transform.scale(obj_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
             obj_surface_pos = (window.get_width() + (index % 5 * displays.pixel_sprite_size) - (displays.pixel_sprite_size * 5),
                                window.get_height() + (index // 5 * displays.pixel_sprite_size) - (displays.pixel_sprite_size * 2))

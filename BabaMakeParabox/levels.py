@@ -78,7 +78,7 @@ class Level(object):
                         in_not_in_all = True
                 if noun_type not in self.all_list and not in_not_in_all:
                     self.all_list.append(noun_type)
-    def meet_prefix_conditions(self, world: worlds.World, obj: objects.BmpObject, prefix_info_list: list[rules.PrefixInfo], is_meta: bool = False) -> bool:
+    def meet_prefix_conditions(self, world: worlds.World, obj: objects.Object, prefix_info_list: list[rules.PrefixInfo], is_meta: bool = False) -> bool:
         return_value = True
         for prefix_info in prefix_info_list:
             meet_prefix_condition = True
@@ -90,11 +90,11 @@ class Level(object):
                 meet_prefix_condition = random.choice((True, False, False, False, False, False))
             return_value = return_value and (meet_prefix_condition if not prefix_info.negated else not meet_prefix_condition)
         return return_value
-    def meet_infix_conditions(self, world: worlds.World, obj: objects.BmpObject, infix_info_list: list[rules.InfixInfo], old_feeling: Optional[objects.Properties] = None) -> bool:
+    def meet_infix_conditions(self, world: worlds.World, obj: objects.Object, infix_info_list: list[rules.InfixInfo], old_feeling: Optional[objects.Properties] = None) -> bool:
         for infix_info in infix_info_list:
             meet_infix_condition = True
             if infix_info.infix_type in (objects.TextOn, objects.TextNear, objects.TextNextto):
-                matched_objs: list[objects.BmpObject] = [obj]
+                matched_objs: list[objects.Object] = [obj]
                 find_range: list[spaces.Coord]
                 if infix_info.infix_type == objects.TextOn:
                     find_range = [spaces.Coord(obj.pos.x, obj.pos.y)]
@@ -106,10 +106,10 @@ class Level(object):
                     find_range = [spaces.Coord(obj.pos.x, obj.pos.y - 1), spaces.Coord(obj.pos.x - 1, obj.pos.y), spaces.Coord(obj.pos.x + 1, obj.pos.y), spaces.Coord(obj.pos.x, obj.pos.y + 1)]
                 for match_negated, match_type_text in infix_info[2]: # type: ignore
                     match_type_text: type[objects.Noun]
-                    match_type = match_type_text.obj_type
+                    match_type = match_type_text.ref_type
                     if match_type == objects.All:
                         if match_negated:
-                            match_objs: list[objects.BmpObject] = []
+                            match_objs: list[objects.Object] = []
                             for new_match_type in [o for o in self.all_list if issubclass(o, objects.in_not_all)]:
                                 for pos in find_range:
                                     match_objs.extend([o for o in world.get_objs_from_pos_and_type(pos, new_match_type) if o not in matched_objs])
@@ -118,7 +118,7 @@ class Level(object):
                                     break
                                 matched_objs.append(match_objs[0])
                         else:
-                            match_objs: list[objects.BmpObject] = []
+                            match_objs: list[objects.Object] = []
                             for new_match_type in [o for o in self.all_list if not issubclass(o, objects.not_in_all)]:
                                 for pos in find_range:
                                     match_objs.extend([o for o in world.get_objs_from_pos_and_type(pos, new_match_type) if o not in matched_objs])
@@ -128,7 +128,7 @@ class Level(object):
                                 matched_objs.append(match_objs[0])
                     else:
                         if match_negated:
-                            match_objs: list[objects.BmpObject] = []
+                            match_objs: list[objects.Object] = []
                             for new_match_type in [o for o in self.all_list if (not issubclass(o, objects.not_in_all)) and not issubclass(o, match_type)]:
                                 for pos in find_range:
                                     match_objs.extend([o for o in world.get_objs_from_pos_and_type(pos, new_match_type) if o not in matched_objs])
@@ -137,7 +137,7 @@ class Level(object):
                             else:
                                 matched_objs.append(match_objs[0])
                         else:
-                            match_objs: list[objects.BmpObject] = []
+                            match_objs: list[objects.Object] = []
                             for pos in find_range:
                                 match_objs.extend([o for o in world.get_objs_from_pos_and_type(pos, match_type) if o not in matched_objs])
                             if len(match_objs) == 0:
@@ -155,7 +155,7 @@ class Level(object):
                             meet_infix_condition = False
             elif infix_info.infix_type == objects.TextWithout:
                 meet_infix_condition = True
-                matched_objs: list[objects.BmpObject] = [obj]
+                matched_objs: list[objects.Object] = [obj]
                 match_type_count: dict[tuple[bool, type[objects.Noun]], int] = {}
                 for match_negated, match_type_text in infix_info[2]: # type: ignore
                     match_type_text: type[objects.Noun]
@@ -163,17 +163,17 @@ class Level(object):
                     match_type_count[(match_negated, match_type_text)] += 1
                 for (match_negated, match_type_text), match_count in match_type_count.items():
                     match_type_text: type[objects.Noun]
-                    match_type = match_type_text.obj_type
+                    match_type = match_type_text.ref_type
                     if match_type == objects.All:
                         if match_negated:
-                            match_objs: list[objects.BmpObject] = []
+                            match_objs: list[objects.Object] = []
                             for new_match_type in [o for o in self.all_list if issubclass(o, objects.in_not_all)]:
                                 match_objs.extend(world.get_objs_from_type(new_match_type))
                                 if len(match_objs) >= match_count:
                                     meet_infix_condition = False
                                     break
                         else:
-                            match_objs: list[objects.BmpObject] = []
+                            match_objs: list[objects.Object] = []
                             for new_match_type in [o for o in self.all_list if not issubclass(o, objects.not_in_all)]:
                                 match_objs.extend(world.get_objs_from_type(new_match_type))
                                 if len(match_objs) >= match_count:
@@ -181,13 +181,13 @@ class Level(object):
                                     break
                     else:
                         if match_negated:
-                            match_objs: list[objects.BmpObject] = []
+                            match_objs: list[objects.Object] = []
                             for new_match_type in [o for o in self.all_list if (not issubclass(o, objects.not_in_all)) and not issubclass(o, match_type)]:
                                 match_objs.extend(world.get_objs_from_type(new_match_type))
                             if len(match_objs) >= match_count:
                                 meet_infix_condition = False
                         else:
-                            match_objs: list[objects.BmpObject] = world.get_objs_from_type(match_type)
+                            match_objs: list[objects.Object] = world.get_objs_from_type(match_type)
                             if len(match_objs) >= match_count:
                                 meet_infix_condition = False
                     if not meet_infix_condition:
@@ -221,7 +221,7 @@ class Level(object):
                 obj.special_operator_properties = {o: objects.Properties() for o in objects.special_operators}
         for world in self.world_list:
             world.rule_list = world.get_rules()
-        new_prop_list: list[tuple[objects.BmpObject, tuple[type[objects.Text], int]]] = []
+        new_prop_list: list[tuple[objects.Object, tuple[type[objects.Text], int]]] = []
         for world in self.world_list:
             for rule in world.rule_list + self.rule_list + self.recursion_rules(world):
                 for atom_rule in rules.to_atom_rules(rule):
@@ -237,8 +237,8 @@ class Level(object):
                             continue
                         if prop_type != objects.TextWord:
                             continue
-                        obj_type = noun_type.obj_type
-                        if obj_type == objects.All:
+                        object_type = noun_type.ref_type
+                        if object_type == objects.All:
                             if noun_negated_tier % 2 == 1:
                                 for obj in [o for o in world.object_list if isinstance(o, objects.in_not_all)]:
                                     if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
@@ -249,11 +249,11 @@ class Level(object):
                                         new_prop_list.append((obj, (objects.TextWord, prop_negated_tier)))
                         else:
                             if noun_negated_tier % 2 == 1:
-                                for obj in [o for o in world.object_list if (not isinstance(o, objects.not_in_all)) and not isinstance(o, obj_type)]:
+                                for obj in [o for o in world.object_list if (not isinstance(o, objects.not_in_all)) and not isinstance(o, object_type)]:
                                     if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
                                         new_prop_list.append((obj, (objects.TextWord, prop_negated_tier)))
                             else:
-                                for obj in world.get_objs_from_type(obj_type):
+                                for obj in world.get_objs_from_type(object_type):
                                     if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
                                         new_prop_list.append((obj, (objects.TextWord, prop_negated_tier)))
         for obj, prop in new_prop_list:
@@ -280,8 +280,8 @@ class Level(object):
                         oper_type = rule_info.oper_type
                         prop_negated_tier = rule_info.prop_negated_tier
                         prop_type = rule_info.prop_type
-                        obj_type = noun_type.obj_type
-                        if obj_type == objects.All:
+                        object_type = noun_type.ref_type
+                        if object_type == objects.All:
                             if noun_negated_tier % 2 == 1:
                                 obj_list = [o for o in world.object_list if isinstance(o, objects.in_not_all)]
                             else:
@@ -292,25 +292,25 @@ class Level(object):
                                         new_prop_list.append((obj, (prop_type, prop_negated_tier)))
                                     else:
                                         obj.special_operator_properties[oper_type].update(prop_type, prop_negated_tier)
-                        elif obj_type == objects.Game and oper_type == objects.TextIs:
-                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject(spaces.Coord(0, 0)), prefix_info_list, True):
+                        elif object_type == objects.Game and oper_type == objects.TextIs:
+                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
                                 self.game_properties.update(prop_type, prop_negated_tier)
-                        elif issubclass(obj_type, objects.LevelPointer):
-                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject(spaces.Coord(0, 0)), prefix_info_list, True):
+                        elif issubclass(object_type, objects.LevelPointer):
+                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
                                 if oper_type == objects.TextIs:
-                                    self.properties[obj_type].update(prop_type, prop_negated_tier)
+                                    self.properties[object_type].update(prop_type, prop_negated_tier)
                                 else:
-                                    self.special_operator_properties[obj_type][oper_type].update(prop_type, prop_negated_tier)
-                        elif issubclass(obj_type, objects.WorldPointer):
-                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject(spaces.Coord(0, 0)), prefix_info_list, True):
+                                    self.special_operator_properties[object_type][oper_type].update(prop_type, prop_negated_tier)
+                        elif issubclass(object_type, objects.WorldPointer):
+                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
                                 if oper_type == objects.TextIs:
-                                    world.properties[obj_type].update(prop_type, prop_negated_tier)
+                                    world.properties[object_type].update(prop_type, prop_negated_tier)
                                 else:
-                                    world.special_operator_properties[obj_type][oper_type].update(prop_type, prop_negated_tier)
+                                    world.special_operator_properties[object_type][oper_type].update(prop_type, prop_negated_tier)
                         if noun_negated_tier % 2 == 1:
-                            obj_list = [o for o in world.object_list if (not isinstance(o, objects.not_in_all)) and not isinstance(o, obj_type)]
+                            obj_list = [o for o in world.object_list if (not isinstance(o, objects.not_in_all)) and not isinstance(o, object_type)]
                         else:
-                            obj_list = world.get_objs_from_type(obj_type)
+                            obj_list = world.get_objs_from_type(object_type)
                         for obj in obj_list:
                             if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
                                 if oper_type == objects.TextIs:
@@ -327,8 +327,8 @@ class Level(object):
                         oper_type = rule_info.oper_type
                         prop_negated_tier = rule_info.prop_negated_tier
                         prop_type = rule_info.prop_type
-                        obj_type = noun_type.obj_type
-                        if obj_type == objects.All:
+                        object_type = noun_type.ref_type
+                        if object_type == objects.All:
                             if noun_negated_tier % 2 == 1:
                                 obj_list = [o for o in world.object_list if isinstance(o, objects.in_not_all)]
                             else:
@@ -339,13 +339,13 @@ class Level(object):
                                         new_prop_list.append((obj, (prop_type, prop_negated_tier)))
                                     else:
                                         obj.special_operator_properties[oper_type].update(prop_type, prop_negated_tier)
-                        elif obj_type == objects.Game and oper_type == objects.TextIs:
-                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject(spaces.Coord(0, 0)), prefix_info_list, True):
+                        elif object_type == objects.Game and oper_type == objects.TextIs:
+                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
                                 self.game_properties.update(prop_type, prop_negated_tier)
                         if noun_negated_tier % 2 == 1:
-                            obj_list = [o for o in world.object_list if (not isinstance(o, objects.not_in_all)) and not isinstance(o, obj_type)]
+                            obj_list = [o for o in world.object_list if (not isinstance(o, objects.not_in_all)) and not isinstance(o, object_type)]
                         else:
-                            obj_list = world.get_objs_from_type(obj_type)
+                            obj_list = world.get_objs_from_type(object_type)
                         for obj in obj_list:
                             if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
                                 if oper_type == objects.TextIs:
@@ -355,7 +355,7 @@ class Level(object):
         for obj, prop in new_prop_list:
             prop_type, prop_negated_count = prop
             obj.properties.update(prop_type, prop_negated_count)
-    def move_obj_between_worlds(self, old_world: worlds.World, obj: objects.BmpObject, new_world: worlds.World, pos: spaces.Coord) -> None:
+    def move_obj_between_worlds(self, old_world: worlds.World, obj: objects.Object, new_world: worlds.World, pos: spaces.Coord) -> None:
         if obj in old_world.object_list:
             old_world.del_obj(obj)
         obj = copy.deepcopy(obj)
@@ -364,7 +364,7 @@ class Level(object):
         obj.old_state.pos = obj.pos
         obj.pos = pos
         new_world.new_obj(obj)
-    def move_obj_in_world(self, world: worlds.World, obj: objects.BmpObject, pos: spaces.Coord) -> None:
+    def move_obj_in_world(self, world: worlds.World, obj: objects.Object, pos: spaces.Coord) -> None:
         if obj in world.object_list:
             world.del_obj(obj)
         obj = copy.deepcopy(obj)
@@ -372,22 +372,22 @@ class Level(object):
         obj.old_state.pos = obj.pos
         obj.pos = pos
         world.new_obj(obj)
-    def destroy_obj(self, world: worlds.World, obj: objects.BmpObject) -> None:
+    def destroy_obj(self, world: worlds.World, obj: objects.Object) -> None:
         world.del_obj(obj)
         for new_noun_type, new_noun_count in obj.special_operator_properties[objects.TextHas].enabled_dict().items(): # type: ignore
             new_noun_type: type[objects.Noun]
-            new_obj_type: type[objects.BmpObject] = new_noun_type.obj_type
-            if issubclass(new_obj_type, objects.Game):
+            new_object_type: type[objects.Object] = new_noun_type.ref_type
+            if issubclass(new_object_type, objects.Game):
                 if isinstance(obj, (objects.LevelPointer, objects.WorldPointer)):
                     for _ in range(new_noun_count):
-                        world.new_obj(objects.Game(obj.pos, obj.orient, obj_type=objects.get_noun_from_type(type(obj))))
+                        world.new_obj(objects.Game(obj.pos, obj.orient, ref_type=objects.get_noun_from_type(type(obj))))
                 else:
                     for _ in range(new_noun_count):
-                        world.new_obj(objects.Game(obj.pos, obj.orient, obj_type=type(obj)))
-            elif issubclass(new_obj_type, objects.LevelPointer):
+                        world.new_obj(objects.Game(obj.pos, obj.orient, ref_type=type(obj)))
+            elif issubclass(new_object_type, objects.LevelPointer):
                 if obj.level_id is not None:
                     for _ in range(new_noun_count):
-                        world.new_obj(new_obj_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=obj.level_id))
+                        world.new_obj(new_object_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=obj.level_id))
                 else:
                     world_id: refs.WorldID = refs.WorldID(obj.uuid.hex)
                     world_color = colors.to_background_color(obj.sprite_color)
@@ -399,11 +399,11 @@ class Level(object):
                     self.created_levels.append(Level(level_id, [new_world], super_level_id=self.level_id, rule_list=self.rule_list))
                     level_pointer_extra: objects.LevelPointerExtra = {"icon": {"name": obj.json_name, "color": obj.sprite_color}}
                     for _ in range(new_noun_count):
-                        world.new_obj(new_obj_type(obj.pos, obj.orient, level_id=level_id, level_pointer_extra=level_pointer_extra))
-            elif issubclass(new_obj_type, objects.WorldPointer):
+                        world.new_obj(new_object_type(obj.pos, obj.orient, level_id=level_id, level_pointer_extra=level_pointer_extra))
+            elif issubclass(new_object_type, objects.WorldPointer):
                 if obj.world_id is not None:
                     for _ in range(new_noun_count):
-                        world.new_obj(new_obj_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=obj.level_id))
+                        world.new_obj(new_object_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=obj.level_id))
                 else:
                     world_id: refs.WorldID = refs.WorldID(obj.uuid.hex)
                     world_color = colors.to_background_color(obj.sprite_color)
@@ -414,16 +414,16 @@ class Level(object):
                     self.set_world(new_world)
                     world_pointer_info: refs.WorldID = refs.WorldID(obj.uuid.hex)
                     for _ in range(new_noun_count):
-                        world.new_obj(new_obj_type(obj.pos, obj.orient, world_id=world_pointer_info))
+                        world.new_obj(new_object_type(obj.pos, obj.orient, world_id=world_pointer_info))
             elif new_noun_type == objects.TextText:
-                new_obj_type = objects.get_noun_from_type(type(obj))
+                new_object_type = objects.get_noun_from_type(type(obj))
                 for _ in range(new_noun_count):
-                    world.new_obj(new_obj_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=obj.level_id))
+                    world.new_obj(new_object_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=obj.level_id))
             else:
-                new_obj_type = new_noun_type.obj_type
+                new_object_type = new_noun_type.ref_type
                 for _ in range(new_noun_count):
-                    world.new_obj(new_obj_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=obj.level_id))
-    def get_move_list(self, world: worlds.World, obj: objects.BmpObject, orient: spaces.Orient, pos: Optional[spaces.Coord] = None, pushed: Optional[list[objects.BmpObject]] = None, passed: Optional[list[refs.WorldID]] = None, transnum: Optional[float] = None, depth: int = 0) -> Optional[list[tuple[objects.BmpObject, worlds.World, spaces.Coord, spaces.Orient]]]:
+                    world.new_obj(new_object_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=obj.level_id))
+    def get_move_list(self, world: worlds.World, obj: objects.Object, orient: spaces.Orient, pos: Optional[spaces.Coord] = None, pushed: Optional[list[objects.Object]] = None, passed: Optional[list[refs.WorldID]] = None, transnum: Optional[float] = None, depth: int = 0) -> Optional[list[tuple[objects.Object, worlds.World, spaces.Coord, spaces.Orient]]]:
         if depth > 128:
             return None
         depth += 1
@@ -468,7 +468,7 @@ class Level(object):
                     exit_world = False
         # push
         push_objects = [o for o in world.get_objs_from_pos(new_pos) if o.properties.enabled(objects.TextPush)]
-        objects_that_cant_push: list[objects.BmpObject] = []
+        objects_that_cant_push: list[objects.Object] = []
         push = False
         push_list = []
         if len(push_objects) != 0 and not world.out_of_range(new_pos):
@@ -591,7 +591,7 @@ class Level(object):
             return basics.remove_same_elements(not_stop_list)
         else:
             return None
-    def move_objs_from_move_list(self, move_list: list[tuple[objects.BmpObject, worlds.World, spaces.Coord, spaces.Orient]]) -> None:
+    def move_objs_from_move_list(self, move_list: list[tuple[objects.Object, worlds.World, spaces.Coord, spaces.Orient]]) -> None:
         move_list = basics.remove_same_elements(move_list)
         for move_obj, new_world, new_pos, new_orient in move_list:
             move_obj.move_number += 1
@@ -730,17 +730,17 @@ class Level(object):
         for world in self.world_list:
             if world.properties[objects.default_world_pointer].enabled(objects.TextTele):
                 pass
-        tele_list: list[tuple[worlds.World, objects.BmpObject, worlds.World, spaces.Coord]] = []
-        object_list: list[tuple[worlds.World, objects.BmpObject]] = []
+        tele_list: list[tuple[worlds.World, objects.Object, worlds.World, spaces.Coord]] = []
+        object_list: list[tuple[worlds.World, objects.Object]] = []
         for world in self.world_list:
             object_list.extend([(world, o) for o in world.object_list])
         tele_objs = [t for t in object_list if t[1].properties.enabled(objects.TextTele)]
-        tele_obj_types: dict[type[objects.BmpObject], list[tuple[worlds.World, objects.BmpObject]]] = {}
-        for obj_type in [n.obj_type for n in objects.noun_class_list]:
+        tele_object_types: dict[type[objects.Object], list[tuple[worlds.World, objects.Object]]] = {}
+        for object_type in [n.ref_type for n in objects.noun_class_list]:
             for tele_obj in tele_objs:
-                if isinstance(tele_obj[1], obj_type):
-                    tele_obj_types[obj_type] = tele_obj_types.get(obj_type, []) + [tele_obj]
-        for new_tele_objs in tele_obj_types.values():
+                if isinstance(tele_obj[1], object_type):
+                    tele_object_types[object_type] = tele_object_types.get(object_type, []) + [tele_obj]
+        for new_tele_objs in tele_object_types.values():
             if len(new_tele_objs) <= 1:
                 continue
             for tele_world, tele_obj in new_tele_objs:
@@ -891,20 +891,20 @@ class Level(object):
             for obj in world.object_list:
                 for make_noun_type, make_noun_count in obj.special_operator_properties[objects.TextMake].enabled_dict().items(): # type: ignore
                     make_noun_type: type[objects.Noun]
-                    make_obj_type: type[objects.BmpObject] = make_noun_type.obj_type
-                    if issubclass(make_obj_type, objects.Game):
+                    make_object_type: type[objects.Object] = make_noun_type.ref_type
+                    if issubclass(make_object_type, objects.Game):
                         if isinstance(obj, (objects.LevelPointer, objects.WorldPointer)):
                             for _ in range(make_noun_count):
-                                world.new_obj(objects.Game(obj.pos, obj.orient, obj_type=objects.get_noun_from_type(type(obj))))
+                                world.new_obj(objects.Game(obj.pos, obj.orient, ref_type=objects.get_noun_from_type(type(obj))))
                         else:
                             for _ in range(make_noun_count):
-                                world.new_obj(objects.Game(obj.pos, obj.orient, obj_type=type(obj)))
-                    elif issubclass(make_obj_type, objects.LevelPointer):
-                        if len(world.get_objs_from_pos_and_type(obj.pos, make_obj_type)) != 0:
+                                world.new_obj(objects.Game(obj.pos, obj.orient, ref_type=type(obj)))
+                    elif issubclass(make_object_type, objects.LevelPointer):
+                        if len(world.get_objs_from_pos_and_type(obj.pos, make_object_type)) != 0:
                             pass
                         elif obj.level_id is not None:
                             for _ in range(make_noun_count):
-                                world.new_obj(make_obj_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=obj.level_id))
+                                world.new_obj(make_object_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=obj.level_id))
                         else:
                             world_id: refs.WorldID = refs.WorldID(obj.uuid.hex)
                             world_color = colors.to_background_color(obj.sprite_color)
@@ -917,13 +917,13 @@ class Level(object):
                             self.created_levels.append(Level(level_id, [new_world], super_level_id=self.level_id, rule_list=self.rule_list))
                             level_pointer_extra: objects.LevelPointerExtra = {"icon": {"name": obj.json_name, "color": obj.sprite_color}}
                             for _ in range(make_noun_count):
-                                world.new_obj(make_obj_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=level_id, level_pointer_extra=level_pointer_extra))
-                    elif issubclass(make_obj_type, objects.WorldPointer):
-                        if len(world.get_objs_from_pos_and_type(obj.pos, make_obj_type)) != 0:
+                                world.new_obj(make_object_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=level_id, level_pointer_extra=level_pointer_extra))
+                    elif issubclass(make_object_type, objects.WorldPointer):
+                        if len(world.get_objs_from_pos_and_type(obj.pos, make_object_type)) != 0:
                             pass
                         if obj.world_id is not None:
                             for _ in range(make_noun_count):
-                                world.new_obj(make_obj_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=obj.level_id))
+                                world.new_obj(make_object_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=obj.level_id))
                         else:
                             world_id: refs.WorldID = refs.WorldID(obj.uuid.hex)
                             world_color = colors.to_background_color(obj.sprite_color)
@@ -934,19 +934,19 @@ class Level(object):
                             new_world.new_obj(new_obj)
                             self.set_world(new_world)
                             for _ in range(make_noun_count):
-                                world.new_obj(make_obj_type(obj.pos, obj.orient, world_id=world_id, level_id=obj.level_id))
+                                world.new_obj(make_object_type(obj.pos, obj.orient, world_id=world_id, level_id=obj.level_id))
                     elif make_noun_type == objects.TextText:
-                        make_obj_type = objects.get_noun_from_type(type(obj))
-                        if len(world.get_objs_from_pos_and_type(obj.pos, make_obj_type)) != 0:
+                        make_object_type = objects.get_noun_from_type(type(obj))
+                        if len(world.get_objs_from_pos_and_type(obj.pos, make_object_type)) != 0:
                             pass
                         for _ in range(make_noun_count):
-                            world.new_obj(make_obj_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=obj.level_id))
+                            world.new_obj(make_object_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=obj.level_id))
                     else:
-                        make_obj_type = make_noun_type.obj_type
-                        if len(world.get_objs_from_pos_and_type(obj.pos, make_obj_type)) != 0:
+                        make_object_type = make_noun_type.ref_type
+                        if len(world.get_objs_from_pos_and_type(obj.pos, make_object_type)) != 0:
                             pass
                         for _ in range(make_noun_count):
-                            world.new_obj(make_obj_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=obj.level_id))
+                            world.new_obj(make_object_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=obj.level_id))
     def text_plus_and_text_minus(self) -> None:
         for world in self.world_list:
             delete_list = []
@@ -964,12 +964,12 @@ class Level(object):
                     continue
                 if not isinstance(text_minus_obj, objects.Noun):
                     continue
-                new_type = text_minus_obj.obj_type
+                new_type = text_minus_obj.ref_type
                 if new_type == objects.Text:
                     continue
                 delete_list.append(text_minus_obj)
                 if issubclass(new_type, objects.Game):
-                    world.new_obj(objects.Game(text_minus_obj.pos, text_minus_obj.orient, obj_type=objects.TextGame))
+                    world.new_obj(objects.Game(text_minus_obj.pos, text_minus_obj.orient, ref_type=objects.TextGame))
                 elif issubclass(new_type, objects.LevelPointer):
                     if text_minus_obj.level_id is not None:
                         world.new_obj(new_type(text_minus_obj.pos, text_minus_obj.orient, world_id=text_minus_obj.world_id, level_id=text_minus_obj.level_id))
@@ -1003,11 +1003,11 @@ class Level(object):
             for game_obj in world.get_objs_from_type(objects.Game):
                 if basics.current_os == basics.windows:
                     if os.path.exists("submp.exe"):
-                        os.system(f"start submp.exe {game_obj.obj_type.json_name}")
+                        os.system(f"start submp.exe {game_obj.ref_type.json_name}")
                     elif os.path.exists("submp.py"):
-                        os.system(f"start /b python submp.py {game_obj.obj_type.json_name}")
+                        os.system(f"start /b python submp.py {game_obj.ref_type.json_name}")
                 elif basics.current_os == basics.linux:
-                    os.system(f"python ./submp.py {game_obj.obj_type.json_name} &")
+                    os.system(f"python ./submp.py {game_obj.ref_type.json_name} &")
     def win(self) -> bool:
         for world in self.world_list:
             you_objs = [o for o in world.object_list if o.properties.enabled(objects.TextYou)]
@@ -1116,8 +1116,8 @@ class Level(object):
             return world_surface
         world_surface_size = (world.width * displays.pixel_sprite_size, world.height * displays.pixel_sprite_size)
         world_surface = pygame.Surface(world_surface_size, pygame.SRCALPHA)
-        object_list: list[tuple[Optional[refs.WorldID], objects.BmpObject]] = []
-        obj_surface_list: list[tuple[spaces.Coord, spaces.Coord, pygame.Surface, objects.BmpObject]] = []
+        object_list: list[tuple[Optional[refs.WorldID], objects.Object]] = []
+        obj_surface_list: list[tuple[spaces.Coord, spaces.Coord, pygame.Surface, objects.Object]] = []
         for other_world in self.world_list:
             for other_object in other_world.object_list:
                 if (smooth is not None) and other_object.old_state.world == world.world_id and isinstance(other_object, displays.order):
