@@ -64,17 +64,19 @@ class Levelpack(object):
                 noun_is_noun = False
                 noun_is_not_noun = False
                 for new_noun in new_nouns:
-                    if not issubclass(new_noun, objects.SpecialNoun):
+                    if issubclass(new_noun, objects.SupportsReferenceType):
                         if isinstance(old_obj, new_noun.ref_type):
                             noun_is_noun = True
-                    elif new_noun.isreferenceof(old_obj):
-                        noun_is_noun = True
+                    elif issubclass(new_noun, objects.SupportsReferencing):
+                        if new_noun.isreferenceof(old_obj):
+                            noun_is_noun = True
                 for not_new_type in not_new_nouns:
-                    if not issubclass(new_noun, objects.SpecialNoun):
+                    if issubclass(new_noun, objects.SupportsReferenceType):
                         if isinstance(old_obj, not_new_type.ref_type):
                             noun_is_not_noun = True
-                    elif new_noun.isreferenceof(old_obj):
-                        noun_is_not_noun = True
+                    elif issubclass(new_noun, objects.SupportsReferencing):
+                        if new_noun.isreferenceof(old_obj):
+                            noun_is_not_noun = True
                 if noun_is_noun:
                     continue
                 if noun_is_not_noun:
@@ -85,10 +87,10 @@ class Levelpack(object):
                         world.new_obj(new_obj)
                     transform_success = True
                 for new_noun in new_nouns:
-                    if issubclass(new_noun, objects.SpecialNoun):
+                    if issubclass(new_noun, objects.FixedNoun):
                         if issubclass(new_noun, objects.TextEmpty):
                             transform_success = True
-                        if issubclass(new_noun, objects.SpecialWorldObject):
+                        if issubclass(new_noun, objects.SpecificWorldNoun):
                             if new_noun.isreferenceof(old_obj):
                                 old_obj.world_id += new_noun.delta_infinite_tier
                     new_type = new_noun.ref_type
@@ -189,10 +191,10 @@ class Levelpack(object):
                     old_world = active_level.get_exact_world(old_world_id)
                     transform_success = True
                     for new_noun in new_noun_list[world_object_type]:
-                        if issubclass(new_noun, objects.SpecialNoun):
+                        if issubclass(new_noun, objects.FixedNoun):
                             if issubclass(new_noun, objects.TextEmpty):
                                 transform_success = True
-                            if issubclass(new_noun, objects.SpecialWorldObject):
+                            if issubclass(new_noun, objects.SpecificWorldNoun):
                                 if new_noun.isreferenceof(old_obj):
                                     old_obj.world_id += new_noun.delta_infinite_tier
                         new_type = new_noun.ref_type
@@ -246,7 +248,7 @@ class Levelpack(object):
                 old_world = old_level.get_exact_world(old_world_id)
                 object_transform_success = True
                 for new_noun in new_noun_list[level_object_type]:
-                    if issubclass(new_noun, objects.SpecialNoun):
+                    if issubclass(new_noun, objects.FixedNoun):
                         if issubclass(new_noun, objects.TextEmpty):
                             transform_success = True
                     new_type = new_noun.ref_type

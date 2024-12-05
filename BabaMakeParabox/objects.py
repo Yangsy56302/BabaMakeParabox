@@ -437,6 +437,9 @@ class Text(Object):
 class Noun(Text):
     ref_type: type["Object"]
 
+class GeneralNoun(Noun):
+    ref_type: type["Object"]
+
 class Prefix(Text):
     pass
 
@@ -449,125 +452,125 @@ class Operator(Text):
 class Property(Text):
     pass
 
-class TextBaba(Noun):
+class TextBaba(GeneralNoun):
     ref_type = Baba
     sprite_color: colors.ColorHex = colors.MAGENTA
 
-class TextKeke(Noun):
+class TextKeke(GeneralNoun):
     ref_type = Keke
     
-class TextMe(Noun):
+class TextMe(GeneralNoun):
     ref_type = Me
 
-class TextPatrick(Noun):
+class TextPatrick(GeneralNoun):
     ref_type = Patrick
 
-class TextSkull(Noun):
+class TextSkull(GeneralNoun):
     ref_type = Skull
 
-class TextGhost(Noun):
+class TextGhost(GeneralNoun):
     ref_type = Ghost
 
-class TextWall(Noun):
+class TextWall(GeneralNoun):
     ref_type = Wall
     sprite_color: colors.ColorHex = colors.LIGHT_GRAY
 
-class TextHedge(Noun):
+class TextHedge(GeneralNoun):
     ref_type = Hedge
 
-class TextIce(Noun):
+class TextIce(GeneralNoun):
     ref_type = Ice
     sprite_color: colors.ColorHex = colors.LIGHT_GRAY_BLUE
 
-class TextTile(Noun):
+class TextTile(GeneralNoun):
     ref_type = Tile
     sprite_color: colors.ColorHex = colors.LIGHT_GRAY
 
-class TextGrass(Noun):
+class TextGrass(GeneralNoun):
     ref_type = Grass
 
-class TextWater(Noun):
+class TextWater(GeneralNoun):
     ref_type = Water
 
-class TextLava(Noun):
+class TextLava(GeneralNoun):
     ref_type = Lava
     sprite_name = "text_lava"
 
-class TextDoor(Noun):
+class TextDoor(GeneralNoun):
     ref_type = Door
 
-class TextKey(Noun):
+class TextKey(GeneralNoun):
     ref_type = Key
 
-class TextBox(Noun):
+class TextBox(GeneralNoun):
     ref_type = Box
 
-class TextRock(Noun):
+class TextRock(GeneralNoun):
     ref_type = Rock
     sprite_color: colors.ColorHex = colors.BROWN
 
-class TextFruit(Noun):
+class TextFruit(GeneralNoun):
     ref_type = Fruit
 
-class TextBelt(Noun):
+class TextBelt(GeneralNoun):
     ref_type = Belt
     sprite_color: colors.ColorHex = colors.LIGHT_GRAY_BLUE
 
-class TextSun(Noun):
+class TextSun(GeneralNoun):
     ref_type = Sun
 
-class TextMoon(Noun):
+class TextMoon(GeneralNoun):
     ref_type = Moon
 
-class TextStar(Noun):
+class TextStar(GeneralNoun):
     ref_type = Star
 
-class TextWhat(Noun):
+class TextWhat(GeneralNoun):
     ref_type = What
 
-class TextLove(Noun):
+class TextLove(GeneralNoun):
     ref_type = Love
 
-class TextFlag(Noun):
+class TextFlag(GeneralNoun):
     ref_type = Flag
 
-class TextLine(Noun):
+class TextLine(GeneralNoun):
     ref_type = Line
 
-class TextDot(Noun):
+class TextDot(GeneralNoun):
     ref_type = Dot
 
-class TextCursor(Noun):
+class TextCursor(GeneralNoun):
     ref_type = Cursor
     sprite_color: colors.ColorHex = colors.LIGHT_YELLOW
 
-class TextText(Noun):
+class TextText(GeneralNoun):
     ref_type = Text
     json_name = "text_text"
     sprite_name = "text_text"
     display_name = "TEXT"
     sprite_color: colors.ColorHex = colors.MAGENTA
 
-class TextLevelObject(Noun):
+class TextLevelObject(GeneralNoun):
     ref_type = LevelObject
 
-class TextLevel(Noun):
+class TextLevel(GeneralNoun):
     ref_type = Level
 
-class TextWorldObject(Noun):
+class TextWorldObject(GeneralNoun):
     ref_type = WorldObject
 
-class TextWorld(Noun):
+class TextWorld(GeneralNoun):
     ref_type = World
 
-class TextClone(Noun):
+class TextClone(GeneralNoun):
     ref_type = Clone
 
-class TextPath(Noun):
+class TextPath(GeneralNoun):
     ref_type = Path
     sprite_name = "text_path"
 
-class TextGame(Noun):
+class TextGame(GeneralNoun):
     ref_type = Game
     json_name = "text_game"
     sprite_name = "text_game"
@@ -798,45 +801,53 @@ class TextDone(Property):
     display_name = "DONE"
     sprite_color: colors.ColorHex = colors.WHITE
 
-class Metatext(Noun):
+class Metatext(GeneralNoun):
     ref_type: type[Text]
     meta_tier: int
     _base_ref_type: type[Text]
 
 class SpecialNoun(Noun):
-    ref_type = NotRealObject
-    sprite_color: colors.ColorHex = colors.WHITE
+    ref_type: type[NotRealObject] = NotRealObject
+    sprite_color = colors.WHITE
     @classmethod
     def isreferenceof(cls, other: Object, **kwds) -> bool:
         raise NotImplementedError()
+
+class FixedNoun(SpecialNoun):
+    @classmethod
+    def isreferenceof(cls, other: Object, **kwds) -> bool:
+        return False
+
+class RangedNoun(SpecialNoun):
+    ref_type: tuple[type[Noun], ...]
+    @classmethod
+    def isreferenceof(cls, other: Object, **kwds) -> bool:
+        return any(map(lambda n: isinstance(other, n) if not isinstance(n, SpecialNoun) else n.isreferenceof(other), cls.ref_type))
+
+SupportsReferenceType = GeneralNoun | RangedNoun
+SupportsReferencing = FixedNoun | RangedNoun
 
 class TextEmpty(SpecialNoun):
     json_name = "text_empty"
     sprite_name = "text_empty"
     display_name = "EMPTY"
-    @classmethod
-    def isreferenceof(cls, other: Object, **kwds) -> bool:
-        return False
 
-class TextAll(SpecialNoun):
+class TextAll(RangedNoun):
     json_name = "text_all"
     sprite_name = "text_all"
     display_name = "ALL"
-    @classmethod
-    def isreferenceof(cls, other: Object, all_list: list[type[Noun]], **kwds) -> bool:
-        return all(map(lambda n: isinstance(other, n) if not isinstance(n, SpecialNoun) else n.isreferenceof(other), all_list))
 
-class TextGroupBase(SpecialNoun):
+class GroupNoun(FixedNoun):
     @classmethod
     def isreferenceof(cls, other: Object, **kwds) -> bool:
         return other.properties.enabled(cls)
 
-class TextGroup(TextGroupBase):
+class TextGroup(GroupNoun):
     json_name = "text_group"
     sprite_name = "text_group"
     display_name = "GROUP"
 
-class SpecialWorldObject(SpecialNoun):
+class SpecificWorldNoun(FixedNoun):
     delta_infinite_tier: int
     @classmethod
     def isreferenceof(cls, other: Object, **kwds) -> TypeGuard[WorldObject]:
@@ -844,7 +855,7 @@ class SpecialWorldObject(SpecialNoun):
             return True
         return False
 
-class TextInfinity(SpecialWorldObject):
+class TextInfinity(SpecificWorldNoun):
     json_name = "text_infinity"
     sprite_name = "text_infinity"
     display_name = "INFINITY"
@@ -856,7 +867,7 @@ class TextInfinity(SpecialWorldObject):
                 return True
         return False
 
-class TextEpsilon(SpecialWorldObject):
+class TextEpsilon(SpecificWorldNoun):
     json_name = "text_epsilon"
     sprite_name = "text_epsilon"
     display_name = "EPSILON"
@@ -867,6 +878,12 @@ class TextEpsilon(SpecialWorldObject):
             if other.world_id.infinite_tier < 0:
                 return True
         return False
+
+class TextParabox(RangedNoun):
+    ref_type = (TextInfinity, TextEpsilon)
+    json_name = "text_parabox"
+    sprite_name = "text_patrick"
+    display_name = "PARABOX"
 
 special_operators = [TextHas, TextMake, TextWrite]
 
@@ -887,8 +904,8 @@ for noun_class in noun_class_list:
     if not hasattr(noun_class, "sprite_color"):
         setattr(noun_class, "sprite_color", noun_class.ref_type.sprite_color)
 
-special_noun_class_list: list[type[SpecialNoun]] = []
-noun_class_list.extend([TextEmpty, TextAll, TextGroup, TextInfinity, TextEpsilon])
+special_noun_class_list: list[type[FixedNoun]] = []
+noun_class_list.extend([TextEmpty, TextAll, TextGroup, TextInfinity, TextEpsilon, TextParabox])
 
 text_class_list: list[type[Text]] = []
 text_class_list.extend(noun_class_list)

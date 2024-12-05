@@ -60,13 +60,13 @@ class World(object):
         if self.out_of_range(pos):
             return []
         return [o for o in self.pos_to_objs(pos) if isinstance(o, object_type)]
-    def get_objs_from_pos_and_special_noun(self, pos: spaces.Coord, noun_type: type[objects.SpecialNoun]) -> list[objects.Object]:
+    def get_objs_from_pos_and_special_noun(self, pos: spaces.Coord, noun_type: type[objects.SupportsReferencing]) -> list[objects.Object]:
         if self.out_of_range(pos):
             return []
         return [o for o in self.pos_to_objs(pos) if noun_type.isreferenceof(o)]
     def get_objs_from_type[T: objects.Object](self, object_type: type[T]) -> list[T]:
         return [o for o in self.object_list if isinstance(o, object_type)]
-    def get_objs_from_special_noun(self, object_type: type[objects.SpecialNoun]) -> list[objects.Object]:
+    def get_objs_from_special_noun(self, object_type: type[objects.SupportsReferencing]) -> list[objects.Object]:
         return [o for o in self.object_list if object_type.isreferenceof(o)]
     def del_obj(self, obj: objects.Object) -> None:
         if not self.out_of_range(obj.pos):

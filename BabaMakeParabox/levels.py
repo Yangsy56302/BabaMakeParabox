@@ -119,7 +119,7 @@ class Level(object):
                         else:
                             match_noun_list = [match_noun]
                     for new_match_noun in match_noun_list:
-                        if issubclass(new_match_noun, objects.SpecialNoun):
+                        if issubclass(new_match_noun, objects.SupportsReferencing):
                             for pos in find_range:
                                 match_objs.extend([o for o in world.get_objs_from_pos_and_special_noun(pos, new_match_noun) if o not in matched_objs])
                         else:
@@ -162,7 +162,7 @@ class Level(object):
                         else:
                             match_noun_list = [match_noun]
                     for new_match_noun in match_noun_list:
-                        if issubclass(new_match_noun, objects.SpecialNoun):
+                        if issubclass(new_match_noun, objects.SupportsReferencing):
                             for pos in find_range:
                                 match_objs.extend([o for o in world.get_objs_from_special_noun(new_match_noun) if o not in matched_objs])
                         else:
@@ -221,7 +221,7 @@ class Level(object):
                         if prop_type != (objects.TextWord):
                             continue
                         new_match_obj_list: list[objects.Object] = []
-                        if issubclass(noun_type, objects.SpecialNoun):
+                        if issubclass(noun_type, objects.SupportsReferencing):
                             new_match_obj_list = [o for o in world.object_list if noun_type.isreferenceof(o, all_list = self.all_list)]
                         else:
                             if noun_negated_tier % 2 == 1:
@@ -257,7 +257,7 @@ class Level(object):
                         prop_type = rule_info.prop_type
                         object_type = noun_type.ref_type
                         new_match_obj_list: list[objects.Object] = []
-                        if issubclass(noun_type, objects.SpecialNoun):
+                        if issubclass(noun_type, objects.SupportsReferencing):
                             new_match_obj_list = [o for o in world.object_list if noun_type.isreferenceof(o, all_list = self.all_list)]
                         elif issubclass(object_type, objects.Game) and issubclass(oper_type, objects.TextIs):
                             if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
@@ -297,7 +297,7 @@ class Level(object):
                         prop_type = rule_info.prop_type
                         object_type = noun_type.ref_type
                         new_match_obj_list: list[objects.Object] = []
-                        if issubclass(noun_type, objects.SpecialNoun):
+                        if issubclass(noun_type, objects.SupportsReferencing):
                             new_match_obj_list = [o for o in world.object_list if noun_type.isreferenceof(o, all_list = self.all_list)]
                         elif issubclass(object_type, objects.Game) and issubclass(oper_type, objects.TextIs):
                             if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
@@ -337,7 +337,7 @@ class Level(object):
         world.del_obj(obj)
         for new_noun_type, new_noun_count in obj.special_operator_properties[objects.TextHas].enabled_dict().items(): # type: ignore
             new_noun_type: type[objects.Noun]
-            if issubclass(new_noun_type, objects.SpecialNoun):
+            if issubclass(new_noun_type, objects.RangedNoun):
                 continue
             new_object_type: type[objects.Object] = new_noun_type.ref_type
             if issubclass(new_object_type, objects.Game):
@@ -854,7 +854,7 @@ class Level(object):
             for obj in world.object_list:
                 for make_noun_type, make_noun_count in obj.special_operator_properties[objects.TextMake].enabled_dict().items(): # type: ignore
                     make_noun_type: type[objects.Noun]
-                    if issubclass(make_noun_type, objects.SpecialNoun):
+                    if issubclass(make_noun_type, objects.RangedNoun):
                         continue
                     make_object_type: type[objects.Object] = make_noun_type.ref_type
                     if issubclass(make_object_type, objects.Game):
