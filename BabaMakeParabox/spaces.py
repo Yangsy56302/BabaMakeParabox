@@ -1,7 +1,10 @@
+from collections import namedtuple
 from typing import Literal, Final
 from enum import Enum
 
-Coord = tuple[int, int]
+Coord = namedtuple("Coord", ("x", "y"))
+
+CoordTuple = tuple[int, int]
 
 class Orient(Enum):
     W = 0x2
@@ -63,13 +66,13 @@ def str_to_orient(direction: OrientStr) -> Orient:
 def pos_facing(pos: Coord, orient: Orient) -> Coord:
     match orient:
         case Orient.W:
-            return (pos[0], pos[1] - 1)
+            return Coord(pos[0], pos[1] - 1)
         case Orient.A:
-            return (pos[0] - 1, pos[1])
+            return Coord(pos[0] - 1, pos[1])
         case Orient.S:
-            return (pos[0], pos[1] + 1)
+            return Coord(pos[0], pos[1] + 1)
         case Orient.D:
-            return (pos[0] + 1, pos[1])
+            return Coord(pos[0] + 1, pos[1])
 
 def on_line(*poses: Coord) -> bool:
     if poses[1][0] - poses[0][0] == 1 and poses[1][1] - poses[0][1] == 0:

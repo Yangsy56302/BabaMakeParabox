@@ -747,3 +747,31 @@
     + 修复了与带无限等级的世界有关的严重Bug。
         + ~~之前的版本测试时都没试过这些游戏内容会不会出Bug……~~
     + 基本修复了无法转换特殊物体的Bug。
+
+##### 3.83
++ **外观**
+    + 更改性能相关选项时现在有 5 个等级而非 4 个。
+    + 由于该选项过于影响性能，嵌套世界的最大显示深度现在可以单独设置。
+    + 现在物体移动时有过渡动画了。
+        + 更改选项时对电脑性能的评分 ≥3 即可启用该功能。
+            + **技术性**：决定该功能是否启用的选项名为`smooth_animation_multiplier`。
++ **漏洞**
+    + 修复了游戏中显示长宽不一致的世界会留下额外黑边的Bug。
++ **技术性**
+    + **`spaces.Coord`**
+        + 改为`namedtuple`。
+        + 同时加入了`spaces.CoordTuple`用于其他外部用途。
+    + **`objects.OldObjectState`**
+        + 添加。
+        + 记录上一步时物体的状态。
+        + 目前并非所有实例属性都被记录或使用。
+    + **`objects.BmpObject`**
+        + 添加了属性`old_state`，用于记录上文所说的状态。
+        + 现在使用`pos: spaces.Coord`而非`x: int`和`y: int`记录坐标。
+            + 代替了`pos: property`。
+        + `sprite_varients`的类型标注改为`tuple[int, ...]`。
+    + **`worlds.World`**
+        + 现在使用`size: spaces.Coord`而非`width: int`和`height: int`记录坐标。
+            + 代替了`size: property`。
+    + **`refs.LevelID`和`refs.WorldID`**
+        + 新增了暂未使用的用于互相转换的实例方法。

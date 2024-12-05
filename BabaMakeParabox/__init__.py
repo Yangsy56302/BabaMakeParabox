@@ -51,7 +51,7 @@ def pre_edit() -> bool:
     languages.lang_print("launch.open.levelpack.empty.editor")
     input_filename = languages.lang_input("input.file.name")
     default_new_world_settings = basics.options["default_new_world"]
-    size = (default_new_world_settings["width"], default_new_world_settings["height"])
+    size = spaces.Coord(default_new_world_settings["width"], default_new_world_settings["height"])
     color = default_new_world_settings["color"]
     if input_filename != "":
         if not os.path.isfile(os.path.join("levelpacks", input_filename)):
@@ -103,27 +103,43 @@ def update_levelpack() -> bool:
 def change_options() -> bool:
     languages.lang_print("seperator.title", text=languages.lang_format("title.change_options"))
     while True:
-        languages.lang_print("launch.change_options.fps")
-        fps_preset = languages.lang_input("input.number")
+        languages.lang_print(f"launch.change_options.performance")
+        performance_preset = languages.lang_input("input.number")
         try:
-            fps_preset = int(fps_preset)
+            performance_preset = int(performance_preset)
         except ValueError:
-            languages.lang_print("warn.value.invalid", value=fps_preset, cls="int")
-        match int(fps_preset):
+            languages.lang_print("warn.value.invalid", value=performance_preset, cls="int")
+        match int(performance_preset):
             case 1:
-                basics.options.update({"fps": 5, "fpw": 1, "world_display_recursion_depth": 1})
+                basics.options.update({"fps": 5, "fpw": 1, "smooth_animation_multiplier": None})
                 break
             case 2:
-                basics.options.update({"fps": 15, "fpw": 3, "world_display_recursion_depth": 2})
+                basics.options.update({"fps": 10, "fpw": 2, "smooth_animation_multiplier": None})
                 break
             case 3:
-                basics.options.update({"fps": 30, "fpw": 5, "world_display_recursion_depth": 3})
+                basics.options.update({"fps": 20, "fpw": 3, "smooth_animation_multiplier": 2})
                 break
             case 4:
-                basics.options.update({"fps": 60, "fpw": 10, "world_display_recursion_depth": 4})
+                basics.options.update({"fps": 30, "fpw": 5, "smooth_animation_multiplier": 2})
+                break
+            case 5:
+                basics.options.update({"fps": 60, "fpw": 10, "smooth_animation_multiplier": 2})
                 break
             case _:
-                languages.lang_print("warn.value.out_of_range", min=1, max=4, value=fps_preset)
+                languages.lang_print("warn.value.out_of_range", min=1, max=5, value=performance_preset)
+    while True:
+        languages.lang_print("launch.change_options.display_layer")
+        display_layer = languages.lang_input("input.number")
+        try:
+            display_layer = int(display_layer)
+        except ValueError:
+            languages.lang_print("warn.value.invalid", value=display_layer, cls="int")
+            continue
+        if display_layer < 0:
+            languages.lang_print("warn.value.underflow", min=1, value=display_layer)
+        else:
+            basics.options.update({"world_display_recursion_depth": display_layer})
+            break
     if languages.lang_input("launch.change_options.json") in languages.yes:
         basics.options.update({"compressed_json_output": False})
     else:
@@ -139,15 +155,15 @@ def change_options() -> bool:
             metatext_tier = int(metatext_tier)
         except ValueError:
             languages.lang_print("warn.value.invalid", value=metatext_tier, cls="int")
+            continue
+        if metatext_tier < 0:
+            languages.lang_print("warn.value.underflow", min=0, value=metatext_tier)
+        elif metatext_tier == 0:
+            basics.options.update({"metatext": {"enabled": False, "tier": 0}})
+            break
         else:
-            if metatext_tier < 0:
-                languages.lang_print("warn.value.underflow", min=0, value=metatext_tier)
-            elif metatext_tier == 0:
-                basics.options.update({"metatext": {"enabled": False, "tier": 0}})
-                break
-            else:
-                basics.options.update({"metatext": {"enabled": True, "tier": metatext_tier}})
-                break
+            basics.options.update({"metatext": {"enabled": True, "tier": metatext_tier}})
+            break
     languages.lang_print("launch.change_options.done")
     return True
 

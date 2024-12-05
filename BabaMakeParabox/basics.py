@@ -19,7 +19,7 @@ def absclampf(__num: float, __lim: float, /) -> float:
 import pygame
 pygame.init()
 
-versions = "3.82"
+versions = "3.83"
 def compare_versions(ver_1: str, ver_2: str) -> Literal[-1, 0, 1]:
     for char_1, char_2 in zip(ver_1, ver_2):
         if ord(char_1) > ord(char_2):
@@ -56,6 +56,7 @@ class Options(TypedDict):
     fps: int
     fpw: int
     world_display_recursion_depth: int
+    smooth_animation_multiplier: Optional[int]
     compressed_json_output: bool
     object_type_shortcuts: list[str]
     default_new_world: DefaultNewWorldOptions
@@ -70,6 +71,7 @@ default_options: Options = {
     "fps": 30,
     "fpw": 5,
     "world_display_recursion_depth": 3,
+    "smooth_animation_multiplier": 2,
     "compressed_json_output": False,
     "default_new_world": {
         "width": 9,

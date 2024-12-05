@@ -16,7 +16,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     current_world = current_level.world_list[current_world_index]
     current_object_type = objects.Baba
     current_orient = spaces.Orient.S
-    current_cursor_pos = (0, 0)
+    current_cursor_pos = spaces.Coord(0, 0)
     current_clipboard = []
     window = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
     pygame.display.set_caption(f"Baba Make Parabox Editor Version {basics.versions}")
@@ -68,8 +68,8 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     keys = {v: False for v in keybinds.values()}
     keys.update({v: False for v in keymods.values()})
     mouses: tuple[int, int, int, int, int] = (0, 0, 0, 0, 0)
-    mouse_pos: tuple[int, int]
-    mouse_pos_in_world: tuple[int, int]
+    mouse_pos: spaces.Coord
+    mouse_pos_in_world: spaces.Coord
     world_surface_size = window.get_size()
     world_surface_pos = (0, 0)
     displays.sprites.update()
@@ -116,8 +116,8 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             int(mouse_scroll[0]), int(mouse_scroll[1])
         )
         del new_mouses
-        mouse_pos = pygame.mouse.get_pos()
-        mouse_pos_in_world = (
+        mouse_pos = spaces.Coord(*pygame.mouse.get_pos())
+        mouse_pos_in_world = spaces.Coord(
             (mouse_pos[0] - world_surface_pos[0]) * current_world.width // world_surface_size[0],
             (mouse_pos[1] - world_surface_pos[1]) * current_world.height // world_surface_size[1]
         )
@@ -310,7 +310,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                             languages.lang_print("warn.value.invalid", value=height, cls="int")
                         else:
                             break
-                    size = (width, height)
+                    size = spaces.Coord(width, height)
                     while True:
                         infinite_tier = languages.lang_input("edit.world.new.infinite_tier")
                         try:
@@ -354,7 +354,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                             languages.lang_print("warn.value.invalid", value=height, cls="int")
                         else:
                             break
-                    size = (width, height)
+                    size = spaces.Coord(width, height)
                     while True:
                         infinite_tier = languages.lang_input("edit.world.new.infinite_tier")
                         try:
@@ -473,9 +473,9 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         if world_changed:
             languages.lang_print("seperator.title", text=languages.lang_format("title.world"))
             if current_cursor_pos[0] > current_world.width:
-                current_cursor_pos = (current_world.width, current_cursor_pos[1])
+                current_cursor_pos = spaces.Coord(current_world.width, current_cursor_pos[1])
             if current_cursor_pos[1] > current_world.height:
-                current_cursor_pos = (current_cursor_pos[0], current_world.height)
+                current_cursor_pos = spaces.Coord(current_cursor_pos[0], current_world.height)
             current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
             current_world = current_level.world_list[current_world_index]
             languages.lang_print("edit.world.current.name", value=current_world.world_id.name)
@@ -485,8 +485,8 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         for world in current_level.world_list:
             world.set_sprite_states(0)
         window.fill("#000000")
-        displays.set_pixel_size(window.get_size())
-        world_surface = current_level.show_world(current_world, wiggle, cursor=current_cursor_pos, debug=True)
+        displays.set_pixel_size(spaces.Coord(*window.get_size()))
+        world_surface = current_level.world_to_surface(current_world, wiggle, cursor=current_cursor_pos, debug=True)
         world_surface_size = (window.get_height() * current_world.width // current_world.height, window.get_height())
         world_surface_pos = (0, 0)
         window.blit(pygame.transform.scale(world_surface, world_surface_size), world_surface_pos)

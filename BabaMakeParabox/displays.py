@@ -133,7 +133,7 @@ def simple_object_to_surface(obj: objects.BmpObject, wiggle: int = 1, default_su
                     obj_surface.fill("#00000000")
     return obj_surface
 
-order = [
+order: tuple[type[objects.BmpObject], ...] = (
     objects.Cursor,
     objects.Operator,
     objects.Noun,
@@ -148,4 +148,4 @@ order = [
     objects.Tiled,
     objects.WorldPointer,
     objects.BmpObject
-]
+)

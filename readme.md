@@ -7,17 +7,14 @@
 作者分别为**Arvi Hempuli**和**Patrick Traynor**。
 
 **本游戏的源代码使用[MIT许可证](https://opensource.org/license/MIT/)。**
-……大概吧。
+_……大概吧。_
 
 **本游戏使用[Pygame](https://www.pygame.org/news/)作为游戏引擎，而Pygame使用[GNU宽通用公共许可证 2.1版](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html)。**
-因此，本人不提供任何Pygame源代码，请自行获取。
-但本人确实提供使用未经修改的Pygame版本经[PyInstaller](https://pyinstaller.org/en/stable/index.html)打包后形成的游戏程序。
+因此，本人不提供Pygame的源代码，而是提供使用未经修改的Pygame版本经[PyInstaller](https://pyinstaller.org/en/stable/index.html)打包后形成的游戏程序。
 **PyInstaller使用[GNU通用公共许可证 第2版](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)。**
 
-**我并未拥有游戏纹理的版权。**
+**我并未拥有游戏纹理的所有权。**
 如果您有关于游戏纹理的使用权等权利的更多信息，请尽快联系我。
-从2024.10.23起，该仓库将不再附带Baba Is You的原创纹理，
-尽管您仍然可以从Github等平台的发布页附近下载这些纹理。
 
 该游戏的雏形诞生于2024.05.15，游戏文件夹创建时间为北京时间12:12:15。
 
@@ -26,18 +23,11 @@
 ### 下载
 
 请跳转到[Gitlab](https://gitlab.com/Yangsy56302/BabaMakeParabox)，
-点击界面右侧的**Release**，展开**Assets**，然后下载以下文件：
+点击页面右上方写着**Code**的蓝色按钮，在展开的下拉菜单里找到**zip**，点击即可下载。
+该流程下载的压缩包（`BabaMakrParabox-main.zip`）内含有**可执行程序（bmp.exe）**，**源代码（BabaMakeParabox文件夹）**，
+**Baba Make Parabox 添加的新纹理（sprites_new）**，**Baba Is You 的部分音效（sounds）**等内容。
 
-+ `baba-is-you-original-sprites.zip`
-    + 原版 Baba Is You 的纹理，必备
-+ （前略）`assets.zip`
-    + Baba Make Parabox 的新纹理，必备
-+ （前略）`windows-x64.zip`
-    + Baba Make Parabox 的游戏本体，必备 *（除非此处下载的程序无法运行，或者您知道怎么将Python代码转为可执行程序）*
-+ （前略）`linux.zip`
-    + 源代码，以及在GNU/Linux系统运行游戏需要的部分内容，建议下载 *（当游戏本体无法运行时的备选方案）*
-+ `Source code`
-    + 包括源代码在内的诸多文件，可选下载
+缺失的文件（包括**Baba Id You 的纹理**）需要点击界面右侧的**Release**，展开**Assets**，然后下载`baba-is-you-original-sprites.zip`。
 
 备用下载地址包括连接不稳定的[Github](https://github.com/Yangsy56302/BabaMakeParabox)
 以及需要注册账号才能下载的[Gitee](https://gitee.com/Yangsy56302/BabaMakeParabox)，此处不推荐。
@@ -45,10 +35,11 @@
 ### 安装
 
 + **推荐方式**
-    1. 在您准备安装的位置（如`C:\Program Files`）新建一个文件夹；
-    2. 将压缩包`baba-is-you-original-sprites.zip`，`assets.zip`，`windows-x64.zip`内的文件解压到该文件夹内。
+    1. 在您准备安装的位置（如`C:\Program Files`）新建文件夹；
+    2. 将压缩包`BabaMakrParabox-main.zip`和`baba-is-you-original-sprites.zip`内的文件和文件夹解压到上一步新建的文件夹内；
+    3. 将文件夹`sprites_old`重命名为`sprites`，然后将文件夹`sprites_new`里面的所有图片放到重命名后的`sprites`文件夹里面。
 + **推荐方式不起作用时的备用方案**
-    1. 解压通过点击`Source code`下载的压缩包；
+    1. 解压通过点击`Source code`下载的压缩包（`BabaMakrParabox-main.zip`）；
     2. 通过以下任意一种方式安装**Python**：
         + 官方安装方式
             1. 打开[Python](https://www.python.org)官方网站；
@@ -56,20 +47,23 @@
             3. 在展开后的部分找到**Download for Windows**下方的按钮，点击以下载；
             4. 打开下载完成的安装程序，勾选最下方的**Add python.exe to PATH**，然后点击醒目的**Install Now**以安装Python；
             5. 等待安装完成，然后重启电脑。
-        + （待补）
-    3. 运行`inst-win.bat`，这一步骤会自行生成`bmp.exe`和`submp.exe`。
+        + _（待补）_
+    3. 运行`inst-win.bat`，等待一段时间（大概在三分钟以内），直到文件夹内出现`bmp.exe`和`submp.exe`。
 
 ### 运行
 
-双击运行`play-win.bat`，这将会间接运行`bmp.exe`，启动游戏程序。
-也可以直接运行`bmp.exe`，但程序故障后会直接关闭终端窗口，所以不推荐。
-如果您的**Windows**系统安装了**Python**，可以尝试运行`inst-win.bat`，然后是`run-win.bat`，后者将运行`bmp.py`以启动游戏。
+双击运行`play-win.bat`，这将会间接运行`bmp.exe`，然后启动程序。
+直接运行`bmp.exe`也是可行的，但程序故障后会直接关闭终端窗口，所以不推荐。
+如果您的**Windows**系统安装了**Python**，还可以尝试运行`run-win.bat`来启动游戏。
 
-**游戏仅在终端窗口存在且未选中终端内部文本时正常运行。**
+同时确保您已经准备关卡包文件……或者[准备制作一个新的关卡包了](#编辑器)。
+
+**游戏仅在命令行窗口存在且未选中内部文本时正常运行。**
 这是Windows命令提示符的预期行为和游戏的简陋交互设计导致的现象，而并非游戏Bug。
-如果发现游戏卡死，请先确保终端内没有选中任何文字，再汇报游戏漏洞。
+游戏未响应时，请先在命令行内**取消选中文字**，确保游戏**并未询问输入**，然后耐心**等待十秒左右**直至游戏继续运行。
+如果游戏仍然处于未响应状态，则该现象可以确认是一个需要汇报的游戏漏洞。
 
-同时确保您已经准备好了关卡包文件……或者[准备好了制作一个新的关卡包](#制作关卡包)。
+## 游戏内容
 
 ### 控制
 
@@ -90,7 +84,7 @@
 + **关闭游戏窗口**：停止游玩，指定文件名以保存
 + **关闭终端**：强制退出程序
 
-## 关卡包编辑器
+## 编辑器
 
 该章节暂时不提供有关游戏设计的相关信息。
 
@@ -252,15 +246,26 @@
 + `TEXT IS WORD`有效，导致非元文本被识别为`TEXT`。
     + 通常，这会导致该规则同时被识别成`TEXT IS TEXT`。
 
-#### 暂未实现
+#### 计划实现
 
-+ `GAME`的复杂语法。
-    + 目前对`GAME`应用修饰词会使其不指代任何物体。
-+ 检测`WORLD`是否为悖论（等价于无限等级是否不等于零）。
++ **短期**
+    + 普通物体转变为新的世界时默认指向其所在的世界。
+    + 检测`WORLD`是否为悖论（`PARADOX`，等价于无限等级是否不等于零）。
++ **中期**
+    + 更改进出世界的逻辑。
+        + 进入世界的触发条件变为与世界物体重合。
+            + 这需要世界物体在无法被推动时不再阻挡物体通过自身。
+        + 物体试图到达不存在的世界时会被删除。
+    + GUI（图形用户界面）。
+        + 使用可输入文本的游戏窗口取代命令行的显示。
++ **长期**
+    + `GAME`的复杂语法。
+        + 目前对`GAME`应用修饰词会使其不指代任何物体。
+    + 消除（或至少减弱）`MOVE`和`STOP`同时使用时的不一致现象。
 
 #### 游戏漏洞
 
-+ 移动系统的完成度很低，会导致诸多与 Baba Is You 内不一致的现象。
++ 移动系统的完成度很低，会表现出与 Baba Is You 不同的情况，主要出现在多个物体同时试图移动的时候。
 
 ### 关于 options.json
 
@@ -268,100 +273,12 @@
 如果您知道什么是`JSON`，您可以试着更改里面的默认设置。
 例如，`fps`理论上代表游戏帧率，而`fpw`代表贴图抖动帧数。
 
-## [版本列表](changelog.md)
+## [更新日志](changelog.md)
 
-## 停止记录的的前版本列表
+## 联系作者
 
-| 版本号 |    时间    | 版本详细信息 |
-|--------|------------|--------------|
-| 1.0    | 2024.07.05 | Game is Init |
-| 1.1    | 2024.07.06 | Keke is Move; Game is Undo and Restart; Baba make Levels |
-| 1.11   | 2024.07.06 | Level is Previous and Next |
-| 1.2    | 2024.07.06 | Flag is Win; Game is EXE |
-| 1.3    | 2024.07.06 | Baba is Keke; World is Input and Output |
-| 1.31   | 2024.07.07 | Terminal is More; Text is not Hide; Level is Red |
-| 1.4    | 2024.07.07 | Baba make Worlds |
-| 1.41   | 2024.07.07 | Level is Best and Swap |
-| 1.42   | 2024.07.08 | Code is Better |
-| 1.5    | 2024.07.08 | Baba is Float; Me is Sink; Rock is Defeat |
-| 1.6    | 2024.07.08 | Door is Shut; Key is Open |
-| 1.7    | 2024.07.09 | All has Color; Lava is Hot; Ice is Melt |
-| 1.8    | 2024.07.10 | Game has Icon; Baba is Word; Keke is Shift; Rock is Tele |
-| 1.81   | 2024.07.10 | Argv is Better |
-| 1.9    | 2024.07.10 | All is Wobble; Code is Better |
-| 1.91   | 2024.07.10 | Lava is Orange; Pos is Best |
-| 2.0    | 2024.07.11 | Level is not World; Cursor is Select |
-| 2.1    | 2024.07.11 | Bug is Fix; World is Level |
-| 2.11   | 2024.07.12 | Undo and Restart is Fix |
-| 2.12   | 2024.07.12 | Object is More |
-| 2.13   | 2024.07.12 | Esc is Out |
-| 2.2    | 2024.07.12 | World feeling Push and Options is Better |
-| 2.21   | 2024.07.12 | Bug is Fix; Patrick is You |
-| 2.22   | 2024.07.12 | Changes is Small |
-| 2.3    | 2024.07.13 | Baba is not You; Rule is Recursion |
-| 2.31   | 2024.07.14 | Baba is More and You |
-| 2.4    | 2024.07.14 | not Baba is You; Level is Baba |
-| 2.41   | 2024.07.14 | Bug on World feeling Push is Fix |
-| 2.42   | 2024.07.14 | World is You |
-| 2.43   | 2024.07.15 | Baba is You and Win |
-| 2.5    | 2024.07.15 | Key on Editor is Better; Level has Icon and Color |
-| 2.51   | 2024.07.15 | World is Word; Object is More |
-| 2.52   | 2024.07.15 | Code feeling Push is Better |
-| 2.6    | 2024.07.16 | Key on Editor is Better and Better |
-| 2.61   | 2024.07.16 | Editor has Palette |
-| 2.7    | 2024.07.16 | Game has Language |
-| 2.71   | 2024.07.16 | Language on File is Read |
-| 2.8    | 2024.07.16 | Baba and Keke and Me is Baba and You and Win |
-| 2.81   | 2024.07.17 | Bug is Fix |
-| 2.82   | 2024.07.18 | Color is Number |
-| 2.9    | 2024.07.18 | Flag is End; Window is Scale; Game has Sound; FPS is not Hide |
-| 2.91   | 2024.07.18 | All is You |
-| 3.0    | 2024.07.19 | Game is You |
-| 3.001  | 2024.07.19 | Game feeling not Sink and not Float is not Move; Game has Midi |
-| 3.002  | 2024.07.19 | All feeling Move is not Slow |
-| 3.003  | 2024.07.19 | Bug on Copy and Paste is Fix |
-| 3.01   | 2024.07.20 | Text is Word |
-| 3.011  | 2024.07.20 | Rule is Atom |
-| 3.012  | 2024.07.20 | Game feeling Stop is not Wiggle |
-| 3.02   | 2024.07.20 | not Baba is not You |
-| 3.1    | 2024.07.21 | Flag on Rock is Win |
-| 3.11   | 2024.07.21 | Rock feeling Push is not Push |
-| 3.111  | 2024.07.21 | Bug on Game feeling Object is Fix |
-| 3.112  | 2024.07.22 | Bug on All feeling Shut and Open is Fix |
-| 3.12   | 2024.07.22 | Width is not Height |
-| 3.121  | 2024.07.22 | Bug on Flag feeling Win is Fix |
-| 3.13   | 2024.07.23 | World is Sink; Text is Float |
-| 3.131  | 2024.07.23 | Change is Small |
-| 3.132  | 2024.07.23 | Game has Music |
-| 3.14   | 2024.07.23 | not meta World is Push |
-| 3.141  | 2024.07.23 | meta Level is World |
-| 3.142  | 2024.07.24 | Bug on Infix is Fix |
-| 3.15   | 2024.07.24 | Baba near Keke is Me |
-| 3.151  | 2024.07.24 | Bug feeling Shut and Open is Fix |
-| 3.16   | 2024.07.24 | Control is not Continue |
-| 3.161  | 2024.07.25 | Game on Linux is Open |
-| 3.162  | 2024.07.25 | Bug on Text is Fix |
-| 3.2    | 2024.07.26 | Baba make Patrick and has Box and write Win |
-| 3.201  | 2024.07.26 | Code is Better; Fps is Switch |
-| 3.202  | 2024.07.27 | Options is Better and has Versions |
-| 3.21   | 2024.07.31 | Levelpack has Versions; Name is Vanilla |
-| 3.211  | 2024.08.01 | Code feeling Strict is More |
-| 3.3    | 2024.08.01 | Text_Baba is You |
-| 3.31   | 2024.08.01 | Text_ Baba is Text_ Text_ Baba |
-| 3.311  | 2024.08.02 | Baba write Text_ You |
-| 3.32   | 2024.08.02 | Text on Box is TextPlus; Bug on Text_ on is Fix |
-| 3.321  | 2024.08.07 | Number on Text_Text feeling Edit is not Hide |
-| 3.4    | 2024.08.07 | Storage on Level and World is Update |
-| 3.401  | 2024.08.07 | Game feeling Done is Shut; Text_Text_ is More |
-| 3.41   | 2024.08.09 | Level is Map; Levelpack is not Restart |
-| 3.5    | 2024.08.24 | Rock is Push and not Enter and not Leave |
-| 3.6    | 2024.09.11 | Levelpack eat Logic |
-| 3.61   | 2024.09.12 | World is More |
-| 3.611  | 2024.09.13 | Bug on World feeling Push is Fix |
-| 3.62   | 2024.10.21 | Flag on Baba and Baba and on Keke and on Keke is Win |
-| 3.621  | 2024.10.22 | seldom and often Wall without Baba is not Push; Game feeling not Safe is not Done |
-| 3.622  | 2024.10.23 | Code has not Asset; Code on Property is Change |
-| 3.623  | 2024.11.26 | File is Rename |
-| 3.7    | 2024.11.27 | Baba feeling You and You and not You is You |
-| 3.701  | 2024.11.28 | Text_Neg is not Text; Image is Rename; Text on Window feeling Black is More |
-| 3.702  | 2024.11.29 | See changelog.md |
+哔哩哔哩：**<https://space.bilibili.com/430612354>**
+
+QQ：**2485385799**
+
+163邮箱：**<yangsy56302@163.com>**

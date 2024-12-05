@@ -9,7 +9,13 @@ import pygame
 class GameIsDoneError(Exception):
     pass
 
-movements: dict[str, tuple[str, spaces.PlayerOperation, spaces.Coord]] = {"W": ("S", spaces.Orient.W, (0, -1)), "S": ("W", spaces.Orient.S, (0, 1)), "A": ("D", spaces.Orient.A, (-1, 0)), "D": ("A", spaces.Orient.D, (1, 0)), " ": ("None", spaces.NullOrient.O, (0, 0))}
+movements: dict[str, tuple[str, spaces.PlayerOperation, spaces.Coord]] = {
+    "W": ("S", spaces.Orient.W, spaces.Coord(0, -1)),
+    "S": ("W", spaces.Orient.S, spaces.Coord(0, 1)),
+    "A": ("D", spaces.Orient.A, spaces.Coord(-1, 0)),
+    "D": ("A", spaces.Orient.D, spaces.Coord(1, 0)),
+    " ": ("None", spaces.NullOrient.O, spaces.Coord(0, 0))
+}
 
 def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     for level in levelpack.level_list:
@@ -63,14 +69,15 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     keys = {v: False for v in keybinds.values()}
     keys.update({v: False for v in keymods.values()})
     mouses: tuple[int, int, int, int, int] = (0, 0, 0, 0, 0)
-    mouse_pos: tuple[int, int]
-    mouse_pos_in_world: tuple[int, int]
-    world_surface_size = window.get_size()
-    world_surface_pos = (0, 0)
+    mouse_pos: spaces.Coord
+    mouse_pos_in_world: spaces.Coord
+    world_surface_size: spaces.CoordTuple = window.get_size()
+    world_surface_pos: spaces.CoordTuple = (0, 0)
     displays.sprites.update()
     level_changed = False
     world_changed = False
-    frame = 1
+    frame = 0
+    frame_since_last_move = 0
     wiggle = 1
     milliseconds = 1000 // basics.options["fps"]
     real_fps = basics.options["fps"]
@@ -84,6 +91,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     press_key_to_continue = False
     while game_running:
         frame += 1
+        frame_since_last_move += 1
         if frame >= basics.options["fpw"]:
             frame = 0
             wiggle = wiggle % 3 + 1
@@ -118,8 +126,8 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             int(mouse_scroll[0]), int(mouse_scroll[1])
         )
         del new_mouses
-        mouse_pos = pygame.mouse.get_pos()
-        mouse_pos_in_world = (
+        mouse_pos = spaces.Coord(*pygame.mouse.get_pos())
+        mouse_pos_in_world = spaces.Coord(
             (mouse_pos[0] - world_surface_pos[0]) * current_world.width // world_surface_size[0],
             (mouse_pos[1] - world_surface_pos[1]) * current_world.height // world_surface_size[1]
         )
@@ -283,7 +291,6 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                         collects_number = len({c for c in levelpack.collectibles if isinstance(c, collects_type)})
                         if collects_number != 0:
                             languages.lang_print("play.levelpack.collectibles", key=collects_type.json_name, value=collects_number)
-                
         if current_level.game_properties:
             offset_used = False
             if current_level.game_properties.has(objects.TextStop):
@@ -342,6 +349,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             display_refresh = False
         if levelpack_refresh:
             if not press_key_to_continue:
+                frame_since_last_move = 0
                 for event in current_level.sound_events:
                     sounds.play(event)
                 if levelpack_info["win"]:
@@ -394,10 +402,26 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         pygame.mixer.music.set_volume(1.0 if current_level.have_you() else 0.5)
         # display
         window.fill("#000000")
-        displays.set_pixel_size(window.get_size())
-        world_surface = current_level.show_world(current_world, wiggle)
-        world_surface_size = (int(min(window.get_size()) * min(1, current_world.width / current_world.height)), int(min(window.get_size()) * min(1, current_world.height / current_world.width)))
-        world_surface_pos = ((window.get_width() - world_surface_size[0]) // 2, (window.get_height() - world_surface_size[1]) // 2)
+        displays.set_pixel_size(spaces.Coord(*window.get_size()))
+        smooth_value = None
+        smooth_animation_multiplier = basics.options["smooth_animation_multiplier"]
+        if smooth_animation_multiplier is not None:
+            smooth_value = frame_since_last_move / basics.options["fps"] * smooth_animation_multiplier
+            if smooth_value >= 0 and smooth_value <= 1:
+                smooth_value = pow(1 - smooth_value, 4)
+            else:
+                smooth_value = None
+        world_surface = current_level.world_to_surface(current_world, wiggle, smooth=smooth_value)
+        del smooth_value
+        # scale
+        world_surface_size = window.get_size()
+        world_surface_pos = (0, 0)
+        if window.get_width() // current_world.width > window.get_height() // current_world.height:
+            world_surface_size = (window.get_height() * current_world.width // current_world.height, window.get_height())
+            world_surface_pos = ((window.get_width() - world_surface_size[0]) // 2, 0)
+        elif window.get_width() // current_world.width < window.get_height() // current_world.height:
+            world_surface_size = (window.get_width(), window.get_width() * current_world.height // current_world.width)
+            world_surface_pos = (0, (window.get_height() - world_surface_size[1]) // 2)
         window.blit(pygame.transform.scale(world_surface, world_surface_size), world_surface_pos)
         # fps
         real_fps = min(1000 / milliseconds, (real_fps * (basics.options["fps"] - 1) + 1000 / milliseconds) / basics.options["fps"])

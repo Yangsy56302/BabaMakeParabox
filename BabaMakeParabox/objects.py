@@ -98,7 +98,7 @@ special_operators: list[type["Operator"]] = []
 
 class BmpObjectJson(TypedDict):
     type: str
-    position: spaces.Coord
+    position: spaces.CoordTuple
     orientation: spaces.OrientStr
     world_id: NotRequired[refs.WorldIDJson]
     world_pointer_extra: NotRequired[WorldPointerExtra]
@@ -106,17 +106,24 @@ class BmpObjectJson(TypedDict):
     level_pointer_extra: NotRequired[LevelPointerExtra]
     path_extra: NotRequired[PathExtra]
 
+class OldObjectState(object):
+    def __init__(self, pos: Optional[spaces.Coord] = None, orient: Optional[spaces.Orient] = None, world: Optional[refs.WorldID] = None, level: Optional[refs.LevelID] = None) -> None:
+        self.pos: Optional[spaces.Coord] = pos
+        self.orient: Optional[spaces.Orient] = orient
+        self.world: Optional[refs.WorldID] = world
+        self.level: Optional[refs.LevelID] = level
+
 class BmpObject(object):
     json_name: str
     sprite_name: str
     display_name: str
     sprite_color: colors.ColorHex
-    sprite_varients: list[int] = [0]
+    sprite_varients: tuple[int, ...] = (0x0, )
     def __init__(self, pos: spaces.Coord, orient: spaces.Orient = spaces.Orient.S, *, world_id: Optional[refs.WorldID] = None, level_id: Optional[refs.LevelID] = None) -> None:
         self.uuid: uuid.UUID = uuid.uuid4()
-        self.x: int = pos[0]
-        self.y: int = pos[1]
+        self.pos: spaces.Coord = pos
         self.orient: spaces.Orient = orient
+        self.old_state: OldObjectState = OldObjectState()
         self.world_id: Optional[refs.WorldID] = world_id
         self.level_id: Optional[refs.LevelID] = level_id
         self.properties: Properties = Properties()
@@ -125,22 +132,12 @@ class BmpObject(object):
         self.sprite_state: int = 0
     def __eq__(self, obj: "BmpObject") -> bool:
         return self.uuid == obj.uuid
-    @property
-    def pos(self) -> spaces.Coord:
-        return (self.x, self.y)
-    @pos.setter
-    def pos(self, new_pos: spaces.Coord) -> None:
-        self.x, self.y = new_pos
-    @pos.deleter
-    def pos(self) -> None:
-        del self.x
-        del self.y
     def reset_uuid(self) -> None:
         self.uuid = uuid.uuid4()
     def set_sprite(self, **kwds) -> None:
         self.sprite_state = 0
     def to_json(self) -> BmpObjectJson:
-        json_object: BmpObjectJson = {"type": self.json_name, "position": (self.x, self.y), "orientation": spaces.orient_to_str(self.orient)}
+        json_object: BmpObjectJson = {"type": self.json_name, "position": tuple(self.pos), "orientation": spaces.orient_to_str(self.orient)}
         if self.world_id is not None:
             json_object = {**json_object, "world_id": self.world_id.to_json()}
         if self.level_id is not None:
@@ -148,33 +145,41 @@ class BmpObject(object):
         return json_object
 
 class Static(BmpObject):
-    sprite_varients: list[int] = [0]
+    sprite_varients: tuple[int, ...] = (0x0, )
     def set_sprite(self, **kwds) -> None:
         self.sprite_state = 0
 
 class Tiled(BmpObject):
-    sprite_varients: list[int] = [n for n in range(0x10)]
+    sprite_varients: tuple[int, ...] = tuple(i for i in range(0x10))
     def set_sprite(self, connected: Optional[dict[spaces.Orient, bool]] = None, **kwds) -> None:
         connected = {spaces.Orient.W: False, spaces.Orient.S: False, spaces.Orient.A: False, spaces.Orient.D: False} if connected is None else connected
         self.sprite_state = (connected[spaces.Orient.D] * 0x1) | (connected[spaces.Orient.W] * 0x2) | (connected[spaces.Orient.A] * 0x4) | (connected[spaces.Orient.S] * 0x8)
 
 class Animated(BmpObject):
-    sprite_varients: list[int] = [n for n in range(0x4)]
+    sprite_varients: tuple[int, ...] = tuple(i for i in range(0x4))
     def set_sprite(self, round_num: int = 0, **kwds) -> None:
         self.sprite_state = round_num % 0x4
 
 class Directional(BmpObject):
-    sprite_varients: list[int] = [n * 0x8 for n in range(0x4)]
+    sprite_varients: tuple[int, ...] = tuple(i * 0x8 for i in range(0x4))
     def set_sprite(self, **kwds) -> None:
         self.sprite_state = int(math.log2(spaces.orient_to_int(self.orient))) * 0x8
 
 class AnimatedDirectional(BmpObject):
-    sprite_varients: list[int] = [n * 0x8 for n in range(0x4)] + [n * 0x8 + 1 for n in range(0x4)] + [n * 0x8 + 2 for n in range(0x4)] + [n * 0x8 + 3 for n in range(0x4)]
+    sprite_varients: tuple[int, ...] = \
+        tuple(i * 0x8 for i in range(0x4)) + \
+        tuple(i * 0x8 + 0x1 for i in range(0x4)) + \
+        tuple(i * 0x8 + 0x2 for i in range(0x4)) + \
+        tuple(i * 0x8 + 0x3 for i in range(0x4))
     def set_sprite(self, round_num: int = 0, **kwds) -> None:
         self.sprite_state = int(math.log2(spaces.orient_to_int(self.orient))) * 0x8 | round_num % 4
 
 class Character(BmpObject):
-    sprite_varients: list[int] = [n * 0x8 for n in range(0x4)] + [n * 0x8 + 1 for n in range(0x4)] + [n * 0x8 + 2 for n in range(0x4)] + [n * 0x8 + 3 for n in range(0x4)]
+    sprite_varients: tuple[int, ...] = \
+        tuple(i * 0x8 for i in range(0x4)) + \
+        tuple(i * 0x8 + 0x1 for i in range(0x4)) + \
+        tuple(i * 0x8 + 0x2 for i in range(0x4)) + \
+        tuple(i * 0x8 + 0x3 for i in range(0x4))
     def set_sprite(self, **kwds) -> None:
         if self.move_number > 0:
             temp_state = (self.sprite_state & 0x3) + 1 if (self.sprite_state & 0x3) != 0x3 else 0x0
@@ -365,7 +370,7 @@ class Empty(BmpObject):
 class WorldPointer(BmpObject):
     light_overlay: colors.ColorHex = 0x000000
     dark_overlay: colors.ColorHex = 0xFFFFFF
-    def __init__(self, pos: tuple[int, int], orient: spaces.Orient = spaces.Orient.S, *, world_id: refs.WorldID, level_id: Optional[refs.LevelID] = None, world_pointer_extra: WorldPointerExtra = default_world_pointer_extra) -> None:
+    def __init__(self, pos: spaces.Coord, orient: spaces.Orient = spaces.Orient.S, *, world_id: refs.WorldID, level_id: Optional[refs.LevelID] = None, world_pointer_extra: WorldPointerExtra = default_world_pointer_extra) -> None:
         self.world_id: refs.WorldID
         super().__init__(pos, orient, world_id=world_id, level_id=level_id)
         self.world_pointer_extra: WorldPointerExtra = world_pointer_extra
@@ -390,7 +395,7 @@ world_pointers: list[type[WorldPointer]] = [World, Clone]
 default_world_pointer: type[WorldPointer] = World
 
 class LevelPointer(BmpObject):
-    def __init__(self, pos: tuple[int, int], orient: spaces.Orient = spaces.Orient.S, *, world_id: Optional[refs.WorldID] = None, level_id: refs.LevelID, level_pointer_extra: LevelPointerExtra = default_level_pointer_extra) -> None:
+    def __init__(self, pos: spaces.Coord, orient: spaces.Orient = spaces.Orient.S, *, world_id: Optional[refs.WorldID] = None, level_id: refs.LevelID, level_pointer_extra: LevelPointerExtra = default_level_pointer_extra) -> None:
         self.level_id: refs.LevelID
         super().__init__(pos, orient, world_id=world_id, level_id=level_id)
         self.level_pointer_extra: LevelPointerExtra = level_pointer_extra
@@ -419,7 +424,7 @@ class Path(Tiled):
         return {**super().to_json(), "path_extra": {"unlocked": self.unlocked, "conditions": {k.json_name: v for k, v in self.conditions.items()}}}
 
 class Game(BmpObject):
-    def __init__(self, pos: tuple[int, int], orient: spaces.Orient = spaces.Orient.S, *, world_id: Optional[refs.WorldID] = None, level_id: Optional[refs.LevelID] = None, obj_type: type[BmpObject], world_pointer_info: refs.WorldID | None = None, level_pointer_info: refs.LevelID | None = None) -> None:
+    def __init__(self, pos: spaces.Coord, orient: spaces.Orient = spaces.Orient.S, *, world_id: Optional[refs.WorldID] = None, level_id: Optional[refs.LevelID] = None, obj_type: type[BmpObject], world_pointer_info: refs.WorldID | None = None, level_pointer_info: refs.LevelID | None = None) -> None:
         super().__init__(pos, orient, world_id=world_pointer_info, level_id=level_pointer_info)
         self.obj_type: type[BmpObject] = obj_type
     json_name: str = "game"
@@ -958,7 +963,7 @@ def json_to_object(json_object: BmpObjectJson, ver: Optional[str] = None) -> Bmp
         raise ValueError(json_object["type"])
     if issubclass(obj_type, LevelPointer):
         if level_id is not None:
-            return obj_type(pos=json_object["position"],
+            return obj_type(pos=spaces.Coord(*json_object["position"]),
                             orient=spaces.str_to_orient(json_object["orientation"]),
                             world_id=world_id,
                             level_id=level_id,
@@ -966,7 +971,7 @@ def json_to_object(json_object: BmpObjectJson, ver: Optional[str] = None) -> Bmp
         raise ValueError(level_id)
     if issubclass(obj_type, WorldPointer):
         if world_id is not None:
-            return obj_type(pos=json_object["position"],
+            return obj_type(pos=spaces.Coord(*json_object["position"]),
                             orient=spaces.str_to_orient(json_object["orientation"]),
                             world_id=world_id,
                             level_id=level_id,
@@ -978,13 +983,13 @@ def json_to_object(json_object: BmpObjectJson, ver: Optional[str] = None) -> Bmp
             path_extra = {"unlocked": False, "conditions": {}}
         reversed_collectible_dict = {v: k for k, v in collects.collectible_dict.items()}
         conditions: dict[type[collects.Collectible], int] = {reversed_collectible_dict[k]: v for k, v in path_extra["conditions"].items()}
-        return obj_type(pos=json_object["position"],
+        return obj_type(pos=spaces.Coord(*json_object["position"]),
                         orient=spaces.str_to_orient(json_object["orientation"]),
                         world_id=world_id,
                         level_id=level_id,
                         unlocked=path_extra["unlocked"],
                         conditions=conditions)
-    return obj_type(pos=json_object["position"],
+    return obj_type(pos=spaces.Coord(*json_object["position"]),
                     orient=spaces.str_to_orient(json_object["orientation"]),
                     world_id=world_id,
                     level_id=level_id)

@@ -95,14 +95,15 @@ class Level(object):
             meet_infix_condition = True
             if infix_info.infix_type in (objects.TextOn, objects.TextNear, objects.TextNextto):
                 matched_objs: list[objects.BmpObject] = [obj]
+                find_range: list[spaces.Coord]
                 if infix_info.infix_type == objects.TextOn:
-                    find_range = [(obj.x, obj.y)]
+                    find_range = [spaces.Coord(obj.pos.x, obj.pos.y)]
                 elif infix_info.infix_type == objects.TextNear:
-                    find_range = [(obj.x - 1, obj.y - 1), (obj.x, obj.y - 1), (obj.x + 1, obj.y - 1),
-                                  (obj.x - 1, obj.y), (obj.x, obj.y), (obj.x + 1, obj.y),
-                                  (obj.x - 1, obj.y + 1), (obj.x, obj.y + 1), (obj.x + 1, obj.y + 1)]
+                    find_range = [spaces.Coord(obj.pos.x - 1, obj.pos.y - 1), spaces.Coord(obj.pos.x, obj.pos.y - 1), spaces.Coord(obj.pos.x + 1, obj.pos.y - 1),
+                                  spaces.Coord(obj.pos.x - 1, obj.pos.y), spaces.Coord(obj.pos.x, obj.pos.y), spaces.Coord(obj.pos.x + 1, obj.pos.y),
+                                  spaces.Coord(obj.pos.x - 1, obj.pos.y + 1), spaces.Coord(obj.pos.x, obj.pos.y + 1), spaces.Coord(obj.pos.x + 1, obj.pos.y + 1)]
                 elif infix_info.infix_type == objects.TextNextto:
-                    find_range = [(obj.x, obj.y - 1), (obj.x - 1, obj.y), (obj.x + 1, obj.y), (obj.x, obj.y + 1)]
+                    find_range = [spaces.Coord(obj.pos.x, obj.pos.y - 1), spaces.Coord(obj.pos.x - 1, obj.pos.y), spaces.Coord(obj.pos.x + 1, obj.pos.y), spaces.Coord(obj.pos.x, obj.pos.y + 1)]
                 for match_negated, match_type_text in infix_info[2]: # type: ignore
                     match_type_text: type[objects.Noun]
                     match_type = match_type_text.obj_type
@@ -292,16 +293,16 @@ class Level(object):
                                     else:
                                         obj.special_operator_properties[oper_type].update(prop_type, prop_negated_tier)
                         elif obj_type == objects.Game and oper_type == objects.TextIs:
-                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject((0, 0)), prefix_info_list, True):
+                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject(spaces.Coord(0, 0)), prefix_info_list, True):
                                 self.game_properties.update(prop_type, prop_negated_tier)
                         elif issubclass(obj_type, objects.LevelPointer):
-                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject((0, 0)), prefix_info_list, True):
+                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject(spaces.Coord(0, 0)), prefix_info_list, True):
                                 if oper_type == objects.TextIs:
                                     self.properties[obj_type].update(prop_type, prop_negated_tier)
                                 else:
                                     self.special_operator_properties[obj_type][oper_type].update(prop_type, prop_negated_tier)
                         elif issubclass(obj_type, objects.WorldPointer):
-                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject((0, 0)), prefix_info_list, True):
+                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject(spaces.Coord(0, 0)), prefix_info_list, True):
                                 if oper_type == objects.TextIs:
                                     world.properties[obj_type].update(prop_type, prop_negated_tier)
                                 else:
@@ -339,7 +340,7 @@ class Level(object):
                                     else:
                                         obj.special_operator_properties[oper_type].update(prop_type, prop_negated_tier)
                         elif obj_type == objects.Game and oper_type == objects.TextIs:
-                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject((0, 0)), prefix_info_list, True):
+                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.BmpObject(spaces.Coord(0, 0)), prefix_info_list, True):
                                 self.game_properties.update(prop_type, prop_negated_tier)
                         if noun_negated_tier % 2 == 1:
                             obj_list = [o for o in world.object_list if (not isinstance(o, objects.not_in_all)) and not isinstance(o, obj_type)]
@@ -359,6 +360,8 @@ class Level(object):
             old_world.del_obj(obj)
         obj = copy.deepcopy(obj)
         obj.reset_uuid()
+        obj.old_state.world = old_world.world_id
+        obj.old_state.pos = obj.pos
         obj.pos = pos
         new_world.new_obj(obj)
     def move_obj_in_world(self, world: worlds.World, obj: objects.BmpObject, pos: spaces.Coord) -> None:
@@ -366,6 +369,7 @@ class Level(object):
             world.del_obj(obj)
         obj = copy.deepcopy(obj)
         obj.reset_uuid()
+        obj.old_state.pos = obj.pos
         obj.pos = pos
         world.new_obj(obj)
     def destroy_obj(self, world: worlds.World, obj: objects.BmpObject) -> None:
@@ -387,8 +391,8 @@ class Level(object):
                 else:
                     world_id: refs.WorldID = refs.WorldID(obj.uuid.hex)
                     world_color = colors.to_background_color(obj.sprite_color)
-                    new_world = worlds.World(world_id, (3, 3), world_color)
-                    obj.pos = (1, 1)
+                    new_world = worlds.World(world_id, spaces.Coord(3, 3), world_color)
+                    obj.pos = spaces.Coord(1, 1)
                     obj.reset_uuid()
                     new_world.new_obj(obj)
                     level_id: refs.LevelID = refs.LevelID(obj.uuid.hex)
@@ -403,8 +407,8 @@ class Level(object):
                 else:
                     world_id: refs.WorldID = refs.WorldID(obj.uuid.hex)
                     world_color = colors.to_background_color(obj.sprite_color)
-                    new_world = worlds.World(world_id, (3, 3), world_color)
-                    obj.pos = (1, 1)
+                    new_world = worlds.World(world_id, spaces.Coord(3, 3), world_color)
+                    obj.pos = spaces.Coord(1, 1)
                     obj.reset_uuid()
                     new_world.new_obj(obj)
                     self.set_world(new_world)
@@ -435,9 +439,7 @@ class Level(object):
             exit_world = True
             # infinite exit
             if passed.count(world.world_id) > 3:
-                inf_super_world_id = copy.deepcopy(world.world_id)
-                inf_super_world_id.infinite_tier += 1
-                inf_super_world_list = self.find_super_worlds(inf_super_world_id)
+                inf_super_world_list = self.find_super_worlds(world.world_id + 1)
                 for inf_super_world, world_obj in inf_super_world_list:
                     if inf_super_world.properties[type(world_obj)].disabled(objects.TextLeave):
                         continue
@@ -552,9 +554,7 @@ class Level(object):
                     new_move_list = None
                     # infinite enter
                     if passed.count(sub_world.world_id) > 3:
-                        sub_world_id = copy.deepcopy(sub_world.world_id)
-                        sub_world_id.infinite_tier -= 1
-                        inf_sub_world = self.get_world(sub_world_id)
+                        inf_sub_world = self.get_world(sub_world.world_id - 1)
                         if inf_sub_world is None:
                             enter_world = False
                             break
@@ -908,9 +908,9 @@ class Level(object):
                         else:
                             world_id: refs.WorldID = refs.WorldID(obj.uuid.hex)
                             world_color = colors.to_background_color(obj.sprite_color)
-                            new_world = worlds.World(world_id, (3, 3), world_color)
+                            new_world = worlds.World(world_id, spaces.Coord(3, 3), world_color)
                             new_obj = copy.deepcopy(obj)
-                            new_obj.pos = (1, 1)
+                            new_obj.pos = spaces.Coord(1, 1)
                             new_obj.reset_uuid()
                             new_world.new_obj(new_obj)
                             level_id: refs.LevelID = refs.LevelID(obj.uuid.hex)
@@ -927,9 +927,9 @@ class Level(object):
                         else:
                             world_id: refs.WorldID = refs.WorldID(obj.uuid.hex)
                             world_color = colors.to_background_color(obj.sprite_color)
-                            new_world = worlds.World(world_id, (3, 3), world_color)
+                            new_world = worlds.World(world_id, spaces.Coord(3, 3), world_color)
                             new_obj = copy.deepcopy(obj)
-                            new_obj.pos = (1, 1)
+                            new_obj.pos = spaces.Coord(1, 1)
                             new_obj.reset_uuid()
                             new_world.new_obj(new_obj)
                             self.set_world(new_world)
@@ -976,10 +976,10 @@ class Level(object):
                     else:
                         world_id: refs.WorldID = refs.WorldID(text_minus_obj.uuid.hex)
                         world_color = colors.to_background_color(text_minus_obj.sprite_color)
-                        new_world = worlds.World(world_id, (3, 3), world_color)
+                        new_world = worlds.World(world_id, spaces.Coord(3, 3), world_color)
                         level_id: refs.LevelID = refs.LevelID(text_minus_obj.uuid.hex)
                         self.created_levels.append(Level(level_id, [new_world], super_level_id=self.level_id, rule_list=self.rule_list))
-                        new_world.new_obj(type(text_minus_obj)((1, 1), text_minus_obj.orient))
+                        new_world.new_obj(type(text_minus_obj)(spaces.Coord(1, 1), text_minus_obj.orient))
                         level_pointer_extra: objects.LevelPointerExtra = {"icon": {"name": text_minus_obj.json_name, "color": text_minus_obj.sprite_color}}
                         new_obj = new_type(text_minus_obj.pos, text_minus_obj.orient, level_id=level_id, level_pointer_extra=level_pointer_extra)
                         world.new_obj(new_obj)
@@ -989,8 +989,8 @@ class Level(object):
                     else:
                         world_id: refs.WorldID = refs.WorldID(text_minus_obj.uuid.hex)
                         world_color = colors.to_background_color(text_minus_obj.sprite_color)
-                        new_world = worlds.World(world_id, (3, 3), world_color)
-                        new_world.new_obj(type(text_minus_obj)((1, 1), text_minus_obj.orient))
+                        new_world = worlds.World(world_id, spaces.Coord(3, 3), world_color)
+                        new_world.new_obj(type(text_minus_obj)(spaces.Coord(1, 1), text_minus_obj.orient))
                         self.set_world(new_world)
                         new_obj = new_type(text_minus_obj.pos, text_minus_obj.orient, world_id=world_id)
                         world.new_obj(new_obj)
@@ -1013,6 +1013,10 @@ class Level(object):
             you_objs = [o for o in world.object_list if o.properties.enabled(objects.TextYou)]
             win_objs = [o for o in world.object_list if o.properties.enabled(objects.TextWin)]
             for you_obj in you_objs:
+                if you_obj in win_objs:
+                    self.collected[collects.Spore] = True
+                    self.sound_events.append("win")
+                    return True
                 if world.properties[objects.default_world_pointer].has(objects.TextWin) or self.properties[objects.default_level_pointer].enabled(objects.TextWin):
                     if not you_obj.properties.enabled(objects.TextFloat):
                         self.collected[collects.Spore] = True
@@ -1030,6 +1034,9 @@ class Level(object):
             you_objs = [o for o in world.object_list if o.properties.enabled(objects.TextYou)]
             end_objs = [o for o in world.object_list if o.properties.enabled(objects.TextEnd)]
             for you_obj in you_objs:
+                if you_obj in end_objs:
+                    self.sound_events.append("end")
+                    return True
                 if world.properties[objects.default_world_pointer].has(objects.TextEnd) or self.properties[objects.default_level_pointer].enabled(objects.TextEnd):
                     if not you_obj.properties.enabled(objects.TextFloat):
                         self.sound_events.append("end")
@@ -1061,35 +1068,116 @@ class Level(object):
                 if obj.properties.enabled(objects.TextYou):
                     return True
         return False
-    def show_world(self, world: worlds.World, frame: int, layer: int = 0, cursor: Optional[spaces.Coord] = None, debug: bool = False) -> pygame.Surface:
-        if layer >= basics.options["world_display_recursion_depth"]:
-            world_surface = pygame.Surface((displays.pixel_sprite_size, displays.pixel_sprite_size), pygame.SRCALPHA)
+    def recursion_get_object_surface_info(self, old_pos: spaces.Coord, old_world_id: refs.WorldID, current_world_id: refs.WorldID, depth: int = 0, passed: Optional[list[refs.WorldID]] = None) -> list[tuple[int, tuple[float, float], tuple[float, float]]]:
+        current_world = self.get_world(current_world_id)
+        if current_world is None:
+            return []
+        if current_world_id == old_world_id:
+            return [(
+                depth + 1,
+                (old_pos[0] / current_world.width, old_pos[1] / current_world.height),
+                (1 / current_world.width, 1 / current_world.height)
+            )]
+        passed = copy.deepcopy(passed) if passed is not None else []
+        new_passed = copy.deepcopy(passed)
+        return_list: list[tuple[int, tuple[float, float], tuple[float, float]]] = []
+        if current_world_id in passed:
+            inf_sub_world = self.get_world(current_world_id - 1)
+            if inf_sub_world is None:
+                return []
+            for world_obj in current_world.get_worlds():
+                if current_world_id - 1 != world_obj.world_id:
+                    continue
+                for new_depth, new_pos, new_size in self.recursion_get_object_surface_info(old_pos, old_world_id, current_world_id - 1, passed=new_passed):
+                    return_list.append((
+                        new_depth + 1,
+                        ((new_pos[0] + world_obj.pos.x) / current_world.width, (new_pos[1] + world_obj.pos.y) / current_world.height),
+                        (new_size[0] / current_world.width, new_size[1] / current_world.height)
+                    ))
+            return return_list
+        new_passed.append(copy.deepcopy(current_world_id))
+        for world_obj in current_world.get_worlds():
+            if world_obj.world_id in passed:
+                continue
+            sub_world = self.get_world(world_obj.world_id)
+            if sub_world is None:
+                continue
+            for new_depth, new_pos, new_size in self.recursion_get_object_surface_info(old_pos, old_world_id, world_obj.world_id, passed=new_passed):
+                return_list.append((
+                    new_depth + 1,
+                    ((new_pos[0] + world_obj.pos.x) / current_world.width, (new_pos[1] + world_obj.pos.y) / current_world.height),
+                    (new_size[0] / current_world.width, new_size[1] / current_world.height)
+                ))
+        return return_list
+    def world_to_surface(self, world: worlds.World, wiggle: int, depth: int = 0, smooth: Optional[float] = None, cursor: Optional[spaces.Coord] = None, debug: bool = False) -> pygame.Surface:
+        if depth > basics.options["world_display_recursion_depth"]:
+            world_surface = pygame.Surface((displays.pixel_sprite_size, displays.pixel_sprite_size))
             world_surface.fill(world.color)
             return world_surface
         world_surface_size = (world.width * displays.pixel_sprite_size, world.height * displays.pixel_sprite_size)
         world_surface = pygame.Surface(world_surface_size, pygame.SRCALPHA)
-        obj_surface_list: list[tuple[spaces.Coord, pygame.Surface, objects.BmpObject]] = []
-        for i in range(len(world.object_list)):
-            obj = world.object_list[i]
-            obj_surface = displays.simple_object_to_surface(obj, wiggle=frame, debug=debug)
-            obj_surface_pos = (obj.x * displays.pixel_sprite_size, obj.y * displays.pixel_sprite_size)
+        object_list: list[tuple[Optional[refs.WorldID], objects.BmpObject]] = []
+        obj_surface_list: list[tuple[spaces.Coord, spaces.Coord, pygame.Surface, objects.BmpObject]] = []
+        for other_world in self.world_list:
+            for other_object in other_world.object_list:
+                if (smooth is not None) and other_object.old_state.world == world.world_id and isinstance(other_object, displays.order):
+                    object_list.append((other_world.world_id, other_object))
+        object_list.extend([(None, o) for o in world.object_list if isinstance(o, displays.order) and (world.world_id, o) not in object_list])
+        for super_world_id, obj in object_list:
+            if not isinstance(obj, displays.order):
+                continue
+            obj_surface: pygame.Surface = displays.simple_object_to_surface(obj, wiggle=wiggle, debug=debug)
+            obj_surface_pos: spaces.Coord = spaces.Coord(obj.pos.x * displays.pixel_sprite_size, obj.pos.y * displays.pixel_sprite_size)
+            obj_surface_size: spaces.Coord = spaces.Coord(displays.pixel_sprite_size, displays.pixel_sprite_size)
             if isinstance(obj, objects.WorldPointer):
-                obj_world = self.get_world(obj.world_id)
-                if obj_world is not None:
-                    obj_surface = displays.simple_object_to_surface(obj, wiggle=frame, default_surface=self.show_world(obj_world, frame, layer + 1), debug=debug)
+                world_of_object = self.get_world(obj.world_id)
+                if world_of_object is not None:
+                    obj_surface = displays.simple_object_to_surface(obj, wiggle=wiggle, default_surface=self.world_to_surface(world_of_object, wiggle, depth + 1, smooth), debug=debug)
             if isinstance(obj, objects.Cursor):
-                obj_surface_pos = (obj.x * displays.pixel_sprite_size - (obj_surface.get_width() - displays.sprite_size) * displays.pixel_size // 2,
-                                   obj.y * displays.pixel_sprite_size - (obj_surface.get_height() - displays.sprite_size) * displays.pixel_size // 2)
-            obj_surface_list.append((obj_surface_pos, obj_surface, obj))
-        sorted_obj_surface_list = map(lambda o: list(map(lambda t: isinstance(o[-1], t), displays.order)).index(True), obj_surface_list)
-        sorted_obj_surface_list = map(lambda t: t[1], sorted(zip(sorted_obj_surface_list, obj_surface_list), key=lambda t: t[0], reverse=True))
-        for pos, surface, obj in sorted_obj_surface_list:
-            if isinstance(obj, objects.Cursor):
-                world_surface.blit(pygame.transform.scale(surface, (displays.pixel_size * surface.get_width(), displays.pixel_size * surface.get_height())), pos)
+                obj_surface_pos = spaces.Coord(obj.pos.x * displays.pixel_sprite_size - (obj_surface.get_width() - displays.sprite_size) * displays.pixel_size // 2,
+                                   obj.pos.y * displays.pixel_sprite_size - (obj_surface.get_height() - displays.sprite_size) * displays.pixel_size // 2)
+                obj_surface_size = spaces.Coord(displays.pixel_size * obj_surface.get_width(), displays.pixel_size * obj_surface.get_height())
+            if (smooth is not None) and (obj.old_state.pos is not None):
+                if smooth >= 0.0 and smooth <= 1.0:
+                    if obj.old_state.world is None:
+                        obj_surface_pos = spaces.Coord(
+                            int((obj.pos.x + (obj.old_state.pos[0] - obj.pos.x) * smooth) * displays.pixel_sprite_size),
+                            int((obj.pos.y + (obj.old_state.pos[1] - obj.pos.y) * smooth) * displays.pixel_sprite_size)
+                        )
+                        obj_surface_list.append((obj_surface_pos, obj_surface_size, obj_surface, obj))
+                    else:
+                        new_surface_info = self.recursion_get_object_surface_info(obj.old_state.pos, obj.old_state.world, world.world_id)
+                        if len(new_surface_info) != 0:
+                            new_surface_info = sorted(new_surface_info, key=lambda t: t[0])
+                            min_world_depth = new_surface_info[0][0]
+                            for world_depth, old_pos, old_size in new_surface_info:
+                                if world_depth > min_world_depth:
+                                    break
+                                if super_world_id is not None:
+                                    old_super_world = self.get_exact_world(super_world_id)
+                                    for old_super_world_object in [o for o in world.get_worlds() if o.world_id == super_world_id]:
+                                        old_pos = (obj.old_state.pos[0] * displays.pixel_sprite_size, obj.old_state.pos[1] * displays.pixel_sprite_size)
+                                        old_size = (displays.pixel_sprite_size, displays.pixel_sprite_size)
+                                        new_pos = ((obj.pos.x / old_super_world.width + old_super_world_object.pos.x) * displays.pixel_sprite_size, (obj.pos.y / old_super_world.height + old_super_world_object.pos.y) * displays.pixel_sprite_size)
+                                        new_size = (displays.pixel_sprite_size / old_super_world.width, displays.pixel_sprite_size / old_super_world.height)
+                                        obj_surface_pos = spaces.Coord(int(new_pos[0] + (old_pos[0] - new_pos[0]) * smooth), int(new_pos[1] + (old_pos[1] - new_pos[1]) * smooth))
+                                        obj_surface_size = spaces.Coord(int(new_size[0] + (old_size[0] - new_size[0]) * smooth), int(new_size[1] + (old_size[1] - new_size[1]) * smooth))
+                                        obj_surface_list.append((obj_surface_pos, obj_surface_size, obj_surface, obj))
+                                else:
+                                    old_pos = spaces.Coord(old_pos[0] * world_surface_size[0], old_pos[1] * world_surface_size[1])
+                                    old_size = spaces.Coord(old_size[0] * displays.pixel_sprite_size, old_size[1] * displays.pixel_sprite_size)
+                                    obj_surface_pos = spaces.Coord(int(obj_surface_pos[0] + (old_pos[0] - obj_surface_pos[0]) * smooth), int(obj_surface_pos[1] + (old_pos[1] - obj_surface_pos[1]) * smooth))
+                                    obj_surface_size = spaces.Coord(int(obj_surface_size[0] + (old_size[0] - obj_surface_size[0]) * smooth), int(obj_surface_size[1] + (old_size[1] - obj_surface_size[1]) * smooth))
+                                    obj_surface_list.append((obj_surface_pos, obj_surface_size, obj_surface, obj))
+                else:
+                    raise ValueError(smooth)
             else:
-                world_surface.blit(pygame.transform.scale(surface, (displays.pixel_sprite_size, displays.pixel_sprite_size)), pos)
+                obj_surface_list.append((obj_surface_pos, obj_surface_size, obj_surface, obj))
+        obj_surface_list.sort(key=lambda o: [isinstance(o[-1], t) for t in displays.order].index(True), reverse=True)
+        for pos, size, surface, obj in obj_surface_list:
+            world_surface.blit(pygame.transform.scale(surface, size), pos)
         if cursor is not None:
-            surface = displays.sprites.get("cursor", 0, frame, raw=True).copy()
+            surface = displays.sprites.get("cursor", 0, wiggle, raw=True).copy()
             pos = (cursor[0] * displays.pixel_sprite_size - (surface.get_width() - displays.sprite_size) * displays.pixel_size // 2,
                    cursor[1] * displays.pixel_sprite_size - (surface.get_height() - displays.sprite_size) * displays.pixel_size // 2)
             world_surface.blit(pygame.transform.scale(surface, (displays.pixel_size * surface.get_width(), displays.pixel_size * surface.get_height())), pos)
@@ -1097,24 +1185,19 @@ class Level(object):
         world_background.fill(pygame.Color(*colors.hex_to_rgb(world.color)))
         world_background.blit(world_surface, (0, 0))
         world_surface = world_background
-        if world.world_id.infinite_tier > 0:
-            infinite_surface = displays.sprites.get("text_infinite", 0, frame)
-            multi_infinite_surface = pygame.Surface((infinite_surface.get_width(), infinite_surface.get_height() * world.world_id.infinite_tier), pygame.SRCALPHA)
-            multi_infinite_surface.fill("#00000000")
-            for i in range(world.world_id.infinite_tier):
-                multi_infinite_surface.blit(infinite_surface, (0, i * infinite_surface.get_height()))
-            multi_infinite_surface = pygame.transform.scale_by(multi_infinite_surface, world.height * displays.pixel_size / world.world_id.infinite_tier)
-            multi_infinite_surface = displays.set_alpha(multi_infinite_surface, 0x80)
-            world_surface.blit(multi_infinite_surface, ((world_surface.get_width() - multi_infinite_surface.get_width()) // 2, 0))
-        elif world.world_id.infinite_tier < 0:
-            epsilon_surface = displays.sprites.get("text_epsilon", 0, frame)
-            multi_epsilon_surface = pygame.Surface((epsilon_surface.get_width(), epsilon_surface.get_height() * -world.world_id.infinite_tier), pygame.SRCALPHA)
-            multi_epsilon_surface.fill("#00000000")
-            for i in range(-world.world_id.infinite_tier):
-                multi_epsilon_surface.blit(epsilon_surface, (0, i * epsilon_surface.get_height()))
-            multi_epsilon_surface = pygame.transform.scale_by(multi_epsilon_surface, world.height * displays.pixel_size / -world.world_id.infinite_tier)
-            multi_epsilon_surface = displays.set_alpha(multi_epsilon_surface, 0x80)
-            world_surface.blit(multi_epsilon_surface, ((world_surface.get_width() - multi_epsilon_surface.get_width()) // 2, 0))
+        if world.world_id.infinite_tier != 0:
+            infinite_text_surface = displays.sprites.get("text_infinite" if world.world_id.infinite_tier > 0 else "text_epsilon", 0, wiggle, raw=True)
+            infinite_tier_surface = pygame.Surface((infinite_text_surface.get_width(), infinite_text_surface.get_height() * abs(world.world_id.infinite_tier)), pygame.SRCALPHA)
+            infinite_tier_surface.fill("#00000000")
+            for i in range(abs(world.world_id.infinite_tier)):
+                infinite_tier_surface.blit(infinite_text_surface, (0, i * infinite_text_surface.get_height()))
+            infinite_tier_surface = displays.set_alpha(infinite_tier_surface, 0x80)
+            if depth == 0:
+                infinite_tier_surface = pygame.transform.scale_by(infinite_tier_surface, world.height * displays.pixel_size / abs(world.world_id.infinite_tier))
+                world_surface.blit(infinite_tier_surface, ((world_surface.get_width() - infinite_tier_surface.get_width()) // 2, 0))
+            else:
+                infinite_tier_surface = pygame.transform.scale(infinite_tier_surface, world_surface_size)
+                world_surface.blit(infinite_tier_surface, (0, 0))
         return world_surface
     def to_json(self) -> LevelJson:
         json_object: LevelJson = {"id": self.level_id.to_json(), "world_list": [], "main_world": self.main_world_id.to_json()}

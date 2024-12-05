@@ -8,15 +8,14 @@ def match_pos(obj: objects.BmpObject, pos: spaces.Coord) -> bool:
 
 class WorldJson(TypedDict):
     id: refs.WorldIDJson
-    size: spaces.Coord
+    size: spaces.CoordTuple
     color: colors.ColorHex
     object_list: list[objects.BmpObjectJson]
 
 class World(object):
-    def __init__(self, world_id: refs.WorldID, size: tuple[int, int], color: Optional[colors.ColorHex] = None) -> None:
+    def __init__(self, world_id: refs.WorldID, size: spaces.Coord, color: Optional[colors.ColorHex] = None) -> None:
         self.world_id: refs.WorldID = world_id
-        self.width: int = size[0]
-        self.height: int = size[1]
+        self.size: spaces.Coord = size
         self.color: colors.ColorHex = color if color is not None else colors.random_world_color()
         self.object_list: list[objects.BmpObject] = []
         self.object_pos_index: list[list[objects.BmpObject]]
@@ -26,6 +25,18 @@ class World(object):
         self.refresh_index()
     def __eq__(self, world: "World") -> bool:
         return self.world_id == world.world_id
+    @property
+    def width(self) -> int:
+        return self.size.x
+    @width.setter
+    def width(self, value: int) -> None:
+        self.size = spaces.Coord(value, self.size.y)
+    @property
+    def height(self) -> int:
+        return self.size.y
+    @height.setter
+    def height(self, value: int) -> None:
+        self.size = spaces.Coord(self.size.x, value)
     def out_of_range(self, coord: spaces.Coord) -> bool:
         return coord[0] < 0 or coord[1] < 0 or coord[0] >= self.width or coord[1] >= self.height
     def pos_to_index(self, pos) -> int:
@@ -35,10 +46,12 @@ class World(object):
     def refresh_index(self) -> None:
         self.object_pos_index = [[] for _ in range(self.width * self.height)]
         for obj in self.object_list:
-            self.pos_to_objs(obj.pos).append(obj)
+            if not self.out_of_range(obj.pos):
+                self.pos_to_objs(obj.pos).append(obj)
     def new_obj(self, obj: objects.BmpObject) -> None:
         self.object_list.append(obj)
-        self.pos_to_objs(obj.pos).append(obj)
+        if not self.out_of_range(obj.pos):
+            self.pos_to_objs(obj.pos).append(obj)
     def get_objs_from_pos(self, pos: spaces.Coord) -> list[objects.BmpObject]:
         if self.out_of_range(pos):
             return []
@@ -50,13 +63,15 @@ class World(object):
     def get_objs_from_type[T: objects.BmpObject](self, obj_type: type[T]) -> list[T]:
         return [o for o in self.object_list if isinstance(o, obj_type)]
     def del_obj(self, obj: objects.BmpObject) -> None:
-        self.pos_to_objs(obj.pos).remove(obj)
+        if not self.out_of_range(obj.pos):
+            self.pos_to_objs(obj.pos).remove(obj)
         self.object_list.remove(obj)
     def del_obj_from_pos_and_type(self, pos: spaces.Coord, obj_type: type) -> bool:
         for obj in self.pos_to_objs(pos):
             if isinstance(obj, obj_type):
                 self.object_list.remove(obj)
-                self.pos_to_objs(pos).remove(obj)
+                if not self.out_of_range(obj.pos):
+                    self.pos_to_objs(pos).remove(obj)
                 return True
         return False
     def del_objs_from_pos_and_type(self, pos: spaces.Coord, obj_type: type) -> bool:
@@ -65,9 +80,12 @@ class World(object):
         for obj in del_objects:
             deleted = True
             self.object_list.remove(obj)
-            self.pos_to_objs(pos).remove(obj)
+            if not self.out_of_range(obj.pos):
+                self.pos_to_objs(pos).remove(obj)
         return deleted
     def del_objs_from_pos(self, pos: spaces.Coord) -> bool:
+        if self.out_of_range(pos):
+            return False
         deleted = len(self.pos_to_objs(pos)) != 0
         for obj in self.pos_to_objs(pos):
             self.object_list.remove(obj)
@@ -174,7 +192,7 @@ class World(object):
         for x in range(self.width):
             for y in range(self.height):
                 x_rule_dict.setdefault(x, [])
-                new_rule_list = self.get_rules_from_pos_and_orient((x, y), spaces.Orient.D)
+                new_rule_list = self.get_rules_from_pos_and_orient(spaces.Coord(x, y), spaces.Orient.D)
                 if new_rule_list is not None:
                     for rule_index in range(len(new_rule_list)):
                         part_of_old_rule = False
@@ -185,7 +203,7 @@ class World(object):
                         if not part_of_old_rule:
                             x_rule_dict[x].append(new_rule_list[rule_index])
                 y_rule_dict.setdefault(y, [])
-                new_rule_list = self.get_rules_from_pos_and_orient((x, y), spaces.Orient.S)
+                new_rule_list = self.get_rules_from_pos_and_orient(spaces.Coord(x, y), spaces.Orient.S)
                 if new_rule_list is not None:
                     for rule_index in range(len(new_rule_list)):
                         part_of_old_rule = False
@@ -218,13 +236,13 @@ class World(object):
     def default_input_position(self, side: spaces.Orient) -> spaces.Coord:
         match side:
             case spaces.Orient.W:
-                return (self.width // 2, -1)
+                return spaces.Coord(self.width // 2, -1)
             case spaces.Orient.A:
-                return (-1, self.height // 2)
+                return spaces.Coord(-1, self.height // 2)
             case spaces.Orient.S:
-                return (self.width // 2, self.height)
+                return spaces.Coord(self.width // 2, self.height)
             case spaces.Orient.D:
-                return (self.width, self.height // 2)
+                return spaces.Coord(self.width, self.height // 2)
     def pos_to_transnum(self, pos: spaces.Coord, side: spaces.Orient) -> float:
         if side in (spaces.Orient.W, spaces.Orient.S):
             return (pos[0] + 0.5) / self.width
@@ -233,13 +251,13 @@ class World(object):
     def transnum_to_pos(self, num: float, side: spaces.Orient) -> spaces.Coord:
         match side:
             case spaces.Orient.W:
-                return (int((num * self.width)), -1)
+                return spaces.Coord(int((num * self.width)), -1)
             case spaces.Orient.S:
-                return (int((num * self.width)), self.height)
+                return spaces.Coord(int((num * self.width)), self.height)
             case spaces.Orient.A:
-                return (-1, int((num * self.height)))
+                return spaces.Coord(-1, int((num * self.height)))
             case spaces.Orient.D:
-                return (self.width, int((num * self.height)))
+                return spaces.Coord(self.width, int((num * self.height)))
     def transnum_to_smaller_transnum(self, num: float, pos: spaces.Coord, side: spaces.Orient) -> float:
         if side in (spaces.Orient.W, spaces.Orient.S):
             return (num * self.width) - pos[0]
@@ -262,7 +280,7 @@ def json_to_world(json_object: WorldJson, ver: Optional[str] = None) -> World:
     else:
         world_id: refs.WorldID = refs.WorldID(**json_object["id"])
     new_world = World(world_id=world_id,
-                      size=json_object["size"],
+                      size=spaces.Coord(*json_object["size"]),
                       color=json_object["color"])
     for obj in json_object["object_list"]:
         new_world.new_obj(objects.json_to_object(obj, ver))
