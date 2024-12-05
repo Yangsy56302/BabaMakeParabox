@@ -424,9 +424,9 @@ class Path(Tiled):
         return {**super().to_json(), "path_extra": {"unlocked": self.unlocked, "conditions": {k.json_name: v for k, v in self.conditions.items()}}}
 
 class Game(Object):
-    def __init__(self, pos: spaces.Coord, orient: spaces.Orient = spaces.Orient.S, *, world_id: Optional[refs.WorldID] = None, level_id: Optional[refs.LevelID] = None, ref_type: type[Object], world_object_info: refs.WorldID | None = None, level_object_info: refs.LevelID | None = None) -> None:
+    def __init__(self, pos: spaces.Coord, orient: spaces.Orient = spaces.Orient.S, *, world_id: Optional[refs.WorldID] = None, level_id: Optional[refs.LevelID] = None, ref_type, world_object_info: refs.WorldID | None = None, level_object_info: refs.LevelID | None = None) -> None:
         super().__init__(pos, orient, world_id=world_object_info, level_id=level_object_info)
-        self.ref_type: type[Object] = ref_type
+        self.ref_type = ref_type
     json_name = "game"
     display_name = "Game"
     sprite_color: colors.ColorHex = colors.PINK
@@ -435,7 +435,7 @@ class Text(Object):
     pass
 
 class Noun(Text):
-    ref_type: type[Object]
+    ref_type: type["Object"]
 
 class Prefix(Text):
     pass
@@ -450,125 +450,125 @@ class Property(Text):
     pass
 
 class TextBaba(Noun):
-    ref_type: type[Object] = Baba
+    ref_type = Baba
     sprite_color: colors.ColorHex = colors.MAGENTA
 
 class TextKeke(Noun):
-    ref_type: type[Object] = Keke
+    ref_type = Keke
     
 class TextMe(Noun):
-    ref_type: type[Object] = Me
+    ref_type = Me
 
 class TextPatrick(Noun):
-    ref_type: type[Object] = Patrick
+    ref_type = Patrick
 
 class TextSkull(Noun):
-    ref_type: type[Object] = Skull
+    ref_type = Skull
 
 class TextGhost(Noun):
-    ref_type: type[Object] = Ghost
+    ref_type = Ghost
 
 class TextWall(Noun):
-    ref_type: type[Object] = Wall
+    ref_type = Wall
     sprite_color: colors.ColorHex = colors.LIGHT_GRAY
 
 class TextHedge(Noun):
-    ref_type: type[Object] = Hedge
+    ref_type = Hedge
 
 class TextIce(Noun):
-    ref_type: type[Object] = Ice
+    ref_type = Ice
     sprite_color: colors.ColorHex = colors.LIGHT_GRAY_BLUE
 
 class TextTile(Noun):
-    ref_type: type[Object] = Tile
+    ref_type = Tile
     sprite_color: colors.ColorHex = colors.LIGHT_GRAY
 
 class TextGrass(Noun):
-    ref_type: type[Object] = Grass
+    ref_type = Grass
 
 class TextWater(Noun):
-    ref_type: type[Object] = Water
+    ref_type = Water
 
 class TextLava(Noun):
-    ref_type: type[Object] = Lava
+    ref_type = Lava
     sprite_name = "text_lava"
 
 class TextDoor(Noun):
-    ref_type: type[Object] = Door
+    ref_type = Door
 
 class TextKey(Noun):
-    ref_type: type[Object] = Key
+    ref_type = Key
 
 class TextBox(Noun):
-    ref_type: type[Object] = Box
+    ref_type = Box
 
 class TextRock(Noun):
-    ref_type: type[Object] = Rock
+    ref_type = Rock
     sprite_color: colors.ColorHex = colors.BROWN
 
 class TextFruit(Noun):
-    ref_type: type[Object] = Fruit
+    ref_type = Fruit
 
 class TextBelt(Noun):
-    ref_type: type[Object] = Belt
+    ref_type = Belt
     sprite_color: colors.ColorHex = colors.LIGHT_GRAY_BLUE
 
 class TextSun(Noun):
-    ref_type: type[Object] = Sun
+    ref_type = Sun
 
 class TextMoon(Noun):
-    ref_type: type[Object] = Moon
+    ref_type = Moon
 
 class TextStar(Noun):
-    ref_type: type[Object] = Star
+    ref_type = Star
 
 class TextWhat(Noun):
-    ref_type: type[Object] = What
+    ref_type = What
 
 class TextLove(Noun):
-    ref_type: type[Object] = Love
+    ref_type = Love
 
 class TextFlag(Noun):
-    ref_type: type[Object] = Flag
+    ref_type = Flag
 
 class TextLine(Noun):
-    ref_type: type[Object] = Line
+    ref_type = Line
 
 class TextDot(Noun):
-    ref_type: type[Object] = Dot
+    ref_type = Dot
 
 class TextCursor(Noun):
-    ref_type: type[Object] = Cursor
+    ref_type = Cursor
     sprite_color: colors.ColorHex = colors.LIGHT_YELLOW
 
 class TextText(Noun):
-    ref_type: type[Object] = Text
+    ref_type = Text
     json_name = "text_text"
     sprite_name = "text_text"
     display_name = "TEXT"
     sprite_color: colors.ColorHex = colors.MAGENTA
 
 class TextLevelObject(Noun):
-    ref_type: type[Object] = LevelObject
+    ref_type = LevelObject
 
 class TextLevel(Noun):
-    ref_type: type[Object] = Level
+    ref_type = Level
 
 class TextWorldObject(Noun):
-    ref_type: type[Object] = WorldObject
+    ref_type = WorldObject
 
 class TextWorld(Noun):
-    ref_type: type[Object] = World
+    ref_type = World
 
 class TextClone(Noun):
-    ref_type: type[Object] = Clone
+    ref_type = Clone
 
 class TextPath(Noun):
-    ref_type: type[Object] = Path
+    ref_type = Path
     sprite_name = "text_path"
 
 class TextGame(Noun):
-    ref_type: type[Object] = Game
+    ref_type = Game
     json_name = "text_game"
     sprite_name = "text_game"
     display_name = "GAME"
@@ -804,13 +804,10 @@ class Metatext(Noun):
     _base_ref_type: type[Text]
 
 class SpecialNoun(Noun):
-    ref_type: type[Object] = NotRealObject
+    ref_type = NotRealObject
     sprite_color: colors.ColorHex = colors.WHITE
     @classmethod
     def isreferenceof(cls, other: Object, **kwds) -> bool:
-        raise NotImplementedError()
-    @classmethod
-    def isrefclassof(cls, other: type[Object], **kwds) -> bool:
         raise NotImplementedError()
 
 class TextEmpty(SpecialNoun):
@@ -820,17 +817,14 @@ class TextEmpty(SpecialNoun):
     @classmethod
     def isreferenceof(cls, other: Object, **kwds) -> bool:
         return False
-    @classmethod
-    def isrefclassof(cls, other: type[Object], **kwds) -> bool:
-        return False
 
 class TextAll(SpecialNoun):
     json_name = "text_all"
     sprite_name = "text_all"
     display_name = "ALL"
     @classmethod
-    def isreferenceof(cls, other: Object, all_list: list[type[Object]], **kwds) -> bool:
-        return isinstance(other, tuple(all_list))
+    def isreferenceof(cls, other: Object, all_list: list[type[Noun]], **kwds) -> bool:
+        return all(map(lambda n: isinstance(other, n) if not isinstance(n, SpecialNoun) else n.isreferenceof(other), all_list))
 
 class TextGroupBase(SpecialNoun):
     @classmethod

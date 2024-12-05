@@ -104,46 +104,32 @@ class Level(object):
                                   spaces.Coord(obj.pos.x - 1, obj.pos.y + 1), spaces.Coord(obj.pos.x, obj.pos.y + 1), spaces.Coord(obj.pos.x + 1, obj.pos.y + 1)]
                 elif infix_info.infix_type == objects.TextNextto:
                     find_range = [spaces.Coord(obj.pos.x, obj.pos.y - 1), spaces.Coord(obj.pos.x - 1, obj.pos.y), spaces.Coord(obj.pos.x + 1, obj.pos.y), spaces.Coord(obj.pos.x, obj.pos.y + 1)]
-                for match_negated, match_type_text in infix_info[2]: # type: ignore
-                    match_type_text: type[objects.Noun]
-                    match_type = match_type_text.ref_type
-                    if match_type == objects.All:
+                for match_negated, match_noun in infix_info[2]: # type: ignore
+                    match_objs: list[objects.Object] = []
+                    match_noun: type[objects.Noun]
+                    match_noun_list: list[type[objects.Noun]] = []
+                    if match_noun == objects.TextAll:
                         if match_negated:
-                            match_objs: list[objects.Object] = []
-                            for new_match_type in [o for o in self.all_list if issubclass(o, objects.in_not_all)]:
-                                for pos in find_range:
-                                    match_objs.extend([o for o in world.get_objs_from_pos_and_type(pos, new_match_type) if o not in matched_objs])
-                                if len(match_objs) == 0:
-                                    meet_infix_condition = False
-                                    break
-                                matched_objs.append(match_objs[0])
+                            match_noun_list = [o for o in self.all_list if issubclass(o, objects.nouns_in_not_all)]
                         else:
-                            match_objs: list[objects.Object] = []
-                            for new_match_type in [o for o in self.all_list if not issubclass(o, objects.not_in_all)]:
-                                for pos in find_range:
-                                    match_objs.extend([o for o in world.get_objs_from_pos_and_type(pos, new_match_type) if o not in matched_objs])
-                                if len(match_objs) == 0:
-                                    meet_infix_condition = False
-                                    break
-                                matched_objs.append(match_objs[0])
+                            match_noun_list = [o for o in self.all_list if not issubclass(o, objects.nouns_not_in_all)]
                     else:
                         if match_negated:
-                            match_objs: list[objects.Object] = []
-                            for new_match_type in [o for o in self.all_list if (not issubclass(o, objects.not_in_all)) and not issubclass(o, match_type)]:
-                                for pos in find_range:
-                                    match_objs.extend([o for o in world.get_objs_from_pos_and_type(pos, new_match_type) if o not in matched_objs])
-                            if len(match_objs) == 0:
-                                meet_infix_condition = False
-                            else:
-                                matched_objs.append(match_objs[0])
+                            match_noun_list = [o for o in self.all_list if (not issubclass(o, objects.nouns_not_in_all)) and not issubclass(o, match_noun)]
                         else:
-                            match_objs: list[objects.Object] = []
+                            match_noun_list = [match_noun]
+                    for new_match_noun in match_noun_list:
+                        if issubclass(new_match_noun, objects.SpecialNoun):
                             for pos in find_range:
-                                match_objs.extend([o for o in world.get_objs_from_pos_and_type(pos, match_type) if o not in matched_objs])
-                            if len(match_objs) == 0:
-                                meet_infix_condition = False
-                            else:
-                                matched_objs.append(match_objs[0])
+                                match_objs.extend([o for o in world.get_objs_from_pos_and_special_noun(pos, new_match_noun) if o not in matched_objs])
+                        else:
+                            new_match_type = new_match_noun.ref_type
+                            for pos in find_range:
+                                match_objs.extend([o for o in world.get_objs_from_pos_and_type(pos, new_match_type) if o not in matched_objs])
+                        if len(match_objs) == 0:
+                            meet_infix_condition = False
+                        else:
+                            matched_objs.append(match_objs[0])
                     if not meet_infix_condition:
                         break
             elif infix_info.infix_type == objects.TextFeeling:
@@ -157,39 +143,36 @@ class Level(object):
                 meet_infix_condition = True
                 matched_objs: list[objects.Object] = [obj]
                 match_type_count: dict[tuple[bool, type[objects.Noun]], int] = {}
-                for match_negated, match_type_text in infix_info[2]: # type: ignore
-                    match_type_text: type[objects.Noun]
-                    match_type_count.setdefault((match_negated, match_type_text), 0)
-                    match_type_count[(match_negated, match_type_text)] += 1
-                for (match_negated, match_type_text), match_count in match_type_count.items():
-                    match_type_text: type[objects.Noun]
-                    match_type = match_type_text.ref_type
-                    if match_type == objects.All:
+                for match_negated, match_noun in infix_info[2]: # type: ignore
+                    match_noun: type[objects.Noun]
+                    match_type_count.setdefault((match_negated, match_noun), 0)
+                    match_type_count[(match_negated, match_noun)] += 1
+                for (match_negated, match_noun), match_count in match_type_count.items():
+                    match_objs: list[objects.Object] = []
+                    match_noun: type[objects.Noun]
+                    match_noun_list: list[type[objects.Noun]] = []
+                    if match_noun == objects.TextAll:
                         if match_negated:
-                            match_objs: list[objects.Object] = []
-                            for new_match_type in [o for o in self.all_list if issubclass(o, objects.in_not_all)]:
-                                match_objs.extend(world.get_objs_from_type(new_match_type))
-                                if len(match_objs) >= match_count:
-                                    meet_infix_condition = False
-                                    break
+                            match_noun_list = [o for o in self.all_list if issubclass(o, objects.nouns_in_not_all)]
                         else:
-                            match_objs: list[objects.Object] = []
-                            for new_match_type in [o for o in self.all_list if not issubclass(o, objects.not_in_all)]:
-                                match_objs.extend(world.get_objs_from_type(new_match_type))
-                                if len(match_objs) >= match_count:
-                                    meet_infix_condition = False
-                                    break
+                            match_noun_list = [o for o in self.all_list if not issubclass(o, objects.nouns_not_in_all)]
                     else:
                         if match_negated:
-                            match_objs: list[objects.Object] = []
-                            for new_match_type in [o for o in self.all_list if (not issubclass(o, objects.not_in_all)) and not issubclass(o, match_type)]:
-                                match_objs.extend(world.get_objs_from_type(new_match_type))
-                            if len(match_objs) >= match_count:
-                                meet_infix_condition = False
+                            match_noun_list = [o for o in self.all_list if (not issubclass(o, objects.nouns_not_in_all)) and not issubclass(o, match_noun)]
                         else:
-                            match_objs: list[objects.Object] = world.get_objs_from_type(match_type)
-                            if len(match_objs) >= match_count:
-                                meet_infix_condition = False
+                            match_noun_list = [match_noun]
+                    for new_match_noun in match_noun_list:
+                        if issubclass(new_match_noun, objects.SpecialNoun):
+                            for pos in find_range:
+                                match_objs.extend([o for o in world.get_objs_from_special_noun(new_match_noun) if o not in matched_objs])
+                        else:
+                            new_match_type = new_match_noun.ref_type
+                            for pos in find_range:
+                                match_objs.extend([o for o in world.get_objs_from_type(new_match_type) if o not in matched_objs])
+                        if len(match_objs) == 0:
+                            meet_infix_condition = False
+                        else:
+                            matched_objs.append(match_objs[0])
                     if not meet_infix_condition:
                         break
             if meet_infix_condition == infix_info.negated:
@@ -235,27 +218,19 @@ class Level(object):
                         prop_type = rule_info.prop_type
                         if oper_type != objects.TextIs:
                             continue
-                        if prop_type != objects.TextWord:
+                        if prop_type != (objects.TextWord):
                             continue
-                        object_type = noun_type.ref_type
-                        if object_type == objects.All:
-                            if noun_negated_tier % 2 == 1:
-                                for obj in [o for o in world.object_list if isinstance(o, objects.in_not_all)]:
-                                    if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
-                                        new_prop_list.append((obj, (objects.TextWord, prop_negated_tier)))
-                            else:
-                                for obj in [o for o in world.object_list if not isinstance(o, objects.not_in_all)]:
-                                    if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
-                                        new_prop_list.append((obj, (objects.TextWord, prop_negated_tier)))
+                        new_match_obj_list: list[objects.Object] = []
+                        if issubclass(noun_type, objects.SpecialNoun):
+                            new_match_obj_list = [o for o in world.object_list if noun_type.isreferenceof(o, all_list = self.all_list)]
                         else:
                             if noun_negated_tier % 2 == 1:
-                                for obj in [o for o in world.object_list if (not isinstance(o, objects.not_in_all)) and not isinstance(o, object_type)]:
-                                    if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
-                                        new_prop_list.append((obj, (objects.TextWord, prop_negated_tier)))
+                                new_match_obj_list = [o for o in world.object_list if objects.TextAll.isreferenceof(o, all_list = self.all_list) and not isinstance(o, noun_type.ref_type)]
                             else:
-                                for obj in world.get_objs_from_type(object_type):
-                                    if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
-                                        new_prop_list.append((obj, (objects.TextWord, prop_negated_tier)))
+                                new_match_obj_list = world.get_objs_from_type(noun_type.ref_type)
+                        for obj in new_match_obj_list:
+                            if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
+                                new_prop_list.append((obj, (prop_type, prop_negated_tier)))
         for obj, prop in new_prop_list:
             prop_type, prop_negated_count = prop
             obj.properties.update(prop_type, prop_negated_count)
@@ -281,18 +256,10 @@ class Level(object):
                         prop_negated_tier = rule_info.prop_negated_tier
                         prop_type = rule_info.prop_type
                         object_type = noun_type.ref_type
-                        if object_type == objects.All:
-                            if noun_negated_tier % 2 == 1:
-                                obj_list = [o for o in world.object_list if isinstance(o, objects.in_not_all)]
-                            else:
-                                obj_list = [o for o in world.object_list if not isinstance(o, objects.not_in_all)]
-                            for obj in obj_list:
-                                if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
-                                    if oper_type == objects.TextIs:
-                                        new_prop_list.append((obj, (prop_type, prop_negated_tier)))
-                                    else:
-                                        obj.special_operator_properties[oper_type].update(prop_type, prop_negated_tier)
-                        elif object_type == objects.Game and oper_type == objects.TextIs:
+                        new_match_obj_list: list[objects.Object] = []
+                        if issubclass(noun_type, objects.SpecialNoun):
+                            new_match_obj_list = [o for o in world.object_list if noun_type.isreferenceof(o, all_list = self.all_list)]
+                        elif issubclass(object_type, objects.Game) and issubclass(oper_type, objects.TextIs):
                             if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
                                 self.game_properties.update(prop_type, prop_negated_tier)
                         elif issubclass(object_type, objects.LevelObject):
@@ -307,11 +274,12 @@ class Level(object):
                                     world.properties[object_type].update(prop_type, prop_negated_tier)
                                 else:
                                     world.special_operator_properties[object_type][oper_type].update(prop_type, prop_negated_tier)
-                        if noun_negated_tier % 2 == 1:
-                            obj_list = [o for o in world.object_list if (not isinstance(o, objects.not_in_all)) and not isinstance(o, object_type)]
                         else:
-                            obj_list = world.get_objs_from_type(object_type)
-                        for obj in obj_list:
+                            if noun_negated_tier % 2 == 1:
+                                new_match_obj_list = [o for o in world.object_list if objects.TextAll.isreferenceof(o, all_list = self.all_list) and not isinstance(o, noun_type.ref_type)]
+                            else:
+                                new_match_obj_list = world.get_objs_from_type(noun_type.ref_type)
+                        for obj in new_match_obj_list:
                             if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
                                 if oper_type == objects.TextIs:
                                     new_prop_list.append((obj, (prop_type, prop_negated_tier)))
@@ -328,25 +296,18 @@ class Level(object):
                         prop_negated_tier = rule_info.prop_negated_tier
                         prop_type = rule_info.prop_type
                         object_type = noun_type.ref_type
-                        if object_type == objects.All:
-                            if noun_negated_tier % 2 == 1:
-                                obj_list = [o for o in world.object_list if isinstance(o, objects.in_not_all)]
-                            else:
-                                obj_list = [o for o in world.object_list if not isinstance(o, objects.not_in_all)]
-                            for obj in obj_list:
-                                if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
-                                    if oper_type == objects.TextIs:
-                                        new_prop_list.append((obj, (prop_type, prop_negated_tier)))
-                                    else:
-                                        obj.special_operator_properties[oper_type].update(prop_type, prop_negated_tier)
-                        elif object_type == objects.Game and oper_type == objects.TextIs:
+                        new_match_obj_list: list[objects.Object] = []
+                        if issubclass(noun_type, objects.SpecialNoun):
+                            new_match_obj_list = [o for o in world.object_list if noun_type.isreferenceof(o, all_list = self.all_list)]
+                        elif issubclass(object_type, objects.Game) and issubclass(oper_type, objects.TextIs):
                             if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
                                 self.game_properties.update(prop_type, prop_negated_tier)
-                        if noun_negated_tier % 2 == 1:
-                            obj_list = [o for o in world.object_list if (not isinstance(o, objects.not_in_all)) and not isinstance(o, object_type)]
                         else:
-                            obj_list = world.get_objs_from_type(object_type)
-                        for obj in obj_list:
+                            if noun_negated_tier % 2 == 1:
+                                new_match_obj_list = [o for o in world.object_list if objects.TextAll.isreferenceof(o, all_list = self.all_list) and not isinstance(o, noun_type.ref_type)]
+                            else:
+                                new_match_obj_list = world.get_objs_from_type(noun_type.ref_type)
+                        for obj in new_match_obj_list:
                             if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
                                 if oper_type == objects.TextIs:
                                     new_prop_list.append((obj, (prop_type, prop_negated_tier)))
