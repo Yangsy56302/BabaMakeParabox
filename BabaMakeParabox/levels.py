@@ -337,6 +337,8 @@ class Level(object):
         world.del_obj(obj)
         for new_noun_type, new_noun_count in obj.special_operator_properties[objects.TextHas].enabled_dict().items(): # type: ignore
             new_noun_type: type[objects.Noun]
+            if issubclass(new_noun_type, objects.SpecialNoun):
+                continue
             new_object_type: type[objects.Object] = new_noun_type.ref_type
             if issubclass(new_object_type, objects.Game):
                 if isinstance(obj, (objects.LevelObject, objects.WorldObject)):
@@ -852,6 +854,8 @@ class Level(object):
             for obj in world.object_list:
                 for make_noun_type, make_noun_count in obj.special_operator_properties[objects.TextMake].enabled_dict().items(): # type: ignore
                     make_noun_type: type[objects.Noun]
+                    if issubclass(make_noun_type, objects.SpecialNoun):
+                        continue
                     make_object_type: type[objects.Object] = make_noun_type.ref_type
                     if issubclass(make_object_type, objects.Game):
                         if isinstance(obj, (objects.LevelObject, objects.WorldObject)):
@@ -865,7 +869,7 @@ class Level(object):
                             pass
                         elif obj.level_id is not None:
                             for _ in range(make_noun_count):
-                                world.new_obj(make_object_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=obj.level_id))
+                                world.new_obj(make_noun_type.ref_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=obj.level_id))
                         else:
                             world_id: refs.WorldID = refs.WorldID(obj.uuid.hex)
                             world_color = colors.to_background_color(obj.sprite_color)
