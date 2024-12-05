@@ -24,10 +24,8 @@ _……大概吧。_
 
 请跳转到[Gitlab](https://gitlab.com/Yangsy56302/BabaMakeParabox)，
 点击页面右上方写着**Code**的蓝色按钮，在展开的下拉菜单里找到**zip**，点击即可下载。
-该流程下载的压缩包（`BabaMakrParabox-main.zip`）内含有**可执行程序（bmp.exe）**，**源代码（BabaMakeParabox文件夹）**，
+该流程下载的压缩包（`BabaMakeParabox-main.zip`）内含有**可执行程序（bmp.exe）**，**源代码（BabaMakeParabox文件夹）**，
 **Baba Make Parabox 添加的新纹理（sprites_new）**，**Baba Is You 的部分音效（sounds）**等内容。
-
-缺失的文件（包括**Baba Id You 的纹理**）需要点击界面右侧的**Release**，展开**Assets**，然后下载`baba-is-you-original-sprites.zip`。
 
 备用下载地址包括连接不稳定的[Github](https://github.com/Yangsy56302/BabaMakeParabox)
 以及需要注册账号才能下载的[Gitee](https://gitee.com/Yangsy56302/BabaMakeParabox)，此处不推荐。
@@ -36,13 +34,15 @@ _……大概吧。_
 
 + **推荐方式**
     1. 在您准备安装的位置（如`C:\Program Files`）新建文件夹；
-    2. 将压缩包`BabaMakrParabox-main.zip`和`baba-is-you-original-sprites.zip`内的文件和文件夹解压到上一步新建的文件夹内；
-    3. 将文件夹`sprites_old`重命名为`sprites`，然后将文件夹`sprites_new`里面的所有图片放到重命名后的`sprites`文件夹里面。
-+ **推荐方式不起作用时的备用方案**
-    1. 解压通过点击`Source code`下载的压缩包（`BabaMakrParabox-main.zip`）；
+    2. 将压缩包`BabaMakeParabox-main.zip`内的文件和文件夹解压到上一步新建的文件夹内；
+    3. 在上一步解压的文件中找到`baba-is-you-original-sprites.zip`，解压到与上一步相同的文件夹内；
+    4. 找到文件夹`sprites_old`并将其重命名为`sprites`；
+    5. 把文件夹`sprites_new`里面的所有图片放到重命名后的`sprites`文件夹里面。
++ **备用方式**
+    1. 完成**推荐方式**的所有步骤；
     2. 通过以下任意一种方式安装**Python**：
         + 官方安装方式
-            1. 打开[Python](https://www.python.org)官方网站；
+            1. 进入[Python的官方网站](https://www.python.org)；
             2. 找到位于Logo右下方的**Downloads**，悬停展开；
             3. 在展开后的部分找到**Download for Windows**下方的按钮，点击以下载；
             4. 打开下载完成的安装程序，勾选最下方的**Add python.exe to PATH**，然后点击醒目的**Install Now**以安装Python；
@@ -250,7 +250,8 @@ _……大概吧。_
 
 + **短期**
     + 普通物体转变为新的世界时默认指向其所在的世界。
-    + 检测`WORLD`是否为悖论（`PARADOX`，等价于无限等级是否不等于零）。
+    + 复杂名词。
+        + 检测`WORLD`是否为悖论（`PARADOX`，等价于无限等级是否不等于零）。
 + **中期**
     + 更改进出世界的逻辑。
         + 进入世界的触发条件变为与世界物体重合。
