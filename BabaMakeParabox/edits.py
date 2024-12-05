@@ -128,7 +128,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 if mouses[0] == 1:
                     if keys["LALT"] or keys["RALT"]: # enter world; enter level (shift)
                         if keys["LSHIFT"] or keys["RSHIFT"]:
-                            sub_level_objs: list[objects.LevelPointer] = current_world.get_levels_from_pos(mouse_pos_in_world)
+                            sub_level_objs: list[objects.LevelObject] = current_world.get_levels_from_pos(mouse_pos_in_world)
                             sub_levels = [levelpack.get_level(o.level_id) for o in sub_level_objs]
                             sub_levels = [w for w in sub_levels if w is not None]
                             if len(sub_levels) != 0:
@@ -137,7 +137,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                                     current_level = level
                                     level_changed = True
                         else:
-                            sub_world_objs: list[objects.WorldPointer] = current_world.get_worlds_from_pos(mouse_pos_in_world)
+                            sub_world_objs: list[objects.WorldObject] = current_world.get_worlds_from_pos(mouse_pos_in_world)
                             sub_worlds = [current_level.get_world(o.world_id) for o in sub_world_objs]
                             sub_worlds = [w for w in sub_worlds if w is not None]
                             if len(sub_worlds) != 0:
@@ -148,7 +148,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     else: # place object; with detail (shift); allow overlap (ctrl)
                         if keys["LSHIFT"] or keys["RSHIFT"] or len(current_world.get_objs_from_pos(current_cursor_pos)) == 0:
                             history.append(copy.deepcopy(levelpack))
-                            if issubclass(current_object_type, objects.LevelPointer):
+                            if issubclass(current_object_type, objects.LevelObject):
                                 if keys["LCTRL"] or keys["RCTRL"]:
                                     languages.lang_print("seperator.title", text=languages.lang_format("title.new"))
                                     name = languages.lang_input("edit.level.new.name")
@@ -169,9 +169,9 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                                     level_id: refs.LevelID = current_level.level_id
                                     icon_name = "empty"
                                     icon_color = colors.WHITE
-                                level_pointer_extra: objects.LevelPointerExtra = {"icon": {"name": icon_name, "color": icon_color}}
-                                current_world.new_obj(current_object_type(current_cursor_pos, current_orient, level_id=level_id, level_pointer_extra=level_pointer_extra))
-                            elif issubclass(current_object_type, objects.WorldPointer):
+                                level_object_extra: objects.LevelObjectExtra = {"icon": {"name": icon_name, "color": icon_color}}
+                                current_world.new_obj(current_object_type(current_cursor_pos, current_orient, level_id=level_id, level_object_extra=level_object_extra))
+                            elif issubclass(current_object_type, objects.WorldObject):
                                 world_id: refs.WorldID = current_world.world_id
                                 if keys["LCTRL"] or keys["RCTRL"]:
                                     languages.lang_print("seperator.title", text=languages.lang_format("title.new"))
@@ -457,7 +457,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             for obj in current_clipboard:
                 obj.pos = current_cursor_pos
                 current_world.new_obj(obj)
-                if isinstance(obj, objects.WorldPointer):
+                if isinstance(obj, objects.WorldObject):
                     for level in levelpack.level_list:
                         world = level.get_world(obj.world_id)
                         if world is not None:
@@ -491,7 +491,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         world_surface_pos = (0, 0)
         window.blit(pygame.transform.scale(world_surface, world_surface_size), world_surface_pos)
         obj_surface = displays.simple_type_to_surface(current_object_type, wiggle=wiggle, debug=True)
-        if issubclass(current_object_type, objects.WorldPointer):
+        if issubclass(current_object_type, objects.WorldObject):
             world = current_level.get_world(current_world.world_id)
             if world is not None:
                 obj_surface = displays.simple_type_to_surface(current_object_type, wiggle=wiggle, default_surface=world_surface, debug=True)
@@ -499,7 +499,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         window.blit(obj_surface, (window.get_width() - displays.pixel_sprite_size, 0))
         for index, object_type in object_type_shortcuts.items():
             obj_surface = displays.simple_type_to_surface(object_type, wiggle=wiggle, debug=True)
-            if issubclass(object_type, objects.WorldPointer):
+            if issubclass(object_type, objects.WorldObject):
                 world = current_level.get_world(current_world.world_id)
                 if world is not None:
                     obj_surface = displays.simple_type_to_surface(object_type, wiggle=wiggle, default_surface=world_surface, debug=True)

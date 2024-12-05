@@ -165,7 +165,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         if not levelpack_refresh:
             if any(mouses) and not current_world.out_of_range(mouse_pos_in_world):
                 if mouses[0] == 1:
-                    sub_world_objs: list[objects.WorldPointer] = current_world.get_worlds_from_pos(mouse_pos_in_world)
+                    sub_world_objs: list[objects.WorldObject] = current_world.get_worlds_from_pos(mouse_pos_in_world)
                     sub_worlds = [current_level.get_world(o.world_id) for o in sub_world_objs]
                     sub_worlds = [w for w in sub_worlds if w is not None]
                     if len(sub_worlds) != 0:

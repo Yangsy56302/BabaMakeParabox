@@ -19,8 +19,8 @@ class World(object):
         self.color: colors.ColorHex = color if color is not None else colors.random_world_color()
         self.object_list: list[objects.Object] = []
         self.object_pos_index: list[list[objects.Object]]
-        self.properties: dict[type[objects.WorldPointer], objects.Properties] = {p: objects.Properties() for p in objects.world_pointers}
-        self.special_operator_properties: dict[type[objects.WorldPointer], dict[type[objects.Operator], objects.Properties]] = {p: {o: objects.Properties() for o in objects.special_operators} for p in objects.world_pointers}
+        self.properties: dict[type[objects.WorldObject], objects.Properties] = {p: objects.Properties() for p in objects.world_object_types}
+        self.special_operator_properties: dict[type[objects.WorldObject], dict[type[objects.Operator], objects.Properties]] = {p: {o: objects.Properties() for o in objects.special_operators} for p in objects.world_object_types}
         self.rule_list: list[rules.Rule] = []
         self.refresh_index()
     def __eq__(self, world: "World") -> bool:
@@ -91,18 +91,18 @@ class World(object):
             self.object_list.remove(obj)
         self.object_pos_index[self.pos_to_index(pos)].clear()
         return deleted
-    def get_worlds(self) -> list[objects.WorldPointer]:
-        return [o for o in self.object_list if isinstance(o, objects.WorldPointer)]
-    def get_worlds_from_pos(self, pos: spaces.Coord) -> list[objects.WorldPointer]:
+    def get_worlds(self) -> list[objects.WorldObject]:
+        return [o for o in self.object_list if isinstance(o, objects.WorldObject)]
+    def get_worlds_from_pos(self, pos: spaces.Coord) -> list[objects.WorldObject]:
         if self.out_of_range(pos):
             return []
-        return [o for o in self.pos_to_objs(pos) if isinstance(o, objects.WorldPointer)]
-    def get_levels(self) -> list[objects.LevelPointer]:
-        return [o for o in self.object_list if isinstance(o, objects.LevelPointer)]
-    def get_levels_from_pos(self, pos: spaces.Coord) -> list[objects.LevelPointer]:
+        return [o for o in self.pos_to_objs(pos) if isinstance(o, objects.WorldObject)]
+    def get_levels(self) -> list[objects.LevelObject]:
+        return [o for o in self.object_list if isinstance(o, objects.LevelObject)]
+    def get_levels_from_pos(self, pos: spaces.Coord) -> list[objects.LevelObject]:
         if self.out_of_range(pos):
             return []
-        return [o for o in self.pos_to_objs(pos) if isinstance(o, objects.LevelPointer)]
+        return [o for o in self.pos_to_objs(pos) if isinstance(o, objects.LevelObject)]
     def get_rules_from_pos_and_orient(self, pos: spaces.Coord, orient: spaces.Orient, stage: str = "before prefix") -> list[rules.Rule]:
         match_list: list[tuple[list[type[objects.Text]], list[type[objects.Text]], str]] = []
         rule_list: list[rules.Rule] = []

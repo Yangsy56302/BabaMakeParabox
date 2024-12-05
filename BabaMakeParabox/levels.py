@@ -29,8 +29,8 @@ class Level(object):
         self.collected: dict[type[collects.Collectible], bool] = collected if collected is not None else {k: False for k in collects.collectible_dict.keys()}
         self.rule_list: list[rules.Rule] = rule_list if rule_list is not None else []
         self.map_info: Optional[MapLevelExtraJson] = map_info
-        self.properties: dict[type[objects.LevelPointer], objects.Properties] = {p: objects.Properties() for p in objects.level_pointers}
-        self.special_operator_properties: dict[type[objects.LevelPointer], dict[type[objects.Operator], objects.Properties]] = {p: {o: objects.Properties() for o in objects.special_operators} for p in objects.level_pointers}
+        self.properties: dict[type[objects.LevelObject], objects.Properties] = {p: objects.Properties() for p in objects.level_object_types}
+        self.special_operator_properties: dict[type[objects.LevelObject], dict[type[objects.Operator], objects.Properties]] = {p: {o: objects.Properties() for o in objects.special_operators} for p in objects.level_object_types}
         self.game_properties: objects.Properties = objects.Properties()
         self.created_levels: list["Level"] = []
         self.all_list: list[type[objects.Noun]] = []
@@ -40,20 +40,20 @@ class Level(object):
     @property
     def main_world(self) -> worlds.World:
         return self.get_exact_world(self.main_world_id)
-    def get_world(self, world_pointer_info: refs.WorldID) -> Optional[worlds.World]:
+    def get_world(self, world_object_info: refs.WorldID) -> Optional[worlds.World]:
         for world in self.world_list:
-            if world.world_id == world_pointer_info:
+            if world.world_id == world_object_info:
                 return world
         return None
-    def get_world_or_default(self, world_pointer_info: refs.WorldID, *, default: worlds.World) -> worlds.World:
-        world = self.get_world(world_pointer_info)
+    def get_world_or_default(self, world_object_info: refs.WorldID, *, default: worlds.World) -> worlds.World:
+        world = self.get_world(world_object_info)
         if world is None:
             return default
         return world
-    def get_exact_world(self, world_pointer_info: refs.WorldID) -> worlds.World:
-        world = self.get_world(world_pointer_info)
+    def get_exact_world(self, world_object_info: refs.WorldID) -> worlds.World:
+        world = self.get_world(world_object_info)
         if world is None:
-            raise KeyError(world_pointer_info)
+            raise KeyError(world_object_info)
         return world
     def set_world(self, world: worlds.World) -> None:
         for i in range(len(self.world_list)):
@@ -61,11 +61,11 @@ class Level(object):
                 self.world_list[i] = world
                 return
         self.world_list.append(world)
-    def find_super_worlds(self, world_pointer_info: refs.WorldID) -> list[tuple[worlds.World, objects.WorldPointer]]:
-        return_value: list[tuple[worlds.World, objects.WorldPointer]] = []
+    def find_super_worlds(self, world_object_info: refs.WorldID) -> list[tuple[worlds.World, objects.WorldObject]]:
+        return_value: list[tuple[worlds.World, objects.WorldObject]] = []
         for super_world in self.world_list:
             for obj in super_world.get_worlds():
-                if world_pointer_info == obj.world_id:
+                if world_object_info == obj.world_id:
                     return_value.append((super_world, obj))
         return return_value
     def all_list_set(self) -> None:
@@ -209,13 +209,13 @@ class Level(object):
         return rule_list
     def update_rules(self, old_prop_dict: dict[uuid.UUID, objects.Properties]) -> None:
         self.game_properties = objects.Properties()
-        for level_pointer_type in objects.level_pointers:
-            self.properties[level_pointer_type] = objects.Properties()
-            self.special_operator_properties[level_pointer_type] = {o: objects.Properties() for o in objects.special_operators}
+        for level_object_type in objects.level_object_types:
+            self.properties[level_object_type] = objects.Properties()
+            self.special_operator_properties[level_object_type] = {o: objects.Properties() for o in objects.special_operators}
         for world in self.world_list:
-            for pointer_type in objects.world_pointers:
-                world.properties[pointer_type] = objects.Properties()
-                world.special_operator_properties[pointer_type] = {o: objects.Properties() for o in objects.special_operators}
+            for object_type in objects.world_object_types:
+                world.properties[object_type] = objects.Properties()
+                world.special_operator_properties[object_type] = {o: objects.Properties() for o in objects.special_operators}
             for obj in world.object_list:
                 obj.properties = objects.Properties()
                 obj.special_operator_properties = {o: objects.Properties() for o in objects.special_operators}
@@ -260,9 +260,9 @@ class Level(object):
             prop_type, prop_negated_count = prop
             obj.properties.update(prop_type, prop_negated_count)
         for world in self.world_list:
-            for pointer_type in objects.world_pointers:
-                world.properties[pointer_type] = objects.Properties()
-                world.special_operator_properties[pointer_type] = {o: objects.Properties() for o in objects.special_operators}
+            for object_type in objects.world_object_types:
+                world.properties[object_type] = objects.Properties()
+                world.special_operator_properties[object_type] = {o: objects.Properties() for o in objects.special_operators}
             for obj in world.object_list:
                 obj.properties = objects.Properties()
                 obj.special_operator_properties = {o: objects.Properties() for o in objects.special_operators}
@@ -295,13 +295,13 @@ class Level(object):
                         elif object_type == objects.Game and oper_type == objects.TextIs:
                             if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
                                 self.game_properties.update(prop_type, prop_negated_tier)
-                        elif issubclass(object_type, objects.LevelPointer):
+                        elif issubclass(object_type, objects.LevelObject):
                             if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
                                 if oper_type == objects.TextIs:
                                     self.properties[object_type].update(prop_type, prop_negated_tier)
                                 else:
                                     self.special_operator_properties[object_type][oper_type].update(prop_type, prop_negated_tier)
-                        elif issubclass(object_type, objects.WorldPointer):
+                        elif issubclass(object_type, objects.WorldObject):
                             if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
                                 if oper_type == objects.TextIs:
                                     world.properties[object_type].update(prop_type, prop_negated_tier)
@@ -378,13 +378,13 @@ class Level(object):
             new_noun_type: type[objects.Noun]
             new_object_type: type[objects.Object] = new_noun_type.ref_type
             if issubclass(new_object_type, objects.Game):
-                if isinstance(obj, (objects.LevelPointer, objects.WorldPointer)):
+                if isinstance(obj, (objects.LevelObject, objects.WorldObject)):
                     for _ in range(new_noun_count):
                         world.new_obj(objects.Game(obj.pos, obj.orient, ref_type=objects.get_noun_from_type(type(obj))))
                 else:
                     for _ in range(new_noun_count):
                         world.new_obj(objects.Game(obj.pos, obj.orient, ref_type=type(obj)))
-            elif issubclass(new_object_type, objects.LevelPointer):
+            elif issubclass(new_object_type, objects.LevelObject):
                 if obj.level_id is not None:
                     for _ in range(new_noun_count):
                         world.new_obj(new_object_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=obj.level_id))
@@ -397,10 +397,10 @@ class Level(object):
                     new_world.new_obj(obj)
                     level_id: refs.LevelID = refs.LevelID(obj.uuid.hex)
                     self.created_levels.append(Level(level_id, [new_world], super_level_id=self.level_id, rule_list=self.rule_list))
-                    level_pointer_extra: objects.LevelPointerExtra = {"icon": {"name": obj.json_name, "color": obj.sprite_color}}
+                    level_object_extra: objects.LevelObjectExtra = {"icon": {"name": obj.json_name, "color": obj.sprite_color}}
                     for _ in range(new_noun_count):
-                        world.new_obj(new_object_type(obj.pos, obj.orient, level_id=level_id, level_pointer_extra=level_pointer_extra))
-            elif issubclass(new_object_type, objects.WorldPointer):
+                        world.new_obj(new_object_type(obj.pos, obj.orient, level_id=level_id, level_object_extra=level_object_extra))
+            elif issubclass(new_object_type, objects.WorldObject):
                 if obj.world_id is not None:
                     for _ in range(new_noun_count):
                         world.new_obj(new_object_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=obj.level_id))
@@ -412,9 +412,9 @@ class Level(object):
                     obj.reset_uuid()
                     new_world.new_obj(obj)
                     self.set_world(new_world)
-                    world_pointer_info: refs.WorldID = refs.WorldID(obj.uuid.hex)
+                    world_object_info: refs.WorldID = refs.WorldID(obj.uuid.hex)
                     for _ in range(new_noun_count):
-                        world.new_obj(new_object_type(obj.pos, obj.orient, world_id=world_pointer_info))
+                        world.new_obj(new_object_type(obj.pos, obj.orient, world_id=world_object_info))
             elif new_noun_type == objects.TextText:
                 new_object_type = objects.get_noun_from_type(type(obj))
                 for _ in range(new_noun_count):
@@ -508,7 +508,7 @@ class Level(object):
         # squeeze
         squeeze = False
         squeeze_list = []
-        if isinstance(obj, objects.WorldPointer) and obj.properties.enabled(objects.TextPush) and not world.out_of_range(new_pos):
+        if isinstance(obj, objects.WorldObject) and obj.properties.enabled(objects.TextPush) and not world.out_of_range(new_pos):
             sub_world = self.get_world(obj.world_id)
             if sub_world is None:
                 pass
@@ -538,7 +538,7 @@ class Level(object):
                     world.del_obj(temp_stop_object)
         enter_world = False
         enter_list = []
-        worlds_that_cant_push = [o for o in objects_that_cant_push if isinstance(o, objects.WorldPointer)]
+        worlds_that_cant_push = [o for o in objects_that_cant_push if isinstance(o, objects.WorldObject)]
         if len(worlds_that_cant_push) != 0 and (not world.out_of_range(new_pos)) and not obj.properties.disabled(objects.TextEnter):
             enter_world = True
             enter_atleast_one_world = False
@@ -631,7 +631,7 @@ class Level(object):
         return pushing_game
     def select(self, orient: spaces.PlayerOperation) -> Optional[refs.LevelID]:
         if orient == spaces.NullOrient.O:
-            level_objs: list[objects.LevelPointer] = []
+            level_objs: list[objects.LevelObject] = []
             for world in self.world_list:
                 select_objs = [o for o in world.object_list if o.properties.enabled(objects.TextSelect)]
                 for obj in select_objs:
@@ -653,7 +653,7 @@ class Level(object):
     def move(self) -> bool:
         pushing_game = False
         for world in self.world_list:
-            global_move_count = world.properties[objects.default_world_pointer].get(objects.TextMove) + self.properties[objects.default_level_pointer].get(objects.TextMove)
+            global_move_count = world.properties[objects.default_world_object_type].get(objects.TextMove) + self.properties[objects.default_level_object_type].get(objects.TextMove)
             for i in range(global_move_count):
                 move_list = []
                 for obj in world.object_list:
@@ -692,7 +692,7 @@ class Level(object):
     def shift(self) -> bool:
         pushing_game = False
         for world in self.world_list:
-            global_shift_count = world.properties[objects.default_world_pointer].get(objects.TextShift) + self.properties[objects.default_level_pointer].get(objects.TextShift)
+            global_shift_count = world.properties[objects.default_world_object_type].get(objects.TextShift) + self.properties[objects.default_level_object_type].get(objects.TextShift)
             for i in range(global_shift_count):
                 move_list = []
                 for obj in world.object_list:
@@ -725,10 +725,10 @@ class Level(object):
             self.move_objs_from_move_list(move_list)
         return pushing_game
     def tele(self) -> None:
-        if self.properties[objects.default_level_pointer].enabled(objects.TextTele):
+        if self.properties[objects.default_level_object_type].enabled(objects.TextTele):
             pass
         for world in self.world_list:
-            if world.properties[objects.default_world_pointer].enabled(objects.TextTele):
+            if world.properties[objects.default_world_object_type].enabled(objects.TextTele):
                 pass
         tele_list: list[tuple[worlds.World, objects.Object, worlds.World, spaces.Coord]] = []
         object_list: list[tuple[worlds.World, objects.Object]] = []
@@ -761,7 +761,7 @@ class Level(object):
         for world in self.world_list:
             delete_list = []
             sink_objs = [o for o in world.object_list if o.properties.enabled(objects.TextSink)]
-            if world.properties[objects.default_world_pointer].has(objects.TextSink) or self.properties[objects.default_level_pointer].enabled(objects.TextSink):
+            if world.properties[objects.default_world_object_type].has(objects.TextSink) or self.properties[objects.default_level_object_type].enabled(objects.TextSink):
                 for obj in world.object_list:
                     if not obj.properties.enabled(objects.TextFloat):
                         delete_list.append(obj)
@@ -787,12 +787,12 @@ class Level(object):
             delete_list = []
             melt_objs = [o for o in world.object_list if o.properties.enabled(objects.TextMelt)]
             hot_objs = [o for o in world.object_list if o.properties.enabled(objects.TextHot)]
-            if len(hot_objs) != 0 and (world.properties[objects.default_world_pointer].has(objects.TextMelt) or self.properties[objects.default_level_pointer].enabled(objects.TextMelt)):
+            if len(hot_objs) != 0 and (world.properties[objects.default_world_object_type].has(objects.TextMelt) or self.properties[objects.default_level_object_type].enabled(objects.TextMelt)):
                 for melt_obj in melt_objs:
                     if not melt_obj.properties.enabled(objects.TextFloat):
                         delete_list.extend(world.object_list)
                 continue
-            if len(melt_objs) != 0 and (world.properties[objects.default_world_pointer].has(objects.TextHot) or self.properties[objects.default_level_pointer].enabled(objects.TextHot)):
+            if len(melt_objs) != 0 and (world.properties[objects.default_world_object_type].has(objects.TextHot) or self.properties[objects.default_level_object_type].enabled(objects.TextHot)):
                 for melt_obj in melt_objs:
                     if not melt_obj.properties.enabled(objects.TextFloat):
                         delete_list.append(melt_obj)
@@ -815,11 +815,11 @@ class Level(object):
             delete_list = []
             you_objs = [o for o in world.object_list if o.properties.enabled(objects.TextYou)]
             defeat_objs = [o for o in world.object_list if o.properties.enabled(objects.TextDefeat)]
-            if len(defeat_objs) != 0 and (world.properties[objects.default_world_pointer].has(objects.TextYou) or self.properties[objects.default_level_pointer].enabled(objects.TextYou)):
+            if len(defeat_objs) != 0 and (world.properties[objects.default_world_object_type].has(objects.TextYou) or self.properties[objects.default_level_object_type].enabled(objects.TextYou)):
                 delete_list.extend(world.object_list)
                 continue
             for you_obj in you_objs:
-                if world.properties[objects.default_world_pointer].has(objects.TextDefeat) or self.properties[objects.default_level_pointer].enabled(objects.TextDefeat):
+                if world.properties[objects.default_world_object_type].has(objects.TextDefeat) or self.properties[objects.default_level_object_type].enabled(objects.TextDefeat):
                     if you_obj not in delete_list:
                         delete_list.append(you_obj)
                         continue
@@ -840,11 +840,11 @@ class Level(object):
             delete_list = []
             bonus_objs = [o for o in world.object_list if o.properties.enabled(objects.TextBonus)]
             you_objs = [o for o in world.object_list if o.properties.enabled(objects.TextYou)]
-            if len(you_objs) != 0 and (world.properties[objects.default_world_pointer].has(objects.TextBonus) or self.properties[objects.default_level_pointer].enabled(objects.TextBonus)):
+            if len(you_objs) != 0 and (world.properties[objects.default_world_object_type].has(objects.TextBonus) or self.properties[objects.default_level_object_type].enabled(objects.TextBonus)):
                 delete_list.extend(world.object_list)
                 continue
             for bonus_obj in bonus_objs:
-                if world.properties[objects.default_world_pointer].has(objects.TextYou) or self.properties[objects.default_level_pointer].enabled(objects.TextYou):
+                if world.properties[objects.default_world_object_type].has(objects.TextYou) or self.properties[objects.default_level_object_type].enabled(objects.TextYou):
                     if bonus_obj not in delete_list:
                         delete_list.append(bonus_obj)
                         continue
@@ -866,10 +866,10 @@ class Level(object):
             delete_list = []
             shut_objs = [o for o in world.object_list if o.properties.enabled(objects.TextShut)]
             open_objs = [o for o in world.object_list if o.properties.enabled(objects.TextOpen)]
-            if len(open_objs) != 0 and (world.properties[objects.default_world_pointer].has(objects.TextShut) or self.properties[objects.default_level_pointer].enabled(objects.TextShut)):
+            if len(open_objs) != 0 and (world.properties[objects.default_world_object_type].has(objects.TextShut) or self.properties[objects.default_level_object_type].enabled(objects.TextShut)):
                 delete_list.extend(world.object_list)
                 continue
-            if len(shut_objs) != 0 and (world.properties[objects.default_world_pointer].has(objects.TextOpen) or self.properties[objects.default_level_pointer].enabled(objects.TextOpen)):
+            if len(shut_objs) != 0 and (world.properties[objects.default_world_object_type].has(objects.TextOpen) or self.properties[objects.default_level_object_type].enabled(objects.TextOpen)):
                 delete_list.extend(world.object_list)
                 continue
             for open_obj in open_objs:
@@ -893,13 +893,13 @@ class Level(object):
                     make_noun_type: type[objects.Noun]
                     make_object_type: type[objects.Object] = make_noun_type.ref_type
                     if issubclass(make_object_type, objects.Game):
-                        if isinstance(obj, (objects.LevelPointer, objects.WorldPointer)):
+                        if isinstance(obj, (objects.LevelObject, objects.WorldObject)):
                             for _ in range(make_noun_count):
                                 world.new_obj(objects.Game(obj.pos, obj.orient, ref_type=objects.get_noun_from_type(type(obj))))
                         else:
                             for _ in range(make_noun_count):
                                 world.new_obj(objects.Game(obj.pos, obj.orient, ref_type=type(obj)))
-                    elif issubclass(make_object_type, objects.LevelPointer):
+                    elif issubclass(make_object_type, objects.LevelObject):
                         if len(world.get_objs_from_pos_and_type(obj.pos, make_object_type)) != 0:
                             pass
                         elif obj.level_id is not None:
@@ -915,10 +915,10 @@ class Level(object):
                             new_world.new_obj(new_obj)
                             level_id: refs.LevelID = refs.LevelID(obj.uuid.hex)
                             self.created_levels.append(Level(level_id, [new_world], super_level_id=self.level_id, rule_list=self.rule_list))
-                            level_pointer_extra: objects.LevelPointerExtra = {"icon": {"name": obj.json_name, "color": obj.sprite_color}}
+                            level_object_extra: objects.LevelObjectExtra = {"icon": {"name": obj.json_name, "color": obj.sprite_color}}
                             for _ in range(make_noun_count):
-                                world.new_obj(make_object_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=level_id, level_pointer_extra=level_pointer_extra))
-                    elif issubclass(make_object_type, objects.WorldPointer):
+                                world.new_obj(make_object_type(obj.pos, obj.orient, world_id=obj.world_id, level_id=level_id, level_object_extra=level_object_extra))
+                    elif issubclass(make_object_type, objects.WorldObject):
                         if len(world.get_objs_from_pos_and_type(obj.pos, make_object_type)) != 0:
                             pass
                         if obj.world_id is not None:
@@ -970,7 +970,7 @@ class Level(object):
                 delete_list.append(text_minus_obj)
                 if issubclass(new_type, objects.Game):
                     world.new_obj(objects.Game(text_minus_obj.pos, text_minus_obj.orient, ref_type=objects.TextGame))
-                elif issubclass(new_type, objects.LevelPointer):
+                elif issubclass(new_type, objects.LevelObject):
                     if text_minus_obj.level_id is not None:
                         world.new_obj(new_type(text_minus_obj.pos, text_minus_obj.orient, world_id=text_minus_obj.world_id, level_id=text_minus_obj.level_id))
                     else:
@@ -980,10 +980,10 @@ class Level(object):
                         level_id: refs.LevelID = refs.LevelID(text_minus_obj.uuid.hex)
                         self.created_levels.append(Level(level_id, [new_world], super_level_id=self.level_id, rule_list=self.rule_list))
                         new_world.new_obj(type(text_minus_obj)(spaces.Coord(1, 1), text_minus_obj.orient))
-                        level_pointer_extra: objects.LevelPointerExtra = {"icon": {"name": text_minus_obj.json_name, "color": text_minus_obj.sprite_color}}
-                        new_obj = new_type(text_minus_obj.pos, text_minus_obj.orient, level_id=level_id, level_pointer_extra=level_pointer_extra)
+                        level_object_extra: objects.LevelObjectExtra = {"icon": {"name": text_minus_obj.json_name, "color": text_minus_obj.sprite_color}}
+                        new_obj = new_type(text_minus_obj.pos, text_minus_obj.orient, level_id=level_id, level_object_extra=level_object_extra)
                         world.new_obj(new_obj)
-                elif issubclass(new_type, objects.WorldPointer):
+                elif issubclass(new_type, objects.WorldObject):
                     if text_minus_obj.world_id is not None:
                         world.new_obj(new_type(text_minus_obj.pos, text_minus_obj.orient, world_id=text_minus_obj.world_id, level_id=text_minus_obj.level_id))
                     else:
@@ -1017,7 +1017,7 @@ class Level(object):
                     self.collected[collects.Spore] = True
                     self.sound_events.append("win")
                     return True
-                if world.properties[objects.default_world_pointer].has(objects.TextWin) or self.properties[objects.default_level_pointer].enabled(objects.TextWin):
+                if world.properties[objects.default_world_object_type].has(objects.TextWin) or self.properties[objects.default_level_object_type].enabled(objects.TextWin):
                     if not you_obj.properties.enabled(objects.TextFloat):
                         self.collected[collects.Spore] = True
                         self.sound_events.append("win")
@@ -1037,7 +1037,7 @@ class Level(object):
                 if you_obj in end_objs:
                     self.sound_events.append("end")
                     return True
-                if world.properties[objects.default_world_pointer].has(objects.TextEnd) or self.properties[objects.default_level_pointer].enabled(objects.TextEnd):
+                if world.properties[objects.default_world_object_type].has(objects.TextEnd) or self.properties[objects.default_level_object_type].enabled(objects.TextEnd):
                     if not you_obj.properties.enabled(objects.TextFloat):
                         self.sound_events.append("end")
                         return True
@@ -1051,7 +1051,7 @@ class Level(object):
         success = False
         for world in self.world_list:
             delete_list = []
-            if world.properties[objects.default_world_pointer].has(objects.TextDone) or self.properties[objects.default_level_pointer].enabled(objects.TextDone):
+            if world.properties[objects.default_world_object_type].has(objects.TextDone) or self.properties[objects.default_level_object_type].enabled(objects.TextDone):
                 delete_list.extend(world.object_list)
             for obj in world.object_list:
                 if obj.properties.enabled(objects.TextDone):
@@ -1129,7 +1129,7 @@ class Level(object):
             obj_surface: pygame.Surface = displays.simple_object_to_surface(obj, wiggle=wiggle, debug=debug)
             obj_surface_pos: spaces.Coord = spaces.Coord(obj.pos.x * displays.pixel_sprite_size, obj.pos.y * displays.pixel_sprite_size)
             obj_surface_size: spaces.Coord = spaces.Coord(displays.pixel_sprite_size, displays.pixel_sprite_size)
-            if isinstance(obj, objects.WorldPointer):
+            if isinstance(obj, objects.WorldObject):
                 world_of_object = self.get_world(obj.world_id)
                 if world_of_object is not None:
                     obj_surface = displays.simple_object_to_surface(obj, wiggle=wiggle, default_surface=self.world_to_surface(world_of_object, wiggle, depth + 1, smooth), debug=debug)

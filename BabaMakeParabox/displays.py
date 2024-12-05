@@ -76,7 +76,7 @@ class Sprites(object):
                     sprite = pygame.image.load(os.path.join("sprites", filename)).convert_alpha()
                     self.raw_sprites[object_type.json_name][int(varient_number)][int(wiggle)] = sprite.copy()
                     self.sprites[object_type.json_name][int(varient_number)][int(wiggle)] = set_surface_color_dark(sprite, sprite_color)
-        special_sprite_name: list[str] = ["empty", "text_infinite", "text_epsilon"]
+        special_sprite_name: list[str] = ["empty", "text_infinity", "text_epsilon"]
         special_sprite_name.extend(["text_" + str(i) for i in range(10)])
         for sprite_name in special_sprite_name:
             self.raw_sprites.setdefault(sprite_name, {0: {}})
@@ -93,7 +93,7 @@ class Sprites(object):
 sprites = Sprites()
 
 def simple_type_to_surface(object_type: type[objects.Object], varient: int = 0, wiggle: int = 1, default_surface: Optional[pygame.Surface] = None, debug: bool = False) -> pygame.Surface:
-    if issubclass(object_type, objects.WorldPointer):
+    if issubclass(object_type, objects.WorldObject):
         if default_surface is not None:
             obj_surface = default_surface.copy()
         else:
@@ -116,10 +116,10 @@ def simple_type_to_surface(object_type: type[objects.Object], varient: int = 0, 
     return obj_surface
 
 def simple_object_to_surface(obj: objects.Object, wiggle: int = 1, default_surface: Optional[pygame.Surface] = None, debug: bool = False) -> pygame.Surface:
-    if isinstance(obj, objects.LevelPointer):
-        obj_surface = set_surface_color_dark(sprites.get(obj.json_name, obj.sprite_state, wiggle, raw=True).copy(), obj.level_pointer_extra["icon"]["color"])
-        icon_surface = sprites.get(obj.level_pointer_extra["icon"]["name"], 0, wiggle, raw=True).copy()
-        icon_surface = set_surface_color_light(set_surface_color_dark(icon_surface, obj.level_pointer_extra["icon"]["color"]), 0xC0C0C0)
+    if isinstance(obj, objects.LevelObject):
+        obj_surface = set_surface_color_dark(sprites.get(obj.json_name, obj.sprite_state, wiggle, raw=True).copy(), obj.level_object_extra["icon"]["color"])
+        icon_surface = sprites.get(obj.level_object_extra["icon"]["name"], 0, wiggle, raw=True).copy()
+        icon_surface = set_surface_color_light(set_surface_color_dark(icon_surface, obj.level_object_extra["icon"]["color"]), 0xC0C0C0)
         icon_surface_pos = ((obj_surface.get_width() - icon_surface.get_width()) // 2,
                             (obj_surface.get_height() - icon_surface.get_height()) // 2)
         obj_surface.blit(icon_surface, icon_surface_pos)
@@ -140,12 +140,12 @@ order: tuple[type[objects.Object], ...] = (
     objects.Property,
     objects.Text,
     objects.Character,
-    objects.LevelPointer,
+    objects.LevelObject,
     objects.Static,
     objects.AnimatedDirectional,
     objects.Directional,
     objects.Animated,
     objects.Tiled,
-    objects.WorldPointer,
+    objects.WorldObject,
     objects.Object
 )
