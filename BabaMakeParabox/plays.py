@@ -208,7 +208,6 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                         current_world = current_level.get_exact_world(old_world_id)
                         history = history[:index]
                         level_changed = True
-                        world_changed = True
                         display_refresh = True
             elif keys["Z"]:
                 if len(history) >= 1:
@@ -219,7 +218,6 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     if len(history) != 1:
                         history.pop()
                     level_changed = True
-                    world_changed = True
                     display_refresh = True
             elif keys["R"]:
                 if keys["LCTRL"] or keys["RCTRL"]:
@@ -236,7 +234,6 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                         current_world.world_id
                     )]
                     level_changed = True
-                    world_changed = True
                     display_refresh = True
             elif keys["O"]:
                 languages.lang_print("seperator.title", text=languages.lang_format("title.savepoint"))
@@ -252,7 +249,6 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     current_world = current_level.get_exact_world(savepoint[3])
                     languages.lang_print("play.savepoint.loaded", value=savepoint_name)
                     level_changed = True
-                    world_changed = True
                     display_refresh = True
                 else:
                     languages.lang_print("warn.savepoint.not_found", value=savepoint_name)
@@ -357,25 +353,33 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 for event in current_level.sound_events:
                     sounds.play(event)
                 if levelpack_info["win"]:
+                    sounds.play("win")
                     languages.lang_print("play.level.win")
                     languages.lang_print("press_any_key_to_continue")
                     press_key_to_continue = True
                 elif levelpack_info["end"]:
+                    sounds.play("end")
                     languages.lang_print("play.levelpack.end")
                     languages.lang_print("press_any_key_to_continue")
                     press_key_to_continue = True
+                elif levelpack_info["done"]:
+                    sounds.play("done")
+                    languages.lang_print("play.levelpack.done")
+                    languages.lang_print("press_any_key_to_continue")
+                    press_key_to_continue = True
                 elif levelpack_info["transform"]:
+                    sounds.play("restart")
                     languages.lang_print("play.level.transform")
                     languages.lang_print("press_any_key_to_continue")
                     press_key_to_continue = True
                 elif levelpack_info["selected_level"] is not None:
+                    sounds.play("level")
                     languages.lang_print("play.level.enter")
                     languages.lang_print("press_any_key_to_continue")
                     press_key_to_continue = True
             else:
                 press_key_to_continue = False
                 level_changed = True
-                world_changed = True
                 if levelpack_info["win"]:
                     level = copy.deepcopy(levelpack_backup.get_level(current_level.level_id))
                     if level is not None:
@@ -384,6 +388,8 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     current_level = super_level if super_level is not None else levelpack.get_exact_level(levelpack.main_level_id)
                     current_world = current_level.main_world
                 elif levelpack_info["end"]:
+                    game_running = False
+                elif levelpack_info["done"]:
                     game_running = False
                 elif levelpack_info["transform"]:
                     super_level = levelpack.get_level(current_level.super_level_id) if current_level.super_level_id is not None else levelpack.get_exact_level(levelpack.main_level_id)
@@ -395,6 +401,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 levelpack.prepare(current_level)
             levelpack_refresh = False
         if level_changed:
+            world_changed = True
             languages.lang_print("seperator.title", text=languages.lang_format("title.level"))
             languages.lang_print("play.level.current.name", value=current_level.level_id.name)
             level_changed = False
@@ -406,18 +413,6 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         pygame.mixer.music.set_volume(1.0 if current_level.have_you() else 0.5)
         # display
         window.fill("#000000")
-        displays.set_pixel_size(spaces.Coord(*window.get_size()))
-        smooth_value = None
-        smooth_animation_multiplier = basics.options["smooth_animation_multiplier"]
-        if smooth_animation_multiplier is not None:
-            smooth_value = frame_since_last_move / basics.options["fps"] * smooth_animation_multiplier
-            if smooth_value >= 0 and smooth_value <= 1:
-                smooth_value = pow(1 - smooth_value, 4)
-            else:
-                smooth_value = None
-        world_surface = current_level.world_to_surface(current_world, wiggle, smooth=smooth_value, debug=basics.options["debug"])
-        del smooth_value
-        # scale
         world_surface_size = window.get_size()
         world_surface_pos = (0, 0)
         if window.get_width() // current_world.width > window.get_height() // current_world.height:
@@ -426,6 +421,9 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         elif window.get_width() // current_world.width < window.get_height() // current_world.height:
             world_surface_size = (window.get_width(), window.get_width() * current_world.height // current_world.width)
             world_surface_pos = (0, (window.get_height() - world_surface_size[1]) // 2)
+        smooth_value = displays.calc_smooth(frame_since_last_move)
+        world_surface = current_level.world_to_surface(current_world, wiggle, world_surface_size, smooth=smooth_value, debug=basics.options["debug"])
+        del smooth_value
         window.blit(pygame.transform.scale(world_surface, world_surface_size), world_surface_pos)
         # fps
         real_fps = min(1000 / milliseconds, (real_fps * (basics.options["fps"] - 1) + 1000 / milliseconds) / basics.options["fps"])

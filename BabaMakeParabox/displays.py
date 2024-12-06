@@ -1,29 +1,19 @@
 from typing import Optional
 import os
 
-from BabaMakeParabox import colors, objects, spaces
+from BabaMakeParabox import basics, colors, objects
 
 import pygame
 
-pixel_size = 4
-sprite_size = 24
-pixel_sprite_size = pixel_size * sprite_size
+def calc_smooth(frame: int) -> Optional[float]:
+    multiplier = basics.options["smooth_animation_multiplier"]
+    if multiplier is not None:
+        smooth_value = frame / basics.options["fps"] * multiplier
+        if smooth_value >= 0 and smooth_value <= 1:
+            return pow(1 - smooth_value, 4)
 
-def set_pixel_size(window_size: spaces.Coord) -> None:
-    global pixel_size, sprite_size, pixel_sprite_size
-    if min(window_size) < 320:
-        pixel_size = 1
-    elif min(window_size) < 480:
-        pixel_size = 2
-    elif min(window_size) < 640:
-        pixel_size = 3
-    elif min(window_size) < 960:
-        pixel_size = 4
-    elif min(window_size) < 1280:
-        pixel_size = 6
-    else:
-        pixel_size = 8
-    pixel_sprite_size = pixel_size * sprite_size
+sprite_size = 24
+gui_scale = 4
 
 def set_alpha(surface: pygame.Surface, alpha: int) -> pygame.Surface:
     new_surface = surface.copy()
@@ -97,7 +87,7 @@ def simple_type_to_surface(object_type: type[objects.Object], varient: int = 0, 
         if default_surface is not None:
             obj_surface = default_surface.copy()
         else:
-            obj_surface = pygame.Surface((pixel_sprite_size, pixel_sprite_size), pygame.SRCALPHA)
+            obj_surface = pygame.Surface((sprite_size, sprite_size), pygame.SRCALPHA)
             obj_surface.fill(object_type.sprite_color)
         obj_surface = set_surface_color_light(obj_surface, object_type.light_overlay)
         obj_surface = set_surface_color_dark(obj_surface, object_type.dark_overlay)

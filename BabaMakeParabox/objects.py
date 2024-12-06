@@ -100,9 +100,9 @@ class Properties(object):
             return False
         return self.calc_count(self.__dict[prop], 1) > 0
     def enabled_dict(self) -> dict[type["Text"], int]:
-        return {k: self.calc_count(v, 0) for k, v in self.__dict.items()}
+        return {k: v for k, v in {k: self.calc_count(v, 0) for k, v in self.__dict.items()}.items() if v != 0}
     def disabled_dict(self) -> dict[type["Text"], int]:
-        return {k: self.calc_count(v, 1) for k, v in self.__dict.items()}
+        return {k: v for k, v in {k: self.calc_count(v, 1) for k, v in self.__dict.items()}.items() if v != 0}
 
 class ObjectJson(TypedDict):
     type: str

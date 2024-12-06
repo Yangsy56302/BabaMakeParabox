@@ -485,30 +485,29 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         for world in current_level.world_list:
             world.set_sprite_states(0)
         window.fill("#000000")
-        displays.set_pixel_size(spaces.Coord(*window.get_size()))
-        world_surface = current_level.world_to_surface(current_world, wiggle, cursor=current_cursor_pos, debug=True)
         world_surface_size = (window.get_height() * current_world.width // current_world.height, window.get_height())
         world_surface_pos = (0, 0)
+        world_surface = current_level.world_to_surface(current_world, wiggle, world_surface_size, cursor=current_cursor_pos, debug=True)
         window.blit(pygame.transform.scale(world_surface, world_surface_size), world_surface_pos)
         obj_surface = displays.simple_type_to_surface(current_object_type, wiggle=wiggle, debug=True)
         if issubclass(current_object_type, objects.WorldObject):
             world = current_level.get_world(current_world.world_id)
             if world is not None:
                 obj_surface = displays.simple_type_to_surface(current_object_type, wiggle=wiggle, default_surface=world_surface, debug=True)
-        obj_surface = pygame.transform.scale(obj_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
-        window.blit(obj_surface, (window.get_width() - displays.pixel_sprite_size, 0))
+        obj_surface = pygame.transform.scale_by(obj_surface, displays.gui_scale)
+        window.blit(obj_surface, (window.get_width() - displays.sprite_size * displays.gui_scale, 0))
         for index, object_type in object_type_shortcuts.items():
             obj_surface = displays.simple_type_to_surface(object_type, wiggle=wiggle, debug=True)
             if issubclass(object_type, objects.WorldObject):
                 world = current_level.get_world(current_world.world_id)
                 if world is not None:
                     obj_surface = displays.simple_type_to_surface(object_type, wiggle=wiggle, default_surface=world_surface, debug=True)
-            obj_surface = pygame.transform.scale(obj_surface, (displays.pixel_sprite_size, displays.pixel_sprite_size))
-            obj_surface_pos = (window.get_width() + (index % 5 * displays.pixel_sprite_size) - (displays.pixel_sprite_size * 5),
-                               window.get_height() + (index // 5 * displays.pixel_sprite_size) - (displays.pixel_sprite_size * 2))
+            obj_surface = pygame.transform.scale_by(obj_surface, displays.gui_scale)
+            obj_surface_pos = (window.get_width() + (index % 5 * displays.sprite_size * displays.gui_scale) - (displays.sprite_size * displays.gui_scale * 5),
+                               window.get_height() + (index // 5 * displays.sprite_size * displays.gui_scale) - (displays.sprite_size * displays.gui_scale * 2))
             obj_surface.blit(
                 displays.set_alpha(displays.sprites.get("text_" + str((index + 1) % 10), 0, wiggle), 0x80),
-                (displays.pixel_sprite_size - displays.sprite_size, displays.pixel_sprite_size - displays.sprite_size)
+                (displays.sprite_size * (displays.gui_scale - 1), displays.sprite_size * (displays.gui_scale - 1))
             )
             window.blit(obj_surface, obj_surface_pos)
         real_fps = min(1000 / milliseconds, (real_fps * (basics.options["fps"] - 1) + 1000 / milliseconds) / basics.options["fps"])

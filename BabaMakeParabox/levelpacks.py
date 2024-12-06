@@ -7,10 +7,11 @@ from BabaMakeParabox import basics, colors, displays, objects, collects, refs, r
 class ReturnInfo(TypedDict):
     win: bool
     end: bool
+    done: bool
     transform: bool
     game_push: bool
     selected_level: Optional[refs.LevelID]
-default_levelpack_info: ReturnInfo = {"win": False, "end": False, "transform": False, "game_push": False, "selected_level": None}
+default_levelpack_info: ReturnInfo = {"win": False, "end": False, "done": False, "transform": False, "game_push": False, "selected_level": None}
 
 class LevelpackJson(TypedDict):
     ver: str
@@ -362,6 +363,7 @@ class Levelpack(object):
         active_level.tele()
         selected_level = active_level.select(op)
         active_level.update_rules(old_prop_dict)
+        done = [objects.TextAll, objects.TextIs, objects.TextDone] in active_level.rule_list
         active_level.done()
         active_level.sink()
         active_level.hot_and_melt()
@@ -385,7 +387,7 @@ class Levelpack(object):
                 path.unlocked = unlocked
         if active_level.collected[collects.Bonus] and win:
             self.collectibles.add(collects.Bonus(active_level.level_id))
-        return {"win": win, "end": end, "transform": transform,
+        return {"win": win, "end": end, "done": done, "transform": transform,
                 "game_push": game_push, "selected_level": selected_level}
     def to_json(self) -> LevelpackJson:
         json_object: LevelpackJson = {
