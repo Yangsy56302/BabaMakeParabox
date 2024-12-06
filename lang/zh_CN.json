@@ -1,4 +1,5 @@
 {
+    "hello_world": "你好，世界！",
     "language.select": "简体中文：输入 zh_CN",
     "game.name": "Baba Make Parabox",
     "press_any_key_to_continue": "请按任意键继续……",
@@ -26,6 +27,7 @@
     "confirm.yes": "[是（默认）：Y，否：n]",
     "confirm.no": "[是：y，否（默认）：N]",
     "launch.welcome": "欢迎来到 Baba Make Parabox！",
+    "launch.debug": "此程序目前处于调试模式。更改设置以关闭。",
     "launch.game_mode.1": "游玩关卡包，请选择 1；",
     "launch.game_mode.2": "编辑关卡包，请选择 2；",
     "launch.game_mode.3": "更改设置，请选择 3；",
@@ -38,6 +40,7 @@
     "launch.save.levelpack.empty.game": "如果您留空，编辑器将不会保存您在该关卡包的进度。",
     "launch.save.levelpack.empty.editor": "如果您留空，编辑器将不会保存您制作的关卡包。",
     "launch.save.levelpack.empty.update": "如果您留空，游戏将用更新后的数据覆盖您刚才选择要更新的关卡包文件。",
+    "launch.change_options.debug": "请问您是否要开启调试模式？[是：y，否（默认）：N]：",
     "launch.change_options.performance": "请对您的计算机性能进行打分（从 1 到 5），程序将根据您的评分设置画质。",
     "launch.change_options.display_layer": "请输入显示世界时可以套娃的最大层数。\n由于该选项严重影响性能，强烈建议将该选项设为小于 3 的数字。\n该选项的最小值为 0（只渲染镜头所在的世界，但最快）。",
     "launch.change_options.json": "请问您需要手动编辑关卡包文件吗？[是：y，否（默认）：N]：",
@@ -98,6 +101,5 @@
     "warn.value.invalid": "警告：“{value}”不是“{cls}”类型的值！",
     "warn.value.out_of_range": "警告：{value} 不在指定范围内！（最小为 {min}，最大为 {max}）",
     "warn.value.underflow": "警告：{value} 太小了！（最小为 {min}）",
-    "warn.value.overflow": "警告：{value} 太大了！（最大为 {min}）",
-    "hello_world": "你好，世界！"
+    "warn.value.overflow": "警告：{value} 太大了！（最大为 {min}）"
 }

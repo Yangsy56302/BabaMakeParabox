@@ -27,11 +27,7 @@ class Levelpack(object):
         self.level_list: list[levels.Level] = list(level_list)
         self.main_level_id: refs.LevelID = main_level_id if main_level_id is not None else self.level_list[0].level_id
         self.collectibles: set[collects.Collectible] = collectibles if collectibles is not None else set()
-        self.rule_list: list[rules.Rule] = rule_list if rule_list is not None else rules.default_rule_list
-        if rule_list is not None:
-            for level in self.level_list:
-                level.rule_list.extend(self.rule_list)
-                level.rule_list = basics.remove_same_elements(level.rule_list)
+        self.rule_list: list[rules.Rule] = rule_list if (rule_list is not None and len(rule_list) != 0) else rules.default_rule_list
     def get_level(self, level_id: refs.LevelID) -> Optional[levels.Level]:
         level = list(filter(lambda l: level_id == l.level_id, self.level_list))
         return level[0] if len(level) != 0 else None
@@ -135,7 +131,7 @@ class Levelpack(object):
                         elif isinstance(old_obj, objects.WorldObject):
                             level_id: refs.LevelID = refs.LevelID(old_obj.world_id.name)
                             self.set_level(levels.Level(level_id, active_level.world_list, super_level_id=active_level.level_id,
-                                                        main_world_id=old_obj.world_id, rule_list=active_level.rule_list))
+                                                        main_world_id=old_obj.world_id))
                             level_object_extra: objects.LevelObjectExtra = {"icon": {"name": "world", "color": world.color}}
                             new_obj = new_type(old_obj.pos, old_obj.orient, level_id=level_id, level_object_extra=level_object_extra)
                             world.new_obj(new_obj)
@@ -148,7 +144,7 @@ class Levelpack(object):
                             world_color = colors.to_background_color(old_obj.sprite_color)
                             new_world = worlds.World(world_id, spaces.Coord(3, 3), world_color)
                             level_id: refs.LevelID = refs.LevelID(old_obj.uuid.hex)
-                            self.set_level(levels.Level(level_id, [new_world], super_level_id=active_level.level_id, rule_list=active_level.rule_list))
+                            self.set_level(levels.Level(level_id, [new_world], super_level_id=active_level.level_id))
                             new_world.new_obj(old_type(spaces.Coord(1, 1)))
                             level_object_extra: objects.LevelObjectExtra = {"icon": {"name": old_obj.sprite_name, "color": old_obj.sprite_color}}
                             new_obj = new_type(old_obj.pos, old_obj.orient, level_id=level_id)
@@ -330,15 +326,14 @@ class Levelpack(object):
             active_level.collected[collects.Blossom] = True
         old_prop_dict: dict[uuid.UUID, objects.Properties] = {}
         for world in active_level.world_list:
-            for obj in world.object_list:
-                old_prop_dict[obj.uuid] = copy.deepcopy(obj.properties)
-                obj.move_number = 0
             for path in world.get_objs_from_type(objects.Path):
                 unlocked = True
                 for bonus_type, bonus_counts in path.conditions.items():
                     if len({c for c in self.collectibles if isinstance(c, bonus_type)}) < bonus_counts:
                         unlocked = False
                 path.unlocked = unlocked
+        for level in self.level_list:
+            level.rule_list = self.rule_list
         active_level.update_rules(old_prop_dict)
         for world in active_level.world_list:
             for obj in world.object_list:
@@ -363,8 +358,7 @@ class Levelpack(object):
         active_level.tele()
         selected_level = active_level.select(op)
         active_level.update_rules(old_prop_dict)
-        done = [objects.TextAll, objects.TextIs, objects.TextDone] in active_level.rule_list
-        active_level.done()
+        done = active_level.done()
         active_level.sink()
         active_level.hot_and_melt()
         active_level.defeat()
@@ -374,7 +368,7 @@ class Levelpack(object):
         active_level.update_rules(old_prop_dict)
         for new_level in active_level.created_levels:
             self.set_level(new_level)
-        active_level.all_list_set()
+        active_level.refresh_all_list()
         active_level.bonus()
         end = active_level.end()
         win = active_level.win()

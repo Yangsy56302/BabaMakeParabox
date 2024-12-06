@@ -165,19 +165,15 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         if not levelpack_refresh:
             if any(mouses) and not current_world.out_of_range(mouse_pos_in_world):
                 if mouses[0] == 1:
-                    if basics.options["debug"] and (keys["LALT"] or keys["RALT"]):
-                        for obj in current_world.get_objs_from_pos(mouse_pos_in_world):
-                            print(obj)
-                    else:
-                        sub_world_objs: list[objects.WorldObject] = current_world.get_worlds_from_pos(mouse_pos_in_world)
-                        sub_worlds = [current_level.get_world(o.world_id) for o in sub_world_objs]
-                        sub_worlds = [w for w in sub_worlds if w is not None]
-                        if len(sub_worlds) != 0:
-                            world = random.choice(sub_worlds)
-                            if world is not None:
-                                current_world = world
-                                world_changed = True
-                                display_refresh = True
+                    sub_world_objs: list[objects.WorldObject] = current_world.get_worlds_from_pos(mouse_pos_in_world)
+                    sub_worlds = [current_level.get_world(o.world_id) for o in sub_world_objs]
+                    sub_worlds = [w for w in sub_worlds if w is not None]
+                    if len(sub_worlds) != 0:
+                        world = random.choice(sub_worlds)
+                        if world is not None:
+                            current_world = world
+                            world_changed = True
+                            display_refresh = True
                 elif mouses[2] == 1:
                     super_worlds = [t[0] for t in current_level.find_super_worlds(current_world.world_id)]
                     if len(super_worlds) != 0:
@@ -209,6 +205,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                         history = history[:index]
                         level_changed = True
                         display_refresh = True
+                        press_key_to_continue = False
             elif keys["Z"]:
                 if len(history) >= 1:
                     levelpack = copy.deepcopy(history[-1][0])
@@ -219,6 +216,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                         history.pop()
                     level_changed = True
                     display_refresh = True
+                    press_key_to_continue = False
             elif keys["R"]:
                 if keys["LCTRL"] or keys["RCTRL"]:
                     languages.lang_print("play.level.restart")
@@ -235,6 +233,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     )]
                     level_changed = True
                     display_refresh = True
+                    press_key_to_continue = False
             elif keys["O"]:
                 languages.lang_print("seperator.title", text=languages.lang_format("title.savepoint"))
                 savepoint_name = ""
@@ -250,6 +249,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     languages.lang_print("play.savepoint.loaded", value=savepoint_name)
                     level_changed = True
                     display_refresh = True
+                    press_key_to_continue = False
                 else:
                     languages.lang_print("warn.savepoint.not_found", value=savepoint_name)
             elif keys["P"]:

@@ -14,15 +14,17 @@ for name in [n for n in os.listdir("lang") if n.endswith(".json")]:
     with open(os.path.join("lang", name), "r", encoding="utf-8") as file:
         language_dict[os.path.splitext(os.path.basename(name))[0]] = Language(json.load(file))
 
+chinese: str = "zh_CN"
 english: str = "en_US"
-current_language_name: str = basics.options["lang"] if basics.options["lang"] != "" else english
+current_language_name: str = basics.options["lang"] if basics.options["lang"] != "" else chinese
 
 def set_current_language(name: str) -> None:
     global current_language_name
-    current_language_name = name if name in list(language_dict.keys()) else english
+    current_language_name = name if name in list(language_dict.keys()) else chinese
+    yes.update()
 
-yes = ("y", "Y", "yes", "Yes", "YES")
-no = ("n", "N", "no", "No", "NO")
+yes: set[str] = {"y", "Y", "yes", "Yes", "YES", "t", "T", "true", "True", "TRUE", "1", "是", "是的"}
+no: set[str] = {"n", "N", "no", "No", "NO", "f", "F", "false", "False", "FALSE", "0", "否", "不是"}
 
 def lang_format(message_id: str, /, **formats) -> str:
     return language_dict[current_language_name][message_id].format(**formats)

@@ -20,10 +20,11 @@ def show_dir(path: str, filter_func: Optional[Callable[[str], bool]] = None, tab
 
 def pre_play() -> bool:
     languages.lang_print("seperator.title", text=languages.lang_format("title.directory", dir="levelpacks"))
-    show_dir("levelpacks") # lambda s: s.endswith(".json")
+    show_dir("levelpacks", lambda s: True if basics.options["debug"] else s.endswith(".json"))
     languages.lang_print("seperator.title", text=languages.lang_format("title.open.file"))
     languages.lang_print("launch.open.levelpack")
     input_filename = languages.lang_input("input.file.name")
+    input_filename += "" if basics.options["debug"] else ".json"
     if not os.path.isfile(os.path.join("levelpacks", input_filename)):
         languages.lang_print("warn.file.not_found", file=input_filename)
         return False
@@ -38,6 +39,7 @@ def pre_play() -> bool:
     languages.lang_print("launch.save.levelpack.empty.game")
     output_filename = languages.lang_input("input.file.name")
     if output_filename != "":
+        output_filename += "" if basics.options["debug"] else ".json"
         with open(os.path.join("levelpacks", output_filename), "w", encoding="utf-8") as file:
             json.dump(levelpack.to_json(), file, **basics.get_json_dump_kwds())
             languages.lang_print("launch.save.levelpack.done", file=output_filename)
@@ -45,7 +47,7 @@ def pre_play() -> bool:
 
 def pre_edit() -> bool:
     languages.lang_print("seperator.title", text=languages.lang_format("title.directory", dir="levelpacks"))
-    show_dir("levelpacks") # lambda s: s.endswith(".json")
+    show_dir("levelpacks", lambda s: True if basics.options["debug"] else s.endswith(".json"))
     languages.lang_print("seperator.title", text=languages.lang_format("title.open.file"))
     languages.lang_print("launch.open.levelpack")
     languages.lang_print("launch.open.levelpack.empty.editor")
@@ -54,6 +56,7 @@ def pre_edit() -> bool:
     size = spaces.Coord(default_new_world_settings["width"], default_new_world_settings["height"])
     color = default_new_world_settings["color"]
     if input_filename != "":
+        input_filename += "" if basics.options["debug"] else ".json"
         if not os.path.isfile(os.path.join("levelpacks", input_filename)):
             languages.lang_print("warn.file.not_found", file=input_filename)
             return False
@@ -71,6 +74,7 @@ def pre_edit() -> bool:
     languages.lang_print("launch.save.levelpack.empty.editor")
     output_filename = languages.lang_input("input.file.name")
     if output_filename != "":
+        output_filename += "" if basics.options["debug"] else ".json"
         with open(os.path.join("levelpacks", output_filename), "w", encoding="utf-8") as file:
             json.dump(levelpack.to_json(), file, **basics.get_json_dump_kwds())
             languages.lang_print("launch.save.levelpack.done", file=output_filename)
@@ -78,10 +82,11 @@ def pre_edit() -> bool:
 
 def update_levelpack() -> bool:
     languages.lang_print("seperator.title", text=languages.lang_format("title.directory", dir="levelpacks"))
-    show_dir("levelpacks") # lambda s: s.endswith(".json")
+    show_dir("levelpacks", lambda s: True if basics.options["debug"] else s.endswith(".json"))
     languages.lang_print("seperator.title", text=languages.lang_format("title.open.file"))
     languages.lang_print("launch.open.levelpack")
     input_filename = languages.lang_input("input.file.name")
+    input_filename += "" if basics.options["debug"] else ".json"
     if not os.path.isfile(os.path.join("levelpacks", input_filename)):
         languages.lang_print("warn.file.not_found", file=input_filename)
         return False
@@ -93,6 +98,7 @@ def update_levelpack() -> bool:
     languages.lang_print("launch.save.levelpack")
     languages.lang_print("launch.save.levelpack.empty.update")
     output_filename = languages.lang_input("input.file.name")
+    output_filename += "" if basics.options["debug"] else ".json"
     if output_filename == "":
         output_filename = input_filename
     with open(os.path.join("levelpacks", output_filename), "w", encoding="utf-8") as file:
@@ -103,6 +109,7 @@ def update_levelpack() -> bool:
 def change_options() -> bool:
     languages.lang_print("seperator.title", text=languages.lang_format("title.change_options"))
     while True:
+        basics.options["debug"] = languages.lang_input("launch.change_options.debug") in languages.yes
         languages.lang_print(f"launch.change_options.performance")
         performance_preset = languages.lang_input("input.number")
         try:
@@ -191,6 +198,8 @@ def main() -> None:
     pre_main()
     try:
         languages.lang_print("launch.welcome")
+        if basics.options["debug"]:
+            languages.lang_print("launch.debug")
         while True:
             languages.lang_print("seperator.title", text=languages.lang_format("title.game.name"))
             for n in map(lambda x: x + 1, range(4)):

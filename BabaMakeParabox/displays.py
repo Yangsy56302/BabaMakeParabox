@@ -121,6 +121,15 @@ def simple_object_to_surface(obj: objects.Object, wiggle: int = 1, default_surfa
                     obj_surface = set_alpha(obj_surface, 0x80)
                 else:
                     obj_surface.fill("#00000000")
+        if isinstance(obj, objects.WorldObject) and obj.world_id.infinite_tier != 0:
+            infinite_text_surface = sprites.get("text_infinity" if obj.world_id.infinite_tier > 0 else "text_epsilon", 0, wiggle, raw=True)
+            infinite_tier_surface = pygame.Surface((sprite_size, sprite_size * abs(obj.world_id.infinite_tier)), pygame.SRCALPHA)
+            infinite_tier_surface.fill("#00000000")
+            for i in range(abs(obj.world_id.infinite_tier)):
+                infinite_tier_surface.blit(infinite_text_surface, (0, i * sprite_size))
+            infinite_tier_surface = set_alpha(infinite_tier_surface, 0x80)
+            infinite_tier_surface = pygame.transform.scale(infinite_tier_surface, obj_surface.get_size())
+            obj_surface.blit(infinite_tier_surface, (0, 0))
     return obj_surface
 
 order: tuple[type[objects.Object], ...] = (

@@ -1,4 +1,5 @@
 {
+    "hello_world": "Hello, World!",
     "language.select": "English: input en_US",
     "game.name": "Baba Make Parabox",
     "press_any_key_to_continue": "Press Any Key To Continue...",
@@ -26,6 +27,7 @@
     "confirm.yes": "[Y/n]",
     "confirm.no": "[y/N]",
     "launch.welcome": "Welcome to Baba Make Parabox!",
+    "launch.debug": "The program is currently in DEBUG MODE. disabling by changing options.",
     "launch.game_mode.1": "Play levelpack, input 1;",
     "launch.game_mode.2": "Edit levelpack, input 2;",
     "launch.game_mode.3": "Change options, input 3;",
@@ -38,6 +40,7 @@
     "launch.save.levelpack.empty.game": "If you leave it empty, the game will not save your progress in the levelpack.",
     "launch.save.levelpack.empty.editor": "If you leave it empty, the editor will not save the levelpack you made.",
     "launch.save.levelpack.empty.update": "If you leave it empty, the game will overwrites the outdated data with the updated data in the levelpack file you choose for update.",
+    "launch.change_options.debug": "Do you want to enable debug mode? [y/N]: ",
     "launch.change_options.performance": "Rank your computer's performance from 1 to 5, and the game's display quality will be set up by your rank just input.",
     "launch.change_options.display_layer": "Input the max depth layer number of world display.\nHIGHLY RECOMMEND set this number lower than 3 due to performance.\nThe minimum value of this option is 0.",
     "launch.change_options.json": "Do you have any needs to edit the levelpack files? [y/N]: ",
@@ -98,6 +101,5 @@
     "warn.value.invalid": "WARN: '{value}' is not a valid {cls} value!",
     "warn.value.out_of_range": "WARN: {value} is out of range! (min: {min}, max: {max})",
     "warn.value.underflow": "WARN: {value} is too small! (min: {min})",
-    "warn.value.overflow": "WARN: {value} is too large! (max: {max})",
-    "hello_world": "Hello, World!"
+    "warn.value.overflow": "WARN: {value} is too large! (max: {max})"
 }

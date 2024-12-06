@@ -330,7 +330,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     default_world = worlds.World(refs.WorldID(name, infinite_tier), size, color)
                     if languages.lang_input("edit.level.new.is_map") in languages.yes:
                         pass
-                    levelpack.level_list.append(levels.Level(level_id, [default_world], super_level_id=super_level_id, main_world_id=refs.WorldID(name, infinite_tier), map_info=None, rule_list=levelpack.rule_list))
+                    levelpack.level_list.append(levels.Level(level_id, [default_world], super_level_id=super_level_id, main_world_id=refs.WorldID(name, infinite_tier), map_info=None))
                     current_level_index = len(levelpack.level_list) - 1
                     current_world_index = 0
                     level_changed = True
@@ -494,7 +494,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             world = current_level.get_world(current_world.world_id)
             if world is not None:
                 obj_surface = displays.simple_type_to_surface(current_object_type, wiggle=wiggle, default_surface=world_surface, debug=True)
-        obj_surface = pygame.transform.scale_by(obj_surface, displays.gui_scale)
+        obj_surface = pygame.transform.scale(obj_surface, (displays.sprite_size * displays.gui_scale, displays.sprite_size * displays.gui_scale))
         window.blit(obj_surface, (window.get_width() - displays.sprite_size * displays.gui_scale, 0))
         for index, object_type in object_type_shortcuts.items():
             obj_surface = displays.simple_type_to_surface(object_type, wiggle=wiggle, debug=True)
