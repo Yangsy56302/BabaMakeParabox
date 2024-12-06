@@ -775,3 +775,6 @@
             + 代替了`size: property`。
     + **`refs.LevelID`和`refs.WorldID`**
         + 新增了暂未使用的用于互相转换的实例方法。
+
+##### 3.9
+_待补。_

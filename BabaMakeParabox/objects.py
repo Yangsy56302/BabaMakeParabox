@@ -901,7 +901,7 @@ class TextEpsilon(SpecificWorldNoun):
 class TextParabox(RangedNoun):
     ref_type = (TextInfinity, TextEpsilon)
     json_name = "text_parabox"
-    sprite_name = "text_patrick"
+    sprite_name = "text_parabox"
     display_name = "PARABOX"
 
 SupportsReferenceType = GeneralNoun | RangedNoun
