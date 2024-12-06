@@ -48,33 +48,57 @@ class Levelpack(object):
             delete_object_list = []
             for old_obj in world.object_list:
                 old_type = type(old_obj)
-                new_nouns: list[type["objects.Noun"]] = []
-                for noun, count in old_obj.properties.enabled_dict().items():
-                    if issubclass(noun, objects.Noun):
-                        new_nouns.extend([noun] * count)
-                while objects.TextAll in new_nouns:
-                    new_nouns.remove(objects.TextAll)
-                    new_nouns.extend(active_level.all_list)
-                not_new_nouns: list[type[objects.Noun]]
-                not_new_nouns = []
-                for noun, count in old_obj.properties.disabled_dict().items():
-                    if issubclass(noun, objects.Noun):
-                        not_new_nouns.extend([noun] * count)
+                new_noun_list: list[type["objects.Noun"]] = []
+                for noun_type, prop_count in old_obj.properties.enabled_dict().items():
+                    if issubclass(noun_type, objects.Noun):
+                        new_noun_list.extend([noun_type] * prop_count)
+                while any(map(lambda p: issubclass(p, objects.RangedNoun), new_noun_list)):
+                    delete_noun_list: list[type[objects.Noun]] = []
+                    for noun_type in new_noun_list:
+                        if not issubclass(noun_type, objects.RangedNoun):
+                            continue
+                        if issubclass(noun_type, objects.TextAll):
+                            new_noun_list.extend(active_level.all_list * prop_count)
+                        if issubclass(noun_type, objects.GroupNoun):
+                            for group_prop_type, group_prop_count in active_level.group_references[noun_type].enabled_dict().items():
+                                if issubclass(group_prop_type, objects.Noun):
+                                    new_noun_list.extend([group_prop_type] * group_prop_count)
+                        delete_noun_list.append(noun_type)
+                    for delete_noun in delete_noun_list:
+                        new_noun_list.remove(delete_noun)
+                not_new_noun_list: list[type["objects.Noun"]] = []
+                for noun_type, prop_count in old_obj.properties.disabled_dict().items():
+                    if issubclass(noun_type, objects.Noun):
+                        not_new_noun_list.extend([noun_type] * prop_count)
+                while any(map(lambda p: issubclass(p, objects.RangedNoun), not_new_noun_list)):
+                    delete_noun_list: list[type[objects.Noun]] = []
+                    for noun_type in not_new_noun_list:
+                        if not issubclass(noun_type, objects.RangedNoun):
+                            continue
+                        if issubclass(noun_type, objects.TextAll):
+                            not_new_noun_list.extend(active_level.all_list * prop_count)
+                        if issubclass(noun_type, objects.GroupNoun):
+                            for group_prop_type, group_prop_count in active_level.group_references[noun_type].disabled_dict().items():
+                                if issubclass(group_prop_type, objects.Noun):
+                                    not_new_noun_list.extend([group_prop_type] * group_prop_count)
+                        delete_noun_list.append(noun_type)
+                    for delete_noun in delete_noun_list:
+                        not_new_noun_list.remove(delete_noun)
                 transform_success = False
                 noun_is_noun = False
                 noun_is_not_noun = False
-                for new_noun in new_nouns:
+                for new_noun in new_noun_list:
                     if issubclass(new_noun, objects.SupportsReferenceType):
                         if isinstance(old_obj, new_noun.ref_type):
                             noun_is_noun = True
-                    elif issubclass(new_noun, objects.SupportsReferencing):
+                    elif issubclass(new_noun, objects.SupportsIsReferenceOf):
                         if new_noun.isreferenceof(old_obj):
                             noun_is_noun = True
-                for not_new_type in not_new_nouns:
+                for not_new_noun in not_new_noun_list:
                     if issubclass(new_noun, objects.SupportsReferenceType):
-                        if isinstance(old_obj, not_new_type.ref_type):
+                        if isinstance(old_obj, not_new_noun.ref_type):
                             noun_is_not_noun = True
-                    elif issubclass(new_noun, objects.SupportsReferencing):
+                    elif issubclass(new_noun, objects.SupportsIsReferenceOf):
                         if new_noun.isreferenceof(old_obj):
                             noun_is_not_noun = True
                 if noun_is_noun:
@@ -86,13 +110,14 @@ class Levelpack(object):
                         new_obj = new_text_type(old_obj.pos, old_obj.orient, world_id=old_obj.world_id, level_id=old_obj.level_id)
                         world.new_obj(new_obj)
                     transform_success = True
-                for new_noun in new_nouns:
+                for new_noun in new_noun_list:
                     if issubclass(new_noun, objects.FixedNoun):
                         if issubclass(new_noun, objects.TextEmpty):
                             transform_success = True
                         if issubclass(new_noun, objects.SpecificWorldNoun):
                             if new_noun.isreferenceof(old_obj):
                                 old_obj.world_id += new_noun.delta_infinite_tier
+                        continue
                     new_type = new_noun.ref_type
                     if issubclass(new_type, objects.Game):
                         if isinstance(old_obj, (objects.LevelObject, objects.WorldObject)):
@@ -168,24 +193,34 @@ class Levelpack(object):
         old_obj_list: dict[type[objects.WorldObject], list[tuple[refs.WorldID, objects.WorldObject]]]
         new_noun_list: dict[type[objects.WorldObject], list[type[objects.Noun]]]
         for world_object_type in objects.world_object_types:
-            for world in active_level.world_list:
+            for active_world in active_level.world_list:
                 old_obj_list = {p: [] for p in objects.world_object_types}
+                new_noun_list = {p: [] for p in objects.world_object_types}
                 for other_world in active_level.world_list:
                     for old_obj in other_world.get_worlds():
-                        if isinstance(old_obj, world_object_type) and world.world_id == old_obj.world_id:
+                        if isinstance(old_obj, world_object_type) and active_world.world_id == old_obj.world_id:
                             old_obj_list[type(old_obj)].append((other_world.world_id, old_obj))
-                new_noun_list = {p: [] for p in objects.world_object_types}
-                for prop_type, prop_count in world.properties[world_object_type].enabled_dict().items():
-                    if not issubclass(prop_type, objects.Noun):
-                        continue
-                    if issubclass(prop_type, objects.TextAll):
-                        new_noun_list[world_object_type].extend(objects.nouns_in_not_all * prop_count)
-                    else:
-                        new_noun_list[world_object_type].extend([prop_type] * prop_count)
-                for new_text_type, new_text_count in world.special_operator_properties[world_object_type][objects.TextWrite].enabled_dict().items():
+                for noun_type, prop_count in active_world.properties[world_object_type].enabled_dict().items():
+                    if issubclass(noun_type, objects.Noun):
+                        new_noun_list[world_object_type].extend([noun_type] * prop_count)
+                while any(map(lambda p: issubclass(p, objects.RangedNoun), new_noun_list)):
+                    delete_noun_list: list[type[objects.Noun]] = []
+                    for noun_type in new_noun_list:
+                        if not issubclass(noun_type, objects.RangedNoun):
+                            continue
+                        if issubclass(noun_type, objects.TextAll):
+                            new_noun_list[world_object_type].extend(active_level.all_list * prop_count)
+                        if issubclass(noun_type, objects.GroupNoun):
+                            for group_prop_type, group_prop_count in active_level.group_references[noun_type].enabled_dict().items():
+                                if issubclass(group_prop_type, objects.Noun):
+                                    new_noun_list[world_object_type].extend([group_prop_type] * group_prop_count)
+                        delete_noun_list.append(noun_type)
+                    for delete_noun in delete_noun_list:
+                        new_noun_list[world_object_type].remove(delete_noun)
+                for new_text_type, new_text_count in active_world.special_operator_properties[world_object_type][objects.TextWrite].enabled_dict().items():
                     for _ in range(new_text_count):
                         new_obj = new_text_type(old_obj.pos, old_obj.orient, world_id=old_obj.world_id, level_id=old_obj.level_id)
-                        world.new_obj(new_obj)
+                        active_world.new_obj(new_obj)
                     transform_success = True
                 for old_world_id, old_obj in old_obj_list[world_object_type]:
                     old_world = active_level.get_exact_world(old_world_id)
@@ -197,6 +232,7 @@ class Levelpack(object):
                             if issubclass(new_noun, objects.SpecificWorldNoun):
                                 if new_noun.isreferenceof(old_obj):
                                     old_obj.world_id += new_noun.delta_infinite_tier
+                            continue
                         new_type = new_noun.ref_type
                         if issubclass(world_object_type, new_type):
                             transform_success = False
@@ -222,6 +258,7 @@ class Levelpack(object):
     def level_transform(self, active_level: levels.Level) -> bool:
         old_obj_list: dict[type[objects.LevelObject], list[tuple[refs.LevelID, refs.WorldID, objects.LevelObject]]]
         new_noun_list: dict[type[objects.LevelObject], list[type[objects.Noun]]]
+        new_noun_list = {p: [] for p in objects.level_object_types}
         transform_success = False
         for level_object_type in objects.level_object_types:
             old_obj_list = {p: [] for p in objects.level_object_types}
@@ -230,14 +267,23 @@ class Levelpack(object):
                     for old_obj in other_world.get_levels():
                         if isinstance(old_obj, level_object_type) and active_level.level_id == old_obj.level_id:
                             old_obj_list[type(old_obj)].append((level.level_id, other_world.world_id, old_obj))
-            new_noun_list = {p: [] for p in objects.level_object_types}
-            for prop_type, prop_count in active_level.properties[level_object_type].enabled_dict().items():
-                if not issubclass(prop_type, objects.Noun):
-                    continue
-                if issubclass(prop_type, objects.TextAll):
-                    new_noun_list[level_object_type].extend(objects.nouns_in_not_all * prop_count)
-                else:
-                    new_noun_list[level_object_type].extend([prop_type] * prop_count)
+            for noun_type, prop_count in active_level.properties[level_object_type].enabled_dict().items():
+                if issubclass(noun_type, objects.Noun):
+                    new_noun_list[level_object_type].extend([noun_type] * prop_count)
+            while any(map(lambda p: issubclass(p, objects.RangedNoun), new_noun_list)):
+                delete_noun_list: list[type[objects.Noun]] = []
+                for noun_type in new_noun_list:
+                    if not issubclass(noun_type, objects.RangedNoun):
+                        continue
+                    if issubclass(noun_type, objects.TextAll):
+                        new_noun_list[level_object_type].extend(active_level.all_list * prop_count)
+                    if issubclass(noun_type, objects.GroupNoun):
+                        for group_prop_type, group_prop_count in active_level.group_references[noun_type].enabled_dict().items():
+                            if issubclass(group_prop_type, objects.Noun):
+                                new_noun_list[level_object_type].extend([group_prop_type] * group_prop_count)
+                    delete_noun_list.append(noun_type)
+                for delete_noun in delete_noun_list:
+                    new_noun_list[level_object_type].remove(delete_noun)
             for new_text_type, new_text_count in active_level.special_operator_properties[level_object_type][objects.TextWrite].enabled_dict().items():
                 for _ in range(new_text_count):
                     new_obj = new_text_type(old_obj.pos, old_obj.orient, world_id=old_obj.world_id, level_id=old_obj.level_id)
@@ -251,6 +297,7 @@ class Levelpack(object):
                     if issubclass(new_noun, objects.FixedNoun):
                         if issubclass(new_noun, objects.TextEmpty):
                             transform_success = True
+                        continue
                     new_type = new_noun.ref_type
                     if issubclass(level_object_type, new_type):
                         object_transform_success = False

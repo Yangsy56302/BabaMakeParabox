@@ -34,6 +34,7 @@ class Level(object):
         self.game_properties: objects.Properties = objects.Properties()
         self.created_levels: list["Level"] = []
         self.all_list: list[type[objects.Noun]] = []
+        self.group_references: dict[type[objects.GroupNoun], objects.Properties] = {p: objects.Properties() for p in objects.group_noun_types}
         self.sound_events: list[str] = []
     def __eq__(self, level: "Level") -> bool:
         return self.level_id == level.level_id
@@ -119,7 +120,7 @@ class Level(object):
                         else:
                             match_noun_list = [match_noun]
                     for new_match_noun in match_noun_list:
-                        if issubclass(new_match_noun, objects.SupportsReferencing):
+                        if issubclass(new_match_noun, objects.SupportsIsReferenceOf):
                             for pos in find_range:
                                 match_objs.extend([o for o in world.get_objs_from_pos_and_special_noun(pos, new_match_noun) if o not in matched_objs])
                         else:
@@ -162,7 +163,7 @@ class Level(object):
                         else:
                             match_noun_list = [match_noun]
                     for new_match_noun in match_noun_list:
-                        if issubclass(new_match_noun, objects.SupportsReferencing):
+                        if issubclass(new_match_noun, objects.SupportsIsReferenceOf):
                             for pos in find_range:
                                 match_objs.extend([o for o in world.get_objs_from_special_noun(new_match_noun) if o not in matched_objs])
                         else:
@@ -221,7 +222,7 @@ class Level(object):
                         if prop_type != (objects.TextWord):
                             continue
                         new_match_obj_list: list[objects.Object] = []
-                        if issubclass(noun_type, objects.SupportsReferencing):
+                        if issubclass(noun_type, objects.SupportsIsReferenceOf):
                             new_match_obj_list = [o for o in world.object_list if noun_type.isreferenceof(o, all_list = self.all_list)]
                         else:
                             if noun_negated_tier % 2 == 1:
@@ -257,7 +258,7 @@ class Level(object):
                         prop_type = rule_info.prop_type
                         object_type = noun_type.ref_type
                         new_match_obj_list: list[objects.Object] = []
-                        if issubclass(noun_type, objects.SupportsReferencing):
+                        if issubclass(noun_type, objects.SupportsIsReferenceOf):
                             new_match_obj_list = [o for o in world.object_list if noun_type.isreferenceof(o, all_list = self.all_list)]
                         elif issubclass(object_type, objects.Game) and issubclass(oper_type, objects.TextIs):
                             if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
@@ -297,7 +298,7 @@ class Level(object):
                         prop_type = rule_info.prop_type
                         object_type = noun_type.ref_type
                         new_match_obj_list: list[objects.Object] = []
-                        if issubclass(noun_type, objects.SupportsReferencing):
+                        if issubclass(noun_type, objects.SupportsIsReferenceOf):
                             new_match_obj_list = [o for o in world.object_list if noun_type.isreferenceof(o, all_list = self.all_list)]
                         elif issubclass(object_type, objects.Game) and issubclass(oper_type, objects.TextIs):
                             if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):

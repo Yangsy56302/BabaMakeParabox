@@ -60,26 +60,26 @@ class World(object):
         if self.out_of_range(pos):
             return []
         return [o for o in self.pos_to_objs(pos) if isinstance(o, object_type)]
-    def get_objs_from_pos_and_special_noun(self, pos: spaces.Coord, noun_type: type[objects.SupportsReferencing]) -> list[objects.Object]:
+    def get_objs_from_pos_and_special_noun(self, pos: spaces.Coord, noun_type: type[objects.SupportsIsReferenceOf]) -> list[objects.Object]:
         if self.out_of_range(pos):
             return []
         return [o for o in self.pos_to_objs(pos) if noun_type.isreferenceof(o)]
     def get_objs_from_type[T: objects.Object](self, object_type: type[T]) -> list[T]:
         return [o for o in self.object_list if isinstance(o, object_type)]
-    def get_objs_from_special_noun(self, object_type: type[objects.SupportsReferencing]) -> list[objects.Object]:
+    def get_objs_from_special_noun(self, object_type: type[objects.SupportsIsReferenceOf]) -> list[objects.Object]:
         return [o for o in self.object_list if object_type.isreferenceof(o)]
     def del_obj(self, obj: objects.Object) -> None:
         if not self.out_of_range(obj.pos):
             self.pos_to_objs(obj.pos).remove(obj)
         self.object_list.remove(obj)
-    def del_obj_from_pos_and_type(self, pos: spaces.Coord, object_type: type) -> bool:
+    def del_objs_from_pos(self, pos: spaces.Coord) -> bool:
+        if self.out_of_range(pos):
+            return False
+        deleted = len(self.pos_to_objs(pos)) != 0
         for obj in self.pos_to_objs(pos):
-            if isinstance(obj, object_type):
-                self.object_list.remove(obj)
-                if not self.out_of_range(obj.pos):
-                    self.pos_to_objs(pos).remove(obj)
-                return True
-        return False
+            self.object_list.remove(obj)
+        self.object_pos_index[self.pos_to_index(pos)].clear()
+        return deleted
     def del_objs_from_pos_and_type(self, pos: spaces.Coord, object_type: type) -> bool:
         del_objects = filter(lambda o: isinstance(o, object_type), self.pos_to_objs(pos))
         deleted = False
@@ -89,13 +89,14 @@ class World(object):
             if not self.out_of_range(obj.pos):
                 self.pos_to_objs(pos).remove(obj)
         return deleted
-    def del_objs_from_pos(self, pos: spaces.Coord) -> bool:
-        if self.out_of_range(pos):
-            return False
-        deleted = len(self.pos_to_objs(pos)) != 0
-        for obj in self.pos_to_objs(pos):
+    def del_objs_from_pos_and_special_noun(self, pos: spaces.Coord, noun_type: type[objects.SupportsIsReferenceOf]) -> bool:
+        del_objects = filter(lambda o: noun_type.isreferenceof(o), self.pos_to_objs(pos))
+        deleted = False
+        for obj in del_objects:
+            deleted = True
             self.object_list.remove(obj)
-        self.object_pos_index[self.pos_to_index(pos)].clear()
+            if not self.out_of_range(obj.pos):
+                self.pos_to_objs(pos).remove(obj)
         return deleted
     def get_worlds(self) -> list[objects.WorldObject]:
         return [o for o in self.object_list if isinstance(o, objects.WorldObject)]

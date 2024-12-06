@@ -94,8 +94,6 @@ class Properties(object):
     def disabled_dict(self) -> dict[type["Text"], int]:
         return {k: self.calc_count(v, 1) for k, v in self.__dict.items()}
 
-special_operators: list[type["Operator"]] = []
-
 class ObjectJson(TypedDict):
     type: str
     position: spaces.CoordTuple
@@ -112,6 +110,8 @@ class OldObjectState(object):
         self.orient: Optional[spaces.Orient] = orient
         self.world: Optional[refs.WorldID] = world
         self.level: Optional[refs.LevelID] = level
+
+special_operators: tuple[type["Operator"], ...]
 
 class Object(object):
     ref_type: type["Object"]
@@ -408,7 +408,7 @@ class Level(LevelObject):
     display_name = "Level"
     sprite_color: colors.ColorHex = colors.MAGENTA
 
-level_object_types: list[type[LevelObject]] = [Level]
+level_object_types: tuple[type[LevelObject], ...] = (Level, )
 default_level_object_type: type[LevelObject] = Level
 
 class Path(Tiled):
@@ -645,6 +645,8 @@ class TextWrite(Operator):
     sprite_name = "text_write"
     display_name = "WRITE"
 
+special_operators: tuple[type[Operator], ...] = (TextHas, TextMake, TextWrite)
+
 class TextNot(Text):
     json_name = "text_not"
     sprite_name = "text_not"
@@ -824,9 +826,6 @@ class RangedNoun(SpecialNoun):
     def isreferenceof(cls, other: Object, **kwds) -> bool:
         return any(map(lambda n: isinstance(other, n) if not isinstance(n, SpecialNoun) else n.isreferenceof(other), cls.ref_type))
 
-SupportsReferenceType = GeneralNoun | RangedNoun
-SupportsReferencing = FixedNoun | RangedNoun
-
 class TextEmpty(SpecialNoun):
     json_name = "text_empty"
     sprite_name = "text_empty"
@@ -837,7 +836,7 @@ class TextAll(RangedNoun):
     sprite_name = "text_all"
     display_name = "ALL"
 
-class GroupNoun(FixedNoun):
+class GroupNoun(RangedNoun):
     @classmethod
     def isreferenceof(cls, other: Object, **kwds) -> bool:
         return other.properties.enabled(cls)
@@ -846,6 +845,8 @@ class TextGroup(GroupNoun):
     json_name = "text_group"
     sprite_name = "text_group"
     display_name = "GROUP"
+
+group_noun_types: tuple[type[GroupNoun], ...] = (TextGroup, )
 
 class SpecificWorldNoun(FixedNoun):
     delta_infinite_tier: int
@@ -885,7 +886,8 @@ class TextParabox(RangedNoun):
     sprite_name = "text_patrick"
     display_name = "PARABOX"
 
-special_operators = [TextHas, TextMake, TextWrite]
+SupportsReferenceType = GeneralNoun | RangedNoun
+SupportsIsReferenceOf = FixedNoun | RangedNoun
 
 noun_class_list: list[type[Noun]] = []
 noun_class_list.extend([TextBaba, TextKeke, TextMe, TextPatrick, TextSkull, TextGhost])
