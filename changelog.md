@@ -776,5 +776,43 @@
     + **`refs.LevelID`和`refs.WorldID`**
         + 新增了暂未使用的用于互相转换的实例方法。
 
-##### 3.9
-_待补。_
+### 3.9
++ **规则**
+    + **名词`INFINITY`（∞），`EPSILON`（ε）和`PARABOX`（∅）**
+        + 添加。
+        + 代表指向悖论世界的物体。
+            + 作为属性时，`INFINITY`会使世界物体指向多一层无穷大悖论的世界，`EPSILON`类似；`PARABOX`同时进行前两者的操作。
+                + 对其他物体无效果。
+        + ~~`PARABOX`的外观（空集符号）是我在熟悉的数学符号里挑的。~~
+    + **名词`GROUP`**
+        + 添加。
+        + 暂未完善机制，会有Bug。
+    + 首次判定无法移动的物体会继续尝试移动，直到可以移动或尝试次数到达某一上限。
+        + ~~大概可以算是~~ 修复了同时往相同方向运动的两个相邻物体中，位于后方的物体可能被位于前方的带有“可阻挡物体通过属性”的物体“阻挡”，从而无法在这一轮移动的Bug。
+    + `ALL IS DONE`现在可以触发结局。
++ **外观**
+    + 对于更大的显示面积，渲染速度更快了。
+    + 最晚在这个版本，编辑器的光标改为白色。
+    + 为了规避物体移动过渡动画没有考虑到纹理实际大小的因素，`CURSOR`物体的大小现在与其他物体一致。
+        + 这不包括没有过渡动画的编辑器光标。
++ **命令行**
+    + 现在答案为布尔值的问题可以识别`True`，`False`，`1`，`0`，`是`，`否`这六个回答了。
+        + `True`和`False`包括常见大小写形式和英文首字母缩写。
++ **技术性**
+    + **`objects.BmpObject`**
+        + 重命名为`objects.Object`。
+            + ~~我自己都没想到这名字竟然又要被用一遍。~~
+        + **`LevelPointer`和`WorldPointer`**
+            + 重命名，`Pointer`改为`Object`。
+        + **`Noun`**
+            + 拆分为`Noun`和派生类`GenericNoun`，后者用于几乎所有可以使用`issubclass`或`isinstance`识别的物体类型。
+            + **`SpecialNoun`**
+                + 添加，是`Noun`的另一个派生类。
+                + 用于不能使用`issubclass`或`isinstance`识别的物体类型。
+                    + 直接派生类有`FixedNoun`，`RangedNoun`，和`TextEmpty`。
+                        + 间接派生类包括`TextAll`，`TextGroup`，`TextInfinity`等。
+                    + 使用类方法`isreferenceof`代替上述内置函数。
+            + **`TextLevel`，`TextWorld`，和`TextClone`**
+                + 现在继承自新的类型（`TextLevelObject`和`TextWorldObject`）。
+    + **`levels.Level.get_move_list`**
+        + 合并了部分重复代码。
