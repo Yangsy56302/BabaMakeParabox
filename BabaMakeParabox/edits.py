@@ -260,7 +260,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                             current_world_index += 1
                             world_changed = True
                     elif keys["LSHIFT"] or keys["RSHIFT"]:
-                        if issubclass(current_object_type, objects.Noun) and current_object_type.ref_type not in objects.not_in_editor:
+                        if issubclass(current_object_type, objects.GeneralNoun) and current_object_type.ref_type not in objects.not_in_editor:
                             current_object_type = current_object_type.ref_type
                     else:
                         current_object_type_list = [t for t in objects.object_name.values() if t not in objects.not_in_editor]

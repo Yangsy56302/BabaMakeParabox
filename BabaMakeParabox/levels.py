@@ -72,13 +72,10 @@ class Level(object):
     def all_list_set(self) -> None:
         for world in self.world_list:
             for obj in world.object_list:
-                noun_type = objects.get_noun_from_type(type(obj))
-                in_not_in_all = False
-                for not_all in objects.not_in_all:
-                    if isinstance(obj, not_all):
-                        in_not_in_all = True
-                if noun_type not in self.all_list and not in_not_in_all:
-                    self.all_list.append(noun_type)
+                if all(map(lambda t: isinstance(obj, t), objects.not_in_all)):
+                    noun_type = objects.get_noun_from_type(type(obj))
+                    if noun_type not in self.all_list:
+                        self.all_list.append(noun_type)
     def meet_prefix_conditions(self, world: worlds.World, obj: objects.Object, prefix_info_list: list[rules.PrefixInfo], is_meta: bool = False) -> bool:
         return_value = True
         for prefix_info in prefix_info_list:
@@ -256,30 +253,35 @@ class Level(object):
                         oper_type = rule_info.oper_type
                         prop_negated_tier = rule_info.prop_negated_tier
                         prop_type = rule_info.prop_type
-                        object_type = noun_type.ref_type
                         new_match_obj_list: list[objects.Object] = []
-                        if issubclass(noun_type, objects.SupportsIsReferenceOf):
-                            new_match_obj_list = [o for o in world.object_list if noun_type.isreferenceof(o, all_list = self.all_list)]
-                        elif issubclass(object_type, objects.Game) and issubclass(oper_type, objects.TextIs):
-                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
-                                self.game_properties.update(prop_type, prop_negated_tier)
-                        elif issubclass(object_type, objects.LevelObject):
-                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
-                                if oper_type == objects.TextIs:
-                                    self.properties[object_type].update(prop_type, prop_negated_tier)
-                                else:
-                                    self.special_operator_properties[object_type][oper_type].update(prop_type, prop_negated_tier)
-                        elif issubclass(object_type, objects.WorldObject):
-                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
-                                if oper_type == objects.TextIs:
-                                    world.properties[object_type].update(prop_type, prop_negated_tier)
-                                else:
-                                    world.special_operator_properties[object_type][oper_type].update(prop_type, prop_negated_tier)
-                        else:
-                            if noun_negated_tier % 2 == 1:
+                        if issubclass(noun_type, objects.GeneralNoun):
+                            object_type = noun_type.ref_type
+                            if issubclass(object_type, objects.LevelObject):
+                                if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
+                                    if oper_type == objects.TextIs:
+                                        self.properties[object_type].update(prop_type, prop_negated_tier)
+                                    else:
+                                        self.special_operator_properties[object_type][oper_type].update(prop_type, prop_negated_tier)
+                            elif issubclass(object_type, objects.WorldObject):
+                                if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
+                                    if oper_type == objects.TextIs:
+                                        world.properties[object_type].update(prop_type, prop_negated_tier)
+                                    else:
+                                        world.special_operator_properties[object_type][oper_type].update(prop_type, prop_negated_tier)
+                            if issubclass(object_type, objects.Game) and issubclass(oper_type, objects.TextIs):
+                                if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
+                                    self.game_properties.update(prop_type, prop_negated_tier)
+                            elif noun_negated_tier % 2 == 1:
                                 new_match_obj_list = [o for o in world.object_list if objects.TextAll.isreferenceof(o, all_list = self.all_list) and not isinstance(o, noun_type.ref_type)]
                             else:
-                                new_match_obj_list = world.get_objs_from_type(noun_type.ref_type)
+                                new_match_obj_list = [o for o in world.get_objs_from_type(noun_type.ref_type)]
+                        elif issubclass(noun_type, objects.SupportsIsReferenceOf):
+                            if noun_negated_tier % 2 == 1:
+                                new_match_obj_list = [o for o in world.object_list if objects.TextAll.isreferenceof(o, all_list = self.all_list) and not noun_type.isreferenceof(o, all_list = self.all_list)]
+                            else:
+                                new_match_obj_list = [o for o in world.object_list if noun_type.isreferenceof(o, all_list = self.all_list)]
+                        else:
+                            pass
                         for obj in new_match_obj_list:
                             if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
                                 if oper_type == objects.TextIs:
@@ -298,16 +300,22 @@ class Level(object):
                         prop_type = rule_info.prop_type
                         object_type = noun_type.ref_type
                         new_match_obj_list: list[objects.Object] = []
-                        if issubclass(noun_type, objects.SupportsIsReferenceOf):
-                            new_match_obj_list = [o for o in world.object_list if noun_type.isreferenceof(o, all_list = self.all_list)]
-                        elif issubclass(object_type, objects.Game) and issubclass(oper_type, objects.TextIs):
-                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
-                                self.game_properties.update(prop_type, prop_negated_tier)
-                        else:
-                            if noun_negated_tier % 2 == 1:
+                        if issubclass(noun_type, objects.GeneralNoun):
+                            object_type = noun_type.ref_type
+                            if issubclass(object_type, objects.Game) and issubclass(oper_type, objects.TextIs):
+                                if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
+                                    self.game_properties.update(prop_type, prop_negated_tier)
+                            elif noun_negated_tier % 2 == 1:
                                 new_match_obj_list = [o for o in world.object_list if objects.TextAll.isreferenceof(o, all_list = self.all_list) and not isinstance(o, noun_type.ref_type)]
                             else:
-                                new_match_obj_list = world.get_objs_from_type(noun_type.ref_type)
+                                new_match_obj_list = [o for o in world.get_objs_from_type(noun_type.ref_type)]
+                        elif issubclass(noun_type, objects.SupportsIsReferenceOf):
+                            if noun_negated_tier % 2 == 1:
+                                new_match_obj_list = [o for o in world.object_list if objects.TextAll.isreferenceof(o, all_list = self.all_list) and not noun_type.isreferenceof(o, all_list = self.all_list)]
+                            else:
+                                new_match_obj_list = [o for o in world.object_list if noun_type.isreferenceof(o, all_list = self.all_list)]
+                        else:
+                            pass
                         for obj in new_match_obj_list:
                             if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
                                 if oper_type == objects.TextIs:
@@ -1152,7 +1160,7 @@ class Level(object):
         world_background.blit(world_surface, (0, 0))
         world_surface = world_background
         if world.world_id.infinite_tier != 0:
-            infinite_text_surface = displays.sprites.get("text_infinite" if world.world_id.infinite_tier > 0 else "text_epsilon", 0, wiggle, raw=True)
+            infinite_text_surface = displays.sprites.get("text_infinity" if world.world_id.infinite_tier > 0 else "text_epsilon", 0, wiggle, raw=True)
             infinite_tier_surface = pygame.Surface((infinite_text_surface.get_width(), infinite_text_surface.get_height() * abs(world.world_id.infinite_tier)), pygame.SRCALPHA)
             infinite_tier_surface.fill("#00000000")
             for i in range(abs(world.world_id.infinite_tier)):

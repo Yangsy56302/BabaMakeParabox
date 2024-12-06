@@ -52,6 +52,7 @@ class MetatextOptions(TypedDict):
 
 class Options(TypedDict):
     ver: str
+    debug: bool
     lang: str
     fps: int
     fpw: int
@@ -67,6 +68,7 @@ class Options(TypedDict):
 
 default_options: Options = {
     "ver": versions,
+    "debug": False,
     "lang": "",
     "fps": 30,
     "fpw": 5,

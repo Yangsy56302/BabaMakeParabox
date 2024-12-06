@@ -221,10 +221,9 @@ class Levelpack(object):
                     for _ in range(new_text_count):
                         new_obj = new_text_type(old_obj.pos, old_obj.orient, world_id=old_obj.world_id, level_id=old_obj.level_id)
                         active_world.new_obj(new_obj)
-                    transform_success = True
                 for old_world_id, old_obj in old_obj_list[world_object_type]:
+                    transform_success = False
                     old_world = active_level.get_exact_world(old_world_id)
-                    transform_success = True
                     for new_noun in new_noun_list[world_object_type]:
                         if issubclass(new_noun, objects.FixedNoun):
                             if issubclass(new_noun, objects.TextEmpty):
@@ -259,8 +258,8 @@ class Levelpack(object):
         old_obj_list: dict[type[objects.LevelObject], list[tuple[refs.LevelID, refs.WorldID, objects.LevelObject]]]
         new_noun_list: dict[type[objects.LevelObject], list[type[objects.Noun]]]
         new_noun_list = {p: [] for p in objects.level_object_types}
-        transform_success = False
         for level_object_type in objects.level_object_types:
+            transform_success = False
             old_obj_list = {p: [] for p in objects.level_object_types}
             for level in self.level_list:
                 for other_world in level.world_list:

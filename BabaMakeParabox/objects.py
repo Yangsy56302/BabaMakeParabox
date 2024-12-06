@@ -29,6 +29,16 @@ class Properties(object):
         self.__dict: PropertiesDict = prop if prop is not None else {}
     def __bool__(self) -> bool:
         return len(self.__dict) != 0
+    def __repr__(self) -> str:
+        string = ""
+        string += "Properties()\n"
+        string += "Enabled:\n"
+        for prop, count in self.enabled_dict().items():
+            string += f"\t{prop.__name__} * {count}\n"
+        string += "Disabled:\n"
+        for prop, count in self.disabled_dict().items():
+            string += f"\t{prop.__name__} * {count}\n"
+        return string
     @staticmethod
     def calc_count(negnum_dict: dict[int, int], negated_number: int = 0) -> int:
         if len(negnum_dict) == 0:
@@ -133,6 +143,13 @@ class Object(object):
         self.sprite_state: int = 0
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
+    def __repr__(self) -> str:
+        string = ""
+        string += f"{self.__class__.__name__}\n"
+        string += f"\tpos={self.pos}, orient={self.orient}\n"
+        string += f"\tworld_id={self.world_id}, level_id={self.level_id}\n"
+        string += f"\tproperties: \n{self.properties}\n"
+        return string
     def reset_uuid(self) -> None:
         self.uuid = uuid.uuid4()
     def set_sprite(self, **kwds) -> None:
@@ -845,6 +862,7 @@ class TextGroup(GroupNoun):
     json_name = "text_group"
     sprite_name = "text_group"
     display_name = "GROUP"
+    sprite_color = colors.DARK_BLUE
 
 group_noun_types: tuple[type[GroupNoun], ...] = (TextGroup, )
 
@@ -906,11 +924,12 @@ for noun_class in noun_class_list:
     if not hasattr(noun_class, "sprite_color"):
         setattr(noun_class, "sprite_color", noun_class.ref_type.sprite_color)
 
-special_noun_class_list: list[type[FixedNoun]] = []
-noun_class_list.extend([TextEmpty, TextAll, TextGroup, TextInfinity, TextEpsilon, TextParabox])
+special_noun_class_list: list[type[SpecialNoun]] = []
+special_noun_class_list.extend([TextEmpty, TextAll, TextGroup, TextInfinity, TextEpsilon, TextParabox])
 
 text_class_list: list[type[Text]] = []
 text_class_list.extend(noun_class_list)
+text_class_list.extend(special_noun_class_list)
 text_class_list.extend([TextText_, TextOften, TextSeldom, TextMeta])
 text_class_list.extend([TextOn, TextNear, TextNextto, TextWithout, TextFeeling])
 text_class_list.extend([TextIs, TextHas, TextMake, TextWrite])
@@ -996,10 +1015,11 @@ def get_noun_from_type(object_type: type[Object]) -> type[Noun]:
     global object_class_used, object_used, object_name, noun_class_list, text_class_list
     return_value: type[Noun] = TextText
     for noun_type in noun_class_list:
-        if object_type.__name__ == noun_type.ref_type.__name__:
-            return noun_type
-        if issubclass(object_type, noun_type.ref_type):
-            return_value = noun_type
+        if issubclass(noun_type, GeneralNoun):
+            if issubclass(object_type, noun_type.ref_type):
+                return_value = noun_type
+            elif object_type.__name__ == noun_type.ref_type.__name__:
+                return_value = noun_type
     if return_value == TextText:
         current_metatext_tier += 1
         generate_metatext_at_tier(current_metatext_tier)

@@ -165,15 +165,19 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         if not levelpack_refresh:
             if any(mouses) and not current_world.out_of_range(mouse_pos_in_world):
                 if mouses[0] == 1:
-                    sub_world_objs: list[objects.WorldObject] = current_world.get_worlds_from_pos(mouse_pos_in_world)
-                    sub_worlds = [current_level.get_world(o.world_id) for o in sub_world_objs]
-                    sub_worlds = [w for w in sub_worlds if w is not None]
-                    if len(sub_worlds) != 0:
-                        world = random.choice(sub_worlds)
-                        if world is not None:
-                            current_world = world
-                            world_changed = True
-                            display_refresh = True
+                    if basics.options["debug"] and (keys["LALT"] or keys["RALT"]):
+                        for obj in current_world.get_objs_from_pos(mouse_pos_in_world):
+                            print(obj)
+                    else:
+                        sub_world_objs: list[objects.WorldObject] = current_world.get_worlds_from_pos(mouse_pos_in_world)
+                        sub_worlds = [current_level.get_world(o.world_id) for o in sub_world_objs]
+                        sub_worlds = [w for w in sub_worlds if w is not None]
+                        if len(sub_worlds) != 0:
+                            world = random.choice(sub_worlds)
+                            if world is not None:
+                                current_world = world
+                                world_changed = True
+                                display_refresh = True
                 elif mouses[2] == 1:
                     super_worlds = [t[0] for t in current_level.find_super_worlds(current_world.world_id)]
                     if len(super_worlds) != 0:
@@ -411,7 +415,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 smooth_value = pow(1 - smooth_value, 4)
             else:
                 smooth_value = None
-        world_surface = current_level.world_to_surface(current_world, wiggle, smooth=smooth_value)
+        world_surface = current_level.world_to_surface(current_world, wiggle, smooth=smooth_value, debug=basics.options["debug"])
         del smooth_value
         # scale
         world_surface_size = window.get_size()
