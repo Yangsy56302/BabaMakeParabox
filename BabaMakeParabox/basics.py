@@ -72,7 +72,7 @@ default_options: Options = {
     "lang": "",
     "fps": 30,
     "fpw": 5,
-    "space_display_recursion_depth": 3,
+    "space_display_recursion_depth": 1,
     "smooth_animation_multiplier": 2,
     "compressed_json_output": False,
     "default_new_space": {
@@ -80,10 +80,21 @@ default_options: Options = {
         "height": 9,
         "color": 0x000000
     },
-    "object_type_shortcuts": ["baba", "wall", "rock", "flag", "skull", "text_space", "text_level", "text_is", "text_you", "text_win"],
+    "object_type_shortcuts": [
+        "baba", 
+        "wall", 
+        "rock", 
+        "flag", 
+        "text_space", 
+        "text_is", 
+        "text_you", 
+        "text_push", 
+        "text_win", 
+        "text_level"
+    ],
     "metatext": {
-        "enabled": False,
-        "tier": 1
+        "enabled": True,
+        "tier": 3
     },
     "bgm": {
         "enabled": False,
