@@ -1,21 +1,21 @@
 from typing import Any, Optional, TypedDict
 import random
 
-from BabaMakeParabox import basics, refs, colors, spaces, objects, rules
+from BabaMakeParabox import basics, positions, refs, colors, objects, rules
 
-def match_pos(obj: objects.Object, pos: spaces.Coord) -> bool:
+def match_pos(obj: objects.Object, pos: positions.Coordinate) -> bool:
     return obj.pos == pos
 
 class WorldJson(TypedDict):
     id: refs.WorldIDJson
-    size: spaces.CoordTuple
+    size: positions.CoordTuple
     color: colors.ColorHex
     object_list: list[objects.ObjectJson]
 
 class World(object):
-    def __init__(self, world_id: refs.WorldID, size: spaces.Coord, color: Optional[colors.ColorHex] = None) -> None:
+    def __init__(self, world_id: refs.WorldID, size: positions.Coordinate, color: Optional[colors.ColorHex] = None) -> None:
         self.world_id: refs.WorldID = world_id
-        self.size: spaces.Coord = size
+        self.size: positions.Coordinate = size
         self.color: colors.ColorHex = color if color is not None else colors.random_world_color()
         self.object_list: list[objects.Object] = []
         self.object_pos_index: list[list[objects.Object]]
@@ -30,14 +30,14 @@ class World(object):
         return self.size.x
     @width.setter
     def width(self, value: int) -> None:
-        self.size = spaces.Coord(value, self.size.y)
+        self.size = positions.Coordinate(value, self.size.y)
     @property
     def height(self) -> int:
         return self.size.y
     @height.setter
     def height(self, value: int) -> None:
-        self.size = spaces.Coord(self.size.x, value)
-    def out_of_range(self, coord: spaces.Coord) -> bool:
+        self.size = positions.Coordinate(self.size.x, value)
+    def out_of_range(self, coord: positions.Coordinate) -> bool:
         return coord[0] < 0 or coord[1] < 0 or coord[0] >= self.width or coord[1] >= self.height
     def pos_to_index(self, pos) -> int:
         return pos[1] * self.width + pos[0]
@@ -52,15 +52,15 @@ class World(object):
         self.object_list.append(obj)
         if not self.out_of_range(obj.pos):
             self.pos_to_objs(obj.pos).append(obj)
-    def get_objs_from_pos(self, pos: spaces.Coord) -> list[objects.Object]:
+    def get_objs_from_pos(self, pos: positions.Coordinate) -> list[objects.Object]:
         if self.out_of_range(pos):
             return []
         return self.pos_to_objs(pos)
-    def get_objs_from_pos_and_type[T: objects.Object](self, pos: spaces.Coord, object_type: type[T]) -> list[T]:
+    def get_objs_from_pos_and_type[T: objects.Object](self, pos: positions.Coordinate, object_type: type[T]) -> list[T]:
         if self.out_of_range(pos):
             return []
         return [o for o in self.pos_to_objs(pos) if isinstance(o, object_type)]
-    def get_objs_from_pos_and_special_noun(self, pos: spaces.Coord, noun_type: type[objects.SupportsIsReferenceOf]) -> list[objects.Object]:
+    def get_objs_from_pos_and_special_noun(self, pos: positions.Coordinate, noun_type: type[objects.SupportsIsReferenceOf]) -> list[objects.Object]:
         if self.out_of_range(pos):
             return []
         return [o for o in self.pos_to_objs(pos) if noun_type.isreferenceof(o)]
@@ -72,7 +72,7 @@ class World(object):
         if not self.out_of_range(obj.pos):
             self.pos_to_objs(obj.pos).remove(obj)
         self.object_list.remove(obj)
-    def del_objs_from_pos(self, pos: spaces.Coord) -> bool:
+    def del_objs_from_pos(self, pos: positions.Coordinate) -> bool:
         if self.out_of_range(pos):
             return False
         deleted = len(self.pos_to_objs(pos)) != 0
@@ -80,7 +80,7 @@ class World(object):
             self.object_list.remove(obj)
         self.object_pos_index[self.pos_to_index(pos)].clear()
         return deleted
-    def del_objs_from_pos_and_type(self, pos: spaces.Coord, object_type: type) -> bool:
+    def del_objs_from_pos_and_type(self, pos: positions.Coordinate, object_type: type) -> bool:
         del_objects = filter(lambda o: isinstance(o, object_type), self.pos_to_objs(pos))
         deleted = False
         for obj in del_objects:
@@ -89,7 +89,7 @@ class World(object):
             if not self.out_of_range(obj.pos):
                 self.pos_to_objs(pos).remove(obj)
         return deleted
-    def del_objs_from_pos_and_special_noun(self, pos: spaces.Coord, noun_type: type[objects.SupportsIsReferenceOf]) -> bool:
+    def del_objs_from_pos_and_special_noun(self, pos: positions.Coordinate, noun_type: type[objects.SupportsIsReferenceOf]) -> bool:
         del_objects = filter(lambda o: noun_type.isreferenceof(o), self.pos_to_objs(pos))
         deleted = False
         for obj in del_objects:
@@ -100,17 +100,17 @@ class World(object):
         return deleted
     def get_worlds(self) -> list[objects.WorldObject]:
         return [o for o in self.object_list if isinstance(o, objects.WorldObject)]
-    def get_worlds_from_pos(self, pos: spaces.Coord) -> list[objects.WorldObject]:
+    def get_worlds_from_pos(self, pos: positions.Coordinate) -> list[objects.WorldObject]:
         if self.out_of_range(pos):
             return []
         return [o for o in self.pos_to_objs(pos) if isinstance(o, objects.WorldObject)]
     def get_levels(self) -> list[objects.LevelObject]:
         return [o for o in self.object_list if isinstance(o, objects.LevelObject)]
-    def get_levels_from_pos(self, pos: spaces.Coord) -> list[objects.LevelObject]:
+    def get_levels_from_pos(self, pos: positions.Coordinate) -> list[objects.LevelObject]:
         if self.out_of_range(pos):
             return []
         return [o for o in self.pos_to_objs(pos) if isinstance(o, objects.LevelObject)]
-    def get_rules_from_pos_and_orient(self, pos: spaces.Coord, orient: spaces.Orient, stage: str = "before prefix") -> list[rules.Rule]:
+    def get_rules_from_pos_and_direct(self, pos: positions.Coordinate, direct: positions.Direction, stage: str = "before prefix") -> list[rules.Rule]:
         match_list: list[tuple[list[type[objects.Text]], list[type[objects.Text]], str]] = []
         rule_list: list[rules.Rule] = []
         if stage == "before prefix": # start, before prefix, or noun
@@ -185,13 +185,14 @@ class World(object):
             if len(unmatch_type) != 0:
                 matched_list = [o for o in matched_list if not issubclass(o, tuple(unmatch_type))]
             if len(matched_list) != 0:
-                rule_list_after_this = self.get_rules_from_pos_and_orient(spaces.pos_facing(pos, orient), orient, next_stage)
+                rule_list_after_this = self.get_rules_from_pos_and_direct(positions.front_position(pos, direct), direct, next_stage)
                 for rule_after_this in rule_list_after_this:
                     for matched_text in matched_list:
                         rule_list.append([matched_text] + rule_after_this)
             elif stage == "after property":
                 rule_list = [[]]
-        return rule_list # rest in piece, more-than-200-lines-long-and-extremely-fucking-confusing function(BabaMakeParabox.worlds.World.get_rules_from_pos_and_orient)
+        return rule_list
+    # rest in piece, more-than-200-lines-long-and-extremely-fucking-confusing function(BabaMakeParabox.worlds.World.get_rules_from_pos_and_orient)
     def get_rules(self) -> list[rules.Rule]:
         rule_list: list[rules.Rule] = []
         x_rule_dict: dict[int, list[rules.Rule]] = {}
@@ -199,7 +200,7 @@ class World(object):
         for x in range(self.width):
             for y in range(self.height):
                 x_rule_dict.setdefault(x, [])
-                new_rule_list = self.get_rules_from_pos_and_orient(spaces.Coord(x, y), spaces.Orient.D)
+                new_rule_list = self.get_rules_from_pos_and_direct(positions.Coordinate(x, y), positions.Direction.D)
                 if new_rule_list is not None:
                     for rule_index in range(len(new_rule_list)):
                         part_of_old_rule = False
@@ -210,7 +211,7 @@ class World(object):
                         if not part_of_old_rule:
                             x_rule_dict[x].append(new_rule_list[rule_index])
                 y_rule_dict.setdefault(y, [])
-                new_rule_list = self.get_rules_from_pos_and_orient(spaces.Coord(x, y), spaces.Orient.S)
+                new_rule_list = self.get_rules_from_pos_and_direct(positions.Coordinate(x, y), positions.Direction.S)
                 if new_rule_list is not None:
                     for rule_index in range(len(new_rule_list)):
                         part_of_old_rule = False
@@ -228,50 +229,50 @@ class World(object):
     def set_sprite_states(self, round_num: int = 0) -> None:
         for obj in self.object_list:
             if isinstance(obj, objects.Tiled):
-                w_pos = spaces.pos_facing(obj.pos, spaces.Orient.W)
+                w_pos = positions.front_position(obj.pos, positions.Direction.W)
                 w = len(self.get_objs_from_pos_and_type(w_pos, type(obj))) != 0
-                s_pos = spaces.pos_facing(obj.pos, spaces.Orient.S)
+                s_pos = positions.front_position(obj.pos, positions.Direction.S)
                 s = len(self.get_objs_from_pos_and_type(s_pos, type(obj))) != 0
-                a_pos = spaces.pos_facing(obj.pos, spaces.Orient.A)
+                a_pos = positions.front_position(obj.pos, positions.Direction.A)
                 a = len(self.get_objs_from_pos_and_type(a_pos, type(obj))) != 0
-                d_pos = spaces.pos_facing(obj.pos, spaces.Orient.D)
+                d_pos = positions.front_position(obj.pos, positions.Direction.D)
                 d = len(self.get_objs_from_pos_and_type(d_pos, type(obj))) != 0
-                connected = {spaces.Orient.W: w, spaces.Orient.S: s, spaces.Orient.A: a, spaces.Orient.D: d}
+                connected = {positions.Direction.W: w, positions.Direction.S: s, positions.Direction.A: a, positions.Direction.D: d}
             else:
-                connected = {spaces.Orient.W: False, spaces.Orient.S: False, spaces.Orient.A: False, spaces.Orient.D: False}
+                connected = {positions.Direction.W: False, positions.Direction.S: False, positions.Direction.A: False, positions.Direction.D: False}
             obj.set_sprite(round_num=round_num, connected=connected)
-    def default_input_position(self, side: spaces.Orient) -> spaces.Coord:
+    def default_input_position(self, side: positions.Direction) -> positions.Coordinate:
         match side:
-            case spaces.Orient.W:
-                return spaces.Coord(self.width // 2, -1)
-            case spaces.Orient.A:
-                return spaces.Coord(-1, self.height // 2)
-            case spaces.Orient.S:
-                return spaces.Coord(self.width // 2, self.height)
-            case spaces.Orient.D:
-                return spaces.Coord(self.width, self.height // 2)
-    def pos_to_transnum(self, pos: spaces.Coord, side: spaces.Orient) -> float:
-        if side in (spaces.Orient.W, spaces.Orient.S):
+            case positions.Direction.W:
+                return positions.Coordinate(self.width // 2, -1)
+            case positions.Direction.A:
+                return positions.Coordinate(-1, self.height // 2)
+            case positions.Direction.S:
+                return positions.Coordinate(self.width // 2, self.height)
+            case positions.Direction.D:
+                return positions.Coordinate(self.width, self.height // 2)
+    def pos_to_transnum(self, pos: positions.Coordinate, side: positions.Direction) -> float:
+        if side in (positions.Direction.W, positions.Direction.S):
             return (pos[0] + 0.5) / self.width
         else:
             return (pos[1] + 0.5) / self.height
-    def transnum_to_pos(self, num: float, side: spaces.Orient) -> spaces.Coord:
+    def transnum_to_pos(self, num: float, side: positions.Direction) -> positions.Coordinate:
         match side:
-            case spaces.Orient.W:
-                return spaces.Coord(int((num * self.width)), -1)
-            case spaces.Orient.S:
-                return spaces.Coord(int((num * self.width)), self.height)
-            case spaces.Orient.A:
-                return spaces.Coord(-1, int((num * self.height)))
-            case spaces.Orient.D:
-                return spaces.Coord(self.width, int((num * self.height)))
-    def transnum_to_smaller_transnum(self, num: float, pos: spaces.Coord, side: spaces.Orient) -> float:
-        if side in (spaces.Orient.W, spaces.Orient.S):
+            case positions.Direction.W:
+                return positions.Coordinate(int((num * self.width)), -1)
+            case positions.Direction.S:
+                return positions.Coordinate(int((num * self.width)), self.height)
+            case positions.Direction.A:
+                return positions.Coordinate(-1, int((num * self.height)))
+            case positions.Direction.D:
+                return positions.Coordinate(self.width, int((num * self.height)))
+    def transnum_to_smaller_transnum(self, num: float, pos: positions.Coordinate, side: positions.Direction) -> float:
+        if side in (positions.Direction.W, positions.Direction.S):
             return (num * self.width) - pos[0]
         else:
             return (num * self.height) - pos[1]
-    def transnum_to_bigger_transnum(self, num: float, pos: spaces.Coord, side: spaces.Orient) -> float:
-        if side in (spaces.Orient.W, spaces.Orient.S):
+    def transnum_to_bigger_transnum(self, num: float, pos: positions.Coordinate, side: positions.Direction) -> float:
+        if side in (positions.Direction.W, positions.Direction.S):
             return (num + pos[0]) / self.width
         else:
             return (num + pos[1]) / self.height
@@ -287,7 +288,7 @@ def json_to_world(json_object: WorldJson, ver: Optional[str] = None) -> World:
     else:
         world_id: refs.WorldID = refs.WorldID(**json_object["id"])
     new_world = World(world_id=world_id,
-                      size=spaces.Coord(*json_object["size"]),
+                      size=positions.Coordinate(*json_object["size"]),
                       color=json_object["color"])
     for obj in json_object["object_list"]:
         new_world.new_obj(objects.json_to_object(obj, ver))

@@ -1,8 +1,8 @@
 from typing import Any, NotRequired, Optional, TypeGuard, TypedDict
 import math
 import uuid
-from BabaMakeParabox import basics, collects, colors, refs, spaces
-from BabaMakeParabox.spaces import Coord
+from BabaMakeParabox import basics, collects, colors, positions, refs
+from BabaMakeParabox.positions import Coordinate
 
 class WorldObjectExtra(TypedDict):
     pass
@@ -106,8 +106,8 @@ class Properties(object):
 
 class ObjectJson(TypedDict):
     type: str
-    position: spaces.CoordTuple
-    orientation: spaces.OrientStr
+    position: positions.CoordTuple
+    direction: positions.DirectStr
     world_id: NotRequired[refs.WorldIDJson]
     world_object_extra: NotRequired[WorldObjectExtra]
     level_id: NotRequired[refs.LevelIDJson]
@@ -115,9 +115,9 @@ class ObjectJson(TypedDict):
     path_extra: NotRequired[PathExtra]
 
 class OldObjectState(object):
-    def __init__(self, pos: Optional[spaces.Coord] = None, orient: Optional[spaces.Orient] = None, world: Optional[refs.WorldID] = None, level: Optional[refs.LevelID] = None) -> None:
-        self.pos: Optional[spaces.Coord] = pos
-        self.orient: Optional[spaces.Orient] = orient
+    def __init__(self, pos: Optional[positions.Coordinate] = None, direct: Optional[positions.Direction] = None, world: Optional[refs.WorldID] = None, level: Optional[refs.LevelID] = None) -> None:
+        self.pos: Optional[positions.Coordinate] = pos
+        self.direct: Optional[positions.Direction] = direct
         self.world: Optional[refs.WorldID] = world
         self.level: Optional[refs.LevelID] = level
 
@@ -130,10 +130,10 @@ class Object(object):
     display_name: str
     sprite_color: colors.ColorHex
     sprite_varients: tuple[int, ...] = (0x0, )
-    def __init__(self, pos: spaces.Coord, orient: spaces.Orient = spaces.Orient.S, *, world_id: Optional[refs.WorldID] = None, level_id: Optional[refs.LevelID] = None) -> None:
+    def __init__(self, pos: positions.Coordinate, direct: positions.Direction = positions.Direction.S, *, world_id: Optional[refs.WorldID] = None, level_id: Optional[refs.LevelID] = None) -> None:
         self.uuid: uuid.UUID = uuid.uuid4()
-        self.pos: spaces.Coord = pos
-        self.orient: spaces.Orient = orient
+        self.pos: positions.Coordinate = pos
+        self.direct: positions.Direction = direct
         self.old_state: OldObjectState = OldObjectState()
         self.world_id: Optional[refs.WorldID] = world_id
         self.level_id: Optional[refs.LevelID] = level_id
@@ -146,7 +146,7 @@ class Object(object):
     def __repr__(self) -> str:
         string = ""
         string += f"{self.__class__.__name__}\n"
-        string += f"\tpos={self.pos}, orient={self.orient}\n"
+        string += f"\tpos={self.pos}, direct={self.direct}\n"
         string += f"\tworld_id={self.world_id}, level_id={self.level_id}\n"
         string += f"\tproperties: \n{self.properties}\n"
         return string
@@ -155,7 +155,7 @@ class Object(object):
     def set_sprite(self, **kwds) -> None:
         self.sprite_state = 0
     def to_json(self) -> ObjectJson:
-        json_object: ObjectJson = {"type": self.json_name, "position": tuple(self.pos), "orientation": spaces.orient_to_str(self.orient)}
+        json_object: ObjectJson = {"type": self.json_name, "position": tuple(self.pos), "direction": positions.direction_to_str(self.direct)}
         if self.world_id is not None:
             json_object = {**json_object, "world_id": self.world_id.to_json()}
         if self.level_id is not None:
@@ -174,9 +174,9 @@ class Static(Object):
 
 class Tiled(Object):
     sprite_varients: tuple[int, ...] = tuple(i for i in range(0x10))
-    def set_sprite(self, connected: Optional[dict[spaces.Orient, bool]] = None, **kwds) -> None:
-        connected = {spaces.Orient.W: False, spaces.Orient.S: False, spaces.Orient.A: False, spaces.Orient.D: False} if connected is None else connected
-        self.sprite_state = (connected[spaces.Orient.D] * 0x1) | (connected[spaces.Orient.W] * 0x2) | (connected[spaces.Orient.A] * 0x4) | (connected[spaces.Orient.S] * 0x8)
+    def set_sprite(self, connected: Optional[dict[positions.Direction, bool]] = None, **kwds) -> None:
+        connected = {positions.Direction.W: False, positions.Direction.S: False, positions.Direction.A: False, positions.Direction.D: False} if connected is None else connected
+        self.sprite_state = (connected[positions.Direction.D] * 0x1) | (connected[positions.Direction.W] * 0x2) | (connected[positions.Direction.A] * 0x4) | (connected[positions.Direction.S] * 0x8)
 
 class Animated(Object):
     sprite_varients: tuple[int, ...] = tuple(i for i in range(0x4))
@@ -186,7 +186,7 @@ class Animated(Object):
 class Directional(Object):
     sprite_varients: tuple[int, ...] = tuple(i * 0x8 for i in range(0x4))
     def set_sprite(self, **kwds) -> None:
-        self.sprite_state = int(math.log2(spaces.orient_to_int(self.orient))) * 0x8
+        self.sprite_state = int(math.log2(positions.direction_to_bit(self.direct))) * 0x8
 
 class AnimatedDirectional(Object):
     sprite_varients: tuple[int, ...] = \
@@ -195,7 +195,7 @@ class AnimatedDirectional(Object):
         tuple(i * 0x8 + 0x2 for i in range(0x4)) + \
         tuple(i * 0x8 + 0x3 for i in range(0x4))
     def set_sprite(self, round_num: int = 0, **kwds) -> None:
-        self.sprite_state = int(math.log2(spaces.orient_to_int(self.orient))) * 0x8 | round_num % 4
+        self.sprite_state = int(math.log2(positions.direction_to_bit(self.direct))) * 0x8 | round_num % 4
 
 class Character(Object):
     sprite_varients: tuple[int, ...] = \
@@ -206,9 +206,9 @@ class Character(Object):
     def set_sprite(self, **kwds) -> None:
         if self.move_number > 0:
             temp_state = (self.sprite_state & 0x3) + 1 if (self.sprite_state & 0x3) != 0x3 else 0x0
-            self.sprite_state = int(math.log2(spaces.orient_to_int(self.orient))) * 0x8 | temp_state
+            self.sprite_state = int(math.log2(positions.direction_to_bit(self.direct))) * 0x8 | temp_state
         else:
-            self.sprite_state = int(math.log2(spaces.orient_to_int(self.orient))) * 0x8 | (self.sprite_state & 0x3)
+            self.sprite_state = int(math.log2(positions.direction_to_bit(self.direct))) * 0x8 | (self.sprite_state & 0x3)
 
 class Baba(Character):
     json_name = "baba"
@@ -387,9 +387,9 @@ class Cursor(Static):
 class WorldObject(Object):
     light_overlay: colors.ColorHex = 0x000000
     dark_overlay: colors.ColorHex = 0xFFFFFF
-    def __init__(self, pos: spaces.Coord, orient: spaces.Orient = spaces.Orient.S, *, world_id: refs.WorldID, level_id: Optional[refs.LevelID] = None, world_object_extra: WorldObjectExtra = default_world_object_extra) -> None:
+    def __init__(self, pos: positions.Coordinate, direct: positions.Direction = positions.Direction.S, *, world_id: refs.WorldID, level_id: Optional[refs.LevelID] = None, world_object_extra: WorldObjectExtra = default_world_object_extra) -> None:
         self.world_id: refs.WorldID
-        super().__init__(pos, orient, world_id=world_id, level_id=level_id)
+        super().__init__(pos, direct, world_id=world_id, level_id=level_id)
         self.world_object_extra: WorldObjectExtra = world_object_extra
     def to_json(self) -> ObjectJson:
         return {**super().to_json(), "world_object_extra": self.world_object_extra}
@@ -410,9 +410,9 @@ world_object_types: list[type[WorldObject]] = [World, Clone]
 default_world_object_type: type[WorldObject] = World
 
 class LevelObject(Object):
-    def __init__(self, pos: spaces.Coord, orient: spaces.Orient = spaces.Orient.S, *, world_id: Optional[refs.WorldID] = None, level_id: refs.LevelID, level_object_extra: LevelObjectExtra = default_level_object_extra) -> None:
+    def __init__(self, pos: positions.Coordinate, direct: positions.Direction = positions.Direction.S, *, world_id: Optional[refs.WorldID] = None, level_id: refs.LevelID, level_object_extra: LevelObjectExtra = default_level_object_extra) -> None:
         self.level_id: refs.LevelID
-        super().__init__(pos, orient, world_id=world_id, level_id=level_id)
+        super().__init__(pos, direct, world_id=world_id, level_id=level_id)
         self.level_object_extra: LevelObjectExtra = level_object_extra
     def to_json(self) -> ObjectJson:
         return {**super().to_json(), "level_object_extra": self.level_object_extra}
@@ -431,16 +431,16 @@ class Path(Tiled):
     sprite_name = "line"
     display_name = "Path"
     sprite_color: colors.ColorHex = colors.SILVER
-    def __init__(self, pos: spaces.Coord, orient: spaces.Orient = spaces.Orient.S, *, world_id: Optional[refs.WorldID] = None, level_id: Optional[refs.LevelID] = None, unlocked: bool = False, conditions: Optional[dict[type[collects.Collectible], int]] = None, world_object_info: Optional[refs.WorldID] = None, level_object_info: Optional[refs.LevelID] = None) -> None:
-        super().__init__(pos, orient, world_id=world_object_info, level_id=level_object_info)
+    def __init__(self, pos: positions.Coordinate, direct: positions.Direction = positions.Direction.S, *, world_id: Optional[refs.WorldID] = None, level_id: Optional[refs.LevelID] = None, unlocked: bool = False, conditions: Optional[dict[type[collects.Collectible], int]] = None, world_object_info: Optional[refs.WorldID] = None, level_object_info: Optional[refs.LevelID] = None) -> None:
+        super().__init__(pos, direct, world_id=world_object_info, level_id=level_object_info)
         self.unlocked: bool = unlocked
         self.conditions: dict[type[collects.Collectible], int] = conditions if conditions is not None else {}
     def to_json(self) -> ObjectJson:
         return {**super().to_json(), "path_extra": {"unlocked": self.unlocked, "conditions": {k.json_name: v for k, v in self.conditions.items()}}}
 
 class Game(Object):
-    def __init__(self, pos: spaces.Coord, orient: spaces.Orient = spaces.Orient.S, *, world_id: Optional[refs.WorldID] = None, level_id: Optional[refs.LevelID] = None, ref_type, world_object_info: refs.WorldID | None = None, level_object_info: refs.LevelID | None = None) -> None:
-        super().__init__(pos, orient, world_id=world_object_info, level_id=level_object_info)
+    def __init__(self, pos: positions.Coordinate, direct: positions.Direction = positions.Direction.S, *, world_id: Optional[refs.WorldID] = None, level_id: Optional[refs.LevelID] = None, ref_type, world_object_info: refs.WorldID | None = None, level_object_info: refs.LevelID | None = None) -> None:
+        super().__init__(pos, direct, world_id=world_object_info, level_id=level_object_info)
         self.ref_type = ref_type
     json_name = "game"
     display_name = "Game"
@@ -1061,16 +1061,16 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
         raise ValueError(json_object["type"])
     if issubclass(object_type, LevelObject):
         if level_id is not None:
-            return object_type(pos=spaces.Coord(*json_object["position"]),
-                            orient=spaces.str_to_orient(json_object["orientation"]),
+            return object_type(pos=positions.Coordinate(*json_object["position"]),
+                            direct=positions.str_to_direction(json_object["direction"]),
                             world_id=world_id,
                             level_id=level_id,
                             level_object_extra=level_object_extra)
         raise ValueError(level_id)
     if issubclass(object_type, WorldObject):
         if world_id is not None:
-            return object_type(pos=spaces.Coord(*json_object["position"]),
-                            orient=spaces.str_to_orient(json_object["orientation"]),
+            return object_type(pos=positions.Coordinate(*json_object["position"]),
+                            direct=positions.str_to_direction(json_object["direction"]),
                             world_id=world_id,
                             level_id=level_id,
                             world_object_extra=world_object_extra)
@@ -1081,13 +1081,13 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
             path_extra = {"unlocked": False, "conditions": {}}
         reversed_collectible_dict = {v: k for k, v in collects.collectible_dict.items()}
         conditions: dict[type[collects.Collectible], int] = {reversed_collectible_dict[k]: v for k, v in path_extra["conditions"].items()}
-        return object_type(pos=spaces.Coord(*json_object["position"]),
-                        orient=spaces.str_to_orient(json_object["orientation"]),
+        return object_type(pos=positions.Coordinate(*json_object["position"]),
+                        direct=positions.str_to_direction(json_object["direction"]),
                         world_id=world_id,
                         level_id=level_id,
                         unlocked=path_extra["unlocked"],
                         conditions=conditions)
-    return object_type(pos=spaces.Coord(*json_object["position"]),
-                    orient=spaces.str_to_orient(json_object["orientation"]),
+    return object_type(pos=positions.Coordinate(*json_object["position"]),
+                    direct=positions.str_to_direction(json_object["direction"]),
                     world_id=world_id,
                     level_id=level_id)

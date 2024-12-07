@@ -4,7 +4,7 @@ import json
 
 import pygame
 
-from BabaMakeParabox import basics, languages, refs, spaces, colors, objects, collects, rules, displays, worlds, levels, levelpacks, plays, edits, subs
+from BabaMakeParabox import basics, languages, positions, refs, colors, objects, collects, rules, displays, worlds, levels, levelpacks, plays, edits, subs
 def show_dir(path: str, filter_func: Optional[Callable[[str], bool]] = None, tab: int = 0) -> None:
     def default_filter_func(filename: str) -> bool:
         return True
@@ -52,7 +52,7 @@ def pre_edit() -> bool:
     languages.lang_print("launch.open.levelpack.empty.editor")
     input_filename = languages.lang_input("input.file.name")
     default_new_world_settings = basics.options["default_new_world"]
-    size = spaces.Coord(default_new_world_settings["width"], default_new_world_settings["height"])
+    size = positions.Coordinate(default_new_world_settings["width"], default_new_world_settings["height"])
     color = default_new_world_settings["color"]
     if input_filename != "":
         input_filename += "" if basics.options["debug"] else ".json"
@@ -245,5 +245,5 @@ def main() -> None:
         pygame.quit()
         languages.lang_print("launch.thank_you")
 
-__all__ = ["basics", "refs", "languages", "spaces", "colors", "objects", "collects", "rules", "displays", "worlds", "levels", "levelpacks", "edits", "plays", "subs", "main"]
+__all__ = ["basics", "refs", "languages", "positions", "colors", "objects", "collects", "rules", "displays", "worlds", "levels", "levelpacks", "edits", "plays", "subs", "main"]
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           # monika was there ;)

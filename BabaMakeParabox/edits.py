@@ -1,7 +1,7 @@
 import copy
 import random
 
-from BabaMakeParabox import basics, languages, colors, refs, spaces, objects, collects, rules, worlds, displays, levels, levelpacks
+from BabaMakeParabox import basics, languages, colors, positions, refs, objects, collects, rules, worlds, displays, levels, levelpacks
 
 import pygame
 
@@ -15,8 +15,8 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     current_world_index: int = 0
     current_world = current_level.world_list[current_world_index]
     current_object_type = objects.Baba
-    current_orient = spaces.Orient.S
-    current_cursor_pos = spaces.Coord(0, 0)
+    current_direct = positions.Direction.S
+    current_cursor_pos = positions.Coordinate(0, 0)
     current_clipboard = []
     window = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
     pygame.display.set_caption(f"Baba Make Parabox Editor Version {basics.versions}")
@@ -68,8 +68,8 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     keys = {v: False for v in keybinds.values()}
     keys.update({v: False for v in keymods.values()})
     mouses: tuple[int, int, int, int, int] = (0, 0, 0, 0, 0)
-    mouse_pos: spaces.Coord
-    mouse_pos_in_world: spaces.Coord
+    mouse_pos: positions.Coordinate
+    mouse_pos_in_world: positions.Coordinate
     world_surface_size = window.get_size()
     world_surface_pos = (0, 0)
     displays.sprites.update()
@@ -116,8 +116,8 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             int(mouse_scroll[0]), int(mouse_scroll[1])
         )
         del new_mouses
-        mouse_pos = spaces.Coord(*pygame.mouse.get_pos())
-        mouse_pos_in_world = spaces.Coord(
+        mouse_pos = positions.Coordinate(*pygame.mouse.get_pos())
+        mouse_pos_in_world = positions.Coordinate(
             (mouse_pos[0] - world_surface_pos[0]) * current_world.width // world_surface_size[0],
             (mouse_pos[1] - world_surface_pos[1]) * current_world.height // world_surface_size[1]
         )
@@ -170,7 +170,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                                     icon_name = "empty"
                                     icon_color = colors.WHITE
                                 level_object_extra: objects.LevelObjectExtra = {"icon": {"name": icon_name, "color": icon_color}}
-                                current_world.new_obj(current_object_type(current_cursor_pos, current_orient, level_id=level_id, level_object_extra=level_object_extra))
+                                current_world.new_obj(current_object_type(current_cursor_pos, current_direct, level_id=level_id, level_object_extra=level_object_extra))
                             elif issubclass(current_object_type, objects.WorldObject):
                                 world_id: refs.WorldID = current_world.world_id
                                 if keys["LCTRL"] or keys["RCTRL"]:
@@ -186,7 +186,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                                             break
                                     if current_level.get_world(refs.WorldID(name, infinite_tier)) is not None:
                                         world_id = refs.WorldID(name, infinite_tier)
-                                current_world.new_obj(current_object_type(current_cursor_pos, current_orient, world_id=world_id))
+                                current_world.new_obj(current_object_type(current_cursor_pos, current_direct, world_id=world_id))
                             elif issubclass(current_object_type, objects.Path):
                                 unlocked = False
                                 conditions: dict[type[collects.Collectible], int] = {}
@@ -213,9 +213,9 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                                                 break
                                         conditions[collects_type] = collects_count
                                         more_condition = languages.lang_input("edit.path.new.condition") in languages.yes
-                                current_world.new_obj(current_object_type(current_cursor_pos, current_orient, unlocked=unlocked, conditions=conditions))
+                                current_world.new_obj(current_object_type(current_cursor_pos, current_direct, unlocked=unlocked, conditions=conditions))
                             else:
-                                current_world.new_obj(current_object_type(current_cursor_pos, current_orient))
+                                current_world.new_obj(current_object_type(current_cursor_pos, current_direct))
                 elif mouses[2] == 1:
                     if keys["LALT"] or keys["RALT"]: # leave world; leave level (shift)
                         if keys["LSHIFT"] or keys["RSHIFT"]:
@@ -268,13 +268,13 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                         current_object_type = current_object_type_list[current_object_type_index + 1 if current_object_type_index < len(current_object_type_list) - 1 else 0]
         # cursor move; object facing change (alt)
         if keys["W"] or keys["UP"]:
-            current_orient = spaces.Orient.W
+            current_direct = positions.Direction.W
         elif keys["S"] or keys["DOWN"]:
-            current_orient = spaces.Orient.S
+            current_direct = positions.Direction.S
         elif keys["A"] or keys["LEFT"]:
-            current_orient = spaces.Orient.A
+            current_direct = positions.Direction.A
         elif keys["D"] or keys["RIGHT"]:
-            current_orient = spaces.Orient.D
+            current_direct = positions.Direction.D
         # object select from palette / save to palette (shift)
         elif any(map(lambda i: keys[str(i)], range(10))):
             for i in range(10):
@@ -310,7 +310,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                             languages.lang_print("warn.value.invalid", value=height, cls="int")
                         else:
                             break
-                    size = spaces.Coord(width, height)
+                    size = positions.Coordinate(width, height)
                     while True:
                         infinite_tier = languages.lang_input("edit.world.new.infinite_tier")
                         try:
@@ -354,7 +354,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                             languages.lang_print("warn.value.invalid", value=height, cls="int")
                         else:
                             break
-                    size = spaces.Coord(width, height)
+                    size = positions.Coordinate(width, height)
                     while True:
                         infinite_tier = languages.lang_input("edit.world.new.infinite_tier")
                         try:
@@ -473,9 +473,9 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         if world_changed:
             languages.lang_print("seperator.title", text=languages.lang_format("title.world"))
             if current_cursor_pos[0] > current_world.width:
-                current_cursor_pos = spaces.Coord(current_world.width, current_cursor_pos[1])
+                current_cursor_pos = positions.Coordinate(current_world.width, current_cursor_pos[1])
             if current_cursor_pos[1] > current_world.height:
-                current_cursor_pos = spaces.Coord(current_cursor_pos[0], current_world.height)
+                current_cursor_pos = positions.Coordinate(current_cursor_pos[0], current_world.height)
             current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
             current_world = current_level.world_list[current_world_index]
             languages.lang_print("edit.world.current.name", value=current_world.world_id.name)

@@ -2,19 +2,19 @@ import random
 import copy
 import os
 
-from BabaMakeParabox import basics, languages, refs, sounds, spaces, objects, collects, displays, worlds, levels, levelpacks
+from BabaMakeParabox import basics, languages, positions, refs, sounds, objects, collects, displays, worlds, levels, levelpacks
 
 import pygame
 
 class GameIsDoneError(Exception):
     pass
 
-movements: dict[str, tuple[str, spaces.PlayerOperation, spaces.Coord]] = {
-    "W": ("S", spaces.Orient.W, spaces.Coord(0, -1)),
-    "S": ("W", spaces.Orient.S, spaces.Coord(0, 1)),
-    "A": ("D", spaces.Orient.A, spaces.Coord(-1, 0)),
-    "D": ("A", spaces.Orient.D, spaces.Coord(1, 0)),
-    " ": ("None", spaces.NullOrient.O, spaces.Coord(0, 0))
+movements: dict[str, tuple[str, positions.PlayerOperation, positions.Coordinate]] = {
+    "W": ("S", positions.Direction.W, positions.Coordinate(0, -1)),
+    "S": ("W", positions.Direction.S, positions.Coordinate(0, 1)),
+    "A": ("D", positions.Direction.A, positions.Coordinate(-1, 0)),
+    "D": ("A", positions.Direction.D, positions.Coordinate(1, 0)),
+    " ": ("None", positions.NoDirect.O, positions.Coordinate(0, 0))
 }
 
 def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
@@ -69,10 +69,10 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     keys = {v: False for v in keybinds.values()}
     keys.update({v: False for v in keymods.values()})
     mouses: tuple[int, int, int, int, int] = (0, 0, 0, 0, 0)
-    mouse_pos: spaces.Coord
-    mouse_pos_in_world: spaces.Coord
-    world_surface_size: spaces.CoordTuple = window.get_size()
-    world_surface_pos: spaces.CoordTuple = (0, 0)
+    mouse_pos: positions.Coordinate
+    mouse_pos_in_world: positions.Coordinate
+    world_surface_size: positions.CoordTuple = window.get_size()
+    world_surface_pos: positions.CoordTuple = (0, 0)
     displays.sprites.update()
     level_changed = False
     world_changed = False
@@ -126,8 +126,8 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             int(mouse_scroll[0]), int(mouse_scroll[1])
         )
         del new_mouses
-        mouse_pos = spaces.Coord(*pygame.mouse.get_pos())
-        mouse_pos_in_world = spaces.Coord(
+        mouse_pos = positions.Coordinate(*pygame.mouse.get_pos())
+        mouse_pos_in_world = positions.Coordinate(
             (mouse_pos[0] - world_surface_pos[0]) * current_world.width // world_surface_size[0],
             (mouse_pos[1] - world_surface_pos[1]) * current_world.height // world_surface_size[1]
         )
