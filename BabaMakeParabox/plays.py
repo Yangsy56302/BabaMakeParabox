@@ -421,10 +421,35 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         elif window.get_width() // current_world.width < window.get_height() // current_world.height:
             world_surface_size = (window.get_width(), window.get_width() * current_world.height // current_world.width)
             world_surface_pos = (0, (window.get_height() - world_surface_size[1]) // 2)
-        smooth_value = displays.calc_smooth(frame_since_last_move)
-        world_surface = current_level.world_to_surface(current_world, wiggle, world_surface_size, smooth=smooth_value, debug=basics.options["debug"])
-        del smooth_value
-        window.blit(pygame.transform.scale(world_surface, world_surface_size), world_surface_pos)
+        if not current_level.game_properties.enabled(objects.TextHide):
+            if not current_level.properties[objects.default_level_object_type].enabled(objects.TextHide):
+                smooth_value = displays.calc_smooth(frame_since_last_move)
+                world_surface = current_level.world_to_surface(current_world, wiggle, world_surface_size, smooth=smooth_value, debug=basics.options["debug"])
+                window.blit(pygame.transform.scale(world_surface, world_surface_size), world_surface_pos)
+                del smooth_value
+            # game transform
+            game_transform_to = [t for t, n in current_level.game_properties.enabled_dict().items() if issubclass(t, objects.Noun) and not n]
+            if len(game_transform_to) != 0:
+                transparent_black_background = pygame.Surface(window.get_size(), pygame.SRCALPHA)
+                transparent_black_background.fill("#00000080")
+                window.blit(transparent_black_background, (0, 0))
+            game_transform_to = [o.ref_type for o in game_transform_to if o is not None]
+            for object_type in game_transform_to:
+                window.blit(pygame.transform.scale(displays.sprites.get(object_type.sprite_name, 0, wiggle), window.get_size()), (0, 0))
+            del game_transform_to
+            # offset
+            display_offset_speed[0] = basics.absclampf(display_offset_speed[0], window.get_width() / basics.options["fps"] * 4)
+            display_offset_speed[1] = basics.absclampf(display_offset_speed[1], window.get_height() / basics.options["fps"] * 4)
+            display_offset[0] += display_offset_speed[0]
+            display_offset[1] += display_offset_speed[1]
+            display_offset[0] %= float(window.get_width())
+            display_offset[1] %= float(window.get_height())
+            if display_offset[0] != 0.0 or display_offset[1] != 0.0:
+                window_surface = pygame.display.get_surface().copy()
+                window.blit(window_surface, [int(display_offset[0]), int(display_offset[1])])
+                window.blit(window_surface, [int(display_offset[0] - window.get_width()), int(display_offset[1])])
+                window.blit(window_surface, [int(display_offset[0]), int(display_offset[1] - window.get_height())])
+                window.blit(window_surface, [int(display_offset[0] - window.get_width()), int(display_offset[1] - window.get_height())])
         # fps
         real_fps = min(1000 / milliseconds, (real_fps * (basics.options["fps"] - 1) + 1000 / milliseconds) / basics.options["fps"])
         if keys["F1"]:
@@ -434,29 +459,6 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             for i in range(len(real_fps_string)):
                 window.blit(displays.sprites.get(f"text_{real_fps_string[i]}", 0, wiggle), (i * displays.sprite_size, 0))
             del real_fps_string
-        # game transform
-        game_transform_to = [t for t, n in current_level.game_properties.enabled_dict().items() if issubclass(t, objects.Noun) and not n]
-        if len(game_transform_to) != 0:
-            transparent_black_background = pygame.Surface(window.get_size(), pygame.SRCALPHA)
-            transparent_black_background.fill("#00000080")
-            window.blit(transparent_black_background, (0, 0))
-        game_transform_to = [o.ref_type for o in game_transform_to if o is not None]
-        for object_type in game_transform_to:
-            window.blit(pygame.transform.scale(displays.sprites.get(object_type.sprite_name, 0, wiggle), window.get_size()), (0, 0))
-        del game_transform_to
-        # offset
-        display_offset_speed[0] = basics.absclampf(display_offset_speed[0], window.get_width() / basics.options["fps"] * 4)
-        display_offset_speed[1] = basics.absclampf(display_offset_speed[1], window.get_height() / basics.options["fps"] * 4)
-        display_offset[0] += display_offset_speed[0]
-        display_offset[1] += display_offset_speed[1]
-        display_offset[0] %= float(window.get_width())
-        display_offset[1] %= float(window.get_height())
-        if display_offset[0] != 0.0 or display_offset[1] != 0.0:
-            window_surface = pygame.display.get_surface().copy()
-            window.blit(window_surface, [int(display_offset[0]), int(display_offset[1])])
-            window.blit(window_surface, [int(display_offset[0] - window.get_width()), int(display_offset[1])])
-            window.blit(window_surface, [int(display_offset[0]), int(display_offset[1] - window.get_height())])
-            window.blit(window_surface, [int(display_offset[0] - window.get_width()), int(display_offset[1] - window.get_height())])
         pygame.display.flip()
         milliseconds = clock.tick(basics.options["fps"])
     pygame.display.quit()

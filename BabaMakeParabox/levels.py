@@ -1064,8 +1064,8 @@ class Level(object):
     def world_to_surface(self, world: worlds.World, wiggle: int, size: spaces.CoordTuple, depth: int = 0, smooth: Optional[float] = None, cursor: Optional[spaces.Coord] = None, debug: bool = False) -> pygame.Surface:
         pixel_size = math.ceil(max(size[0] / world.width, size[1] / world.height) / displays.sprite_size)
         scaled_sprite_size = pixel_size * displays.sprite_size
-        if depth > basics.options["world_display_recursion_depth"]:
-            world_surface = pygame.Surface((scaled_sprite_size, scaled_sprite_size))
+        if depth > basics.options["world_display_recursion_depth"] or world.properties[objects.default_world_object_type].enabled(objects.TextHide):
+            world_surface = pygame.Surface((scaled_sprite_size, scaled_sprite_size), pygame.SRCALPHA)
             world_surface.fill(world.color)
             world_surface = displays.simple_object_to_surface(objects.WorldObject(spaces.Coord(0, 0), world_id=world.world_id), default_surface=world_surface)
             return world_surface
@@ -1080,6 +1080,8 @@ class Level(object):
         object_list.extend([(None, o) for o in world.object_list if isinstance(o, displays.order) and (world.world_id, o) not in object_list])
         for super_world_id, obj in object_list:
             if not isinstance(obj, displays.order):
+                continue
+            if obj.properties.enabled(objects.TextHide):
                 continue
             obj_surface: pygame.Surface = displays.simple_object_to_surface(obj, wiggle=wiggle, debug=debug)
             obj_surface_pos: spaces.Coord = spaces.Coord(obj.pos.x * scaled_sprite_size, obj.pos.y * scaled_sprite_size)
