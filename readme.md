@@ -277,7 +277,7 @@ _……大概吧。_
 
 ## [更新日志](changelog.md)
 
-见<changelog.md>（标题也是链接）。
+见changelog.md（段落标题就是链接）。
 
 ## 联系作者
 

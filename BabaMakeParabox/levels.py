@@ -225,13 +225,29 @@ class Level(object):
                         if prop_type != (objects.TextWord):
                             continue
                         new_match_obj_list: list[objects.Object] = []
-                        if issubclass(noun_type, objects.SupportsIsReferenceOf):
-                            new_match_obj_list = [o for o in world.object_list if noun_type.isreferenceof(o, all_list = self.all_list)]
-                        else:
+                        if issubclass(noun_type, objects.GeneralNoun):
+                            object_type = noun_type.ref_type
+                            if issubclass(object_type, objects.LevelObject):
+                                if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
+                                    if oper_type == objects.TextIs:
+                                        self.properties[object_type].update(prop_type, prop_negated_tier)
+                                    else:
+                                        self.special_operator_properties[object_type][oper_type].update(prop_type, prop_negated_tier)
+                            elif issubclass(object_type, objects.WorldObject):
+                                if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
+                                    if oper_type == objects.TextIs:
+                                        world.properties[object_type].update(prop_type, prop_negated_tier)
+                                    else:
+                                        world.special_operator_properties[object_type][oper_type].update(prop_type, prop_negated_tier)
                             if noun_negated_tier % 2 == 1:
-                                new_match_obj_list = [o for o in world.object_list if objects.TextAll.isreferenceof(o, all_list = self.all_list) and not isinstance(o, noun_type.ref_type)]
+                                new_match_obj_list = [o for o in world.object_list if objects.TextAll.isreferenceof(o, all_list = self.all_list) and not isinstance(o, object_type)]
                             else:
-                                new_match_obj_list = world.get_objs_from_type(noun_type.ref_type)
+                                new_match_obj_list = [o for o in world.get_objs_from_type(object_type)]
+                        elif issubclass(noun_type, objects.SupportsIsReferenceOf):
+                            if noun_negated_tier % 2 == 1:
+                                new_match_obj_list = [o for o in world.object_list if objects.TextAll.isreferenceof(o, all_list = self.all_list) and not noun_type.isreferenceof(o, all_list = self.all_list)]
+                            else:
+                                new_match_obj_list = [o for o in world.object_list if noun_type.isreferenceof(o, all_list = self.all_list)]
                         for obj in new_match_obj_list:
                             if self.meet_infix_conditions(world, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(world, obj, prefix_info_list):
                                 new_prop_list.append((obj, (prop_type, prop_negated_tier)))
@@ -278,9 +294,9 @@ class Level(object):
                                 if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
                                     self.game_properties.update(prop_type, prop_negated_tier)
                             elif noun_negated_tier % 2 == 1:
-                                new_match_obj_list = [o for o in world.object_list if objects.TextAll.isreferenceof(o, all_list = self.all_list) and not isinstance(o, noun_type.ref_type)]
+                                new_match_obj_list = [o for o in world.object_list if objects.TextAll.isreferenceof(o, all_list = self.all_list) and not isinstance(o, object_type)]
                             else:
-                                new_match_obj_list = [o for o in world.get_objs_from_type(noun_type.ref_type)]
+                                new_match_obj_list = [o for o in world.get_objs_from_type(object_type)]
                         elif issubclass(noun_type, objects.SupportsIsReferenceOf):
                             if noun_negated_tier % 2 == 1:
                                 new_match_obj_list = [o for o in world.object_list if objects.TextAll.isreferenceof(o, all_list = self.all_list) and not noun_type.isreferenceof(o, all_list = self.all_list)]
@@ -304,7 +320,6 @@ class Level(object):
                         oper_type = rule_info.oper_type
                         prop_negated_tier = rule_info.prop_negated_tier
                         prop_type = rule_info.prop_type
-                        object_type = noun_type.ref_type
                         new_match_obj_list: list[objects.Object] = []
                         if issubclass(noun_type, objects.GeneralNoun):
                             object_type = noun_type.ref_type
@@ -312,9 +327,9 @@ class Level(object):
                                 if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(world, objects.Object(spaces.Coord(0, 0)), prefix_info_list, True):
                                     self.game_properties.update(prop_type, prop_negated_tier)
                             elif noun_negated_tier % 2 == 1:
-                                new_match_obj_list = [o for o in world.object_list if objects.TextAll.isreferenceof(o, all_list = self.all_list) and not isinstance(o, noun_type.ref_type)]
+                                new_match_obj_list = [o for o in world.object_list if objects.TextAll.isreferenceof(o, all_list = self.all_list) and not isinstance(o, object_type)]
                             else:
-                                new_match_obj_list = [o for o in world.get_objs_from_type(noun_type.ref_type)]
+                                new_match_obj_list = [o for o in world.get_objs_from_type(object_type)]
                         elif issubclass(noun_type, objects.SupportsIsReferenceOf):
                             if noun_negated_tier % 2 == 1:
                                 new_match_obj_list = [o for o in world.object_list if objects.TextAll.isreferenceof(o, all_list = self.all_list) and not noun_type.isreferenceof(o, all_list = self.all_list)]

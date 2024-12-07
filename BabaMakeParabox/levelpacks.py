@@ -173,14 +173,14 @@ class Levelpack(object):
                             active_level.set_world(new_world)
                             world.new_obj(new_type(old_obj.pos, old_obj.orient, world_id=world_id))
                             transform_success = True
-                    elif new_type == objects.Text:
+                    elif issubclass(new_noun, objects.TextText):
                         if not isinstance(old_obj, objects.Text):
-                            transform_success = True
                             new_obj = objects.get_noun_from_type(old_type)(old_obj.pos, old_obj.orient, world_id=old_obj.world_id, level_id=old_obj.level_id)
+                            transform_success = True
                             world.new_obj(new_obj)
                     else:
                         transform_success = True
-                        new_obj = new_noun(old_obj.pos, old_obj.orient, world_id=old_obj.world_id, level_id=old_obj.level_id)
+                        new_obj = new_type(old_obj.pos, old_obj.orient, world_id=old_obj.world_id, level_id=old_obj.level_id)
                         world.new_obj(new_obj)
                 if transform_success:
                     delete_object_list.append(old_obj)
@@ -244,7 +244,7 @@ class Levelpack(object):
                             new_obj = new_type(old_obj.pos, old_obj.orient, level_id=new_level_id, level_object_extra=new_level_object_extra)
                         elif issubclass(new_type, objects.Game):
                             new_obj = objects.Game(old_obj.pos, old_obj.orient, ref_type=objects.get_noun_from_type(world_object_type))
-                        elif issubclass(new_type, objects.Text):
+                        elif issubclass(new_noun, objects.TextText):
                             new_obj = objects.get_noun_from_type(world_object_type)(old_obj.pos, old_obj.orient, world_id=old_obj.world_id)
                         else:
                             new_obj = new_type(old_obj.pos, old_obj.orient, world_id=old_obj.world_id)
@@ -307,7 +307,7 @@ class Levelpack(object):
                         new_obj = new_type(old_obj.pos, old_obj.orient, world_id=active_level.main_world_id)
                     elif issubclass(new_type, objects.Game):
                         new_obj = objects.Game(old_obj.pos, old_obj.orient, ref_type=objects.get_noun_from_type(level_object_type))
-                    elif issubclass(new_type, objects.Text):
+                    elif issubclass(new_noun, objects.TextText):
                         new_obj = objects.get_noun_from_type(level_object_type)(old_obj.pos, old_obj.orient, level_id=active_level.level_id)
                     else:
                         new_obj = new_type(old_obj.pos, old_obj.orient, level_id=active_level.level_id)

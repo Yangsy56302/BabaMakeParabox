@@ -816,3 +816,7 @@
                 + 现在继承自新的类型（`TextLevelObject`和`TextWorldObject`）。
     + **`levels.Level.get_move_list`**
         + 合并了部分重复代码。
+
+##### 3.901
++ **漏洞**
+    + 修复了普通物体转换时总是会变成名词本身而非该名词对应的物体的严重Bug。
