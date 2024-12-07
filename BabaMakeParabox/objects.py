@@ -4,10 +4,10 @@ import uuid
 from BabaMakeParabox import basics, collects, colors, positions, refs
 from BabaMakeParabox.positions import Coordinate
 
-class WorldObjectExtra(TypedDict):
+class SpaceObjectExtra(TypedDict):
     pass
 
-default_world_object_extra: WorldObjectExtra = {}
+default_space_object_extra: SpaceObjectExtra = {}
 
 class LevelObjectIcon(TypedDict):
     name: str
@@ -108,17 +108,17 @@ class ObjectJson(TypedDict):
     type: str
     position: positions.CoordTuple
     direction: positions.DirectStr
-    world_id: NotRequired[refs.WorldIDJson]
-    world_object_extra: NotRequired[WorldObjectExtra]
+    space_id: NotRequired[refs.SpaceIDJson]
+    space_object_extra: NotRequired[SpaceObjectExtra]
     level_id: NotRequired[refs.LevelIDJson]
     level_object_extra: NotRequired[LevelObjectExtra]
     path_extra: NotRequired[PathExtra]
 
 class OldObjectState(object):
-    def __init__(self, pos: Optional[positions.Coordinate] = None, direct: Optional[positions.Direction] = None, world: Optional[refs.WorldID] = None, level: Optional[refs.LevelID] = None) -> None:
+    def __init__(self, pos: Optional[positions.Coordinate] = None, direct: Optional[positions.Direction] = None, space: Optional[refs.SpaceID] = None, level: Optional[refs.LevelID] = None) -> None:
         self.pos: Optional[positions.Coordinate] = pos
         self.direct: Optional[positions.Direction] = direct
-        self.world: Optional[refs.WorldID] = world
+        self.space: Optional[refs.SpaceID] = space
         self.level: Optional[refs.LevelID] = level
 
 special_operators: tuple[type["Operator"], ...]
@@ -130,12 +130,12 @@ class Object(object):
     display_name: str
     sprite_color: colors.ColorHex
     sprite_varients: tuple[int, ...] = (0x0, )
-    def __init__(self, pos: positions.Coordinate, direct: positions.Direction = positions.Direction.S, *, world_id: Optional[refs.WorldID] = None, level_id: Optional[refs.LevelID] = None) -> None:
+    def __init__(self, pos: positions.Coordinate, direct: positions.Direction = positions.Direction.S, *, space_id: Optional[refs.SpaceID] = None, level_id: Optional[refs.LevelID] = None) -> None:
         self.uuid: uuid.UUID = uuid.uuid4()
         self.pos: positions.Coordinate = pos
         self.direct: positions.Direction = direct
         self.old_state: OldObjectState = OldObjectState()
-        self.world_id: Optional[refs.WorldID] = world_id
+        self.space_id: Optional[refs.SpaceID] = space_id
         self.level_id: Optional[refs.LevelID] = level_id
         self.properties: Properties = Properties()
         self.special_operator_properties: dict[type["Operator"], Properties] = {o: Properties() for o in special_operators}
@@ -147,7 +147,7 @@ class Object(object):
         string = ""
         string += f"{self.__class__.__name__}\n"
         string += f"\tpos={self.pos}, direct={self.direct}\n"
-        string += f"\tworld_id={self.world_id}, level_id={self.level_id}\n"
+        string += f"\tspace_id={self.space_id}, level_id={self.level_id}\n"
         string += f"\tproperties: \n{self.properties}\n"
         return string
     def reset_uuid(self) -> None:
@@ -156,8 +156,8 @@ class Object(object):
         self.sprite_state = 0
     def to_json(self) -> ObjectJson:
         json_object: ObjectJson = {"type": self.json_name, "position": tuple(self.pos), "direction": positions.direction_to_str(self.direct)}
-        if self.world_id is not None:
-            json_object = {**json_object, "world_id": self.world_id.to_json()}
+        if self.space_id is not None:
+            json_object = {**json_object, "space_id": self.space_id.to_json()}
         if self.level_id is not None:
             json_object = {**json_object, "level_id": self.level_id.to_json()}
         return json_object
@@ -384,35 +384,35 @@ class Cursor(Static):
     display_name = "Cursor"
     sprite_color: colors.ColorHex = colors.PINK
 
-class WorldObject(Object):
+class SpaceObject(Object):
     light_overlay: colors.ColorHex = 0x000000
     dark_overlay: colors.ColorHex = 0xFFFFFF
-    def __init__(self, pos: positions.Coordinate, direct: positions.Direction = positions.Direction.S, *, world_id: refs.WorldID, level_id: Optional[refs.LevelID] = None, world_object_extra: WorldObjectExtra = default_world_object_extra) -> None:
-        self.world_id: refs.WorldID
-        super().__init__(pos, direct, world_id=world_id, level_id=level_id)
-        self.world_object_extra: WorldObjectExtra = world_object_extra
+    def __init__(self, pos: positions.Coordinate, direct: positions.Direction = positions.Direction.S, *, space_id: refs.SpaceID, level_id: Optional[refs.LevelID] = None, space_object_extra: SpaceObjectExtra = default_space_object_extra) -> None:
+        self.space_id: refs.SpaceID
+        super().__init__(pos, direct, space_id=space_id, level_id=level_id)
+        self.space_object_extra: SpaceObjectExtra = space_object_extra
     def to_json(self) -> ObjectJson:
-        return {**super().to_json(), "world_object_extra": self.world_object_extra}
+        return {**super().to_json(), "space_object_extra": self.space_object_extra}
 
-class World(WorldObject):
+class Space(SpaceObject):
     dark_overlay: colors.ColorHex = 0xC0C0C0
-    json_name = "world"
-    display_name = "World"
+    json_name = "space"
+    display_name = "Space"
     sprite_color: colors.ColorHex = colors.LIGHT_GRAY_BLUE
         
-class Clone(WorldObject):
+class Clone(SpaceObject):
     light_overlay: colors.ColorHex = 0x404040
     json_name = "clone"
     display_name = "Clone"
     sprite_color: colors.ColorHex = colors.LIGHTER_GRAY_BLUE
 
-world_object_types: list[type[WorldObject]] = [World, Clone]
-default_world_object_type: type[WorldObject] = World
+space_object_types: list[type[SpaceObject]] = [Space, Clone]
+default_space_object_type: type[SpaceObject] = Space
 
 class LevelObject(Object):
-    def __init__(self, pos: positions.Coordinate, direct: positions.Direction = positions.Direction.S, *, world_id: Optional[refs.WorldID] = None, level_id: refs.LevelID, level_object_extra: LevelObjectExtra = default_level_object_extra) -> None:
+    def __init__(self, pos: positions.Coordinate, direct: positions.Direction = positions.Direction.S, *, space_id: Optional[refs.SpaceID] = None, level_id: refs.LevelID, level_object_extra: LevelObjectExtra = default_level_object_extra) -> None:
         self.level_id: refs.LevelID
-        super().__init__(pos, direct, world_id=world_id, level_id=level_id)
+        super().__init__(pos, direct, space_id=space_id, level_id=level_id)
         self.level_object_extra: LevelObjectExtra = level_object_extra
     def to_json(self) -> ObjectJson:
         return {**super().to_json(), "level_object_extra": self.level_object_extra}
@@ -431,16 +431,16 @@ class Path(Tiled):
     sprite_name = "line"
     display_name = "Path"
     sprite_color: colors.ColorHex = colors.SILVER
-    def __init__(self, pos: positions.Coordinate, direct: positions.Direction = positions.Direction.S, *, world_id: Optional[refs.WorldID] = None, level_id: Optional[refs.LevelID] = None, unlocked: bool = False, conditions: Optional[dict[type[collects.Collectible], int]] = None, world_object_info: Optional[refs.WorldID] = None, level_object_info: Optional[refs.LevelID] = None) -> None:
-        super().__init__(pos, direct, world_id=world_object_info, level_id=level_object_info)
+    def __init__(self, pos: positions.Coordinate, direct: positions.Direction = positions.Direction.S, *, space_id: Optional[refs.SpaceID] = None, level_id: Optional[refs.LevelID] = None, unlocked: bool = False, conditions: Optional[dict[type[collects.Collectible], int]] = None, space_object_info: Optional[refs.SpaceID] = None, level_object_info: Optional[refs.LevelID] = None) -> None:
+        super().__init__(pos, direct, space_id=space_object_info, level_id=level_object_info)
         self.unlocked: bool = unlocked
         self.conditions: dict[type[collects.Collectible], int] = conditions if conditions is not None else {}
     def to_json(self) -> ObjectJson:
         return {**super().to_json(), "path_extra": {"unlocked": self.unlocked, "conditions": {k.json_name: v for k, v in self.conditions.items()}}}
 
 class Game(Object):
-    def __init__(self, pos: positions.Coordinate, direct: positions.Direction = positions.Direction.S, *, world_id: Optional[refs.WorldID] = None, level_id: Optional[refs.LevelID] = None, ref_type, world_object_info: refs.WorldID | None = None, level_object_info: refs.LevelID | None = None) -> None:
-        super().__init__(pos, direct, world_id=world_object_info, level_id=level_object_info)
+    def __init__(self, pos: positions.Coordinate, direct: positions.Direction = positions.Direction.S, *, space_id: Optional[refs.SpaceID] = None, level_id: Optional[refs.LevelID] = None, ref_type, space_object_info: refs.SpaceID | None = None, level_object_info: refs.LevelID | None = None) -> None:
+        super().__init__(pos, direct, space_id=space_object_info, level_id=level_object_info)
         self.ref_type = ref_type
     json_name = "game"
     display_name = "Game"
@@ -572,12 +572,12 @@ class TextLevelObject(GeneralNoun):
 class TextLevel(GeneralNoun):
     ref_type = Level
 
-class TextWorldObject(GeneralNoun):
-    ref_type = WorldObject
+class TextSpaceObject(GeneralNoun):
+    ref_type = SpaceObject
 
-class TextWorld(GeneralNoun):
-    ref_type = World
-    sprite_name = "text_world"
+class TextSpace(GeneralNoun):
+    ref_type = Space
+    sprite_name = "text_space"
 
 class TextClone(GeneralNoun):
     ref_type = Clone
@@ -866,35 +866,35 @@ class TextGroup(GroupNoun):
 
 group_noun_types: tuple[type[GroupNoun], ...] = (TextGroup, )
 
-class SpecificWorldNoun(FixedNoun):
+class SpecificSpaceNoun(FixedNoun):
     delta_infinite_tier: int
     @classmethod
-    def isreferenceof(cls, other: Object, **kwds) -> TypeGuard[WorldObject]:
-        if isinstance(other, WorldObject):
+    def isreferenceof(cls, other: Object, **kwds) -> TypeGuard[SpaceObject]:
+        if isinstance(other, SpaceObject):
             return True
         return False
 
-class TextInfinity(SpecificWorldNoun):
+class TextInfinity(SpecificSpaceNoun):
     json_name = "text_infinity"
     sprite_name = "text_infinity"
     display_name = "INFINITY"
     delta_infinite_tier = 1
     @classmethod
-    def isreferenceof(cls, other: WorldObject, **kwds) -> bool:
+    def isreferenceof(cls, other: SpaceObject, **kwds) -> bool:
         if super().isreferenceof(other):
-            if other.world_id.infinite_tier > 0:
+            if other.space_id.infinite_tier > 0:
                 return True
         return False
 
-class TextEpsilon(SpecificWorldNoun):
+class TextEpsilon(SpecificSpaceNoun):
     json_name = "text_epsilon"
     sprite_name = "text_epsilon"
     display_name = "EPSILON"
     delta_infinite_tier = -1
     @classmethod
-    def isreferenceof(cls, other: WorldObject, **kwds) -> bool:
+    def isreferenceof(cls, other: SpaceObject, **kwds) -> bool:
         if super().isreferenceof(other):
-            if other.world_id.infinite_tier < 0:
+            if other.space_id.infinite_tier < 0:
                 return True
         return False
 
@@ -912,7 +912,7 @@ noun_class_list.extend([TextBaba, TextKeke, TextMe, TextPatrick, TextSkull, Text
 noun_class_list.extend([TextWall, TextHedge, TextIce, TextTile, TextGrass, TextWater, TextLava])
 noun_class_list.extend([TextDoor, TextKey, TextBox, TextRock, TextFruit, TextBelt, TextSun, TextMoon, TextStar, TextWhat, TextLove, TextFlag])
 noun_class_list.extend([TextLine, TextDot, TextCursor, TextAll, TextText])
-noun_class_list.extend([TextWorld, TextClone, TextLevel, TextPath, TextGame])
+noun_class_list.extend([TextSpace, TextClone, TextLevel, TextPath, TextGame])
 
 for noun_class in noun_class_list:
     if not hasattr(noun_class, "json_name"):
@@ -941,7 +941,7 @@ object_used: list[type[Object]] = []
 object_used.extend([Baba, Keke, Me, Patrick, Skull, Ghost])
 object_used.extend([Wall, Hedge, Ice, Tile, Grass, Water, Lava])
 object_used.extend([Door, Key, Box, Rock, Fruit, Belt, Sun, Moon, Star, What, Love, Flag])
-object_used.extend([Line, Dot, Cursor, Level, World, Clone, Game, Path])
+object_used.extend([Line, Dot, Cursor, Level, Space, Clone, Game, Path])
 object_used.extend(text_class_list)
 
 object_class_used = object_used[:]
@@ -949,9 +949,9 @@ object_class_used.extend([Text, Game])
 
 object_name: dict[str, type[Object]] = {t.json_name: t for t in object_used}
 
-nouns_not_in_all: tuple[type[Noun], ...] = (TextAll, TextEmpty, TextText, TextLevelObject, TextWorldObject, TextGame)
-not_in_all: tuple[type[Object], ...] = (Text, LevelObject, WorldObject, Game)
-nouns_in_not_all: tuple[type[Noun], ...] = (TextAll, TextEmpty, TextText, TextLevelObject, TextWorldObject, TextGame)
+nouns_not_in_all: tuple[type[Noun], ...] = (TextAll, TextEmpty, TextText, TextLevelObject, TextSpaceObject, TextGame)
+not_in_all: tuple[type[Object], ...] = (Text, LevelObject, SpaceObject, Game)
+nouns_in_not_all: tuple[type[Noun], ...] = (TextAll, TextEmpty, TextText, TextLevelObject, TextSpaceObject, TextGame)
 in_not_all: tuple[type[Object], ...] = (Text, Game)
 not_in_editor: tuple[type[Object], ...] = (Text, Game)
 
@@ -1029,28 +1029,28 @@ def get_noun_from_type(object_type: type[Object]) -> type[Noun]:
 def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object:
     global current_metatext_tier
     global object_class_used, object_used, object_name, noun_class_list, text_class_list
-    world_id: Optional[refs.WorldID] = None
+    space_id: Optional[refs.SpaceID] = None
     level_id: Optional[refs.LevelID] = None
-    world_object_extra: Optional[WorldObjectExtra] = None
+    space_object_extra: Optional[SpaceObjectExtra] = None
     level_object_extra: Optional[LevelObjectExtra] = None
     if basics.compare_versions(ver if ver is not None else "0.0", "3.8") == -1:
-        old_world_id = json_object.get("world")
-        if old_world_id is not None:
-            world_id = refs.WorldID(old_world_id.get("name", ""), old_world_id.get("infinite_tier", 0))
+        old_space_id = json_object.get("space")
+        if old_space_id is not None:
+            space_id = refs.SpaceID(old_space_id.get("name", ""), old_space_id.get("infinite_tier", 0))
         old_level_id = json_object.get("level")
         if old_level_id is not None:
             level_id = refs.LevelID(old_level_id.get("name", ""))
             level_object_extra = {"icon": old_level_id.get("icon", default_level_object_extra["icon"])}
     else:
-        world_id_json = json_object.get("world_id")
-        if world_id_json is not None:
-            world_id = refs.WorldID(**world_id_json)
+        space_id_json = json_object.get("space_id")
+        if space_id_json is not None:
+            space_id = refs.SpaceID(**space_id_json)
         level_id_json = json_object.get("level_id")
         if level_id_json is not None:
             level_id = refs.LevelID(**level_id_json)
-        world_object_extra = json_object.get("world_object_extra")
+        space_object_extra = json_object.get("space_object_extra")
         level_object_extra = json_object.get("level_object_extra")
-    world_object_extra = world_object_extra if world_object_extra is not None else default_world_object_extra
+    space_object_extra = space_object_extra if space_object_extra is not None else default_space_object_extra
     level_object_extra = level_object_extra if level_object_extra is not None else default_level_object_extra
     object_type = object_name.get(json_object["type"])
     if object_type is None:
@@ -1063,18 +1063,18 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
         if level_id is not None:
             return object_type(pos=positions.Coordinate(*json_object["position"]),
                             direct=positions.str_to_direction(json_object["direction"]),
-                            world_id=world_id,
+                            space_id=space_id,
                             level_id=level_id,
                             level_object_extra=level_object_extra)
         raise ValueError(level_id)
-    if issubclass(object_type, WorldObject):
-        if world_id is not None:
+    if issubclass(object_type, SpaceObject):
+        if space_id is not None:
             return object_type(pos=positions.Coordinate(*json_object["position"]),
                             direct=positions.str_to_direction(json_object["direction"]),
-                            world_id=world_id,
+                            space_id=space_id,
                             level_id=level_id,
-                            world_object_extra=world_object_extra)
-        raise ValueError(world_id)
+                            space_object_extra=space_object_extra)
+        raise ValueError(space_id)
     if issubclass(object_type, Path):
         path_extra = json_object.get("path_extra")
         if path_extra is None:
@@ -1083,11 +1083,11 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
         conditions: dict[type[collects.Collectible], int] = {reversed_collectible_dict[k]: v for k, v in path_extra["conditions"].items()}
         return object_type(pos=positions.Coordinate(*json_object["position"]),
                         direct=positions.str_to_direction(json_object["direction"]),
-                        world_id=world_id,
+                        space_id=space_id,
                         level_id=level_id,
                         unlocked=path_extra["unlocked"],
                         conditions=conditions)
     return object_type(pos=positions.Coordinate(*json_object["position"]),
                     direct=positions.str_to_direction(json_object["direction"]),
-                    world_id=world_id,
+                    space_id=space_id,
                     level_id=level_id)

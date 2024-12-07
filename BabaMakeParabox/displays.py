@@ -10,7 +10,7 @@ def calc_smooth(frame: int) -> Optional[float]:
     if multiplier is not None:
         smooth_value = frame / basics.options["fps"] * multiplier
         if smooth_value >= 0 and smooth_value <= 1:
-            return pow(1 - smooth_value, 4)
+            return (1 - smooth_value) ** 4
 
 sprite_size = 24
 gui_scale = 4
@@ -89,7 +89,7 @@ class Sprites(object):
 sprites = Sprites()
 
 def simple_type_to_surface(object_type: type[objects.Object], varient: int = 0, wiggle: int = 1, default_surface: Optional[pygame.Surface] = None, debug: bool = False) -> pygame.Surface:
-    if issubclass(object_type, objects.WorldObject):
+    if issubclass(object_type, objects.SpaceObject):
         if default_surface is not None:
             obj_surface = default_surface.copy()
         else:
@@ -127,11 +127,11 @@ def simple_object_to_surface(obj: objects.Object, wiggle: int = 1, default_surfa
                     obj_surface = set_alpha(obj_surface, 0x80)
                 else:
                     obj_surface.fill("#00000000")
-        if isinstance(obj, objects.WorldObject) and obj.world_id.infinite_tier != 0:
-            infinite_text_surface = sprites.get("text_infinity" if obj.world_id.infinite_tier > 0 else "text_epsilon", 0, wiggle, raw=True)
-            infinite_tier_surface = pygame.Surface((sprite_size, sprite_size * abs(obj.world_id.infinite_tier)), pygame.SRCALPHA)
+        if isinstance(obj, objects.SpaceObject) and obj.space_id.infinite_tier != 0:
+            infinite_text_surface = sprites.get("text_infinity" if obj.space_id.infinite_tier > 0 else "text_epsilon", 0, wiggle, raw=True)
+            infinite_tier_surface = pygame.Surface((sprite_size, sprite_size * abs(obj.space_id.infinite_tier)), pygame.SRCALPHA)
             infinite_tier_surface.fill("#00000000")
-            for i in range(abs(obj.world_id.infinite_tier)):
+            for i in range(abs(obj.space_id.infinite_tier)):
                 infinite_tier_surface.blit(infinite_text_surface, (0, i * sprite_size))
             infinite_tier_surface = set_alpha(infinite_tier_surface, 0x80)
             infinite_tier_surface = pygame.transform.scale(infinite_tier_surface, obj_surface.get_size())
@@ -151,6 +151,6 @@ order: tuple[type[objects.Object], ...] = (
     objects.Directional,
     objects.Animated,
     objects.Tiled,
-    objects.WorldObject,
+    objects.SpaceObject,
     objects.Object
 )

@@ -2,7 +2,7 @@ import random
 import copy
 import os
 
-from BabaMakeParabox import basics, languages, positions, refs, sounds, objects, collects, displays, worlds, levels, levelpacks
+from BabaMakeParabox import basics, languages, positions, refs, sounds, objects, collects, displays, spaces, levels, levelpacks
 
 import pygame
 
@@ -19,20 +19,20 @@ movements: dict[str, tuple[str, positions.PlayerOperation, positions.Coordinate]
 
 def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     for level in levelpack.level_list:
-        for world in level.world_list:
-            world.set_sprite_states(0)
+        for space in level.space_list:
+            space.set_sprite_states(0)
     levelpack.prepare(levelpack.get_exact_level(levelpack.main_level_id))
     levelpack_backup = copy.deepcopy(levelpack)
     current_level: levels.Level = levelpack.get_exact_level(levelpack.main_level_id)
-    current_world: worlds.World = current_level.get_exact_world(current_level.main_world_id)
+    current_space: spaces.Space = current_level.get_exact_space(current_level.main_space_id)
     levelpack_info: levelpacks.ReturnInfo = levelpacks.default_levelpack_info.copy()
-    history: list[tuple[levelpacks.Levelpack, levelpacks.ReturnInfo, refs.LevelID, refs.WorldID]] = [(
+    history: list[tuple[levelpacks.Levelpack, levelpacks.ReturnInfo, refs.LevelID, refs.SpaceID]] = [(
         copy.deepcopy(levelpack),
         levelpack_info.copy(),
         current_level.level_id,
-        current_world.world_id
+        current_space.space_id
     )]
-    savepoint_dict: dict[str, tuple[levelpacks.Levelpack, levelpacks.ReturnInfo, refs.LevelID, refs.WorldID]] = {}
+    savepoint_dict: dict[str, tuple[levelpacks.Levelpack, levelpacks.ReturnInfo, refs.LevelID, refs.SpaceID]] = {}
     default_savepoint_name = "_"
     window = pygame.display.set_mode((720, 720), pygame.RESIZABLE)
     display_offset = [0.0, 0.0]
@@ -70,12 +70,12 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     keys.update({v: False for v in keymods.values()})
     mouses: tuple[int, int, int, int, int] = (0, 0, 0, 0, 0)
     mouse_pos: positions.Coordinate
-    mouse_pos_in_world: positions.Coordinate
-    world_surface_size: positions.CoordTuple = window.get_size()
-    world_surface_pos: positions.CoordTuple = (0, 0)
+    mouse_pos_in_space: positions.Coordinate
+    space_surface_size: positions.CoordTuple = window.get_size()
+    space_surface_pos: positions.CoordTuple = (0, 0)
     displays.sprites.update()
     level_changed = False
-    world_changed = False
+    space_changed = False
     frame = 0
     frame_since_last_move = 0
     wiggle = 1
@@ -127,32 +127,32 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         )
         del new_mouses
         mouse_pos = positions.Coordinate(*pygame.mouse.get_pos())
-        mouse_pos_in_world = positions.Coordinate(
-            (mouse_pos[0] - world_surface_pos[0]) * current_world.width // world_surface_size[0],
-            (mouse_pos[1] - world_surface_pos[1]) * current_world.height // world_surface_size[1]
+        mouse_pos_in_space = positions.Coordinate(
+            (mouse_pos[0] - space_surface_pos[0]) * current_space.width // space_surface_size[0],
+            (mouse_pos[1] - space_surface_pos[1]) * current_space.height // space_surface_size[1]
         )
         if not press_key_to_continue:
             for key, (negative_key, op, (dx, dy)) in movements.items():
                 if keys[key] and not keys.get(negative_key, False):
-                    new_history: tuple[levelpacks.Levelpack, levelpacks.ReturnInfo, refs.LevelID, refs.WorldID] = (
+                    new_history: tuple[levelpacks.Levelpack, levelpacks.ReturnInfo, refs.LevelID, refs.SpaceID] = (
                         copy.deepcopy(levelpack),
                         levelpack.turn(current_level, op),
                         current_level.level_id,
-                        current_world.world_id
+                        current_space.space_id
                     )
                     history.append(new_history)
-                    levelpack_info, current_level_id, current_world_id = new_history[1:]
+                    levelpack_info, current_level_id, current_space_id = new_history[1:]
                     current_level = levelpack.get_exact_level(current_level_id)
-                    current_world = current_level.get_exact_world(current_world_id)
+                    current_space = current_level.get_exact_space(current_space_id)
                     if current_level.game_properties.has(objects.TextYou):
-                        display_offset[0] += dx * window.get_width() / current_world.width
-                        display_offset[1] += dy * window.get_height() / current_world.height
+                        display_offset[0] += dx * window.get_width() / current_space.width
+                        display_offset[1] += dy * window.get_height() / current_space.height
                     if current_level.game_properties.has(objects.TextPush) and levelpack_info["game_push"]:
-                        display_offset[0] += dx * window.get_width() / current_world.width
-                        display_offset[1] += dy * window.get_height() / current_world.height
+                        display_offset[0] += dx * window.get_width() / current_space.width
+                        display_offset[1] += dy * window.get_height() / current_space.height
                     for level in levelpack.level_list:
-                        for world in current_level.world_list:
-                            world.set_sprite_states(len(history))
+                        for space in current_level.space_list:
+                            space.set_sprite_states(len(history))
                     display_refresh = True
                     levelpack_refresh = True
                     break
@@ -163,45 +163,45 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     levelpack_refresh = True
                     break
         if not levelpack_refresh:
-            if any(mouses) and not current_world.out_of_range(mouse_pos_in_world):
+            if any(mouses) and not current_space.out_of_range(mouse_pos_in_space):
                 if mouses[0] == 1:
-                    sub_world_objs: list[objects.WorldObject] = current_world.get_worlds_from_pos(mouse_pos_in_world)
-                    sub_worlds = [current_level.get_world(o.world_id) for o in sub_world_objs]
-                    sub_worlds = [w for w in sub_worlds if w is not None]
-                    if len(sub_worlds) != 0:
-                        world = random.choice(sub_worlds)
-                        if world is not None:
-                            current_world = world
-                            world_changed = True
+                    sub_space_objs: list[objects.SpaceObject] = current_space.get_spaces_from_pos(mouse_pos_in_space)
+                    sub_spaces = [current_level.get_space(o.space_id) for o in sub_space_objs]
+                    sub_spaces = [w for w in sub_spaces if w is not None]
+                    if len(sub_spaces) != 0:
+                        space = random.choice(sub_spaces)
+                        if space is not None:
+                            current_space = space
+                            space_changed = True
                             display_refresh = True
                 elif mouses[2] == 1:
-                    super_worlds = [t[0] for t in current_level.find_super_worlds(current_world.world_id)]
-                    if len(super_worlds) != 0:
-                        current_world = random.choice(super_worlds)
-                        world_changed = True
+                    super_spaces = [t[0] for t in current_level.find_super_spaces(current_space.space_id)]
+                    if len(super_spaces) != 0:
+                        current_space = random.choice(super_spaces)
+                        space_changed = True
                 elif mouses[1] == 1:
                     pass
                 elif mouses[3]:
-                    current_world_index = current_level.world_list.index(current_world)
-                    current_world_index -= 1
-                    current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
-                    current_world = current_level.world_list[current_world_index]
-                    world_changed = True
+                    current_space_index = current_level.space_list.index(current_space)
+                    current_space_index -= 1
+                    current_space_index = current_space_index % len(current_level.space_list) if current_space_index >= 0 else len(current_level.space_list) - 1
+                    current_space = current_level.space_list[current_space_index]
+                    space_changed = True
                     display_refresh = True
                 elif mouses[4]:
-                    current_world_index = current_level.world_list.index(current_world)
-                    current_world_index += 1
-                    current_world_index = current_world_index % len(current_level.world_list) if current_world_index >= 0 else len(current_level.world_list) - 1
-                    current_world = current_level.world_list[current_world_index]
-                    world_changed = True
+                    current_space_index = current_level.space_list.index(current_space)
+                    current_space_index += 1
+                    current_space_index = current_space_index % len(current_level.space_list) if current_space_index >= 0 else len(current_level.space_list) - 1
+                    current_space = current_level.space_list[current_space_index]
+                    space_changed = True
                     display_refresh = True
             elif keys["ESCAPE"]:
-                for index, (old_levelpack, old_levelpack_info, old_level_id, old_world_id) in reversed(list(enumerate(history))):
+                for index, (old_levelpack, old_levelpack_info, old_level_id, old_space_id) in reversed(list(enumerate(history))):
                     if old_levelpack_info["selected_level"] is not None:
                         levelpack = copy.deepcopy(old_levelpack)
                         levelpack_info = levelpacks.default_levelpack_info.copy()
                         current_level = levelpack.get_exact_level(old_level_id)
-                        current_world = current_level.get_exact_world(old_world_id)
+                        current_space = current_level.get_exact_space(old_space_id)
                         history = history[:index]
                         level_changed = True
                         display_refresh = True
@@ -211,7 +211,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     levelpack = copy.deepcopy(history[-1][0])
                     levelpack_info = levelpacks.default_levelpack_info.copy()
                     current_level = levelpack.get_exact_level(history[-1][2])
-                    current_world = current_level.get_exact_world(history[-1][3])
+                    current_space = current_level.get_exact_space(history[-1][3])
                     if len(history) != 1:
                         history.pop()
                     level_changed = True
@@ -224,12 +224,12 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     levelpack = copy.deepcopy(levelpack_backup)
                     levelpack_info = levelpacks.default_levelpack_info.copy()
                     current_level = copy.deepcopy(levelpack.get_exact_level(levelpack.main_level_id))
-                    current_world = current_level.get_exact_world(current_level.main_world_id)
+                    current_space = current_level.get_exact_space(current_level.main_space_id)
                     history = [(
                         copy.deepcopy(levelpack),
                         levelpack_info.copy(),
                         current_level.level_id,
-                        current_world.world_id
+                        current_space.space_id
                     )]
                     level_changed = True
                     display_refresh = True
@@ -245,7 +245,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     levelpack = savepoint[0]
                     levelpack_info = levelpacks.default_levelpack_info.copy()
                     current_level = copy.deepcopy(levelpack.get_exact_level(savepoint[2]))
-                    current_world = current_level.get_exact_world(savepoint[3])
+                    current_space = current_level.get_exact_space(savepoint[3])
                     languages.lang_print("play.savepoint.loaded", value=savepoint_name)
                     level_changed = True
                     display_refresh = True
@@ -258,21 +258,21 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 if keys["LCTRL"] or keys["RCTRL"]:
                     savepoint_name = languages.lang_input("input.savepoint.name")
                 savepoint_name = savepoint_name if savepoint_name != "" else default_savepoint_name
-                savepoint_dict[savepoint_name] = (copy.deepcopy(levelpack), levelpack_info.copy(), current_level.level_id, current_world.world_id)
+                savepoint_dict[savepoint_name] = (copy.deepcopy(levelpack), levelpack_info.copy(), current_level.level_id, current_space.space_id)
                 languages.lang_print("play.savepoint.saved", value=savepoint_name)
             elif keys["TAB"]:
                 languages.lang_print("seperator.title", text=languages.lang_format("title.info"))
                 languages.lang_print("play.level.current.name", value=current_level.level_id.name)
-                languages.lang_print("play.world.current.name", value=current_world.world_id.name)
-                languages.lang_print("play.world.current.infinite_tier", value=current_world.world_id.infinite_tier)
-                languages.lang_print("seperator.title", text=languages.lang_format("title.world.rule_list"))
-                for rule in current_world.rule_list:
+                languages.lang_print("play.space.current.name", value=current_space.space_id.name)
+                languages.lang_print("play.space.current.infinite_tier", value=current_space.space_id.infinite_tier)
+                languages.lang_print("seperator.title", text=languages.lang_format("title.space.rule_list"))
+                for rule in current_space.rule_list:
                     str_list = []
                     for object_type in rule:
                         str_list.append(object_type.display_name)
                     print(" ".join(str_list))
                 languages.lang_print("seperator.title", text=languages.lang_format("title.level.rule_list"))
-                for rule in current_level.recursion_rules(current_world):
+                for rule in current_level.recursion_rules(current_space):
                     str_list = []
                     for object_type in rule:
                         str_list.append(object_type.display_name)
@@ -386,7 +386,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                         levelpack.set_level(level)
                     super_level = levelpack.get_level(current_level.super_level_id) if current_level.super_level_id is not None else levelpack.get_exact_level(levelpack.main_level_id)
                     current_level = super_level if super_level is not None else levelpack.get_exact_level(levelpack.main_level_id)
-                    current_world = current_level.main_world
+                    current_space = current_level.main_space
                 elif levelpack_info["end"]:
                     game_running = False
                 elif levelpack_info["done"]:
@@ -394,38 +394,38 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 elif levelpack_info["transform"]:
                     super_level = levelpack.get_level(current_level.super_level_id) if current_level.super_level_id is not None else levelpack.get_exact_level(levelpack.main_level_id)
                     current_level = super_level if super_level is not None else levelpack.get_exact_level(levelpack.main_level_id)
-                    current_world = current_level.main_world
+                    current_space = current_level.main_space
                 elif levelpack_info["selected_level"] is not None:
                     current_level = levelpack.get_exact_level(levelpack_info["selected_level"])
-                    current_world = current_level.main_world
+                    current_space = current_level.main_space
                 levelpack.prepare(current_level)
             levelpack_refresh = False
         if level_changed:
-            world_changed = True
+            space_changed = True
             languages.lang_print("seperator.title", text=languages.lang_format("title.level"))
             languages.lang_print("play.level.current.name", value=current_level.level_id.name)
             level_changed = False
-        if world_changed:
-            languages.lang_print("seperator.title", text=languages.lang_format("title.world"))
-            languages.lang_print("play.world.current.name", value=current_world.world_id.name)
-            languages.lang_print("play.world.current.infinite_tier", value=current_world.world_id.infinite_tier)
-            world_changed = False
+        if space_changed:
+            languages.lang_print("seperator.title", text=languages.lang_format("title.space"))
+            languages.lang_print("play.space.current.name", value=current_space.space_id.name)
+            languages.lang_print("play.space.current.infinite_tier", value=current_space.space_id.infinite_tier)
+            space_changed = False
         pygame.mixer.music.set_volume(1.0 if current_level.have_you() else 0.5)
         # display
         window.fill("#000000")
-        world_surface_size = window.get_size()
-        world_surface_pos = (0, 0)
-        if window.get_width() // current_world.width > window.get_height() // current_world.height:
-            world_surface_size = (window.get_height() * current_world.width // current_world.height, window.get_height())
-            world_surface_pos = ((window.get_width() - world_surface_size[0]) // 2, 0)
-        elif window.get_width() // current_world.width < window.get_height() // current_world.height:
-            world_surface_size = (window.get_width(), window.get_width() * current_world.height // current_world.width)
-            world_surface_pos = (0, (window.get_height() - world_surface_size[1]) // 2)
+        space_surface_size = window.get_size()
+        space_surface_pos = (0, 0)
+        if window.get_width() // current_space.width > window.get_height() // current_space.height:
+            space_surface_size = (window.get_height() * current_space.width // current_space.height, window.get_height())
+            space_surface_pos = ((window.get_width() - space_surface_size[0]) // 2, 0)
+        elif window.get_width() // current_space.width < window.get_height() // current_space.height:
+            space_surface_size = (window.get_width(), window.get_width() * current_space.height // current_space.width)
+            space_surface_pos = (0, (window.get_height() - space_surface_size[1]) // 2)
         if not current_level.game_properties.enabled(objects.TextHide):
             if not current_level.properties[objects.default_level_object_type].enabled(objects.TextHide):
                 smooth_value = displays.calc_smooth(frame_since_last_move)
-                world_surface = current_level.world_to_surface(current_world, wiggle, world_surface_size, smooth=smooth_value, debug=basics.options["debug"])
-                window.blit(pygame.transform.scale(world_surface, world_surface_size), world_surface_pos)
+                space_surface = current_level.space_to_surface(current_space, wiggle, space_surface_size, smooth=smooth_value, debug=basics.options["debug"])
+                window.blit(pygame.transform.scale(space_surface, space_surface_size), space_surface_pos)
                 del smooth_value
             # game transform
             game_transform_to = [t for t, n in current_level.game_properties.enabled_dict().items() if issubclass(t, objects.Noun) and not n]

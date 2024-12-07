@@ -221,7 +221,7 @@ default_rule_list: list[Rule] = []
 default_rule_list.append([objects.TextText, objects.TextIs, objects.TextPush])
 default_rule_list.append([objects.TextCursor, objects.TextIs, objects.TextSelect])
 default_rule_list.append([objects.TextLevel, objects.TextIs, objects.TextStop])
-default_rule_list.append([objects.TextNot, objects.TextMeta, objects.TextWorld, objects.TextIs, objects.TextPush])
+default_rule_list.append([objects.TextNot, objects.TextMeta, objects.TextSpace, objects.TextIs, objects.TextPush])
 default_rule_list.append([objects.TextNot, objects.TextMeta, objects.TextClone, objects.TextIs, objects.TextPush])
 default_rule_list.append([objects.TextMeta, objects.TextClone, objects.TextIs, objects.TextNot, objects.TextLeave])
 

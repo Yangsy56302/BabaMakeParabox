@@ -97,7 +97,7 @@ def random_hue() -> ColorHex:
         b = 255 * ((n - 5 / 6) * 6)
     return rgb_to_hex(int(r), int(g), int(b))
 
-def random_world_color() -> ColorHex:
+def random_space_color() -> ColorHex:
     r, g, b = hex_to_rgb(random_hue())
     return rgb_to_hex(r // 16, g // 16, b // 16)
 

@@ -4,7 +4,7 @@ import json
 
 import pygame
 
-from BabaMakeParabox import basics, languages, positions, refs, colors, objects, collects, rules, displays, worlds, levels, levelpacks, plays, edits, subs
+from BabaMakeParabox import basics, languages, positions, refs, colors, objects, collects, rules, displays, spaces, levels, levelpacks, plays, edits, subs
 def show_dir(path: str, filter_func: Optional[Callable[[str], bool]] = None, tab: int = 0) -> None:
     def default_filter_func(filename: str) -> bool:
         return True
@@ -51,9 +51,9 @@ def pre_edit() -> bool:
     languages.lang_print("launch.open.levelpack")
     languages.lang_print("launch.open.levelpack.empty.editor")
     input_filename = languages.lang_input("input.file.name")
-    default_new_world_settings = basics.options["default_new_world"]
-    size = positions.Coordinate(default_new_world_settings["width"], default_new_world_settings["height"])
-    color = default_new_world_settings["color"]
+    default_new_space_settings = basics.options["default_new_space"]
+    size = positions.Coordinate(default_new_space_settings["width"], default_new_space_settings["height"])
+    color = default_new_space_settings["color"]
     if input_filename != "":
         input_filename += "" if basics.options["debug"] else ".json"
         if not os.path.isfile(os.path.join("levelpacks", input_filename)):
@@ -64,8 +64,8 @@ def pre_edit() -> bool:
             languages.lang_print("launch.open.levelpack.done", file=input_filename)
             levelpack = levelpacks.json_to_levelpack(levelpack_json)
     else:
-        world = worlds.World(refs.WorldID("main"), size, color=color)
-        level = levels.Level(refs.LevelID("main"), [world])
+        space = spaces.Space(refs.SpaceID("main"), size, color=color)
+        level = levels.Level(refs.LevelID("main"), [space])
         levelpack = levelpacks.Levelpack("main", [level])
     levelpack = edits.levelpack_editor(levelpack)
     languages.lang_print("seperator.title", text=languages.lang_format("title.save.file"))
@@ -144,7 +144,7 @@ def change_options() -> bool:
         if display_layer < 0:
             languages.lang_print("warn.value.underflow", min=1, value=display_layer)
         else:
-            basics.options.update({"world_display_recursion_depth": display_layer})
+            basics.options.update({"space_display_recursion_depth": display_layer})
             break
     if languages.lang_input("launch.change_options.json") in languages.yes:
         basics.options.update({"compressed_json_output": False})
@@ -245,5 +245,5 @@ def main() -> None:
         pygame.quit()
         languages.lang_print("launch.thank_you")
 
-__all__ = ["basics", "refs", "languages", "positions", "colors", "objects", "collects", "rules", "displays", "worlds", "levels", "levelpacks", "edits", "plays", "subs", "main"]
+__all__ = ["basics", "refs", "languages", "positions", "colors", "objects", "collects", "rules", "displays", "spaces", "levels", "levelpacks", "edits", "plays", "subs", "main"]
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           # monika was there ;)

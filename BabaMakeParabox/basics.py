@@ -37,7 +37,7 @@ pyinst_env = "PYINST"
 
 options_filename = "options.json"
 
-class DefaultNewWorldOptions(TypedDict):
+class DefaultNewSpaceOptions(TypedDict):
     width: int
     height: int
     color: int
@@ -56,11 +56,11 @@ class Options(TypedDict):
     lang: str
     fps: int
     fpw: int
-    world_display_recursion_depth: int
+    space_display_recursion_depth: int
     smooth_animation_multiplier: Optional[int]
     compressed_json_output: bool
     object_type_shortcuts: list[str]
-    default_new_world: DefaultNewWorldOptions
+    default_new_space: DefaultNewSpaceOptions
     metatext: MetatextOptions
     bgm: BgmOptions
     game_is_end: NotRequired[bool]
@@ -72,15 +72,15 @@ default_options: Options = {
     "lang": "",
     "fps": 30,
     "fpw": 5,
-    "world_display_recursion_depth": 3,
+    "space_display_recursion_depth": 3,
     "smooth_animation_multiplier": 2,
     "compressed_json_output": False,
-    "default_new_world": {
+    "default_new_space": {
         "width": 9,
         "height": 9,
         "color": 0x000000
     },
-    "object_type_shortcuts": ["baba", "wall", "rock", "flag", "skull", "text_world", "text_level", "text_is", "text_you", "text_win"],
+    "object_type_shortcuts": ["baba", "wall", "rock", "flag", "skull", "text_space", "text_level", "text_is", "text_you", "text_win"],
     "metatext": {
         "enabled": False,
         "tier": 1

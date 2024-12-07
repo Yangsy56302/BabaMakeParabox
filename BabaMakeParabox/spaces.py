@@ -6,25 +6,25 @@ from BabaMakeParabox import basics, positions, refs, colors, objects, rules
 def match_pos(obj: objects.Object, pos: positions.Coordinate) -> bool:
     return obj.pos == pos
 
-class WorldJson(TypedDict):
-    id: refs.WorldIDJson
+class SpaceJson(TypedDict):
+    id: refs.SpaceIDJson
     size: positions.CoordTuple
     color: colors.ColorHex
     object_list: list[objects.ObjectJson]
 
-class World(object):
-    def __init__(self, world_id: refs.WorldID, size: positions.Coordinate, color: Optional[colors.ColorHex] = None) -> None:
-        self.world_id: refs.WorldID = world_id
+class Space(object):
+    def __init__(self, space_id: refs.SpaceID, size: positions.Coordinate, color: Optional[colors.ColorHex] = None) -> None:
+        self.space_id: refs.SpaceID = space_id
         self.size: positions.Coordinate = size
-        self.color: colors.ColorHex = color if color is not None else colors.random_world_color()
+        self.color: colors.ColorHex = color if color is not None else colors.random_space_color()
         self.object_list: list[objects.Object] = []
         self.object_pos_index: list[list[objects.Object]]
-        self.properties: dict[type[objects.WorldObject], objects.Properties] = {p: objects.Properties() for p in objects.world_object_types}
-        self.special_operator_properties: dict[type[objects.WorldObject], dict[type[objects.Operator], objects.Properties]] = {p: {o: objects.Properties() for o in objects.special_operators} for p in objects.world_object_types}
+        self.properties: dict[type[objects.SpaceObject], objects.Properties] = {p: objects.Properties() for p in objects.space_object_types}
+        self.special_operator_properties: dict[type[objects.SpaceObject], dict[type[objects.Operator], objects.Properties]] = {p: {o: objects.Properties() for o in objects.special_operators} for p in objects.space_object_types}
         self.rule_list: list[rules.Rule] = []
         self.refresh_index()
-    def __eq__(self, world: "World") -> bool:
-        return self.world_id == world.world_id
+    def __eq__(self, space: "Space") -> bool:
+        return self.space_id == space.space_id
     @property
     def width(self) -> int:
         return self.size.x
@@ -98,12 +98,12 @@ class World(object):
             if not self.out_of_range(obj.pos):
                 self.pos_to_objs(pos).remove(obj)
         return deleted
-    def get_worlds(self) -> list[objects.WorldObject]:
-        return [o for o in self.object_list if isinstance(o, objects.WorldObject)]
-    def get_worlds_from_pos(self, pos: positions.Coordinate) -> list[objects.WorldObject]:
+    def get_spaces(self) -> list[objects.SpaceObject]:
+        return [o for o in self.object_list if isinstance(o, objects.SpaceObject)]
+    def get_spaces_from_pos(self, pos: positions.Coordinate) -> list[objects.SpaceObject]:
         if self.out_of_range(pos):
             return []
-        return [o for o in self.pos_to_objs(pos) if isinstance(o, objects.WorldObject)]
+        return [o for o in self.pos_to_objs(pos) if isinstance(o, objects.SpaceObject)]
     def get_levels(self) -> list[objects.LevelObject]:
         return [o for o in self.object_list if isinstance(o, objects.LevelObject)]
     def get_levels_from_pos(self, pos: positions.Coordinate) -> list[objects.LevelObject]:
@@ -192,7 +192,7 @@ class World(object):
             elif stage == "after property":
                 rule_list = [[]]
         return rule_list
-    # rest in piece, more-than-200-lines-long-and-extremely-fucking-confusing function(BabaMakeParabox.worlds.World.get_rules_from_pos_and_orient)
+    # rest in piece, more-than-200-lines-long-and-extremely-fucking-confusing function(BabaMakeParabox.spaces.Space.get_rules_from_pos_and_orient)
     def get_rules(self) -> list[rules.Rule]:
         rule_list: list[rules.Rule] = []
         x_rule_dict: dict[int, list[rules.Rule]] = {}
@@ -276,21 +276,21 @@ class World(object):
             return (num + pos[0]) / self.width
         else:
             return (num + pos[1]) / self.height
-    def to_json(self) -> WorldJson:
-        json_object: WorldJson = {"id": self.world_id.to_json(), "size": (self.width, self.height), "color": self.color, "object_list": []}
+    def to_json(self) -> SpaceJson:
+        json_object: SpaceJson = {"id": self.space_id.to_json(), "size": (self.width, self.height), "color": self.color, "object_list": []}
         for obj in self.object_list:
             json_object["object_list"].append(obj.to_json())
         return json_object
 
-def json_to_world(json_object: WorldJson, ver: Optional[str] = None) -> World:
+def json_to_space(json_object: SpaceJson, ver: Optional[str] = None) -> Space:
     if basics.compare_versions(ver if ver is not None else "0.0", "3.8") == -1:
-        world_id: refs.WorldID = refs.WorldID(json_object["name"], json_object["infinite_tier"]) # type: ignore
+        space_id: refs.SpaceID = refs.SpaceID(json_object["name"], json_object["infinite_tier"]) # type: ignore
     else:
-        world_id: refs.WorldID = refs.WorldID(**json_object["id"])
-    new_world = World(world_id=world_id,
+        space_id: refs.SpaceID = refs.SpaceID(**json_object["id"])
+    new_space = Space(space_id=space_id,
                       size=positions.Coordinate(*json_object["size"]),
                       color=json_object["color"])
     for obj in json_object["object_list"]:
-        new_world.new_obj(objects.json_to_object(obj, ver))
-    new_world.refresh_index()
-    return new_world
+        new_space.new_obj(objects.json_to_object(obj, ver))
+    new_space.refresh_index()
+    return new_space
