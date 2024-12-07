@@ -132,7 +132,7 @@ class Levelpack(object):
                             level_id: refs.LevelID = refs.LevelID(old_obj.world_id.name)
                             self.set_level(levels.Level(level_id, active_level.world_list, super_level_id=active_level.level_id,
                                                         main_world_id=old_obj.world_id))
-                            level_object_extra: objects.LevelObjectExtra = {"icon": {"name": "world", "color": world.color}}
+                            level_object_extra: objects.LevelObjectExtra = {"icon": {"name": objects.get_noun_from_type(objects.default_world_object_type).json_name, "color": world.color}}
                             new_obj = new_type(old_obj.pos, old_obj.orient, level_id=level_id, level_object_extra=level_object_extra)
                             world.new_obj(new_obj)
                             transform_success = True
@@ -146,7 +146,7 @@ class Levelpack(object):
                             level_id: refs.LevelID = refs.LevelID(old_obj.uuid.hex)
                             self.set_level(levels.Level(level_id, [new_world], super_level_id=active_level.level_id))
                             new_world.new_obj(old_type(spaces.Coord(1, 1)))
-                            level_object_extra: objects.LevelObjectExtra = {"icon": {"name": old_obj.sprite_name, "color": old_obj.sprite_color}}
+                            level_object_extra: objects.LevelObjectExtra = {"icon": {"name": old_obj.json_name, "color": old_obj.sprite_color}}
                             new_obj = new_type(old_obj.pos, old_obj.orient, level_id=level_id)
                             world.new_obj(new_obj)
                             transform_success = True

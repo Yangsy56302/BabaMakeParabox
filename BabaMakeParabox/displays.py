@@ -66,7 +66,7 @@ class Sprites(object):
                     sprite = pygame.image.load(os.path.join("sprites", filename)).convert_alpha()
                     self.raw_sprites[object_type.json_name][int(varient_number)][int(wiggle)] = sprite.copy()
                     self.sprites[object_type.json_name][int(varient_number)][int(wiggle)] = set_surface_color_dark(sprite, sprite_color)
-        special_sprite_name: list[str] = ["empty", "text_infinity", "text_epsilon"]
+        special_sprite_name: list[str] = ["text_infinity", "text_epsilon"]
         special_sprite_name.extend(["text_" + str(i) for i in range(10)])
         for sprite_name in special_sprite_name:
             self.raw_sprites.setdefault(sprite_name, {0: {}})
@@ -76,9 +76,15 @@ class Sprites(object):
                 sprite = pygame.image.load(os.path.join("sprites", filename)).convert_alpha()
                 self.raw_sprites[sprite_name][0][int(wiggle)] = sprite.copy()
                 self.sprites[sprite_name][0][int(wiggle)] = set_surface_color_dark(sprite, sprite_color)
+        empty_sprite = pygame.Surface((sprite_size, sprite_size), pygame.SRCALPHA)
+        empty_sprite.fill("#00000000")
+        self.raw_sprites.setdefault("empty", {0: {}})
+        self.sprites.setdefault("empty", {0: {}})
+        for wiggle in range(1, 4):
+            self.raw_sprites["empty"][0][int(wiggle)] = empty_sprite.copy()
+            self.sprites["empty"][0][int(wiggle)] = empty_sprite.copy()
     def get(self, name: str, varient: int, wiggle: int = 1, raw: bool = False) -> pygame.Surface:
-        if raw:
-            return self.raw_sprites[name][varient][wiggle]
+        if raw: return self.raw_sprites[name][varient][wiggle]
         return self.sprites[name][varient][wiggle]
 sprites = Sprites()
 

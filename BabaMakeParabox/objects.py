@@ -397,14 +397,12 @@ class WorldObject(Object):
 class World(WorldObject):
     dark_overlay: colors.ColorHex = 0xC0C0C0
     json_name = "world"
-    sprite_name = "world"
     display_name = "World"
     sprite_color: colors.ColorHex = colors.LIGHT_GRAY_BLUE
         
 class Clone(WorldObject):
     light_overlay: colors.ColorHex = 0x404040
     json_name = "clone"
-    sprite_name = "clone"
     display_name = "Clone"
     sprite_color: colors.ColorHex = colors.LIGHTER_GRAY_BLUE
 
@@ -579,9 +577,11 @@ class TextWorldObject(GeneralNoun):
 
 class TextWorld(GeneralNoun):
     ref_type = World
+    sprite_name = "text_world"
 
 class TextClone(GeneralNoun):
     ref_type = Clone
+    sprite_name = "text_clone"
 
 class TextPath(GeneralNoun):
     ref_type = Path
