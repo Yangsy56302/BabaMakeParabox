@@ -948,6 +948,8 @@ object_class_used = object_used[:]
 object_class_used.extend([Text, Game])
 
 object_name: dict[str, type[Object]] = {t.json_name: t for t in object_used}
+object_name["world"] = Space
+object_name["text_world"] = TextSpace
 
 nouns_not_in_all: tuple[type[Noun], ...] = (TextAll, TextEmpty, TextText, TextLevelObject, TextSpaceObject, TextGame)
 not_in_all: tuple[type[Object], ...] = (Text, LevelObject, SpaceObject, Game)
@@ -988,6 +990,8 @@ def generate_metatext_at_tier(tier: int) -> list[type[Metatext]]:
             object_class_used.append(new_type)
             object_used.append(new_type)
             object_name[new_type.json_name] = new_type
+            if "space" in new_type.json_name:
+                object_name[new_type.json_name.replace("world", "space")] = new_type
             noun_class_list.append(new_type)
             text_class_list.append(new_type)
         return new_metatext_class_list
@@ -1034,13 +1038,22 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
     space_object_extra: Optional[SpaceObjectExtra] = None
     level_object_extra: Optional[LevelObjectExtra] = None
     if basics.compare_versions(ver if ver is not None else "0.0", "3.8") == -1:
-        old_space_id = json_object.get("space")
+        old_space_id = json_object.get("world")
         if old_space_id is not None:
             space_id = refs.SpaceID(old_space_id.get("name", ""), old_space_id.get("infinite_tier", 0))
         old_level_id = json_object.get("level")
         if old_level_id is not None:
             level_id = refs.LevelID(old_level_id.get("name", ""))
             level_object_extra = {"icon": old_level_id.get("icon", default_level_object_extra["icon"])}
+    elif basics.compare_versions(ver if ver is not None else "0.0", "3.91") == -1:
+        space_id_json = json_object.get("world_id")
+        if space_id_json is not None:
+            space_id = refs.SpaceID(**space_id_json)
+        level_id_json = json_object.get("level_id")
+        if level_id_json is not None:
+            level_id = refs.LevelID(**level_id_json)
+        space_object_extra = json_object.get("world_object_extra")
+        level_object_extra = json_object.get("level_object_extra")
     else:
         space_id_json = json_object.get("space_id")
         if space_id_json is not None:
@@ -1059,21 +1072,30 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
             generate_metatext_at_tier(current_metatext_tier)
             return json_to_object(json_object, ver)
         raise ValueError(json_object["type"])
+    pos = positions.Coordinate(*json_object["position"])
+    if basics.compare_versions(ver if ver is not None else "0.0", "3.91") == -1:
+        direct = positions.str_to_direction(json_object["orientation"]) # type: ignore
+    else:
+        direct = positions.str_to_direction(json_object["direction"])
     if issubclass(object_type, LevelObject):
         if level_id is not None:
-            return object_type(pos=positions.Coordinate(*json_object["position"]),
-                            direct=positions.str_to_direction(json_object["direction"]),
-                            space_id=space_id,
-                            level_id=level_id,
-                            level_object_extra=level_object_extra)
+            return object_type(
+                pos=pos,
+                direct=direct,
+                space_id=space_id,
+                level_id=level_id,
+                level_object_extra=level_object_extra
+            )
         raise ValueError(level_id)
     if issubclass(object_type, SpaceObject):
         if space_id is not None:
-            return object_type(pos=positions.Coordinate(*json_object["position"]),
-                            direct=positions.str_to_direction(json_object["direction"]),
-                            space_id=space_id,
-                            level_id=level_id,
-                            space_object_extra=space_object_extra)
+            return object_type(
+                pos=pos,
+                direct=direct,
+                space_id=space_id,
+                level_id=level_id,
+                space_object_extra=space_object_extra
+            )
         raise ValueError(space_id)
     if issubclass(object_type, Path):
         path_extra = json_object.get("path_extra")
@@ -1081,13 +1103,17 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
             path_extra = {"unlocked": False, "conditions": {}}
         reversed_collectible_dict = {v: k for k, v in collects.collectible_dict.items()}
         conditions: dict[type[collects.Collectible], int] = {reversed_collectible_dict[k]: v for k, v in path_extra["conditions"].items()}
-        return object_type(pos=positions.Coordinate(*json_object["position"]),
-                        direct=positions.str_to_direction(json_object["direction"]),
-                        space_id=space_id,
-                        level_id=level_id,
-                        unlocked=path_extra["unlocked"],
-                        conditions=conditions)
-    return object_type(pos=positions.Coordinate(*json_object["position"]),
-                    direct=positions.str_to_direction(json_object["direction"]),
-                    space_id=space_id,
-                    level_id=level_id)
+        return object_type(
+            pos=pos,
+            direct=direct,
+            space_id=space_id,
+            level_id=level_id,
+            unlocked=path_extra["unlocked"],
+            conditions=conditions
+        )
+    return object_type(
+        pos=pos,
+        direct=direct,
+        space_id=space_id,
+        level_id=level_id
+    )

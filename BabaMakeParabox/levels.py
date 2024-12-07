@@ -1166,15 +1166,25 @@ def json_to_level(json_object: LevelJson, ver: Optional[str] = None) -> Level:
     if basics.compare_versions(ver if ver is not None else "0.0", "3.8") == -1:
         level_id: refs.LevelID = refs.LevelID(json_object["name"]) # type: ignore
         super_level_id = refs.LevelID(json_object["super_level"]) # type: ignore
-        main_space_id: refs.SpaceID = refs.SpaceID(json_object["main_space"]) # type: ignore
+        main_space_id: refs.SpaceID = refs.SpaceID(json_object["main_world"]) # type: ignore
+        for space in json_object["world_list"]: # type: ignore
+            space_list.append(spaces.json_to_space(space, ver))
+    elif basics.compare_versions(ver if ver is not None else "0.0", "3.91") == -1:
+        level_id: refs.LevelID = refs.LevelID(**json_object["id"])
+        super_level_json = json_object.get("super_level")
+        if super_level_json is not None:
+            super_level_id = refs.LevelID(**super_level_json)
+        main_space_id: refs.SpaceID = refs.SpaceID(**json_object["main_world"]) # type: ignore
+        for space in json_object["world_list"]: # type: ignore
+            space_list.append(spaces.json_to_space(space, ver))
     else:
         level_id: refs.LevelID = refs.LevelID(**json_object["id"])
         super_level_json = json_object.get("super_level")
         if super_level_json is not None:
             super_level_id = refs.LevelID(**super_level_json)
         main_space_id: refs.SpaceID = refs.SpaceID(**json_object["main_space"])
-    for space in json_object["space_list"]:
-        space_list.append(spaces.json_to_space(space, ver))
+        for space in json_object["space_list"]:
+            space_list.append(spaces.json_to_space(space, ver))
     return Level(level_id=level_id,
                  space_list=space_list,
                  super_level_id=super_level_id,
