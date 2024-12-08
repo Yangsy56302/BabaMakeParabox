@@ -551,7 +551,7 @@ class Levelpack(object):
         for rule in self.rule_list:
             json_object["rule_list"].append([])
             for obj in rule:
-                json_object["rule_list"][-1].append({v: k for k, v in objects.object_name.items()}[obj])
+                json_object["rule_list"][-1].append(obj.json_name)
         return json_object
 
 def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
@@ -565,7 +565,7 @@ def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
     for rule in json_object["rule_list"]:
         rule_list.append([])
         for object_type in rule:
-            rule_list[-1].append(objects.object_name[object_type]) # type: ignore
+            rule_list[-1].append(objects.name_to_class[object_type]) # type: ignore
     if basics.compare_versions(ver if ver is not None else "0.0", "3.8") == -1:
         main_level_id: refs.LevelID = refs.LevelID(json_object["main_level"]) # type: ignore
     else:

@@ -74,7 +74,7 @@ class Level(object):
     def refresh_all_list(self) -> None:
         for space in self.space_list:
             for obj in space.object_list:
-                if all(map(lambda t: isinstance(obj, t), objects.not_in_all)):
+                if all(map(lambda t: isinstance(obj, t), objects.types_not_in_all)):
                     noun_type = objects.get_noun_from_type(type(obj))
                     if noun_type not in self.all_list:
                         self.all_list.append(noun_type)

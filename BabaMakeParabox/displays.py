@@ -1,5 +1,6 @@
 from typing import Optional
 import os
+import string
 
 from BabaMakeParabox import basics, colors, objects
 
@@ -67,8 +68,8 @@ class Sprites(object):
                     sprite = pygame.image.load(os.path.join("sprites", filename)).convert_alpha()
                     self.raw_sprites[object_type.json_name][int(varient_number)][int(wiggle)] = sprite.copy()
                     self.sprites[object_type.json_name][int(varient_number)][int(wiggle)] = set_surface_color_dark(sprite, sprite_color)
-        special_sprite_name: list[str] = ["text_infinity", "text_epsilon"]
-        special_sprite_name.extend(["text_" + str(i) for i in range(10)])
+        special_sprite_name: list[str] = ["text_" + c for c in string.digits]
+        special_sprite_name.extend(["text_" + c for c in string.ascii_lowercase])
         for sprite_name in special_sprite_name:
             self.raw_sprites.setdefault(sprite_name, {0: {}})
             self.sprites.setdefault(sprite_name, {0: {}})

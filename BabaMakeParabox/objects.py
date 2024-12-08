@@ -911,8 +911,8 @@ noun_class_list: list[type[Noun]] = []
 noun_class_list.extend([TextBaba, TextKeke, TextMe, TextPatrick, TextSkull, TextGhost])
 noun_class_list.extend([TextWall, TextHedge, TextIce, TextTile, TextGrass, TextWater, TextLava])
 noun_class_list.extend([TextDoor, TextKey, TextBox, TextRock, TextFruit, TextBelt, TextSun, TextMoon, TextStar, TextWhat, TextLove, TextFlag])
-noun_class_list.extend([TextLine, TextDot, TextCursor, TextAll, TextText])
-noun_class_list.extend([TextSpace, TextClone, TextLevel, TextPath, TextGame])
+noun_class_list.extend([TextLine, TextDot, TextCursor])
+noun_class_list.extend([TextText, TextSpace, TextClone, TextLevel, TextPath, TextGame])
 
 for noun_class in noun_class_list:
     if not hasattr(noun_class, "json_name"):
@@ -925,7 +925,7 @@ for noun_class in noun_class_list:
         setattr(noun_class, "sprite_color", noun_class.ref_type.sprite_color)
 
 special_noun_class_list: list[type[SpecialNoun]] = []
-special_noun_class_list.extend([TextEmpty, TextAll, TextGroup, TextInfinity, TextEpsilon, TextParabox])
+special_noun_class_list.extend([TextAll, TextInfinity, TextEpsilon, TextParabox])
 
 text_class_list: list[type[Text]] = []
 text_class_list.extend(noun_class_list)
@@ -937,25 +937,17 @@ text_class_list.extend([TextNot, TextAnd])
 text_class_list.extend([TextYou, TextMove, TextStop, TextPush, TextSink, TextFloat, TextOpen, TextShut, TextHot, TextMelt, TextWin, TextDefeat, TextShift, TextTele])
 text_class_list.extend([TextEnter, TextLeave, TextBonus, TextHide, TextWord, TextSelect, TextTextPlus, TextTextMinus, TextEnd, TextDone])
 
-object_used: list[type[Object]] = []
-object_used.extend([Baba, Keke, Me, Patrick, Skull, Ghost])
-object_used.extend([Wall, Hedge, Ice, Tile, Grass, Water, Lava])
-object_used.extend([Door, Key, Box, Rock, Fruit, Belt, Sun, Moon, Star, What, Love, Flag])
-object_used.extend([Line, Dot, Cursor, Level, Space, Clone, Game, Path])
-object_used.extend(text_class_list)
+object_class_only: list[type[Object]] = [Text, Game]
+object_used: list[type[Object]] = text_class_list + [t.ref_type for t in noun_class_list if t.ref_type not in object_class_only]
 
-object_class_used = object_used[:]
-object_class_used.extend([Text, Game])
+name_to_class: dict[str, type[Object]] = {t.json_name: t for t in object_used}
+name_to_class["world"] = Space
+name_to_class["text_world"] = TextSpace
 
-object_name: dict[str, type[Object]] = {t.json_name: t for t in object_used}
-object_name["world"] = Space
-object_name["text_world"] = TextSpace
-
-nouns_not_in_all: tuple[type[Noun], ...] = (TextAll, TextEmpty, TextText, TextLevelObject, TextSpaceObject, TextGame)
-not_in_all: tuple[type[Object], ...] = (Text, LevelObject, SpaceObject, Game)
-nouns_in_not_all: tuple[type[Noun], ...] = (TextAll, TextEmpty, TextText, TextLevelObject, TextSpaceObject, TextGame)
-in_not_all: tuple[type[Object], ...] = (Text, Game)
-not_in_editor: tuple[type[Object], ...] = (Text, Game)
+nouns_not_in_all: tuple[type[Noun], ...] = (TextAll, TextText, TextLevelObject, TextSpaceObject, TextGame)
+types_not_in_all: tuple[type[Object], ...] = (Text, LevelObject, SpaceObject, Game)
+nouns_in_not_all: tuple[type[Noun], ...] = (TextText, )
+types_in_not_all: tuple[type[Object], ...] = (Text, )
 
 metatext_class_dict: dict[int, list[type[Metatext]]] = {}
 current_metatext_tier: int = basics.options["metatext"]["tier"]
@@ -987,11 +979,10 @@ def generate_metatext_at_tier(tier: int) -> list[type[Metatext]]:
             new_metatext_class_list.append(generate_metatext(noun))
         metatext_class_dict[1] = new_metatext_class_list
         for new_type in new_metatext_class_list:
-            object_class_used.append(new_type)
             object_used.append(new_type)
-            object_name[new_type.json_name] = new_type
-            if "space" in new_type.json_name:
-                object_name[new_type.json_name.replace("world", "space")] = new_type
+            name_to_class[new_type.json_name] = new_type
+            if "world" in new_type.json_name:
+                name_to_class[new_type.json_name.replace("world", "space")] = new_type
             noun_class_list.append(new_type)
             text_class_list.append(new_type)
         return new_metatext_class_list
@@ -1001,9 +992,8 @@ def generate_metatext_at_tier(tier: int) -> list[type[Metatext]]:
         new_metatext_class_list.append(generate_metatext(noun))
     metatext_class_dict[tier] = new_metatext_class_list
     for new_type in new_metatext_class_list:
-        object_class_used.append(new_type)
         object_used.append(new_type)
-        object_name[new_type.json_name] = new_type
+        name_to_class[new_type.json_name] = new_type
         noun_class_list.append(new_type)
         text_class_list.append(new_type)
     return new_metatext_class_list
@@ -1016,7 +1006,7 @@ def same_float_prop(obj_1: Object, obj_2: Object):
 
 def get_noun_from_type(object_type: type[Object]) -> type[Noun]:
     global current_metatext_tier
-    global object_class_used, object_used, object_name, noun_class_list, text_class_list
+    global object_class_used, object_used, name_to_class, noun_class_list, text_class_list
     return_value: type[Noun] = TextText
     for noun_type in noun_class_list:
         if issubclass(noun_type, GeneralNoun):
@@ -1032,7 +1022,7 @@ def get_noun_from_type(object_type: type[Object]) -> type[Noun]:
 
 def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object:
     global current_metatext_tier
-    global object_class_used, object_used, object_name, noun_class_list, text_class_list
+    global object_class_used, object_used, name_to_class, noun_class_list, text_class_list
     space_id: Optional[refs.SpaceID] = None
     level_id: Optional[refs.LevelID] = None
     space_object_extra: Optional[SpaceObjectExtra] = None
@@ -1065,7 +1055,7 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
         level_object_extra = json_object.get("level_object_extra")
     space_object_extra = space_object_extra if space_object_extra is not None else default_space_object_extra
     level_object_extra = level_object_extra if level_object_extra is not None else default_level_object_extra
-    object_type = object_name.get(json_object["type"])
+    object_type = name_to_class.get(json_object["type"])
     if object_type is None:
         if json_object["type"].startswith("text_text_"):
             current_metatext_tier += 1

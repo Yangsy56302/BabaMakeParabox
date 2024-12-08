@@ -76,7 +76,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     colors.set_palette(os.path.join(".", "palettes", basics.options["palette"]))
     displays.sprites.update()
     window.fill(colors.current_palette[0, 4])
-    object_type_shortcuts: dict[int, type[objects.Object]] = {k: objects.object_name[v] for k, v in enumerate(basics.options["object_type_shortcuts"])}
+    object_type_shortcuts: dict[int, type[objects.Object]] = {k: objects.name_to_class[v] for k, v in enumerate(basics.options["object_type_shortcuts"])}
     level_changed = True
     space_changed = True
     frame = 0
@@ -246,10 +246,10 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                             space_changed = True
                     elif keys["LSHIFT"] or keys["RSHIFT"]:
                         obj_to_noun = objects.get_noun_from_type(current_object_type)
-                        if obj_to_noun not in objects.not_in_editor:
+                        if obj_to_noun not in objects.object_used:
                             current_object_type = obj_to_noun
                     else:
-                        current_object_type_list = [t for t in objects.object_name.values() if t not in objects.not_in_editor]
+                        current_object_type_list = [t for t in objects.name_to_class.values() if t in objects.object_used]
                         current_object_type_index = current_object_type_list.index(current_object_type)
                         current_object_type = current_object_type_list[current_object_type_index - 1 if current_object_type_index >= 0 else len(current_object_type_list) - 1]
                 elif mouses[4]:
@@ -262,10 +262,10 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                             current_space_index += 1
                             space_changed = True
                     elif keys["LSHIFT"] or keys["RSHIFT"]:
-                        if issubclass(current_object_type, objects.GeneralNoun) and current_object_type.ref_type not in objects.not_in_editor:
+                        if issubclass(current_object_type, objects.GeneralNoun) and current_object_type.ref_type in objects.object_used:
                             current_object_type = current_object_type.ref_type
                     else:
-                        current_object_type_list = [t for t in objects.object_name.values() if t not in objects.not_in_editor]
+                        current_object_type_list = [t for t in objects.name_to_class.values() if t in objects.object_used]
                         current_object_type_index = current_object_type_list.index(current_object_type)
                         current_object_type = current_object_type_list[current_object_type_index + 1 if current_object_type_index < len(current_object_type_list) - 1 else 0]
         # cursor move; object facing change (alt)
@@ -283,7 +283,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 if keys[str(i)]:
                     if keys["LSHIFT"] or keys["RSHIFT"]:
                         object_type_shortcuts[(i - 1) % 10] = current_object_type
-                        basics.options["object_type_shortcuts"][(i - 1) % 10] = {v: k for k, v in objects.object_name.items()}[current_object_type]
+                        basics.options["object_type_shortcuts"][(i - 1) % 10] = current_object_type.json_name
                     else:
                         current_object_type = object_type_shortcuts[(i - 1) % 10]
         elif keys["N"]:
@@ -397,7 +397,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             type_rule: rules.Rule = []
             valid_input = True
             for text in text_rule:
-                object_type = objects.object_name.get(text)
+                object_type = objects.name_to_class.get(text)
                 if object_type is not None:
                     if issubclass(object_type, objects.Text):
                         type_rule.append(object_type)
