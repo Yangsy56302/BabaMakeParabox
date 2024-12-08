@@ -3,4 +3,4 @@
 import BabaMakeParabox as bmp
 
 if __name__ == "__main__":
-    exit(bmp.main())
+    bmp.main()
