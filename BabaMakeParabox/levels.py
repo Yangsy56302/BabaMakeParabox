@@ -20,7 +20,8 @@ class LevelJson(TypedDict):
     space_list: list[spaces.SpaceJson]
 
 max_move_count: int = 16
-infinite_loop_number: int = 16
+infinite_move_number: int = 16
+MoveInfo = tuple[objects.Object, Optional[tuple[spaces.Space, positions.Coordinate, positions.Direction]]]
 
 class Level(object):
     def __init__(self, level_id: refs.LevelID, space_list: list[spaces.Space], *, super_level_id: Optional[refs.LevelID] = None, main_space_id: Optional[refs.SpaceID] = None, map_info: Optional[MapLevelExtraJson] = None, collected: Optional[dict[type[collects.Collectible], bool]] = None, ) -> None:
@@ -81,6 +82,47 @@ class Level(object):
         for space in self.space_list:
             for obj in space.object_list:
                 obj.move_number = 0
+    def move_obj_between_spaces(self, old_space: spaces.Space, obj: objects.Object, new_space: spaces.Space, pos: positions.Coordinate) -> None:
+        if obj in old_space.object_list:
+            old_space.del_obj(obj)
+        obj = copy.deepcopy(obj)
+        obj.reset_uuid()
+        obj.old_state.space = old_space.space_id
+        obj.old_state.pos = obj.pos
+        obj.pos = pos
+        new_space.new_obj(obj)
+    def move_obj_in_space(self, space: spaces.Space, obj: objects.Object, pos: positions.Coordinate) -> None:
+        if obj in space.object_list:
+            space.del_obj(obj)
+        obj = copy.deepcopy(obj)
+        obj.reset_uuid()
+        obj.old_state.pos = obj.pos
+        obj.pos = pos
+        space.new_obj(obj)
+    def move_objs_from_move_list(self, move_list: list[MoveInfo]) -> None:
+        delete_list: list[objects.Object] = []
+        move_list = basics.remove_same_elements(move_list)
+        for move_obj, new_info in move_list:
+            for space in self.space_list:
+                if move_obj in space.object_list:
+                    old_space = space
+            if new_info is None:
+                if move_obj not in delete_list:
+                    delete_list.append(move_obj)
+                continue
+            new_space, new_pos, new_direct = new_info
+            move_obj.move_number += 1
+            if old_space == new_space:
+                self.move_obj_in_space(old_space, move_obj, new_pos)
+            else:
+                self.move_obj_between_spaces(old_space, move_obj, new_space, new_pos)
+            move_obj.direct = new_direct
+        for del_obj in delete_list:
+            for space in self.space_list:
+                if del_obj in space.object_list:
+                    space.del_obj(del_obj)
+        if len(move_list) != 0 and "move" not in self.sound_events:
+            self.sound_events.append("move")
     def meet_prefix_conditions(self, space: spaces.Space, obj: objects.Object, prefix_info_list: list[rules.PrefixInfo], is_meta: bool = False) -> bool:
         return_value = True
         for prefix_info in prefix_info_list:
@@ -172,7 +214,7 @@ class Level(object):
                             new_match_type = new_match_noun.ref_type
                             for pos in find_range:
                                 match_objs.extend([o for o in space.get_objs_from_type(new_match_type) if o not in matched_objs])
-                        if len(match_objs) == 0:
+                        if len(match_objs) >= match_count:
                             meet_infix_condition = False
                         else:
                             matched_objs.append(match_objs[0])
@@ -196,23 +238,6 @@ class Level(object):
                     rule_info.extend(new_rule_info)
                     passed.append(super_space.space_id)
         return rule_list, rule_info
-    def move_obj_between_spaces(self, old_space: spaces.Space, obj: objects.Object, new_space: spaces.Space, pos: positions.Coordinate) -> None:
-        if obj in old_space.object_list:
-            old_space.del_obj(obj)
-        obj = copy.deepcopy(obj)
-        obj.reset_uuid()
-        obj.old_state.space = old_space.space_id
-        obj.old_state.pos = obj.pos
-        obj.pos = pos
-        new_space.new_obj(obj)
-    def move_obj_in_space(self, space: spaces.Space, obj: objects.Object, pos: positions.Coordinate) -> None:
-        if obj in space.object_list:
-            space.del_obj(obj)
-        obj = copy.deepcopy(obj)
-        obj.reset_uuid()
-        obj.old_state.pos = obj.pos
-        obj.pos = pos
-        space.new_obj(obj)
     def destroy_obj(self, space: spaces.Space, obj: objects.Object) -> None:
         space.del_obj(obj)
         for new_noun_type, new_noun_count in obj.special_operator_properties[objects.TextHas].enabled_dict().items(): # type: ignore
@@ -244,7 +269,7 @@ class Level(object):
     def get_move_list(self, space: spaces.Space, obj: objects.Object, \
         direct: positions.Direction, pos: Optional[positions.Coordinate] = None, \
             pushed: Optional[list[objects.Object]] = None, passed: Optional[list[refs.SpaceID]] = None, \
-                transnum: Optional[float] = None, depth: int = 0) -> Optional[list[tuple[objects.Object, spaces.Space, positions.Coordinate, positions.Direction]]]:
+                transnum: Optional[float] = None, depth: int = 0) -> Optional[list[MoveInfo]]:
         if depth > 100:
             return None
         depth += 1
@@ -255,30 +280,29 @@ class Level(object):
         pos = pos if pos is not None else obj.pos
         new_pos = positions.front_position(pos, direct)
         exit_space = False
-        exit_list = []
-        # exit & infinite exit
+        exit_list: list[MoveInfo] = []
         if space.out_of_range(new_pos) and not obj.properties.disabled(objects.TextLeave):
-            if passed.count(space.space_id) > infinite_loop_number:
-                super_space_list = self.find_super_spaces(space.space_id + 1)
-            else:
-                super_space_list = self.find_super_spaces(space.space_id)
-                passed.append(space.space_id)
-            if len(super_space_list) != 0:
+            super_space_id = space.space_id
+            if passed.count(space.space_id) > infinite_move_number:
+                super_space_id = space.space_id + 1
+            passed.append(space.space_id)
+            if self.get_space(super_space_id) is None:
+                exit_list.append((obj, None))
                 exit_space = True
-            for super_space, space_obj in super_space_list:
-                if super_space.properties[type(space_obj)].disabled(objects.TextLeave):
-                    continue
-                new_transnum = super_space.transnum_to_bigger_transnum(transnum, space_obj.pos, direct) if transnum is not None else space.pos_to_transnum(obj.pos, direct)
-                new_move_list = self.get_move_list(super_space, obj, direct, space_obj.pos, pushed, passed, new_transnum, depth)
-                if new_move_list is None:
-                    exit_space = False
-                    break
-                exit_list.extend(new_move_list)
-        # push
+            else:
+                super_space_list = self.find_super_spaces(super_space_id)
+                for super_space, space_obj in super_space_list:
+                    if super_space.properties[type(space_obj)].disabled(objects.TextLeave):
+                        continue
+                    new_transnum = super_space.transnum_to_bigger_transnum(transnum, space_obj.pos, direct) if transnum is not None else space.pos_to_transnum(obj.pos, direct)
+                    new_move_list = self.get_move_list(super_space, obj, direct, space_obj.pos, pushed, passed, new_transnum, depth)
+                    if new_move_list is not None:
+                        exit_space = True
+                        exit_list.extend(new_move_list)
         push_objects = [o for o in space.get_objs_from_pos(new_pos) if o.properties.enabled(objects.TextPush)]
         unpushable_objects: list[objects.Object] = []
         push = False
-        push_list = []
+        push_list: list[MoveInfo] = []
         if len(push_objects) != 0 and not space.out_of_range(new_pos):
             push = True
             for push_object in push_objects:
@@ -289,8 +313,7 @@ class Level(object):
                 else:
                     push_list.extend(new_move_list)
             if push:
-                push_list.append((obj, space, new_pos, direct))
-        # - & stop & shut
+                push_list.append((obj, (space, new_pos, direct)))
         simple = False
         if not space.out_of_range(new_pos):
             stop_objects = [o for o in space.get_objs_from_pos(new_pos) if o.properties.enabled(objects.TextStop) and not o.properties.enabled(objects.TextPush)]
@@ -307,38 +330,47 @@ class Level(object):
                             simple = False
             else:
                 simple = True
-        # squeeze
         squeeze = False
-        squeeze_list = []
+        squeeze_list: list[MoveInfo] = []
         if isinstance(obj, objects.SpaceObject) and (not space.out_of_range(new_pos)) and (not simple) and len(stop_objects) == 0:
             sub_space = self.get_space(obj.space_id)
-            if sub_space is not None and not sub_space.properties[type(obj)].disabled(objects.TextEnter):
+            if sub_space is not None:
+                if not sub_space.properties[type(obj)].disabled(objects.TextEnter):
+                    squeeze = True
+                    for new_push_object in push_objects:
+                        if new_push_object.properties.disabled(objects.TextEnter):
+                            squeeze = False
+                            break
+                        input_pos = sub_space.default_input_position(direct)
+                        squeeze_move_list = self.get_move_list(sub_space, new_push_object, positions.swap_direction(direct), input_pos, pushed=pushed + [obj], depth=depth)
+                        if squeeze_move_list is None:
+                            squeeze = False
+                            break
+                        squeeze_list.extend(squeeze_move_list)
+            else:
                 squeeze = True
-                for new_push_object in space.get_objs_from_pos(new_pos):
+                for new_push_object in push_objects:
                     if new_push_object.properties.disabled(objects.TextEnter):
                         squeeze = False
                         break
-                    input_pos = sub_space.default_input_position(direct)
-                    squeeze_move_list = self.get_move_list(sub_space, new_push_object, positions.swap_direction(direct), input_pos, pushed=pushed + [obj], depth=depth)
-                    if squeeze_move_list is None:
-                        squeeze = False
-                        break
-                    squeeze_list.extend(squeeze_move_list)
+                    squeeze_list.append((new_push_object, None))
             if squeeze:
-                squeeze_list.append((obj, space, new_pos, direct))
+                squeeze_list.append((obj, (space, new_pos, direct)))
         enter_space = False
-        enter_list = []
+        enter_list: list[MoveInfo] = []
         if not space.out_of_range(new_pos) and not obj.properties.disabled(objects.TextEnter):
             sub_space_obj_list = [o for o in space.get_spaces_from_pos(new_pos) if not o.properties.disabled(objects.TextEnter)]
             for space_obj in sub_space_obj_list:
                 sub_space = self.get_space(space_obj.space_id)
                 if sub_space is None:
+                    enter_space = True
                     continue
                 input_pos = sub_space.transnum_to_pos(transnum, positions.swap_direction(direct)) if transnum is not None else sub_space.default_input_position(positions.swap_direction(direct))
                 new_transnum = space.transnum_to_smaller_transnum(transnum, space_obj.pos, positions.swap_direction(direct)) if transnum is not None else 0.5
-                if passed.count(sub_space.space_id) > infinite_loop_number:
+                if passed.count(sub_space.space_id) > infinite_move_number:
                     sub_space = self.get_space(sub_space.space_id - 1)
                     if sub_space is None:
+                        enter_space = True
                         continue
                     input_pos = sub_space.default_input_position(positions.swap_direction(direct))
                     new_transnum = 0.5
@@ -349,6 +381,8 @@ class Level(object):
                 if new_move_list is not None:
                     enter_list.extend(new_move_list)
                     enter_space = True
+        if enter_space and len(enter_list) == 0:
+            enter_list.append((obj, None))
         if exit_space:
             return basics.remove_same_elements(exit_list)
         elif push:
@@ -358,23 +392,9 @@ class Level(object):
         elif squeeze:
             return basics.remove_same_elements(squeeze_list)
         elif simple:
-            return [(obj, space, new_pos, direct)]
+            return [(obj, (space, new_pos, direct))]
         else:
             return None
-    def move_objs_from_move_list(self, move_list: list[tuple[objects.Object, spaces.Space, positions.Coordinate, positions.Direction]]) -> None:
-        move_list = basics.remove_same_elements(move_list)
-        for move_obj, new_space, new_pos, new_direct in move_list:
-            move_obj.move_number += 1
-            for space in self.space_list:
-                if move_obj in space.object_list:
-                    old_space = space
-            if old_space == new_space:
-                self.move_obj_in_space(old_space, move_obj, new_pos)
-            else:
-                self.move_obj_between_spaces(old_space, move_obj, new_space, new_pos)
-            move_obj.direct = new_direct
-        if len(move_list) != 0 and "move" not in self.sound_events:
-            self.sound_events.append("move")
     def you(self, direct: positions.PlayerOperation) -> bool:
         self.reset_move_numbers()
         if direct == positions.NoDirect.O:

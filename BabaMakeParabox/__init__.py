@@ -154,11 +154,13 @@ def change_options() -> bool:
         if palette_filename == "":
             break
         palette_filename += "" if basics.options["debug"] and not palette_filename.endswith(".png") else ".png"
-        if not os.path.isfile(os.path.join(".", "palettes", palette_filename)):
+        pelette_path = os.path.join(".", "palettes", palette_filename)
+        if not os.path.isfile(pelette_path):
             languages.lang_print("warn.file.not_found", file=palette_filename)
             continue
         try:
-            colors.set_palette(os.path.join(".", "palettes", palette_filename))
+            colors.set_palette(pelette_path)
+            basics.options["palette"] = palette_filename
         except Exception:
             languages.lang_print("warn.unknown", value=traceback.format_exc())
         else:
