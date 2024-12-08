@@ -28,10 +28,11 @@
     "confirm.no": "[是：y，否（默认）：N]",
     "launch.welcome": "欢迎来到 Baba Make Parabox！",
     "launch.debug": "此程序目前处于调试模式。更改设置以关闭。",
-    "launch.game_mode.1": "游玩关卡包，请选择 1；",
-    "launch.game_mode.2": "编辑关卡包，请选择 2；",
-    "launch.game_mode.3": "更改设置，请选择 3；",
-    "launch.game_mode.4": "更新关卡包格式，请选择 4。",
+    "launch.game_mode.1": "游玩关卡包，请输入 1；",
+    "launch.game_mode.2": "编辑关卡包，请输入 2；",
+    "launch.game_mode.3": "更改设置，请输入 3；",
+    "launch.game_mode.4": "更新关卡包格式，请输入 4。",
+    "launch.game_mode.0": "任何其他输入都会退出游戏。",
     "launch.open.levelpack": "请在下方输入您要打开的关卡包的文件名。",
     "launch.open.levelpack.done": "已成功从文件“{file}”读取关卡包数据。",
     "launch.open.levelpack.empty.editor": "如果您留空，编辑器将会新建一个默认的关卡包。",
@@ -93,7 +94,7 @@
     "edit.space.delete": "请问您是否确定要删除这个空间？[是：y，否（默认）：N]：",
     "input.number": "以数字形式输入您的选择：",
     "input.string": "输入内容：",
-    "input.file.name": "输入文件名：",
+    "input.file.name": "输入文件名（不要包括文件夹的名称）：",
     "input.savepoint.name": "输入临时存档名：",
     "warn.savepoint.not_found": "警告：临时存档“{value}”未找到！",
     "warn.file.not_found": "警告：文件“{file}”未找到！",
@@ -101,5 +102,6 @@
     "warn.value.invalid": "警告：“{value}”不是“{cls}”类型的值！",
     "warn.value.out_of_range": "警告：{value} 不在指定范围内！（最小为 {min}，最大为 {max}）",
     "warn.value.underflow": "警告：{value} 太小了！（最小为 {min}）",
-    "warn.value.overflow": "警告：{value} 太大了！（最大为 {min}）"
+    "warn.value.overflow": "警告：{value} 太大了！（最大为 {min}）",
+    "warn.unknown": "警告：非致命性程序异常，游戏将会继续运行。详细信息：\n{value}"
 }

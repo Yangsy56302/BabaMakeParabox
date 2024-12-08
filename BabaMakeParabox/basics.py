@@ -19,7 +19,7 @@ def absclampf(__num: float, __lim: float, /) -> float:
 import pygame
 pygame.init()
 
-versions = "3.91"
+versions = "3.92"
 def compare_versions(ver_1: str, ver_2: str) -> Literal[-1, 0, 1]:
     for char_1, char_2 in zip(ver_1, ver_2):
         if ord(char_1) > ord(char_2):
@@ -34,8 +34,6 @@ def compare_versions(ver_1: str, ver_2: str) -> Literal[-1, 0, 1]:
         return -1
 
 pyinst_env = "PYINST"
-
-options_filename = "options.json"
 
 class DefaultNewSpaceOptions(TypedDict):
     width: int
@@ -58,6 +56,7 @@ class Options(TypedDict):
     fpw: int
     space_display_recursion_depth: int
     smooth_animation_multiplier: Optional[int]
+    palette: str
     compressed_json_output: bool
     object_type_shortcuts: list[str]
     default_new_space: DefaultNewSpaceOptions
@@ -73,11 +72,12 @@ default_options: Options = {
     "fps": 30,
     "fpw": 5,
     "space_display_recursion_depth": 1,
-    "smooth_animation_multiplier": 2,
+    "smooth_animation_multiplier": 3,
+    "palette": "default.png",
     "compressed_json_output": False,
     "default_new_space": {
-        "width": 9,
-        "height": 9,
+        "width": 15,
+        "height": 15,
         "color": 0x000000
     },
     "object_type_shortcuts": [
@@ -101,6 +101,7 @@ default_options: Options = {
         "name": "rush_baba.mid"
     }
 }
+options_filename = "options.json"
 options: Options = Options(copy.deepcopy(default_options))
 
 class _JsonDumpKwds(TypedDict):

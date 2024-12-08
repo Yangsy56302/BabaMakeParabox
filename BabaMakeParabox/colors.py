@@ -1,7 +1,28 @@
+import os
 import random
+
+import PIL.Image
 
 ColorHex = int
 ColorRGB = tuple[int, int, int]
+
+PaletteIndex = tuple[int, int]
+Palette = dict[PaletteIndex, ColorHex]
+def get_palette(path: str) -> Palette:
+    palette: Palette = {}
+    image = PIL.Image.open(path)
+    image.convert("RGB")
+    for x in range(image.width):
+        for y in range(image.height):
+            pixel = image.getpixel((x, y))
+            if isinstance(pixel, tuple):
+                palette[x, y] = rgb_to_hex(*pixel[:3])
+    return palette
+
+current_palette: Palette = {}
+def set_palette(path: str) -> None:
+    global current_palette
+    current_palette.update(get_palette(path))
 
 DARK_GRAY = 0x242424
 LIGHT_GRAY = 0x737373
@@ -56,16 +77,23 @@ def hex_to_rgb(color: ColorHex) -> ColorRGB:
 
 def str_to_hex(string: str) -> ColorHex:
     try:
-        if string.startswith("0x"):
-            new_string = string[2:]
-        elif string.startswith("#"):
-            new_string = string[1:]
+        if "," in string:
+            x, y = string.split(sep=",")
+            x = int(x.strip())
+            y = int(y.strip())
+            color = current_palette[x, y]
         else:
-            new_string = string[:]
-        r = int(new_string[:2], base=16)
-        g = int(new_string[2:4], base=16)
-        b = int(new_string[4:], base=16)
-        return rgb_to_hex(r, g, b)
+            if string.startswith("0x"):
+                new_string = string[2:]
+            elif string.startswith("#"):
+                new_string = string[1:]
+            else:
+                new_string = string[:]
+            r = int(new_string[:2], base=16)
+            g = int(new_string[2:4], base=16)
+            b = int(new_string[4:], base=16)
+            color = rgb_to_hex(r, g, b)
+        return color
     except Exception:
         raise ValueError(string)
 

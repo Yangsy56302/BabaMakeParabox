@@ -1,3 +1,4 @@
+import os
 import copy
 import random
 
@@ -20,7 +21,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     current_clipboard = []
     window = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
     pygame.display.set_caption(f"Baba Make Parabox Editor Version {basics.versions}")
-    pygame.display.set_icon(pygame.image.load("bmp.png"))
+    pygame.display.set_icon(pygame.image.load(os.path.join(".", "logo", "c8icon.png")))
     pygame.key.stop_text_input()
     clock = pygame.time.Clock()
     keybinds = {
@@ -72,8 +73,9 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     mouse_pos_in_space: positions.Coordinate
     space_surface_size = window.get_size()
     space_surface_pos = (0, 0)
+    colors.set_palette(os.path.join(".", "palettes", basics.options["palette"]))
     displays.sprites.update()
-    window.fill("#000000")
+    window.fill(colors.current_palette[0, 4])
     object_type_shortcuts: dict[int, type[objects.Object]] = {k: objects.object_name[v] for k, v in enumerate(basics.options["object_type_shortcuts"])}
     level_changed = True
     space_changed = True
@@ -160,7 +162,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                                     while True:
                                         icon_color = languages.lang_input("edit.level.new.icon.color")
                                         try:
-                                            icon_color = colors.str_to_hex(icon_color) if icon_color != "" else colors.WHITE
+                                            icon_color = colors.str_to_hex(icon_color) if icon_color != "" else colors.current_palette[0, 3]
                                         except ValueError:
                                             languages.lang_print("warn.value.invalid", value=icon_color, cls="color")
                                         else:
@@ -168,7 +170,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                                 else:
                                     level_id: refs.LevelID = current_level.level_id
                                     icon_name = "empty"
-                                    icon_color = colors.WHITE
+                                    icon_color = colors.current_palette[0, 3]
                                 level_object_extra: objects.LevelObjectExtra = {"icon": {"name": icon_name, "color": icon_color}}
                                 current_space.new_obj(current_object_type(current_cursor_pos, current_direct, level_id=level_id, level_object_extra=level_object_extra))
                             elif issubclass(current_object_type, objects.SpaceObject):
@@ -484,7 +486,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         # display
         for space in current_level.space_list:
             space.set_sprite_states(0)
-        window.fill("#000000")
+        window.fill(colors.current_palette[0, 4])
         space_surface_size = (window.get_height() * current_space.width // current_space.height, window.get_height())
         space_surface_pos = (0, 0)
         space_surface = current_level.space_to_surface(current_space, wiggle, space_surface_size, cursor=current_cursor_pos, debug=True)

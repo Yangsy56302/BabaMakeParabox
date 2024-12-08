@@ -13,7 +13,7 @@ def calc_smooth(frame: int) -> Optional[float]:
             return (1 - smooth_value) ** 4
 
 sprite_size = 24
-gui_scale = 4
+gui_scale = 3
 
 def set_alpha(surface: pygame.Surface, alpha: int) -> pygame.Surface:
     new_surface = surface.copy()
@@ -46,15 +46,16 @@ def set_surface_color_light(surface: pygame.Surface, color: colors.ColorHex) -> 
 
 class Sprites(object):
     def __init__(self) -> None:
-        pass
-    def update(self) -> None:
         self.raw_sprites: dict[str, dict[int, dict[int, pygame.Surface]]] = {}
         self.sprites: dict[str, dict[int, dict[int, pygame.Surface]]] = {}
+    def update(self) -> None:
+        self.raw_sprites.clear()
+        self.sprites.clear()
         for object_type in objects.object_used:
             sprite_name: str = getattr(object_type, "sprite_name", "")
             if sprite_name == "":
                 continue
-            sprite_color: colors.ColorHex = getattr(object_type, "sprite_color", colors.WHITE)
+            sprite_color: colors.ColorHex = colors.current_palette[getattr(object_type, "sprite_color", (0, 4))]
             sprite_varients: list[int] = getattr(object_type, "sprite_varients")
             self.raw_sprites.setdefault(object_type.json_name, {})
             self.sprites.setdefault(object_type.json_name, {})
@@ -94,7 +95,7 @@ def simple_type_to_surface(object_type: type[objects.Object], varient: int = 0, 
             obj_surface = default_surface.copy()
         else:
             obj_surface = pygame.Surface((sprite_size, sprite_size), pygame.SRCALPHA)
-            obj_surface.fill(object_type.sprite_color)
+            obj_surface.fill(colors.current_palette[object_type.sprite_color])
         obj_surface = set_surface_color_light(obj_surface, object_type.light_overlay)
         obj_surface = set_surface_color_dark(obj_surface, object_type.dark_overlay)
     else:

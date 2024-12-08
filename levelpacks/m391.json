@@ -1848,48 +1848,5 @@
             }
         }
     ], 
-    "rule_list": [
-        [
-            "text_text", 
-            "text_is", 
-            "text_push"
-        ], 
-        [
-            "text_cursor", 
-            "text_is", 
-            "text_select"
-        ], 
-        [
-            "text_meta", 
-            "text_world", 
-            "text_is", 
-            "text_enter", 
-            "text_and", 
-            "text_leave"
-        ], 
-        [
-            "text_meta", 
-            "text_clone", 
-            "text_is", 
-            "text_enter"
-        ], 
-        [
-            "text_not", 
-            "text_meta", 
-            "text_world", 
-            "text_and", 
-            "text_not", 
-            "text_meta", 
-            "text_clone", 
-            "text_is", 
-            "text_push"
-        ], 
-        [
-            "text_not", 
-            "text_meta", 
-            "text_level", 
-            "text_is", 
-            "text_stop"
-        ]
-    ]
+    "rule_list": []
 }

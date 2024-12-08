@@ -128,7 +128,7 @@ class Object(object):
     json_name: str
     sprite_name: str
     display_name: str
-    sprite_color: colors.ColorHex
+    sprite_color: colors.PaletteIndex
     sprite_varients: tuple[int, ...] = (0x0, )
     def __init__(self, pos: positions.Coordinate, direct: positions.Direction = positions.Direction.S, *, space_id: Optional[refs.SpaceID] = None, level_id: Optional[refs.LevelID] = None) -> None:
         self.uuid: uuid.UUID = uuid.uuid4()
@@ -214,175 +214,175 @@ class Baba(Character):
     json_name = "baba"
     sprite_name = "baba"
     display_name = "Baba"
-    sprite_color: colors.ColorHex = colors.WHITE
+    sprite_color: colors.PaletteIndex = (0, 3)
 
 class Keke(Character):
     json_name = "keke"
     sprite_name = "keke"
     display_name = "Keke"
-    sprite_color: colors.ColorHex = colors.LIGHT_RED
+    sprite_color: colors.PaletteIndex = (2, 2)
 
 class Me(Character):
     json_name = "me"
     sprite_name = "me"
     display_name = "Me"
-    sprite_color: colors.ColorHex = colors.LIGHT_PURPLE
+    sprite_color: colors.PaletteIndex = (3, 1)
 
 class Patrick(Directional):
     json_name = "patrick"
     sprite_name = "patrick"
     display_name = "Patrick"
-    sprite_color: colors.ColorHex = colors.MAGENTA
+    sprite_color: colors.PaletteIndex = (4, 1)
 
 class Skull(Directional):
     json_name = "skull"
     sprite_name = "skull"
     display_name = "Skull"
-    sprite_color: colors.ColorHex = colors.DARK_RED
+    sprite_color: colors.PaletteIndex = (2, 1)
 
 class Ghost(Directional):
     json_name = "ghost"
     sprite_name = "ghost"
     display_name = "Ghost"
-    sprite_color: colors.ColorHex = colors.PINK
+    sprite_color: colors.PaletteIndex = (4, 2)
 
 class Wall(Tiled):
     json_name = "wall"
     sprite_name = "wall"
     display_name = "Wall"
-    sprite_color: colors.ColorHex = colors.DARK_GRAY_BLUE
+    sprite_color: colors.PaletteIndex = (1, 1)
 
 class Hedge(Tiled):
     json_name = "hedge"
     sprite_name = "hedge"
     display_name = "Hedge"
-    sprite_color: colors.ColorHex = colors.DARK_GREEN
+    sprite_color: colors.PaletteIndex = (5, 1)
 
 class Ice(Tiled):
     json_name = "ice"
     sprite_name = "ice"
     display_name = "Ice"
-    sprite_color: colors.ColorHex = colors.DARK_GRAY_BLUE
+    sprite_color: colors.PaletteIndex = (1, 1)
 
 class Tile(Static):
     json_name = "tile"
     sprite_name = "tile"
     display_name = "Tile"
-    sprite_color: colors.ColorHex = colors.DARK_GRAY
+    sprite_color: colors.PaletteIndex = (0, 0)
 
 class Grass(Tiled):
     json_name = "grass"
     sprite_name = "grass"
     display_name = "Grass"
-    sprite_color: colors.ColorHex = colors.DARK_GRAY_GREEN
+    sprite_color: colors.PaletteIndex = (5, 0)
 
 class Water(Tiled):
     json_name = "water"
     sprite_name = "water"
     display_name = "Water"
-    sprite_color: colors.ColorHex = colors.LIGHT_GRAY_BLUE
+    sprite_color: colors.PaletteIndex = (1, 3)
 
 class Lava(Tiled):
     json_name = "lava"
     sprite_name = "water"
     display_name = "Lava"
-    sprite_color: colors.ColorHex = colors.LIGHT_ORANGE
+    sprite_color: colors.PaletteIndex = (2, 3)
 
 class Door(Static):
     json_name = "door"
     sprite_name = "door"
     display_name = "Door"
-    sprite_color: colors.ColorHex = colors.LIGHT_RED
+    sprite_color: colors.PaletteIndex = (2, 2)
 
 class Key(Static):
     json_name = "key"
     sprite_name = "key"
     display_name = "Key"
-    sprite_color: colors.ColorHex = colors.LIGHT_YELLOW
+    sprite_color: colors.PaletteIndex = (2, 4)
 
 class Box(Static):
     json_name = "box"
     sprite_name = "box"
     display_name = "Box"
-    sprite_color: colors.ColorHex = colors.BROWN
+    sprite_color: colors.PaletteIndex = (6, 1)
 
 class Rock(Static):
     json_name = "rock"
     sprite_name = "rock"
     display_name = "Rock"
-    sprite_color: colors.ColorHex = colors.LIGHT_BROWN
+    sprite_color: colors.PaletteIndex = (6, 2)
 
 class Fruit(Static):
     json_name = "fruit"
     sprite_name = "fruit"
     display_name = "Fruit"
-    sprite_color: colors.ColorHex = colors.LIGHT_RED
+    sprite_color: colors.PaletteIndex = (2, 2)
 
 class Belt(AnimatedDirectional):
     json_name = "belt"
     sprite_name = "belt"
     display_name = "Belt"
-    sprite_color: colors.ColorHex = colors.DARK_GRAY_BLUE
+    sprite_color: colors.PaletteIndex = (1, 1)
 
 class Sun(Static):
     json_name = "sun"
     sprite_name = "sun"
     display_name = "Sun"
-    sprite_color: colors.ColorHex = colors.LIGHT_YELLOW
+    sprite_color: colors.PaletteIndex = (2, 4)
 
 class Moon(Static):
     json_name = "moon"
     sprite_name = "moon"
     display_name = "Moon"
-    sprite_color: colors.ColorHex = colors.LIGHT_YELLOW
+    sprite_color: colors.PaletteIndex = (2, 4)
 
 class Star(Static):
     json_name = "star"
     sprite_name = "star"
     display_name = "Star"
-    sprite_color: colors.ColorHex = colors.LIGHT_YELLOW
+    sprite_color: colors.PaletteIndex = (2, 4)
 
 class What(Static):
     json_name = "what"
     sprite_name = "what"
     display_name = "What"
-    sprite_color: colors.ColorHex = colors.WHITE
+    sprite_color: colors.PaletteIndex = (0, 3)
 
 class Love(Static):
     json_name = "love"
     sprite_name = "love"
     display_name = "Love"
-    sprite_color: colors.ColorHex = colors.PINK
+    sprite_color: colors.PaletteIndex = (4, 2)
 
 class Flag(Static):
     json_name = "flag"
     sprite_name = "flag"
     display_name = "Flag"
-    sprite_color: colors.ColorHex = colors.LIGHT_YELLOW
+    sprite_color: colors.PaletteIndex = (2, 4)
 
 class Line(Tiled):
     json_name = "line"
     sprite_name = "line"
     display_name = "Line"
-    sprite_color: colors.ColorHex = colors.WHITE
+    sprite_color: colors.PaletteIndex = (0, 3)
 
 class Dot(Static):
     json_name = "dot"
     sprite_name = "dot"
     display_name = "Dot"
-    sprite_color: colors.ColorHex = colors.WHITE
+    sprite_color: colors.PaletteIndex = (0, 3)
 
 class Orb(Static):
     json_name = "orb"
     sprite_name = "orb"
     display_name = "Orb"
-    sprite_color: colors.ColorHex = colors.MAGENTA
+    sprite_color: colors.PaletteIndex = (4, 1)
 
 class Cursor(Static):
     json_name = "cursor"
     sprite_name = "cursor"
     display_name = "Cursor"
-    sprite_color: colors.ColorHex = colors.PINK
+    sprite_color: colors.PaletteIndex = (4, 2)
 
 class SpaceObject(Object):
     light_overlay: colors.ColorHex = 0x000000
@@ -398,13 +398,13 @@ class Space(SpaceObject):
     dark_overlay: colors.ColorHex = 0xC0C0C0
     json_name = "space"
     display_name = "Space"
-    sprite_color: colors.ColorHex = colors.LIGHT_GRAY_BLUE
+    sprite_color: colors.PaletteIndex = (1, 3)
         
 class Clone(SpaceObject):
     light_overlay: colors.ColorHex = 0x404040
     json_name = "clone"
     display_name = "Clone"
-    sprite_color: colors.ColorHex = colors.LIGHTER_GRAY_BLUE
+    sprite_color: colors.PaletteIndex = (1, 4)
 
 space_object_types: list[type[SpaceObject]] = [Space, Clone]
 default_space_object_type: type[SpaceObject] = Space
@@ -421,7 +421,7 @@ class Level(LevelObject):
     json_name = "level"
     sprite_name = "level"
     display_name = "Level"
-    sprite_color: colors.ColorHex = colors.MAGENTA
+    sprite_color: colors.PaletteIndex = (4, 1)
 
 level_object_types: tuple[type[LevelObject], ...] = (Level, )
 default_level_object_type: type[LevelObject] = Level
@@ -430,7 +430,7 @@ class Path(Tiled):
     json_name = "path"
     sprite_name = "line"
     display_name = "Path"
-    sprite_color: colors.ColorHex = colors.SILVER
+    sprite_color: colors.PaletteIndex = (0, 2)
     def __init__(self, pos: positions.Coordinate, direct: positions.Direction = positions.Direction.S, *, space_id: Optional[refs.SpaceID] = None, level_id: Optional[refs.LevelID] = None, unlocked: bool = False, conditions: Optional[dict[type[collects.Collectible], int]] = None, space_object_info: Optional[refs.SpaceID] = None, level_object_info: Optional[refs.LevelID] = None) -> None:
         super().__init__(pos, direct, space_id=space_object_info, level_id=level_object_info)
         self.unlocked: bool = unlocked
@@ -444,7 +444,7 @@ class Game(Object):
         self.ref_type = ref_type
     json_name = "game"
     display_name = "Game"
-    sprite_color: colors.ColorHex = colors.PINK
+    sprite_color: colors.PaletteIndex = (4, 2)
 
 class Text(Object):
     pass
@@ -459,17 +459,17 @@ class Prefix(Text):
     pass
 
 class Infix(Text):
-    sprite_color: colors.ColorHex = colors.WHITE
+    sprite_color: colors.PaletteIndex = (0, 3)
 
 class Operator(Text):
-    sprite_color: colors.ColorHex = colors.WHITE
+    sprite_color: colors.PaletteIndex = (0, 3)
 
 class Property(Text):
     pass
 
 class TextBaba(GeneralNoun):
     ref_type = Baba
-    sprite_color: colors.ColorHex = colors.MAGENTA
+    sprite_color: colors.PaletteIndex = (4, 1)
 
 class TextKeke(GeneralNoun):
     ref_type = Keke
@@ -488,18 +488,18 @@ class TextGhost(GeneralNoun):
 
 class TextWall(GeneralNoun):
     ref_type = Wall
-    sprite_color: colors.ColorHex = colors.LIGHT_GRAY
+    sprite_color: colors.PaletteIndex = (0, 1)
 
 class TextHedge(GeneralNoun):
     ref_type = Hedge
 
 class TextIce(GeneralNoun):
     ref_type = Ice
-    sprite_color: colors.ColorHex = colors.LIGHT_GRAY_BLUE
+    sprite_color: colors.PaletteIndex = (1, 3)
 
 class TextTile(GeneralNoun):
     ref_type = Tile
-    sprite_color: colors.ColorHex = colors.LIGHT_GRAY
+    sprite_color: colors.PaletteIndex = (0, 1)
 
 class TextGrass(GeneralNoun):
     ref_type = Grass
@@ -522,14 +522,14 @@ class TextBox(GeneralNoun):
 
 class TextRock(GeneralNoun):
     ref_type = Rock
-    sprite_color: colors.ColorHex = colors.BROWN
+    sprite_color: colors.PaletteIndex = (6, 1)
 
 class TextFruit(GeneralNoun):
     ref_type = Fruit
 
 class TextBelt(GeneralNoun):
     ref_type = Belt
-    sprite_color: colors.ColorHex = colors.LIGHT_GRAY_BLUE
+    sprite_color: colors.PaletteIndex = (1, 3)
 
 class TextSun(GeneralNoun):
     ref_type = Sun
@@ -557,14 +557,14 @@ class TextDot(GeneralNoun):
 
 class TextCursor(GeneralNoun):
     ref_type = Cursor
-    sprite_color: colors.ColorHex = colors.LIGHT_YELLOW
+    sprite_color: colors.PaletteIndex = (2, 4)
 
 class TextText(GeneralNoun):
     ref_type = Text
     json_name = "text_text"
     sprite_name = "text_text"
     display_name = "TEXT"
-    sprite_color: colors.ColorHex = colors.MAGENTA
+    sprite_color: colors.PaletteIndex = (4, 1)
 
 class TextLevelObject(GeneralNoun):
     ref_type = LevelObject
@@ -597,25 +597,25 @@ class TextOften(Prefix):
     json_name = "text_often"
     sprite_name = "text_often"
     display_name = "OFTEN"
-    sprite_color: colors.ColorHex = colors.LIGHT_GREEN
+    sprite_color: colors.PaletteIndex = (5, 4)
 
 class TextSeldom(Prefix):
     json_name = "text_seldom"
     sprite_name = "text_seldom"
     display_name = "SELDOM"
-    sprite_color: colors.ColorHex = colors.DARK_BLUE
+    sprite_color: colors.PaletteIndex = (3, 2)
 
 class TextMeta(Prefix):
     json_name = "text_meta"
     sprite_name = "text_meta"
     display_name = "META"
-    sprite_color: colors.ColorHex = colors.MAGENTA
+    sprite_color: colors.PaletteIndex = (4, 1)
 
 class TextText_(Text):
     json_name = "text_text_"
     sprite_name = "text_text_underline"
     display_name = "TEXT_"
-    sprite_color: colors.ColorHex = colors.DARK_MAGENTA
+    sprite_color: colors.PaletteIndex = (4, 0)
 
 class TextOn(Infix):
     json_name = "text_on"
@@ -668,157 +668,157 @@ class TextNot(Text):
     json_name = "text_not"
     sprite_name = "text_not"
     display_name = "NOT"
-    sprite_color: colors.ColorHex = colors.LIGHT_RED
+    sprite_color: colors.PaletteIndex = (2, 2)
 
 class TextAnd(Text):
     json_name = "text_and"
     sprite_name = "text_and"
     display_name = "AND"
-    sprite_color: colors.ColorHex = colors.WHITE
+    sprite_color: colors.PaletteIndex = (0, 3)
 
 class TextYou(Property):
     json_name = "text_you"
     sprite_name = "text_you"
     display_name = "YOU"
-    sprite_color: colors.ColorHex = colors.MAGENTA
+    sprite_color: colors.PaletteIndex = (4, 1)
 
 class TextMove(Property):
     json_name = "text_move"
     sprite_name = "text_move"
     display_name = "MOVE"
-    sprite_color: colors.ColorHex = colors.LIGHT_GREEN
+    sprite_color: colors.PaletteIndex = (5, 4)
 
 class TextStop(Property):
     json_name = "text_stop"
     sprite_name = "text_stop"
     display_name = "STOP"
-    sprite_color: colors.ColorHex = colors.DARK_GREEN
+    sprite_color: colors.PaletteIndex = (5, 1)
 
 class TextPush(Property):
     json_name = "text_push"
     sprite_name = "text_push"
     display_name = "PUSH"
-    sprite_color: colors.ColorHex = colors.BROWN
+    sprite_color: colors.PaletteIndex = (6, 1)
 
 class TextSink(Property):
     json_name = "text_sink"
     sprite_name = "text_sink"
     display_name = "SINK"
-    sprite_color: colors.ColorHex = colors.LIGHT_GRAY_BLUE
+    sprite_color: colors.PaletteIndex = (1, 3)
 
 class TextFloat(Property):
     json_name = "text_float"
     sprite_name = "text_float"
     display_name = "FLOAT"
-    sprite_color: colors.ColorHex = colors.LIGHTER_GRAY_BLUE
+    sprite_color: colors.PaletteIndex = (1, 4)
 
 class TextOpen(Property):
     json_name = "text_open"
     sprite_name = "text_open"
     display_name = "OPEN"
-    sprite_color: colors.ColorHex = colors.LIGHT_YELLOW
+    sprite_color: colors.PaletteIndex = (2, 4)
 
 class TextShut(Property):
     json_name = "text_shut"
     sprite_name = "text_shut"
     display_name = "SHUT"
-    sprite_color: colors.ColorHex = colors.LIGHT_RED
+    sprite_color: colors.PaletteIndex = (2, 2)
 
 class TextHot(Property):
     json_name = "text_hot"
     sprite_name = "text_hot"
     display_name = "HOT"
-    sprite_color: colors.ColorHex = colors.LIGHT_ORANGE
+    sprite_color: colors.PaletteIndex = (2, 3)
 
 class TextMelt(Property):
     json_name = "text_melt"
     sprite_name = "text_melt"
     display_name = "MELT"
-    sprite_color: colors.ColorHex = colors.LIGHT_GRAY_BLUE
+    sprite_color: colors.PaletteIndex = (1, 3)
 
 class TextWin(Property):
     json_name = "text_win"
     sprite_name = "text_win"
     display_name = "WIN"
-    sprite_color: colors.ColorHex = colors.LIGHT_YELLOW
+    sprite_color: colors.PaletteIndex = (2, 4)
 
 class TextDefeat(Property):
     json_name = "text_defeat"
     sprite_name = "text_defeat"
     display_name = "DEFEAT"
-    sprite_color: colors.ColorHex = colors.DARK_RED
+    sprite_color: colors.PaletteIndex = (2, 1)
 
 class TextShift(Property):
     json_name = "text_shift"
     sprite_name = "text_shift"
     display_name = "SHIFT"
-    sprite_color: colors.ColorHex = colors.LIGHT_GRAY_BLUE
+    sprite_color: colors.PaletteIndex = (1, 3)
 
 class TextTele(Property):
     json_name = "text_tele"
     sprite_name = "text_tele"
     display_name = "TELE"
-    sprite_color: colors.ColorHex = colors.LIGHTER_GRAY_BLUE
+    sprite_color: colors.PaletteIndex = (1, 4)
 
 class TextEnter(Property):
     json_name = "text_enter"
     sprite_name = "text_enter"
     display_name = "ENTER"
-    sprite_color: colors.ColorHex = colors.LIGHT_GREEN
+    sprite_color: colors.PaletteIndex = (5, 4)
     
 class TextLeave(Property):
     json_name = "text_leave"
     sprite_name = "text_leave"
     display_name = "LEAVE"
-    sprite_color: colors.ColorHex = colors.LIGHT_RED
+    sprite_color: colors.PaletteIndex = (2, 2)
 
 class TextBonus(Property):
     json_name = "text_bonus"
     sprite_name = "text_bonus"
     display_name = "BONUS"
-    sprite_color: colors.ColorHex = colors.MAGENTA
+    sprite_color: colors.PaletteIndex = (4, 1)
 
 class TextHide(Property):
     json_name = "text_hide"
     sprite_name = "text_hide"
     display_name = "HIDE"
-    sprite_color: colors.ColorHex = colors.DARK_BLUE
+    sprite_color: colors.PaletteIndex = (3, 2)
 
 class TextWord(Property):
     json_name = "text_word"
     sprite_name = "text_word"
     display_name = "WORD"
-    sprite_color: colors.ColorHex = colors.WHITE
+    sprite_color: colors.PaletteIndex = (0, 3)
 
 class TextSelect(Property):
     json_name = "text_select"
     sprite_name = "text_select"
     display_name = "SELECT"
-    sprite_color: colors.ColorHex = colors.LIGHT_YELLOW
+    sprite_color: colors.PaletteIndex = (2, 4)
 
 class TextTextPlus(Property):
     json_name = "text_text+"
     sprite_name = "text_text_plus"
     display_name = "TEXT+"
-    sprite_color: colors.ColorHex = colors.MAGENTA
+    sprite_color: colors.PaletteIndex = (4, 1)
 
 class TextTextMinus(Property):
     json_name = "text_text-"
     sprite_name = "text_text_minus"
     display_name = "TEXT-"
-    sprite_color: colors.ColorHex = colors.PINK
+    sprite_color: colors.PaletteIndex = (4, 2)
 
 class TextEnd(Property):
     json_name = "text_end"
     sprite_name = "text_end"
     display_name = "END"
-    sprite_color: colors.ColorHex = colors.WHITE
+    sprite_color: colors.PaletteIndex = (0, 3)
 
 class TextDone(Property):
     json_name = "text_done"
     sprite_name = "text_done"
     display_name = "DONE"
-    sprite_color: colors.ColorHex = colors.WHITE
+    sprite_color: colors.PaletteIndex = (0, 3)
 
 class Metatext(GeneralNoun):
     ref_type: type[Text]
@@ -827,7 +827,7 @@ class Metatext(GeneralNoun):
 
 class SpecialNoun(Noun):
     ref_type: type[NotRealObject] = NotRealObject
-    sprite_color = colors.WHITE
+    sprite_color = (0, 3)
     @classmethod
     def isreferenceof(cls, other: Object, **kwds) -> bool:
         raise NotImplementedError()
@@ -862,7 +862,7 @@ class TextGroup(GroupNoun):
     json_name = "text_group"
     sprite_name = "text_group"
     display_name = "GROUP"
-    sprite_color = colors.DARK_BLUE
+    sprite_color = (3, 2)
 
 group_noun_types: tuple[type[GroupNoun], ...] = (TextGroup, )
 

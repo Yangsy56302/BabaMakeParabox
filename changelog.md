@@ -880,3 +880,40 @@ Baba Make Parabox v3.91 是 2024.12.07 更新的一个版本，将游戏概念�
         + 重命名为`spaces`。
     + **`spaces`** ~~现在你叫spaces了，那我叫什么？~~
         + 重命名为`positions`。~~O_o.bmp~~
+
+#### 3.92
+Baba Make Parabox v3.92 是 2024.12.08 更新的一个版本，使新生成的空间或关卡物体默认指向该物体所在的空间或关卡，加入了对调色盘的支持，重绘了游戏的Logo，并修复了一些漏洞。
+
++ **规则**
+    + **`HAS`，`MAKE`，和`TEXT-`**
+        + 通过以上方法生成的并不含有额外信息的空间物体将不再生成新的空间，而会直接指向该物体所在的空间。
+            + 原物体拥有空间信息时仍会指向原本所指的空间。
+            + `IS`暂不遵循该设定。
+            + 关卡同理。
++ **命令行**
+    + 文件后缀名（如`.json`）现在是可选输入项，而不必在输入时去除。
+    + 现在游戏会等到在主菜单内选择非预期选项时自行退出，从而可以在编辑完关卡包之后直接游玩。
+        + 程序异常之后仍然会停止运行。
++ **外观**
+    + **调色盘**
+        + 添加。
+        + 游戏现在会通过调色盘，而不是代码内的数值，来获取画面所使用的颜色列表。
+    + 略微缩小了**编辑器**的界面。
++ **技术性**
+    + 调整了部分设置的默认值（如编辑器创建新空间时的默认大小）。
+    + **`levels.Level`**
+        + 将`update_rules`移动至`levelpacks.Levelpack`。
+            + 同时移除了因为这个改动而变得无用的`levels.Level.rule_list`。
+        + 现在支持读取并写入`author`字段，用于标注作者。
+            + 编辑器内暂未加入对应操作。
+    + **`rules.RuleInfo`**
+        + 更改了存储结构，从而修复了许多与解析规则有关的漏洞。
+    + **`rules.analysis_rule`**
+        + 拆分为执行解析规则任务的函数`rules.get_info_from_rule`和定义规则语法的字典`rules.how_to_match_rule`。
+    + **`rules.to_atom_rules`，`spaces.match_pos`**
+        + 移除。
+    + **`spaces.Space.get_rules_from_pos_and_direct`**
+        + 重命名为`get_rule_from_pos_and_direct`。
+        + 现在引用上文提到的`rules.how_to_match_rule`，而不是该函数内部的相似内容。
+    + **`objects.Object.sprite_color`**
+        + 现在存储颜色在调色盘上对应的坐标。

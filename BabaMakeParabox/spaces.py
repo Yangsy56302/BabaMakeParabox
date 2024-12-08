@@ -1,10 +1,7 @@
-from typing import Any, Optional, TypedDict
+from typing import Any, Optional, TypedDict, Callable
 import random
 
 from BabaMakeParabox import basics, positions, refs, colors, objects, rules
-
-def match_pos(obj: objects.Object, pos: positions.Coordinate) -> bool:
-    return obj.pos == pos
 
 class SpaceJson(TypedDict):
     id: refs.SpaceIDJson
@@ -22,6 +19,7 @@ class Space(object):
         self.properties: dict[type[objects.SpaceObject], objects.Properties] = {p: objects.Properties() for p in objects.space_object_types}
         self.special_operator_properties: dict[type[objects.SpaceObject], dict[type[objects.Operator], objects.Properties]] = {p: {o: objects.Properties() for o in objects.special_operators} for p in objects.space_object_types}
         self.rule_list: list[rules.Rule] = []
+        self.rule_info: list[rules.RuleInfo] = []
         self.refresh_index()
     def __eq__(self, space: "Space") -> bool:
         return self.space_id == space.space_id
@@ -110,122 +108,55 @@ class Space(object):
         if self.out_of_range(pos):
             return []
         return [o for o in self.pos_to_objs(pos) if isinstance(o, objects.LevelObject)]
-    def get_rules_from_pos_and_direct(self, pos: positions.Coordinate, direct: positions.Direction, stage: str = "before prefix") -> list[rules.Rule]:
-        match_list: list[tuple[list[type[objects.Text]], list[type[objects.Text]], str]] = []
-        rule_list: list[rules.Rule] = []
-        if stage == "before prefix": # start, before prefix, or noun
-            match_list = [
-                ([objects.TextNot], [], "before prefix"),
-                ([objects.Prefix], [], "after prefix"),
-                ([objects.TextText_], [], "text_ noun"),
-                ([objects.Noun], [], "before infix"),
-            ]
-        elif stage == "after prefix": # after prefix, before new prefix, or noun
-            match_list = [
-                ([objects.TextNot], [], "after prefix"),
-                ([objects.TextAnd], [], "before prefix"),
-                ([objects.TextText_], [], "text_ noun"),
-                ([objects.Noun], [], "before infix"),
-            ]
-        elif stage == "before infix": # after noun, before infix type, new noun, and operator
-            match_list = [
-                ([objects.TextNot], [], "before infix"),
-                ([objects.Infix], [], "in infix"),
-                ([objects.TextAnd], [], "before prefix"),
-                ([objects.Operator], [], "before property"),
-            ]
-        elif stage == "in infix": # after infix type, before infix noun
-            match_list = [
-                ([objects.TextNot], [], "in infix"),
-                ([objects.TextText_], [], "text_ infix"),
-                ([objects.Noun, objects.Property], [], "after infix"),
-            ]
-        elif stage == "after infix": # after infix noun, before operator, or new infix
-            match_list = [
-                ([objects.TextAnd], [], "new infix"),
-                ([objects.Operator], [], "before property"),
-            ]
-        elif stage == "new infix": # before new infix type, or new infix noun
-            match_list = [
-                ([objects.Infix], [], "in infix"),
-                ([objects.TextText_], [], "text_ infix"),
-                ([objects.Noun, objects.Property], [], "after infix"),
-            ]
-        elif stage == "before property": # after operator, before property
-            match_list = [
-                ([objects.TextNot], [], "before property"),
-                ([objects.TextText_], [], "text_ property"),
-                ([objects.Noun, objects.Property], [], "after property"),
-            ]
-        elif stage == "after property": # after property, may before new property
-            match_list = [
-                ([objects.TextAnd], [], "before property"),
-            ]
-        elif stage == "text_ noun": # metatext
-            match_list = [
-                ([objects.TextText_], [], "text_ noun"),
-                ([objects.Text], [objects.TextText_], "before infix"),
-            ]
-        elif stage == "text_ infix": # metatext
-            match_list = [
-                ([objects.TextText_], [], "text_ infix"),
-                ([objects.Text], [objects.TextText_], "after infix"),
-            ]
-        elif stage == "text_ property": # metatext
-            match_list = [
-                ([objects.TextText_], [], "text_ property"),
-                ([objects.Text], [objects.TextText_], "after property"),
-            ]
-        else:
-            raise ValueError(stage)
-        for match_type, unmatch_type, next_stage in match_list:
+    def get_rule_from_pos_and_direct(self, pos: positions.Coordinate, direct: positions.Direction, stage: str = "before prefix") -> tuple[list[rules.Rule], list[rules.RuleInfo]]:
+        new_rule_list: list[rules.Rule] = []
+        new_info_list: list[rules.RuleInfo] = []
+        for match_type, unmatch_type, next_stage, func in rules.how_to_match_rule[stage]:
             text_type_list: list[type[objects.Text]] = [type(o) for o in self.get_objs_from_pos_and_type(pos, objects.Text)]
             text_type_list += [objects.get_noun_from_type(type(o)) for o in self.get_objs_from_pos(pos) if o.properties.has(objects.TextWord)]
             matched_list = [o for o in text_type_list if issubclass(o, tuple(match_type))]
             if len(unmatch_type) != 0:
                 matched_list = [o for o in matched_list if not issubclass(o, tuple(unmatch_type))]
             if len(matched_list) != 0:
-                rule_list_after_this = self.get_rules_from_pos_and_direct(positions.front_position(pos, direct), direct, next_stage)
-                for rule_after_this in rule_list_after_this:
-                    for matched_text in matched_list:
-                        rule_list.append([matched_text] + rule_after_this)
-            elif stage == "after property":
-                rule_list = [[]]
-        return rule_list
-    # rest in piece, more-than-200-lines-long-and-extremely-fucking-confusing function(BabaMakeParabox.spaces.Space.get_rules_from_pos_and_orient)
-    def get_rules(self) -> list[rules.Rule]:
-        rule_list: list[rules.Rule] = []
+                rule_list, info_list = self.get_rule_from_pos_and_direct(positions.front_position(pos, direct), direct, next_stage)
+                for matched_text in matched_list:
+                    new_rule_list.extend([matched_text] + r for r in rule_list)
+                    new_info_list.extend(func(i, matched_text) for i in info_list)
+            if stage == "after property":
+                new_rule_list.append([])
+                new_info_list.append(rules.RuleInfo([], 0, objects.Noun, [], [rules.OperInfo(objects.Operator, [])]))
+        return new_rule_list, new_info_list
+    def set_rule(self) -> None:
+        self.rule_list = []
+        self.rule_info = []
         x_rule_dict: dict[int, list[rules.Rule]] = {}
         y_rule_dict: dict[int, list[rules.Rule]] = {}
         for x in range(self.width):
             for y in range(self.height):
                 x_rule_dict.setdefault(x, [])
-                new_rule_list = self.get_rules_from_pos_and_direct(positions.Coordinate(x, y), positions.Direction.D)
-                if new_rule_list is not None:
-                    for rule_index in range(len(new_rule_list)):
-                        part_of_old_rule = False
-                        for old_x, old_rule_list in x_rule_dict.items():
-                            old_rule_list_test = list(map(lambda r: list(r[x - old_x:]), old_rule_list))
-                            if list(new_rule_list[rule_index]) in old_rule_list_test:
-                                part_of_old_rule = True
-                        if not part_of_old_rule:
-                            x_rule_dict[x].append(new_rule_list[rule_index])
+                new_rule_list, new_rule_info = self.get_rule_from_pos_and_direct(positions.Coordinate(x, y), positions.Direction.D)
+                for rule_index in range(len(new_rule_list)):
+                    part_of_old_rule = False
+                    for old_x, old_rule_list in x_rule_dict.items():
+                        old_rule_list_test = list(map(lambda r: list(r[x - old_x:]), old_rule_list))
+                        if list(new_rule_list[rule_index]) in old_rule_list_test:
+                            part_of_old_rule = True
+                    if not part_of_old_rule:
+                        x_rule_dict[x].append(new_rule_list[rule_index])
+                        self.rule_list.append(new_rule_list[rule_index])
+                        self.rule_info.append(new_rule_info[rule_index])
                 y_rule_dict.setdefault(y, [])
-                new_rule_list = self.get_rules_from_pos_and_direct(positions.Coordinate(x, y), positions.Direction.S)
-                if new_rule_list is not None:
-                    for rule_index in range(len(new_rule_list)):
-                        part_of_old_rule = False
-                        for old_y, old_rule_list in y_rule_dict.items():
-                            old_rule_list_test = list(map(lambda r: list(r[y - old_y:]), old_rule_list))
-                            if list(new_rule_list[rule_index]) in old_rule_list_test:
-                                part_of_old_rule = True
-                        if not part_of_old_rule:
-                            y_rule_dict[y].append(new_rule_list[rule_index])
-        for x_rule_list in x_rule_dict.values():
-            rule_list.extend(x_rule_list)
-        for y_rule_list in y_rule_dict.values():
-            rule_list.extend(y_rule_list)
-        return rule_list
+                new_rule_list, new_rule_info = self.get_rule_from_pos_and_direct(positions.Coordinate(x, y), positions.Direction.S)
+                for rule_index in range(len(new_rule_list)):
+                    part_of_old_rule = False
+                    for old_y, old_rule_list in y_rule_dict.items():
+                        old_rule_list_test = list(map(lambda r: list(r[y - old_y:]), old_rule_list))
+                        if list(new_rule_list[rule_index]) in old_rule_list_test:
+                            part_of_old_rule = True
+                    if not part_of_old_rule:
+                        y_rule_dict[y].append(new_rule_list[rule_index])
+                        self.rule_list.append(new_rule_list[rule_index])
+                        self.rule_info.append(new_rule_info[rule_index])
     def set_sprite_states(self, round_num: int = 0) -> None:
         for obj in self.object_list:
             if isinstance(obj, objects.Tiled):

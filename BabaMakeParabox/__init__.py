@@ -1,6 +1,7 @@
 from typing import AnyStr, Optional, Callable
 import os
 import json
+import traceback
 
 import pygame
 
@@ -23,7 +24,7 @@ def pre_play() -> bool:
     languages.lang_print("seperator.title", text=languages.lang_format("title.open.file"))
     languages.lang_print("launch.open.levelpack")
     input_filename = languages.lang_input("input.file.name")
-    input_filename += "" if basics.options["debug"] else ".json"
+    input_filename += "" if basics.options["debug"] and not input_filename.endswith(".json") else ".json"
     if not os.path.isfile(os.path.join("levelpacks", input_filename)):
         languages.lang_print("warn.file.not_found", file=input_filename)
         return False
@@ -38,7 +39,7 @@ def pre_play() -> bool:
     languages.lang_print("launch.save.levelpack.empty.game")
     output_filename = languages.lang_input("input.file.name")
     if output_filename != "":
-        output_filename += "" if basics.options["debug"] else ".json"
+        output_filename += "" if basics.options["debug"] and not output_filename.endswith(".json") else ".json"
         with open(os.path.join("levelpacks", output_filename), "w", encoding="utf-8") as file:
             json.dump(levelpack.to_json(), file, **basics.get_json_dump_kwds())
             languages.lang_print("launch.save.levelpack.done", file=output_filename)
@@ -51,11 +52,10 @@ def pre_edit() -> bool:
     languages.lang_print("launch.open.levelpack")
     languages.lang_print("launch.open.levelpack.empty.editor")
     input_filename = languages.lang_input("input.file.name")
-    default_new_space_settings = basics.options["default_new_space"]
-    size = positions.Coordinate(default_new_space_settings["width"], default_new_space_settings["height"])
-    color = default_new_space_settings["color"]
+    size = positions.Coordinate(basics.options["default_new_space"]["width"], basics.options["default_new_space"]["height"])
+    color = basics.options["default_new_space"]["color"]
     if input_filename != "":
-        input_filename += "" if basics.options["debug"] else ".json"
+        input_filename += "" if basics.options["debug"] and not input_filename.endswith(".json") else ".json"
         if not os.path.isfile(os.path.join("levelpacks", input_filename)):
             languages.lang_print("warn.file.not_found", file=input_filename)
             return False
@@ -64,16 +64,16 @@ def pre_edit() -> bool:
             languages.lang_print("launch.open.levelpack.done", file=input_filename)
             levelpack = levelpacks.json_to_levelpack(levelpack_json)
     else:
-        space = spaces.Space(refs.SpaceID("main"), size, color=color)
-        level = levels.Level(refs.LevelID("main"), [space])
-        levelpack = levelpacks.Levelpack("main", [level])
+        space = spaces.Space(refs.SpaceID("main_space"), size, color=color)
+        level = levels.Level(refs.LevelID("main_level"), [space])
+        levelpack = levelpacks.Levelpack([level])
     levelpack = edits.levelpack_editor(levelpack)
     languages.lang_print("seperator.title", text=languages.lang_format("title.save.file"))
     languages.lang_print("launch.save.levelpack")
     languages.lang_print("launch.save.levelpack.empty.editor")
     output_filename = languages.lang_input("input.file.name")
     if output_filename != "":
-        output_filename += "" if basics.options["debug"] else ".json"
+        output_filename += "" if basics.options["debug"] and not output_filename.endswith(".json") else ".json"
         with open(os.path.join("levelpacks", output_filename), "w", encoding="utf-8") as file:
             json.dump(levelpack.to_json(), file, **basics.get_json_dump_kwds())
             languages.lang_print("launch.save.levelpack.done", file=output_filename)
@@ -85,7 +85,7 @@ def update_levelpack() -> bool:
     languages.lang_print("seperator.title", text=languages.lang_format("title.open.file"))
     languages.lang_print("launch.open.levelpack")
     input_filename = languages.lang_input("input.file.name")
-    input_filename += "" if basics.options["debug"] else ".json"
+    input_filename += "" if basics.options["debug"] and not input_filename.endswith(".json") else ".json"
     if not os.path.isfile(os.path.join("levelpacks", input_filename)):
         languages.lang_print("warn.file.not_found", file=input_filename)
         return False
@@ -97,7 +97,7 @@ def update_levelpack() -> bool:
     languages.lang_print("launch.save.levelpack")
     languages.lang_print("launch.save.levelpack.empty.update")
     output_filename = languages.lang_input("input.file.name")
-    output_filename += "" if basics.options["debug"] else ".json"
+    output_filename += "" if basics.options["debug"] and not output_filename.endswith(".json") else ".json"
     if output_filename == "":
         output_filename = input_filename
     with open(os.path.join("levelpacks", output_filename), "w", encoding="utf-8") as file:
@@ -123,13 +123,13 @@ def change_options() -> bool:
                 basics.options.update({"fps": 10, "fpw": 2, "smooth_animation_multiplier": None})
                 break
             case 3:
-                basics.options.update({"fps": 20, "fpw": 3, "smooth_animation_multiplier": 2})
+                basics.options.update({"fps": 20, "fpw": 3, "smooth_animation_multiplier": 3})
                 break
             case 4:
-                basics.options.update({"fps": 30, "fpw": 5, "smooth_animation_multiplier": 2})
+                basics.options.update({"fps": 30, "fpw": 5, "smooth_animation_multiplier": 3})
                 break
             case 5:
-                basics.options.update({"fps": 60, "fpw": 10, "smooth_animation_multiplier": 2})
+                basics.options.update({"fps": 60, "fpw": 10, "smooth_animation_multiplier": 3})
                 break
             case _:
                 languages.lang_print("warn.value.out_of_range", min=1, max=5, value=performance_preset)
@@ -145,6 +145,23 @@ def change_options() -> bool:
             languages.lang_print("warn.value.underflow", min=1, value=display_layer)
         else:
             basics.options.update({"space_display_recursion_depth": display_layer})
+            break
+    while True:
+        languages.lang_print("seperator.title", text=languages.lang_format("title.directory", dir="palettes"))
+        show_dir("palettes", lambda s: True if basics.options["debug"] else s.endswith(".png"))
+        languages.lang_print("seperator.title", text=languages.lang_format("title.open.file"))
+        palette_filename = languages.lang_input("input.file.name")
+        if palette_filename == "":
+            break
+        palette_filename += "" if basics.options["debug"] and not palette_filename.endswith(".png") else ".png"
+        if not os.path.isfile(os.path.join(".", "palettes", palette_filename)):
+            languages.lang_print("warn.file.not_found", file=palette_filename)
+            continue
+        try:
+            colors.set_palette(os.path.join(".", "palettes", palette_filename))
+        except Exception:
+            languages.lang_print("warn.unknown", value=traceback.format_exc())
+        else:
             break
     if languages.lang_input("launch.change_options.json") in languages.yes:
         basics.options.update({"compressed_json_output": False})
@@ -191,9 +208,9 @@ def pre_main() -> None:
     else:
         languages.set_current_language(basics.options["lang"])
 
-def main() -> None:
+def main() -> int:
     if not pre_main_check():
-        return
+        return 0
     pre_main()
     try:
         languages.lang_print("launch.welcome")
@@ -203,27 +220,28 @@ def main() -> None:
             languages.lang_print("seperator.title", text=languages.lang_format("title.game.name"))
             for n in map(lambda x: x + 1, range(4)):
                 languages.lang_print(f"launch.game_mode.{n}")
+            languages.lang_print(f"launch.game_mode.0")
             game_mode = languages.lang_input("input.number")
             try:
                 game_mode = int(game_mode)
             except ValueError:
-                languages.lang_print("warn.value.invalid", value=game_mode, cls="int")
-                continue
+                break
             if game_mode == 1:
                 if pre_play():
-                    break
+                    continue
             elif game_mode == 2:
                 if pre_edit():
-                    break
+                    continue
             elif game_mode == 3:
                 if change_options():
-                    break
+                    continue
             elif game_mode == 4:
                 if update_levelpack():
-                    break
+                    continue
             else:
-                languages.lang_print("warn.value.out_of_range", min=1, max=4, value=game_mode)
+                break
     except KeyboardInterrupt:
+        print()
         languages.lang_print("seperator.title", text=languages.lang_format("title.warning"))
         languages.lang_print("launch.keyboard_interrupt")
         languages.lang_print("launch.keyboard_interrupt.insert")
@@ -231,19 +249,24 @@ def main() -> None:
         languages.lang_print("launch.exit")
         pygame.quit()
         languages.lang_print("launch.thank_you")
-    except Exception as e:
+        return 0
+    except Exception:
         pygame.quit()
+        print()
         languages.lang_print("seperator.title", text=languages.lang_format("title.exception"))
         languages.lang_print("launch.exception")
         languages.lang_print("launch.exception.report")
         languages.lang_print("launch.exception.record")
-        raise e
+        traceback.print_exc()
+        return 1
     else:
+        print()
         languages.lang_print("seperator.title", text=languages.lang_format("title.game.name"))
         basics.save_options(basics.options)
         languages.lang_print("launch.exit")
         pygame.quit()
         languages.lang_print("launch.thank_you")
+        return 0
 
 __all__ = ["basics", "refs", "languages", "positions", "colors", "objects", "collects", "rules", "displays", "spaces", "levels", "levelpacks", "edits", "plays", "subs", "main"]
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           # monika was there ;)

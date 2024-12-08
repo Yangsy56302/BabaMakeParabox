@@ -29,7 +29,6 @@ class Level(object):
         self.super_level_id: Optional[refs.LevelID] = super_level_id
         self.main_space_id: refs.SpaceID = main_space_id if main_space_id is not None else space_list[0].space_id
         self.collected: dict[type[collects.Collectible], bool] = collected if collected is not None else {k: False for k in collects.collectible_dict.keys()}
-        self.rule_list: list[rules.Rule] = []
         self.map_info: Optional[MapLevelExtraJson] = map_info
         self.properties: dict[type[objects.LevelObject], objects.Properties] = {p: objects.Properties() for p in objects.level_object_types}
         self.special_operator_properties: dict[type[objects.LevelObject], dict[type[objects.Operator], objects.Properties]] = {p: {o: objects.Properties() for o in objects.special_operators} for p in objects.level_object_types}
@@ -141,7 +140,7 @@ class Level(object):
                     meet_infix_condition = False
                 else:
                     for infix_noun_info in infix_info.infix_noun_info_list:
-                        if old_feeling.has(infix_noun_info.infix_noun_type) == infix_noun_info.negated:
+                        if old_feeling.enabled(infix_noun_info.infix_noun_type) == infix_noun_info.negated:
                             meet_infix_condition = False
             elif infix_info.infix_type == objects.TextWithout:
                 meet_infix_condition = True
@@ -182,170 +181,21 @@ class Level(object):
             if meet_infix_condition == infix_info.negated:
                 return False
         return True
-    def recursion_rules(self, space: spaces.Space, passed: Optional[list[refs.SpaceID]] = None) -> list[rules.Rule]:
+    def recursion_rules(self, space: spaces.Space, passed: Optional[list[refs.SpaceID]] = None) -> tuple[list[rules.Rule], list[rules.RuleInfo]]:
         passed = passed if passed is not None else []
         if space.space_id in passed:
-            return []
+            return [], []
         passed.append(space.space_id)
         rule_list = copy.deepcopy(space.rule_list)
+        rule_info = copy.deepcopy(space.rule_info)
         for super_space in self.space_list:
             for space_obj in super_space.get_spaces():
                 if space.space_id == space_obj.space_id:
-                    rule_list.extend(self.recursion_rules(super_space, passed))
+                    new_rule_list, new_rule_info = self.recursion_rules(super_space, passed)
+                    rule_list.extend(new_rule_list)
+                    rule_info.extend(new_rule_info)
                     passed.append(super_space.space_id)
-        return rule_list
-    def update_rules(self, old_prop_dict: dict[uuid.UUID, objects.Properties]) -> None:
-        self.game_properties = objects.Properties()
-        for level_object_type in objects.level_object_types:
-            self.properties[level_object_type] = objects.Properties()
-            self.special_operator_properties[level_object_type] = {o: objects.Properties() for o in objects.special_operators}
-        for space in self.space_list:
-            for object_type in objects.space_object_types:
-                space.properties[object_type] = objects.Properties()
-                space.special_operator_properties[object_type] = {o: objects.Properties() for o in objects.special_operators}
-            for obj in space.object_list:
-                obj.properties = objects.Properties()
-                obj.special_operator_properties = {o: objects.Properties() for o in objects.special_operators}
-        for space in self.space_list:
-            space.rule_list = space.get_rules()
-        new_prop_list: list[tuple[objects.Object, tuple[type[objects.Text], int]]] = []
-        for space in self.space_list:
-            for rule in space.rule_list + self.rule_list + self.recursion_rules(space):
-                for atom_rule in rules.to_atom_rules(rule):
-                    for rule_info in rules.analysis_rule(atom_rule):
-                        prefix_info_list = rule_info.prefix_info_list
-                        noun_negated_tier = rule_info.noun_negated_tier
-                        noun_type = rule_info.noun_type
-                        infix_info_list = rule_info.infix_info_list
-                        oper_type = rule_info.oper_type
-                        prop_negated_tier = rule_info.prop_negated_tier
-                        prop_type = rule_info.prop_type
-                        if oper_type != objects.TextIs:
-                            continue
-                        if prop_type != (objects.TextWord):
-                            continue
-                        new_match_obj_list: list[objects.Object] = []
-                        if issubclass(noun_type, objects.GeneralNoun):
-                            object_type = noun_type.ref_type
-                            if issubclass(object_type, objects.LevelObject):
-                                if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(space, objects.Object(positions.Coordinate(0, 0)), prefix_info_list, True):
-                                    if oper_type == objects.TextIs:
-                                        self.properties[object_type].update(prop_type, prop_negated_tier)
-                                    else:
-                                        self.special_operator_properties[object_type][oper_type].update(prop_type, prop_negated_tier)
-                            elif issubclass(object_type, objects.SpaceObject):
-                                if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(space, objects.Object(positions.Coordinate(0, 0)), prefix_info_list, True):
-                                    if oper_type == objects.TextIs:
-                                        space.properties[object_type].update(prop_type, prop_negated_tier)
-                                    else:
-                                        space.special_operator_properties[object_type][oper_type].update(prop_type, prop_negated_tier)
-                            if noun_negated_tier % 2 == 1:
-                                new_match_obj_list = [o for o in space.object_list if objects.TextAll.isreferenceof(o, all_list = self.all_list) and not isinstance(o, object_type)]
-                            else:
-                                new_match_obj_list = [o for o in space.get_objs_from_type(object_type)]
-                        elif issubclass(noun_type, objects.SupportsIsReferenceOf):
-                            if noun_negated_tier % 2 == 1:
-                                new_match_obj_list = [o for o in space.object_list if objects.TextAll.isreferenceof(o, all_list = self.all_list) and not noun_type.isreferenceof(o, all_list = self.all_list)]
-                            else:
-                                new_match_obj_list = [o for o in space.object_list if noun_type.isreferenceof(o, all_list = self.all_list)]
-                        for obj in new_match_obj_list:
-                            if self.meet_infix_conditions(space, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(space, obj, prefix_info_list):
-                                new_prop_list.append((obj, (prop_type, prop_negated_tier)))
-        for obj, prop in new_prop_list:
-            prop_type, prop_negated_count = prop
-            obj.properties.update(prop_type, prop_negated_count)
-        for space in self.space_list:
-            for object_type in objects.space_object_types:
-                space.properties[object_type] = objects.Properties()
-                space.special_operator_properties[object_type] = {o: objects.Properties() for o in objects.special_operators}
-            for obj in space.object_list:
-                obj.properties = objects.Properties()
-                obj.special_operator_properties = {o: objects.Properties() for o in objects.special_operators}
-        for space in self.space_list:
-            space.rule_list = space.get_rules()
-        new_prop_list = []
-        for space in self.space_list:
-            for rule in space.rule_list + self.rule_list:
-                for atom_rule in rules.to_atom_rules(rule):
-                    for rule_info in rules.analysis_rule(atom_rule):
-                        prefix_info_list = rule_info.prefix_info_list
-                        noun_negated_tier = rule_info.noun_negated_tier
-                        noun_type = rule_info.noun_type
-                        infix_info_list = rule_info.infix_info_list
-                        oper_type = rule_info.oper_type
-                        prop_negated_tier = rule_info.prop_negated_tier
-                        prop_type = rule_info.prop_type
-                        new_match_obj_list: list[objects.Object] = []
-                        if issubclass(noun_type, objects.GeneralNoun):
-                            object_type = noun_type.ref_type
-                            if issubclass(object_type, objects.LevelObject):
-                                if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(space, objects.Object(positions.Coordinate(0, 0)), prefix_info_list, True):
-                                    if oper_type == objects.TextIs:
-                                        self.properties[object_type].update(prop_type, prop_negated_tier)
-                                    else:
-                                        self.special_operator_properties[object_type][oper_type].update(prop_type, prop_negated_tier)
-                            elif issubclass(object_type, objects.SpaceObject):
-                                if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(space, objects.Object(positions.Coordinate(0, 0)), prefix_info_list, True):
-                                    if oper_type == objects.TextIs:
-                                        space.properties[object_type].update(prop_type, prop_negated_tier)
-                                    else:
-                                        space.special_operator_properties[object_type][oper_type].update(prop_type, prop_negated_tier)
-                            if issubclass(object_type, objects.Game) and issubclass(oper_type, objects.TextIs):
-                                if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(space, objects.Object(positions.Coordinate(0, 0)), prefix_info_list, True):
-                                    self.game_properties.update(prop_type, prop_negated_tier)
-                            elif noun_negated_tier % 2 == 1:
-                                new_match_obj_list = [o for o in space.object_list if objects.TextAll.isreferenceof(o, all_list = self.all_list) and not isinstance(o, object_type)]
-                            else:
-                                new_match_obj_list = [o for o in space.get_objs_from_type(object_type)]
-                        elif issubclass(noun_type, objects.SupportsIsReferenceOf):
-                            if noun_negated_tier % 2 == 1:
-                                new_match_obj_list = [o for o in space.object_list if objects.TextAll.isreferenceof(o, all_list = self.all_list) and not noun_type.isreferenceof(o, all_list = self.all_list)]
-                            else:
-                                new_match_obj_list = [o for o in space.object_list if noun_type.isreferenceof(o, all_list = self.all_list)]
-                        else:
-                            pass
-                        for obj in new_match_obj_list:
-                            if self.meet_infix_conditions(space, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(space, obj, prefix_info_list):
-                                if oper_type == objects.TextIs:
-                                    new_prop_list.append((obj, (prop_type, prop_negated_tier)))
-                                else:
-                                    obj.special_operator_properties[oper_type].update(prop_type, prop_negated_tier)
-            for rule in self.recursion_rules(space):
-                for atom_rule in rules.to_atom_rules(rule):
-                    for rule_info in rules.analysis_rule(atom_rule):
-                        prefix_info_list = rule_info.prefix_info_list
-                        noun_negated_tier = rule_info.noun_negated_tier
-                        noun_type = rule_info.noun_type
-                        infix_info_list = rule_info.infix_info_list
-                        oper_type = rule_info.oper_type
-                        prop_negated_tier = rule_info.prop_negated_tier
-                        prop_type = rule_info.prop_type
-                        new_match_obj_list: list[objects.Object] = []
-                        if issubclass(noun_type, objects.GeneralNoun):
-                            object_type = noun_type.ref_type
-                            if issubclass(object_type, objects.Game) and issubclass(oper_type, objects.TextIs):
-                                if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.meet_prefix_conditions(space, objects.Object(positions.Coordinate(0, 0)), prefix_info_list, True):
-                                    self.game_properties.update(prop_type, prop_negated_tier)
-                            elif noun_negated_tier % 2 == 1:
-                                new_match_obj_list = [o for o in space.object_list if objects.TextAll.isreferenceof(o, all_list = self.all_list) and not isinstance(o, object_type)]
-                            else:
-                                new_match_obj_list = [o for o in space.get_objs_from_type(object_type)]
-                        elif issubclass(noun_type, objects.SupportsIsReferenceOf):
-                            if noun_negated_tier % 2 == 1:
-                                new_match_obj_list = [o for o in space.object_list if objects.TextAll.isreferenceof(o, all_list = self.all_list) and not noun_type.isreferenceof(o, all_list = self.all_list)]
-                            else:
-                                new_match_obj_list = [o for o in space.object_list if noun_type.isreferenceof(o, all_list = self.all_list)]
-                        else:
-                            pass
-                        for obj in new_match_obj_list:
-                            if self.meet_infix_conditions(space, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and self.meet_prefix_conditions(space, obj, prefix_info_list):
-                                if oper_type == objects.TextIs:
-                                    new_prop_list.append((obj, (prop_type, prop_negated_tier)))
-                                else:
-                                    obj.special_operator_properties[oper_type].update(prop_type, prop_negated_tier)
-        for obj, prop in new_prop_list:
-            prop_type, prop_negated_count = prop
-            obj.properties.update(prop_type, prop_negated_count)
+        return rule_list, rule_info
     def move_obj_between_spaces(self, old_space: spaces.Space, obj: objects.Object, new_space: spaces.Space, pos: positions.Coordinate) -> None:
         if obj in old_space.object_list:
             old_space.del_obj(obj)
@@ -370,51 +220,26 @@ class Level(object):
             if issubclass(new_noun_type, objects.RangedNoun):
                 continue
             new_object_type: type[objects.Object] = new_noun_type.ref_type
-            if issubclass(new_object_type, objects.Game):
-                if isinstance(obj, (objects.LevelObject, objects.SpaceObject)):
-                    for _ in range(new_noun_count):
-                        space.new_obj(objects.Game(obj.pos, obj.direct, ref_type=objects.get_noun_from_type(type(obj))))
-                else:
-                    for _ in range(new_noun_count):
-                        space.new_obj(objects.Game(obj.pos, obj.direct, ref_type=type(obj)))
-            elif issubclass(new_object_type, objects.LevelObject):
-                if obj.level_id is not None:
-                    for _ in range(new_noun_count):
-                        space.new_obj(new_object_type(obj.pos, obj.direct, space_id=obj.space_id, level_id=obj.level_id))
-                else:
-                    space_id: refs.SpaceID = refs.SpaceID(obj.uuid.hex)
-                    space_color = colors.to_background_color(obj.sprite_color)
-                    new_space = spaces.Space(space_id, positions.Coordinate(3, 3), space_color)
-                    obj.pos = positions.Coordinate(1, 1)
-                    obj.reset_uuid()
-                    new_space.new_obj(obj)
-                    level_id: refs.LevelID = refs.LevelID(obj.uuid.hex)
-                    self.created_levels.append(Level(level_id, [new_space], super_level_id=self.level_id))
-                    level_object_extra: objects.LevelObjectExtra = {"icon": {"name": obj.json_name, "color": obj.sprite_color}}
-                    for _ in range(new_noun_count):
-                        space.new_obj(new_object_type(obj.pos, obj.direct, level_id=level_id, level_object_extra=level_object_extra))
-            elif issubclass(new_object_type, objects.SpaceObject):
-                if obj.space_id is not None:
-                    for _ in range(new_noun_count):
-                        space.new_obj(new_object_type(obj.pos, obj.direct, space_id=obj.space_id, level_id=obj.level_id))
-                else:
-                    space_id: refs.SpaceID = refs.SpaceID(obj.uuid.hex)
-                    space_color = colors.to_background_color(obj.sprite_color)
-                    new_space = spaces.Space(space_id, positions.Coordinate(3, 3), space_color)
-                    obj.pos = positions.Coordinate(1, 1)
-                    obj.reset_uuid()
-                    new_space.new_obj(obj)
-                    self.set_space(new_space)
-                    space_object_info: refs.SpaceID = refs.SpaceID(obj.uuid.hex)
-                    for _ in range(new_noun_count):
-                        space.new_obj(new_object_type(obj.pos, obj.direct, space_id=space_object_info))
-            elif new_noun_type == objects.TextText:
+            if issubclass(new_noun_type, objects.TextText):
                 new_object_type = objects.get_noun_from_type(type(obj))
-                for _ in range(new_noun_count):
-                    space.new_obj(new_object_type(obj.pos, obj.direct, space_id=obj.space_id, level_id=obj.level_id))
-            else:
-                new_object_type = new_noun_type.ref_type
-                for _ in range(new_noun_count):
+            for _ in range(new_noun_count):
+                if issubclass(new_object_type, objects.Game):
+                    if isinstance(obj, (objects.LevelObject, objects.SpaceObject)):
+                        space.new_obj(objects.Game(obj.pos, obj.direct, ref_type=objects.get_noun_from_type(type(obj))))
+                    else:
+                        space.new_obj(objects.Game(obj.pos, obj.direct, ref_type=type(obj)))
+                elif issubclass(new_object_type, objects.LevelObject):
+                    level_object_extra: objects.LevelObjectExtra = {"icon": {"name": obj.json_name, "color": colors.current_palette[obj.sprite_color]}}
+                    if obj.level_id is not None:
+                        space.new_obj(new_object_type(obj.pos, obj.direct, level_id=obj.level_id, level_object_extra=level_object_extra))
+                    else:
+                        space.new_obj(new_object_type(obj.pos, obj.direct, level_id=self.level_id, level_object_extra=level_object_extra))
+                elif issubclass(new_object_type, objects.SpaceObject):
+                    if obj.space_id is not None:
+                        space.new_obj(new_object_type(obj.pos, obj.direct, space_id=obj.space_id))
+                    else:
+                        space.new_obj(new_object_type(obj.pos, obj.direct, space_id=space.space_id))
+                else:
                     space.new_obj(new_object_type(obj.pos, obj.direct, space_id=obj.space_id, level_id=obj.level_id))
     def get_move_list(self, space: spaces.Space, obj: objects.Object, \
         direct: positions.Direction, pos: Optional[positions.Coordinate] = None, \
@@ -715,11 +540,11 @@ class Level(object):
         success = False
         for space in self.space_list:
             delete_list = []
-            sink_objs = [o for o in space.object_list if o.properties.enabled(objects.TextSink)]
-            if space.properties[objects.default_space_object_type].has(objects.TextSink) or self.properties[objects.default_level_object_type].enabled(objects.TextSink):
+            if space.properties[objects.default_space_object_type].enabled(objects.TextSink) or self.properties[objects.default_level_object_type].enabled(objects.TextSink):
                 for obj in space.object_list:
                     if not obj.properties.enabled(objects.TextFloat):
                         delete_list.append(obj)
+            sink_objs = [o for o in space.object_list if o.properties.enabled(objects.TextSink)]
             for sink_obj in sink_objs:
                 for obj in space.get_objs_from_pos(sink_obj.pos):
                     if obj == sink_obj:
@@ -742,12 +567,12 @@ class Level(object):
             delete_list = []
             melt_objs = [o for o in space.object_list if o.properties.enabled(objects.TextMelt)]
             hot_objs = [o for o in space.object_list if o.properties.enabled(objects.TextHot)]
-            if len(hot_objs) != 0 and (space.properties[objects.default_space_object_type].has(objects.TextMelt) or self.properties[objects.default_level_object_type].enabled(objects.TextMelt)):
+            if len(hot_objs) != 0 and (space.properties[objects.default_space_object_type].enabled(objects.TextMelt) or self.properties[objects.default_level_object_type].enabled(objects.TextMelt)):
                 for melt_obj in melt_objs:
                     if not melt_obj.properties.enabled(objects.TextFloat):
                         delete_list.extend(space.object_list)
                 continue
-            if len(melt_objs) != 0 and (space.properties[objects.default_space_object_type].has(objects.TextHot) or self.properties[objects.default_level_object_type].enabled(objects.TextHot)):
+            if len(melt_objs) != 0 and (space.properties[objects.default_space_object_type].enabled(objects.TextHot) or self.properties[objects.default_level_object_type].enabled(objects.TextHot)):
                 for melt_obj in melt_objs:
                     if not melt_obj.properties.enabled(objects.TextFloat):
                         delete_list.append(melt_obj)
@@ -770,11 +595,11 @@ class Level(object):
             delete_list = []
             you_objs = [o for o in space.object_list if o.properties.enabled(objects.TextYou)]
             defeat_objs = [o for o in space.object_list if o.properties.enabled(objects.TextDefeat)]
-            if len(defeat_objs) != 0 and (space.properties[objects.default_space_object_type].has(objects.TextYou) or self.properties[objects.default_level_object_type].enabled(objects.TextYou)):
+            if len(defeat_objs) != 0 and (space.properties[objects.default_space_object_type].enabled(objects.TextYou) or self.properties[objects.default_level_object_type].enabled(objects.TextYou)):
                 delete_list.extend(space.object_list)
                 continue
             for you_obj in you_objs:
-                if space.properties[objects.default_space_object_type].has(objects.TextDefeat) or self.properties[objects.default_level_object_type].enabled(objects.TextDefeat):
+                if space.properties[objects.default_space_object_type].enabled(objects.TextDefeat) or self.properties[objects.default_level_object_type].enabled(objects.TextDefeat):
                     if you_obj not in delete_list:
                         delete_list.append(you_obj)
                         continue
@@ -795,11 +620,11 @@ class Level(object):
             delete_list = []
             bonus_objs = [o for o in space.object_list if o.properties.enabled(objects.TextBonus)]
             you_objs = [o for o in space.object_list if o.properties.enabled(objects.TextYou)]
-            if len(you_objs) != 0 and (space.properties[objects.default_space_object_type].has(objects.TextBonus) or self.properties[objects.default_level_object_type].enabled(objects.TextBonus)):
+            if len(you_objs) != 0 and (space.properties[objects.default_space_object_type].enabled(objects.TextBonus) or self.properties[objects.default_level_object_type].enabled(objects.TextBonus)):
                 delete_list.extend(space.object_list)
                 continue
             for bonus_obj in bonus_objs:
-                if space.properties[objects.default_space_object_type].has(objects.TextYou) or self.properties[objects.default_level_object_type].enabled(objects.TextYou):
+                if space.properties[objects.default_space_object_type].enabled(objects.TextYou) or self.properties[objects.default_level_object_type].enabled(objects.TextYou):
                     if bonus_obj not in delete_list:
                         delete_list.append(bonus_obj)
                         continue
@@ -821,10 +646,10 @@ class Level(object):
             delete_list = []
             shut_objs = [o for o in space.object_list if o.properties.enabled(objects.TextShut)]
             open_objs = [o for o in space.object_list if o.properties.enabled(objects.TextOpen)]
-            if len(open_objs) != 0 and (space.properties[objects.default_space_object_type].has(objects.TextShut) or self.properties[objects.default_level_object_type].enabled(objects.TextShut)):
+            if len(open_objs) != 0 and (space.properties[objects.default_space_object_type].enabled(objects.TextShut) or self.properties[objects.default_level_object_type].enabled(objects.TextShut)):
                 delete_list.extend(space.object_list)
                 continue
-            if len(shut_objs) != 0 and (space.properties[objects.default_space_object_type].has(objects.TextOpen) or self.properties[objects.default_level_object_type].enabled(objects.TextOpen)):
+            if len(shut_objs) != 0 and (space.properties[objects.default_space_object_type].enabled(objects.TextOpen) or self.properties[objects.default_level_object_type].enabled(objects.TextOpen)):
                 delete_list.extend(space.object_list)
                 continue
             for open_obj in open_objs:
@@ -849,60 +674,30 @@ class Level(object):
                     if issubclass(make_noun_type, objects.RangedNoun):
                         continue
                     make_object_type: type[objects.Object] = make_noun_type.ref_type
-                    if issubclass(make_object_type, objects.Game):
-                        if isinstance(obj, (objects.LevelObject, objects.SpaceObject)):
-                            for _ in range(make_noun_count):
-                                space.new_obj(objects.Game(obj.pos, obj.direct, ref_type=objects.get_noun_from_type(type(obj))))
-                        else:
-                            for _ in range(make_noun_count):
-                                space.new_obj(objects.Game(obj.pos, obj.direct, ref_type=type(obj)))
-                    elif issubclass(make_object_type, objects.LevelObject):
-                        if len(space.get_objs_from_pos_and_type(obj.pos, make_object_type)) != 0:
-                            pass
-                        elif obj.level_id is not None:
-                            for _ in range(make_noun_count):
-                                space.new_obj(make_noun_type.ref_type(obj.pos, obj.direct, space_id=obj.space_id, level_id=obj.level_id))
-                        else:
-                            space_id: refs.SpaceID = refs.SpaceID(obj.uuid.hex)
-                            space_color = colors.to_background_color(obj.sprite_color)
-                            new_space = spaces.Space(space_id, positions.Coordinate(3, 3), space_color)
-                            new_obj = copy.deepcopy(obj)
-                            new_obj.pos = positions.Coordinate(1, 1)
-                            new_obj.reset_uuid()
-                            new_space.new_obj(new_obj)
-                            level_id: refs.LevelID = refs.LevelID(obj.uuid.hex)
-                            self.created_levels.append(Level(level_id, [new_space], super_level_id=self.level_id))
-                            level_object_extra: objects.LevelObjectExtra = {"icon": {"name": obj.json_name, "color": obj.sprite_color}}
-                            for _ in range(make_noun_count):
-                                space.new_obj(make_object_type(obj.pos, obj.direct, space_id=obj.space_id, level_id=level_id, level_object_extra=level_object_extra))
-                    elif issubclass(make_object_type, objects.SpaceObject):
-                        if len(space.get_objs_from_pos_and_type(obj.pos, make_object_type)) != 0:
-                            pass
-                        if obj.space_id is not None:
-                            for _ in range(make_noun_count):
-                                space.new_obj(make_object_type(obj.pos, obj.direct, space_id=obj.space_id, level_id=obj.level_id))
-                        else:
-                            space_id: refs.SpaceID = refs.SpaceID(obj.uuid.hex)
-                            space_color = colors.to_background_color(obj.sprite_color)
-                            new_space = spaces.Space(space_id, positions.Coordinate(3, 3), space_color)
-                            new_obj = copy.deepcopy(obj)
-                            new_obj.pos = positions.Coordinate(1, 1)
-                            new_obj.reset_uuid()
-                            new_space.new_obj(new_obj)
-                            self.set_space(new_space)
-                            for _ in range(make_noun_count):
-                                space.new_obj(make_object_type(obj.pos, obj.direct, space_id=space_id, level_id=obj.level_id))
-                    elif make_noun_type == objects.TextText:
+                    if issubclass(make_noun_type, objects.TextText):
                         make_object_type = objects.get_noun_from_type(type(obj))
-                        if len(space.get_objs_from_pos_and_type(obj.pos, make_object_type)) != 0:
-                            pass
-                        for _ in range(make_noun_count):
-                            space.new_obj(make_object_type(obj.pos, obj.direct, space_id=obj.space_id, level_id=obj.level_id))
-                    else:
-                        make_object_type = make_noun_type.ref_type
-                        if len(space.get_objs_from_pos_and_type(obj.pos, make_object_type)) != 0:
-                            pass
-                        for _ in range(make_noun_count):
+                    if len(space.get_objs_from_pos_and_type(obj.pos, make_object_type)) != 0:
+                        continue
+                    for _ in range(make_noun_count):
+                        if issubclass(make_object_type, objects.Game):
+                            if isinstance(obj, (objects.LevelObject, objects.SpaceObject)):
+                                space.new_obj(objects.Game(obj.pos, obj.direct, ref_type=objects.get_noun_from_type(type(obj))))
+                            else:
+                                space.new_obj(objects.Game(obj.pos, obj.direct, ref_type=type(obj)))
+                        elif issubclass(make_object_type, objects.LevelObject):
+                            if len(space.get_objs_from_pos_and_type(obj.pos, make_object_type)) == 0:
+                                level_object_extra: objects.LevelObjectExtra = {"icon": {"name": obj.json_name, "color": colors.current_palette[obj.sprite_color]}}
+                                if obj.level_id is not None:
+                                    space.new_obj(make_object_type(obj.pos, obj.direct, level_id=obj.level_id, level_object_extra=level_object_extra))
+                                else:
+                                    space.new_obj(make_object_type(obj.pos, obj.direct, level_id=self.level_id, level_object_extra=level_object_extra))
+                        elif issubclass(make_object_type, objects.SpaceObject):
+                            if len(space.get_objs_from_pos_and_type(obj.pos, make_object_type)) == 0:
+                                if obj.space_id is not None:
+                                    space.new_obj(make_object_type(obj.pos, obj.direct, space_id=obj.space_id))
+                                else:
+                                    space.new_obj(make_object_type(obj.pos, obj.direct, space_id=space.space_id))
+                        else:
                             space.new_obj(make_object_type(obj.pos, obj.direct, space_id=obj.space_id, level_id=obj.level_id))
     def text_plus_and_text_minus(self) -> None:
         for space in self.space_list:
@@ -913,7 +708,7 @@ class Level(object):
                 if text_plus_obj in text_minus_objs:
                     continue
                 new_type = objects.get_noun_from_type(type(text_plus_obj))
-                if new_type != objects.TextText:
+                if not issubclass(new_type, objects.TextText):
                     delete_list.append(text_plus_obj)
                     space.new_obj(new_type(text_plus_obj.pos, text_plus_obj.direct, space_id=text_plus_obj.space_id, level_id=text_plus_obj.level_id))
             for text_minus_obj in text_minus_objs:
@@ -928,29 +723,16 @@ class Level(object):
                 if issubclass(new_type, objects.Game):
                     space.new_obj(objects.Game(text_minus_obj.pos, text_minus_obj.direct, ref_type=objects.TextGame))
                 elif issubclass(new_type, objects.LevelObject):
+                    level_object_extra: objects.LevelObjectExtra = {"icon": {"name": text_minus_obj.json_name, "color": colors.current_palette[text_minus_obj.sprite_color]}}
                     if text_minus_obj.level_id is not None:
-                        space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.direct, space_id=text_minus_obj.space_id, level_id=text_minus_obj.level_id))
+                        space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.direct, level_id=self.level_id, level_object_extra=level_object_extra))
                     else:
-                        space_id: refs.SpaceID = refs.SpaceID(text_minus_obj.uuid.hex)
-                        space_color = colors.to_background_color(text_minus_obj.sprite_color)
-                        new_space = spaces.Space(space_id, positions.Coordinate(3, 3), space_color)
-                        level_id: refs.LevelID = refs.LevelID(text_minus_obj.uuid.hex)
-                        self.created_levels.append(Level(level_id, [new_space], super_level_id=self.level_id))
-                        new_space.new_obj(type(text_minus_obj)(positions.Coordinate(1, 1), text_minus_obj.direct))
-                        level_object_extra: objects.LevelObjectExtra = {"icon": {"name": text_minus_obj.json_name, "color": text_minus_obj.sprite_color}}
-                        new_obj = new_type(text_minus_obj.pos, text_minus_obj.direct, level_id=level_id, level_object_extra=level_object_extra)
-                        space.new_obj(new_obj)
+                        space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.direct, level_id=self.level_id, level_object_extra=level_object_extra))
                 elif issubclass(new_type, objects.SpaceObject):
                     if text_minus_obj.space_id is not None:
-                        space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.direct, space_id=text_minus_obj.space_id, level_id=text_minus_obj.level_id))
+                        space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.direct, space_id=text_minus_obj.space_id))
                     else:
-                        space_id: refs.SpaceID = refs.SpaceID(text_minus_obj.uuid.hex)
-                        space_color = colors.to_background_color(text_minus_obj.sprite_color)
-                        new_space = spaces.Space(space_id, positions.Coordinate(3, 3), space_color)
-                        new_space.new_obj(type(text_minus_obj)(positions.Coordinate(1, 1), text_minus_obj.direct))
-                        self.set_space(new_space)
-                        new_obj = new_type(text_minus_obj.pos, text_minus_obj.direct, space_id=space_id)
-                        space.new_obj(new_obj)
+                        space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.direct, space_id=space.space_id))
                 else:
                     space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.direct, space_id=text_minus_obj.space_id, level_id=text_minus_obj.level_id))
             for obj in delete_list:
@@ -973,7 +755,7 @@ class Level(object):
                 if you_obj in win_objs:
                     self.collected[collects.Spore] = True
                     return True
-                if space.properties[objects.default_space_object_type].has(objects.TextWin) or self.properties[objects.default_level_object_type].enabled(objects.TextWin):
+                if space.properties[objects.default_space_object_type].enabled(objects.TextWin) or self.properties[objects.default_level_object_type].enabled(objects.TextWin):
                     if not you_obj.properties.enabled(objects.TextFloat):
                         self.collected[collects.Spore] = True
                         return True
@@ -990,7 +772,7 @@ class Level(object):
             for you_obj in you_objs:
                 if you_obj in end_objs:
                     return True
-                if space.properties[objects.default_space_object_type].has(objects.TextEnd) or self.properties[objects.default_level_object_type].enabled(objects.TextEnd):
+                if space.properties[objects.default_space_object_type].enabled(objects.TextEnd) or self.properties[objects.default_level_object_type].enabled(objects.TextEnd):
                     if not you_obj.properties.enabled(objects.TextFloat):
                         return True
                 for end_obj in end_objs:
@@ -1001,7 +783,7 @@ class Level(object):
     def done(self) -> bool:
         for space in self.space_list:
             delete_list = []
-            if space.properties[objects.default_space_object_type].has(objects.TextDone) or self.properties[objects.default_level_object_type].enabled(objects.TextDone):
+            if space.properties[objects.default_space_object_type].enabled(objects.TextDone) or self.properties[objects.default_level_object_type].enabled(objects.TextDone):
                 delete_list.extend(space.object_list)
             for obj in space.object_list:
                 if obj.properties.enabled(objects.TextDone):
