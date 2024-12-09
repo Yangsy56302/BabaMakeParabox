@@ -74,7 +74,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     space_surface_size = window.get_size()
     space_surface_pos = (0, 0)
     colors.set_palette(os.path.join(".", "palettes", basics.options["palette"]))
-    displays.sprites.update()
+    displays.current_sprites.update()
     window.fill(colors.current_palette[0, 4])
     object_type_shortcuts: dict[int, type[objects.Object]] = {k: objects.name_to_class[v] for k, v in enumerate(basics.options["object_type_shortcuts"])}
     level_changed = True
@@ -87,7 +87,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     show_fps = False
     while editor_running:
         frame += 1
-        if frame >= basics.options["fpw"]:
+        if frame >= basics.options["fps"] // 6:
             frame = 0
             wiggle = wiggle % 3 + 1
         for key in keybinds.values():
@@ -246,7 +246,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                             space_changed = True
                     elif keys["LSHIFT"] or keys["RSHIFT"]:
                         obj_to_noun = objects.get_noun_from_type(current_object_type)
-                        if obj_to_noun not in objects.object_used:
+                        if obj_to_noun in objects.object_used:
                             current_object_type = obj_to_noun
                     else:
                         current_object_type_list = [t for t in objects.name_to_class.values() if t in objects.object_used]
@@ -508,7 +508,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             obj_surface_pos = (window.get_width() + (index % 5 * displays.sprite_size * displays.gui_scale) - (displays.sprite_size * displays.gui_scale * 5),
                                window.get_height() + (index // 5 * displays.sprite_size * displays.gui_scale) - (displays.sprite_size * displays.gui_scale * 2))
             obj_surface.blit(
-                displays.set_alpha(displays.sprites.get("text_" + str((index + 1) % 10), 0, wiggle), 0x80),
+                displays.set_alpha(displays.current_sprites.get("text_" + str((index + 1) % 10), 0, wiggle), 0x80),
                 (displays.sprite_size * (displays.gui_scale - 1), displays.sprite_size * (displays.gui_scale - 1))
             )
             window.blit(obj_surface, obj_surface_pos)
@@ -518,7 +518,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         if show_fps:
             real_fps_string = str(int(real_fps))
             for i in range(len(real_fps_string)):
-                window.blit(displays.sprites.get(f"text_{real_fps_string[i]}", 0, wiggle), (i * displays.sprite_size, 0))
+                window.blit(displays.current_sprites.get(f"text_{real_fps_string[i]}", 0, wiggle), (i * displays.sprite_size, 0))
         pygame.display.flip()
         milliseconds = clock.tick(basics.options["fps"])
     pygame.display.quit()

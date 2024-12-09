@@ -74,7 +74,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     space_surface_size: positions.CoordTuple = window.get_size()
     space_surface_pos: positions.CoordTuple = (0, 0)
     colors.set_palette(os.path.join(".", "palettes", basics.options["palette"]))
-    displays.sprites.update()
+    displays.current_sprites.update()
     level_changed = False
     space_changed = False
     frame = 0
@@ -93,7 +93,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     while game_running:
         frame += 1
         frame_since_last_move += 1
-        if frame >= basics.options["fpw"]:
+        if frame >= basics.options["fps"] // 6:
             frame = 0
             wiggle = wiggle % 3 + 1
         for key in keybinds.values():
@@ -349,6 +349,17 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 game_running = False
             display_refresh = False
         if levelpack_refresh:
+            for new_game_type, new_game_count in current_level.game_properties.enabled_dict().items():
+                if not issubclass(new_game_type, (objects.SpaceObject, objects.LevelObject)):
+                    new_game_type = new_game_type.ref_type
+                for _ in range(new_game_count):
+                    if basics.current_os == basics.windows:
+                        if os.path.exists("bmp.exe"):
+                                os.system(f"start submp.exe {new_game_type.json_name}")
+                        elif os.path.exists("bmp.py"):
+                            os.system(f"start python submp.py {new_game_type.json_name}")
+                    elif basics.current_os == basics.linux:
+                        os.system(f"python ./submp.py {new_game_type.json_name} &")
             if not press_key_to_continue:
                 frame_since_last_move = 0
                 for event in current_level.sound_events:
@@ -436,7 +447,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 window.blit(transparent_black_background, (0, 0))
             game_transform_to = [o.ref_type for o in game_transform_to if o is not None]
             for object_type in game_transform_to:
-                window.blit(pygame.transform.scale(displays.sprites.get(object_type.json_name, 0, wiggle), window.get_size()), (0, 0))
+                window.blit(pygame.transform.scale(displays.current_sprites.get(object_type.json_name, 0, wiggle), window.get_size()), (0, 0))
             del game_transform_to
             # offset
             display_offset_speed[0] = basics.absclampf(display_offset_speed[0], window.get_width() / basics.options["fps"] * 4)
@@ -458,9 +469,10 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         if show_fps:
             real_fps_string = str(int(real_fps))
             for i in range(len(real_fps_string)):
-                window.blit(displays.sprites.get(f"text_{real_fps_string[i]}", 0, wiggle), (i * displays.sprite_size, 0))
+                window.blit(displays.current_sprites.get(f"text_{real_fps_string[i]}", 0, wiggle), (i * displays.sprite_size, 0))
             del real_fps_string
         pygame.display.flip()
         milliseconds = clock.tick(basics.options["fps"])
+    pygame.mixer.music.stop()
     pygame.display.quit()
     return levelpack

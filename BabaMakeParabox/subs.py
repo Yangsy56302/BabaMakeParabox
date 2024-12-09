@@ -1,14 +1,15 @@
-from BabaMakeParabox import displays, objects
+from BabaMakeParabox import objects, displays, colors
 
 import pygame
 
 def sub(json_name: str) -> None:
     pygame.init()
-    window_size = (192, 192)
+    window_size = (displays.sprite_size * 10, displays.sprite_size * 10)
     window = pygame.display.set_mode(window_size)
-    pygame.display.set_caption(json_name)
-    displays.sprites.update()
-    sprites = list(map(lambda i: displays.sprites.get(objects.name_to_class[json_name].json_name, 0, i), range(1, 4)))
+    pygame.display.set_caption(objects.name_to_class[json_name].display_name)
+    colors.set_palette("./palettes/variant.png")
+    displays.current_sprites.update()
+    sprites = list(map(lambda i: displays.current_sprites.get(json_name, 0, i), range(1, 4)))
     pygame.display.set_icon(sprites[0])
     clock = pygame.time.Clock()
     wiggle = 0
@@ -21,5 +22,5 @@ def sub(json_name: str) -> None:
         window.blit(pygame.transform.scale(sprites[wiggle], window_size), (0, 0))
         pygame.display.flip()
         wiggle = (wiggle + 1) % 3
-        clock.tick(3)
+        clock.tick(6)
     pygame.quit()

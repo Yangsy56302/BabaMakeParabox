@@ -934,7 +934,7 @@ class Level(object):
         for pos, size, surface, obj in obj_surface_list:
             space_surface.blit(pygame.transform.scale(surface, size), pos)
         if cursor is not None:
-            surface = displays.sprites.get("cursor", 0, wiggle, raw=True).copy()
+            surface = displays.current_sprites.get("cursor", 0, wiggle, raw=True).copy()
             pos = (cursor[0] * scaled_sprite_size - (surface.get_width() - displays.sprite_size) * pixel_size // 2,
                    cursor[1] * scaled_sprite_size - (surface.get_height() - displays.sprite_size) * pixel_size // 2)
             space_surface.blit(pygame.transform.scale(surface, (pixel_size * surface.get_width(), pixel_size * surface.get_height())), pos)
@@ -943,7 +943,7 @@ class Level(object):
         space_background.blit(space_surface, (0, 0))
         space_surface = space_background
         if space.space_id.infinite_tier != 0 and depth == 0:
-            infinite_text_surface = displays.sprites.get("text_infinity" if space.space_id.infinite_tier > 0 else "text_epsilon", 0, wiggle, raw=True)
+            infinite_text_surface = displays.current_sprites.get("text_infinity" if space.space_id.infinite_tier > 0 else "text_epsilon", 0, wiggle, raw=True)
             infinite_tier_surface = pygame.Surface((infinite_text_surface.get_width(), infinite_text_surface.get_height() * abs(space.space_id.infinite_tier)), pygame.SRCALPHA)
             infinite_tier_surface.fill("#00000000")
             for i in range(abs(space.space_id.infinite_tier)):

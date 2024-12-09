@@ -19,7 +19,7 @@ def absclampf(__num: float, __lim: float, /) -> float:
 import pygame
 pygame.init()
 
-versions = "3.922"
+versions = "3.923"
 def compare_versions(ver_1: str, ver_2: str) -> Literal[-1, 0, 1]:
     for char_1, char_2 in zip(ver_1, ver_2):
         if ord(char_1) > ord(char_2):
@@ -53,7 +53,6 @@ class Options(TypedDict):
     debug: bool
     lang: str
     fps: int
-    fpw: int
     space_display_recursion_depth: int
     smooth_animation_multiplier: Optional[int]
     palette: str
@@ -70,7 +69,6 @@ default_options: Options = {
     "debug": False,
     "lang": "",
     "fps": 30,
-    "fpw": 5,
     "space_display_recursion_depth": 1,
     "smooth_animation_multiplier": 3,
     "palette": "default.png",
@@ -94,7 +92,7 @@ default_options: Options = {
     ],
     "metatext": {
         "enabled": True,
-        "tier": 3
+        "tier": 5
     },
     "bgm": {
         "enabled": False,
