@@ -118,10 +118,7 @@ class Levelpack(object):
                 new_match_obj_list: list[objects.Object] = []
                 if issubclass(noun_type, objects.GeneralNoun):
                     object_type = noun_type.ref_type
-                    if issubclass(object_type, objects.Game) and issubclass(oper_type, objects.TextIs):
-                        if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and len(prefix_info_list) == 0:
-                            active_level.game_properties.update(prop_type, prop_negated_tier)
-                    elif noun_negated_tier % 2 == 1:
+                    if noun_negated_tier % 2 == 1:
                         new_match_obj_list = [o for o in space.object_list if objects.TextAll.isreferenceof(o, all_list = active_level.all_list) and not isinstance(o, object_type)]
                     else:
                         new_match_obj_list = [o for o in space.get_objs_from_type(object_type)]
@@ -135,7 +132,10 @@ class Levelpack(object):
                     for prop_info in oper_info.prop_list:
                         prop_type = prop_info.prop_type
                         prop_negated_tier = prop_info.prop_negated_tier
-                        if issubclass(object_type, objects.LevelObject) and noun_negated_tier % 2 == 0:
+                        if issubclass(object_type, objects.Game) and issubclass(oper_type, objects.TextIs):
+                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and len(prefix_info_list) == 0:
+                                active_level.game_properties.update(prop_type, prop_negated_tier)
+                        elif issubclass(object_type, objects.LevelObject) and noun_negated_tier % 2 == 0:
                             meet_prefix_conditions = any(active_level.meet_prefix_conditions(space, o, prefix_info_list, True) for o in active_level_objs)
                             meet_infix_conditions = any(active_level.meet_infix_conditions(space, o, infix_info_list, old_prop_dict.get(o.uuid)) for o in active_level_objs)
                             if (meet_prefix_conditions and meet_infix_conditions) or (len(prefix_info_list) == 0 and len(infix_info_list) == 0 and len(active_level_objs) == 0):
@@ -166,10 +166,7 @@ class Levelpack(object):
                 new_match_obj_list: list[objects.Object] = []
                 if issubclass(noun_type, objects.GeneralNoun):
                     object_type = noun_type.ref_type
-                    if issubclass(object_type, objects.Game) and issubclass(oper_type, objects.TextIs):
-                        if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and active_level.meet_prefix_conditions(space, objects.Object(positions.Coordinate(0, 0)), prefix_info_list, True):
-                            active_level.game_properties.update(prop_type, prop_negated_tier)
-                    elif noun_negated_tier % 2 == 1:
+                    if noun_negated_tier % 2 == 1:
                         new_match_obj_list = [o for o in space.object_list if objects.TextAll.isreferenceof(o, all_list = active_level.all_list) and not isinstance(o, object_type)]
                     else:
                         new_match_obj_list = [o for o in space.get_objs_from_type(object_type)]
@@ -183,6 +180,9 @@ class Levelpack(object):
                     for prop_info in oper_info.prop_list:
                         prop_type = prop_info.prop_type
                         prop_negated_tier = prop_info.prop_negated_tier
+                        if issubclass(object_type, objects.Game) and issubclass(oper_type, objects.TextIs):
+                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and active_level.meet_prefix_conditions(space, objects.Object(positions.Coordinate(0, 0)), prefix_info_list, True):
+                                active_level.game_properties.update(prop_type, prop_negated_tier)
                         for obj in new_match_obj_list:
                             if active_level.meet_infix_conditions(space, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and active_level.meet_prefix_conditions(space, obj, prefix_info_list):
                                 if oper_type == objects.TextIs:

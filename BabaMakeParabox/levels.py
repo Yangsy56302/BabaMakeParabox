@@ -19,8 +19,8 @@ class LevelJson(TypedDict):
     main_space: refs.SpaceIDJson
     space_list: list[spaces.SpaceJson]
 
-max_move_count: int = 16
-infinite_move_number: int = 16
+max_move_count: int = 24
+infinite_move_number: int = 6
 MoveInfo = tuple[objects.Object, Optional[tuple[spaces.Space, positions.Coordinate, positions.Direction]]]
 
 class Level(object):

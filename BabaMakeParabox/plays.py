@@ -145,10 +145,10 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     levelpack_info, current_level_id, current_space_id = new_history[1:]
                     current_level = levelpack.get_exact_level(current_level_id)
                     current_space = current_level.get_exact_space(current_space_id)
-                    if current_level.game_properties.has(objects.TextYou):
+                    if current_level.game_properties.enabled(objects.TextYou):
                         display_offset[0] += dx * window.get_width() / current_space.width
                         display_offset[1] += dy * window.get_height() / current_space.height
-                    if current_level.game_properties.has(objects.TextPush) and levelpack_info["game_push"]:
+                    if current_level.game_properties.enabled(objects.TextPush) and levelpack_info["game_push"]:
                         display_offset[0] += dx * window.get_width() / current_space.width
                         display_offset[1] += dy * window.get_height() / current_space.height
                     for level in levelpack.level_list:
@@ -294,16 +294,16 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                             languages.lang_print("play.levelpack.collectibles", key=collects_type.json_name, value=collects_number)
         if current_level.game_properties:
             offset_used = False
-            if current_level.game_properties.has(objects.TextStop):
+            if current_level.game_properties.enabled(objects.TextStop):
                 wiggle = 1
-            if current_level.game_properties.has(objects.TextShift):
+            if current_level.game_properties.enabled(objects.TextShift):
                 display_offset[0] += window.get_width() / basics.options["fps"]
-            if current_level.game_properties.has(objects.TextMove):
+            if current_level.game_properties.enabled(objects.TextMove):
                 display_offset[1] += window.get_height() / (4 * basics.options["fps"])
-            if current_level.game_properties.has(objects.TextSink):
+            if current_level.game_properties.enabled(objects.TextSink):
                 display_offset_speed[1] += window.get_height() / (16 * basics.options["fps"])
                 offset_used = True
-            if current_level.game_properties.has(objects.TextFloat):
+            if current_level.game_properties.enabled(objects.TextFloat):
                 display_offset_speed[1] -= window.get_height() / (64 * basics.options["fps"])
                 offset_used = True
             if not offset_used:
@@ -311,25 +311,25 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 display_offset_speed[1] = display_offset_speed[1] / 2
             del offset_used
         if display_refresh:
-            if current_level.game_properties.has(objects.TextWin):
+            if current_level.game_properties.enabled(objects.TextWin):
                 languages.lang_print("play.win")
                 sounds.play("win")
                 game_running = False
-            if current_level.game_properties.has(objects.TextShut):
+            if current_level.game_properties.enabled(objects.TextShut):
                 sounds.play("defeat")
                 game_running = False
-            if current_level.game_properties.has(objects.TextEnd):
+            if current_level.game_properties.enabled(objects.TextEnd):
                 languages.lang_print("play.end")
                 sounds.play("end")
                 basics.options["game_is_end"] = True
                 game_running = False
-            if current_level.game_properties.has(objects.TextDone):
+            if current_level.game_properties.enabled(objects.TextDone):
                 sounds.play("done")
                 basics.options["game_is_done"] = True
                 basics.save_options(basics.options)
                 game_running = False
                 raise GameIsDoneError()
-            if current_level.game_properties.has(objects.TextOpen):
+            if current_level.game_properties.enabled(objects.TextOpen):
                 sounds.play("open")
                 if basics.current_os == basics.windows:
                     if os.path.exists("bmp.exe"):
@@ -338,28 +338,26 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                         os.system("start python bmp.py")
                 elif basics.current_os == basics.linux:
                     os.system("python ./bmp.py &")
-            if current_level.game_properties.has(objects.TextTele):
+            if current_level.game_properties.enabled(objects.TextTele):
                 sounds.play("tele")
                 display_offset = [float(random.randrange(window.get_width())), float(random.randrange(window.get_height()))]
-            if current_level.game_properties.has(objects.TextHot) and current_level.game_properties.has(objects.TextMelt):
+            if current_level.game_properties.enabled(objects.TextHot) and current_level.game_properties.enabled(objects.TextMelt):
                 sounds.play("melt")
                 game_running = False
-            if current_level.game_properties.has(objects.TextYou) and current_level.game_properties.has(objects.TextDefeat):
+            if current_level.game_properties.enabled(objects.TextYou) and current_level.game_properties.enabled(objects.TextDefeat):
                 sounds.play("defeat")
                 game_running = False
             display_refresh = False
         if levelpack_refresh:
-            for new_game_type, new_game_count in current_level.game_properties.enabled_dict().items():
-                if not issubclass(new_game_type, (objects.SpaceObject, objects.LevelObject)):
-                    new_game_type = new_game_type.ref_type
-                for _ in range(new_game_count):
+            for space in current_level.space_list:
+                for game_obj in space.get_objs_from_type(objects.Game):
                     if basics.current_os == basics.windows:
                         if os.path.exists("bmp.exe"):
-                                os.system(f"start submp.exe {new_game_type.json_name}")
+                            os.system(f"start submp.exe {game_obj.ref_type.json_name}")
                         elif os.path.exists("bmp.py"):
-                            os.system(f"start python submp.py {new_game_type.json_name}")
+                            os.system(f"start python submp.py {game_obj.ref_type.json_name}")
                     elif basics.current_os == basics.linux:
-                        os.system(f"python ./submp.py {new_game_type.json_name} &")
+                        os.system(f"python ./submp.py {game_obj.ref_type.json_name} &")
             if not press_key_to_continue:
                 frame_since_last_move = 0
                 for event in current_level.sound_events:
