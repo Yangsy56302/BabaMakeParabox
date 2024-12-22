@@ -6,6 +6,9 @@ from BabaMakeParabox import basics, languages, positions, refs, sounds, objects,
 
 import pygame
 
+class GameIsDefeatError(Exception):
+    pass
+
 class GameIsDoneError(Exception):
     pass
 
@@ -93,8 +96,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     while game_running:
         frame += 1
         frame_since_last_move += 1
-        if frame >= basics.options["fps"] // 6:
-            frame = 0
+        if frame % (basics.options["fps"] // 6) == 0:
             wiggle = wiggle % 3 + 1
         for key in keybinds.values():
             keys[key] = False
@@ -311,17 +313,25 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 display_offset_speed[1] = display_offset_speed[1] / 2
             del offset_used
         if display_refresh:
+            # not used
+            display_refresh = False
+        if levelpack_refresh:
             if current_level.game_properties.enabled(objects.TextWin):
                 languages.lang_print("play.win")
                 sounds.play("win")
                 game_running = False
-            if current_level.game_properties.enabled(objects.TextShut):
+            if current_level.game_properties.enabled(objects.TextDefeat):
                 sounds.play("defeat")
                 game_running = False
+                raise GameIsDefeatError()
+            if current_level.game_properties.enabled(objects.TextBonus):
+                sounds.play("bonus")
+                print("VVd4WmVGTnRXVEJOYWtaVFRqQmtWZz09")
             if current_level.game_properties.enabled(objects.TextEnd):
                 languages.lang_print("play.end")
                 sounds.play("end")
                 basics.options["game_is_end"] = True
+                basics.save_options(basics.options)
                 game_running = False
             if current_level.game_properties.enabled(objects.TextDone):
                 sounds.play("done")
@@ -330,7 +340,6 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 game_running = False
                 raise GameIsDoneError()
             if current_level.game_properties.enabled(objects.TextOpen):
-                sounds.play("open")
                 if basics.current_os == basics.windows:
                     if os.path.exists("bmp.exe"):
                             os.system("start bmp.exe")
@@ -338,6 +347,8 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                         os.system("start python bmp.py")
                 elif basics.current_os == basics.linux:
                     os.system("python ./bmp.py &")
+            if current_level.game_properties.enabled(objects.TextShut):
+                game_running = False
             if current_level.game_properties.enabled(objects.TextTele):
                 sounds.play("tele")
                 display_offset = [float(random.randrange(window.get_width())), float(random.randrange(window.get_height()))]
@@ -347,8 +358,6 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             if current_level.game_properties.enabled(objects.TextYou) and current_level.game_properties.enabled(objects.TextDefeat):
                 sounds.play("defeat")
                 game_running = False
-            display_refresh = False
-        if levelpack_refresh:
             for space in current_level.space_list:
                 for game_obj in space.get_objs_from_type(objects.Game):
                     if basics.current_os == basics.windows:
@@ -434,6 +443,8 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         if not current_level.game_properties.enabled(objects.TextHide):
             if not current_level.properties[objects.default_level_object_type].enabled(objects.TextHide):
                 smooth_value = displays.calc_smooth(frame_since_last_move)
+                if current_level.game_properties.enabled(objects.TextStop):
+                    smooth_value = None
                 space_surface = current_level.space_to_surface(current_space, wiggle, space_surface_size, smooth=smooth_value, debug=basics.options["debug"])
                 window.blit(pygame.transform.scale(space_surface, space_surface_size), space_surface_pos)
                 del smooth_value
@@ -447,6 +458,11 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             for object_type in game_transform_to:
                 window.blit(pygame.transform.scale(displays.current_sprites.get(object_type.json_name, 0, wiggle), window.get_size()), (0, 0))
             del game_transform_to
+            if current_level.game_properties.enabled(objects.TextSelect):
+                select_surface = displays.current_sprites.get(objects.Cursor.json_name, 0, wiggle, raw=True)
+                select_surface = displays.set_surface_color_dark(select_surface, colors.float_to_hue((frame / basics.options["fps"] / 6) % 1.0))
+                window.blit(pygame.transform.scale(select_surface, window.get_size()), (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
+                del select_surface
             # offset
             display_offset_speed[0] = basics.absclampf(display_offset_speed[0], window.get_width() / basics.options["fps"] * 4)
             display_offset_speed[1] = basics.absclampf(display_offset_speed[1], window.get_height() / basics.options["fps"] * 4)

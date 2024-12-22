@@ -87,8 +87,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     show_fps = False
     while editor_running:
         frame += 1
-        if frame >= basics.options["fps"] // 6:
-            frame = 0
+        if frame % (basics.options["fps"] // 6) == 0:
             wiggle = wiggle % 3 + 1
         for key in keybinds.values():
             keys[key] = False

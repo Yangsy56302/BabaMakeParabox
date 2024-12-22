@@ -281,7 +281,7 @@ class Levelpack(object):
                             space.new_obj(new_type(old_obj.pos, old_obj.direct, level_id=old_obj.level_id, level_object_extra=old_obj.level_object_extra))
                             transform_success = True
                         elif isinstance(old_obj, objects.SpaceObject):
-                            level_id: refs.LevelID = refs.LevelID(old_obj.space_id.name)
+                            level_id: refs.LevelID = old_obj.space_id.to_level_id()
                             self.set_level(levels.Level(level_id, active_level.space_list, super_level_id=active_level.level_id,
                                                         main_space_id=old_obj.space_id))
                             level_object_extra: objects.LevelObjectExtra = {"icon": {"name": objects.get_noun_from_type(objects.default_space_object_type).json_name, "color": space.color}}
@@ -292,14 +292,7 @@ class Levelpack(object):
                             space.new_obj(new_type(old_obj.pos, old_obj.direct, level_id=old_obj.level_id))
                             transform_success = True
                         else:
-                            space_id: refs.SpaceID = refs.SpaceID(old_obj.uuid.hex)
-                            space_color = colors.to_background_color(colors.current_palette[old_obj.sprite_color])
-                            new_space = spaces.Space(space_id, positions.Coordinate(3, 3), space_color)
-                            level_id: refs.LevelID = refs.LevelID(old_obj.uuid.hex)
-                            self.set_level(levels.Level(level_id, [new_space], super_level_id=active_level.level_id))
-                            new_space.new_obj(old_type(positions.Coordinate(1, 1)))
-                            level_object_extra: objects.LevelObjectExtra = {"icon": {"name": old_obj.json_name, "color": colors.current_palette[old_obj.sprite_color]}}
-                            new_obj = new_type(old_obj.pos, old_obj.direct, level_id=level_id)
+                            new_obj = new_type(old_obj.pos, old_obj.direct, level_id=active_level.level_id)
                             space.new_obj(new_obj)
                             transform_success = True
                     elif issubclass(new_type, objects.SpaceObject):
@@ -309,21 +302,19 @@ class Levelpack(object):
                             space.new_obj(new_type(old_obj.pos, old_obj.direct, space_id=old_obj.space_id, space_object_extra=old_obj.space_object_extra))
                             transform_success = True
                         elif isinstance(old_obj, objects.LevelObject):
-                            new_level = self.get_exact_level(old_obj.level_id)
-                            for temp_space in new_level.space_list:
-                                active_level.set_space(temp_space)
-                            space.new_obj(new_type(old_obj.pos, old_obj.direct, space_id=new_level.main_space_id))
+                            new_level = self.get_level(old_obj.level_id)
+                            if new_level is not None:
+                                for temp_space in new_level.space_list:
+                                    active_level.set_space(temp_space)
+                                space.new_obj(new_type(old_obj.pos, old_obj.direct, space_id=new_level.main_space_id))
+                            else:
+                                space.new_obj(new_type(old_obj.pos, old_obj.direct, space_id=old_obj.level_id.to_space_id()))
                             transform_success = True
                         elif old_obj.space_id is not None:
                             space.new_obj(new_type(old_obj.pos, old_obj.direct, space_id=old_obj.space_id))
                             transform_success = True
                         else:
-                            space_id: refs.SpaceID = refs.SpaceID(old_obj.uuid.hex)
-                            space_color = colors.to_background_color(colors.current_palette[old_obj.sprite_color])
-                            new_space = spaces.Space(space_id, positions.Coordinate(3, 3), space_color)
-                            new_space.new_obj(old_type(positions.Coordinate(1, 1), old_obj.direct))
-                            active_level.set_space(new_space)
-                            space.new_obj(new_type(old_obj.pos, old_obj.direct, space_id=space_id))
+                            space.new_obj(new_type(old_obj.pos, old_obj.direct, space_id=space.space_id))
                             transform_success = True
                     elif issubclass(new_noun, objects.TextText):
                         if not isinstance(old_obj, objects.Text):
@@ -388,7 +379,7 @@ class Levelpack(object):
                         elif issubclass(new_type, objects.SpaceObject):
                             new_obj = new_type(old_obj.pos, old_obj.direct, space_id=old_obj.space_id, space_object_extra=old_obj.space_object_extra)
                         elif issubclass(new_type, objects.LevelObject):
-                            new_level_id = refs.LevelID(old_obj.space_id.name)
+                            new_level_id: refs.LevelID = old_obj.space_id.to_level_id()
                             new_level_object_extra = objects.LevelObjectExtra(icon=objects.LevelObjectIcon(
                                 name=objects.get_noun_from_type(space_object_type).json_name, color=active_level.get_exact_space(old_obj.space_id).color
                             ))

@@ -886,6 +886,11 @@ class Level(object):
             if obj.properties.enabled(objects.TextHide):
                 continue
             obj_surface: pygame.Surface = displays.simple_object_to_surface(obj, wiggle=wiggle, debug=debug)
+            if self.game_properties.enabled(objects.TextWord):
+                obj_type = type(obj)
+                for _ in range(self.game_properties.get(objects.TextWord)):
+                    obj_type = objects.get_noun_from_type(obj_type)
+                obj_surface = displays.simple_type_to_surface(obj_type, wiggle=wiggle, debug=debug)
             obj_surface_pos: positions.Coordinate = positions.Coordinate(obj.pos.x * scaled_sprite_size, obj.pos.y * scaled_sprite_size)
             obj_surface_size: positions.Coordinate = positions.Coordinate(scaled_sprite_size, scaled_sprite_size)
             if isinstance(obj, objects.SpaceObject):
