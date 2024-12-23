@@ -318,6 +318,7 @@ class Level(object):
         if not space.out_of_range(new_pos):
             stop_objects = [o for o in space.get_objs_from_pos(new_pos) if o.properties.enabled(objects.TextStop) and not o.properties.enabled(objects.TextPush)]
             if len(stop_objects + unpushable_objects) != 0:
+                push = False
                 if obj.properties.enabled(objects.TextOpen):
                     simple = True
                     for stop_object in stop_objects + unpushable_objects:
