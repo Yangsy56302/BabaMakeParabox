@@ -1,7 +1,7 @@
 from typing import Any, Optional, TypedDict, NotRequired
 import uuid
 
-from BabaMakeParabox import basics, colors, displays, objects, collects, positions, refs, rules, levels, spaces
+from BabaMakeParabox import basics, objects, collects, positions, refs, rules, levels, spaces
 
 class ReturnInfo(TypedDict):
     win: bool
@@ -362,19 +362,19 @@ class Levelpack(object):
                         new_obj = new_text_type(old_obj.pos, old_obj.direct, space_id=old_obj.space_id, level_id=old_obj.level_id)
                         active_space.new_obj(new_obj)
                 for old_space_id, old_obj in old_obj_list[space_object_type]:
-                    transform_success = False
+                    unchangeable = False
                     old_space = active_level.get_exact_space(old_space_id)
                     for new_noun in new_noun_list[space_object_type]:
                         if issubclass(new_noun, objects.FixedNoun):
                             if issubclass(new_noun, objects.TextEmpty):
-                                transform_success = True
+                                continue
                             if issubclass(new_noun, objects.SpecificSpaceNoun):
                                 if new_noun.isreferenceof(old_obj):
                                     old_obj.space_id += new_noun.delta_infinite_tier
                             continue
                         new_type = new_noun.ref_type
                         if issubclass(space_object_type, new_type):
-                            transform_success = False
+                            unchangeable = True
                             break
                         elif issubclass(new_type, objects.SpaceObject):
                             new_obj = new_type(old_obj.pos, old_obj.direct, space_id=old_obj.space_id, space_object_extra=old_obj.space_object_extra)
@@ -392,14 +392,14 @@ class Levelpack(object):
                         else:
                             new_obj = new_type(old_obj.pos, old_obj.direct, space_id=old_obj.space_id)
                         old_space.new_obj(new_obj)
-                    if transform_success and len(new_noun_list[space_object_type]) != 0:
+                    if len(new_noun_list[space_object_type]) != 0 and not unchangeable:
                         old_space.del_obj(old_obj)
     def level_transform(self, active_level: levels.Level) -> bool:
         old_obj_list: dict[type[objects.LevelObject], list[tuple[refs.LevelID, refs.SpaceID, objects.LevelObject]]]
         new_noun_list: dict[type[objects.LevelObject], list[type[objects.Noun]]]
         new_noun_list = {p: [] for p in objects.level_object_types}
+        transform_success = False
         for level_object_type in objects.level_object_types:
-            transform_success = False
             old_obj_list = {p: [] for p in objects.level_object_types}
             for level in self.level_list:
                 for other_space in level.space_list:
@@ -427,19 +427,19 @@ class Levelpack(object):
                 for _ in range(new_text_count):
                     new_obj = new_text_type(old_obj.pos, old_obj.direct, space_id=old_obj.space_id, level_id=old_obj.level_id)
                     old_space.new_obj(new_obj)
-                transform_success = True
+                transform_success |= True
             for old_level_id, old_space_id, old_obj in old_obj_list[level_object_type]:
                 old_level = self.get_exact_level(old_level_id)
                 old_space = old_level.get_exact_space(old_space_id)
-                object_transform_success = True
+                unchangeable = False
                 for new_noun in new_noun_list[level_object_type]:
                     if issubclass(new_noun, objects.FixedNoun):
                         if issubclass(new_noun, objects.TextEmpty):
-                            transform_success = True
+                            continue
                         continue
                     new_type = new_noun.ref_type
                     if issubclass(level_object_type, new_type):
-                        object_transform_success = False
+                        unchangeable = True
                         break
                     elif issubclass(new_type, objects.LevelObject):
                         new_obj = new_type(old_obj.pos, old_obj.direct, level_id=old_obj.level_id, level_object_extra=old_obj.level_object_extra)
@@ -455,9 +455,9 @@ class Levelpack(object):
                     else:
                         new_obj = new_type(old_obj.pos, old_obj.direct, level_id=active_level.level_id)
                     old_space.new_obj(new_obj)
-                if object_transform_success and len(new_noun_list[level_object_type]) != 0:
+                if len(new_noun_list[level_object_type]) != 0 and not unchangeable:
                     old_space.del_obj(old_obj)
-                    transform_success = True
+                    transform_success |= True
         return transform_success
     def prepare(self, active_level: levels.Level) -> dict[uuid.UUID, objects.Properties]:
         clear_counts: int = 0

@@ -114,12 +114,10 @@ class ObjectJson(TypedDict):
     level_object_extra: NotRequired[LevelObjectExtra]
     path_extra: NotRequired[PathExtra]
 
-StepInfo = tuple[refs.SpaceID, positions.Coordinate]
 class OldObjectState(object):
-    def __init__(self, pos: Optional[positions.Coordinate] = None, direct: Optional[positions.Direction] = None, steps: Optional[list[StepInfo]] = None, space: Optional[refs.SpaceID] = None, level: Optional[refs.LevelID] = None) -> None:
+    def __init__(self, *, pos: Optional[positions.Coordinate] = None, direct: Optional[positions.Direction] = None, space: Optional[refs.SpaceID] = None, level: Optional[refs.LevelID] = None) -> None:
         self.pos: Optional[positions.Coordinate] = pos
         self.direct: Optional[positions.Direction] = direct
-        self.steps: Optional[list[StepInfo]] = steps
         self.space: Optional[refs.SpaceID] = space
         self.level: Optional[refs.LevelID] = level
 
@@ -145,6 +143,8 @@ class Object(object):
         self.sprite_state: int = 0
     def __eq__(self, obj: "Object") -> bool:
         return self.uuid == obj.uuid
+    def __hash__(self) -> int:
+        return hash(self.uuid)
     def __repr__(self) -> str:
         string = ""
         string += f"{self.__class__.__name__}\n"

@@ -46,30 +46,49 @@ class Space(object):
         for obj in self.object_list:
             if not self.out_of_range(obj.pos):
                 self.pos_to_objs(obj.pos).append(obj)
+    @staticmethod
+    def auto_refresh(func):
+        def wrapper(self: "Space", *args, **kwds):
+            try:
+                r = func(self, *args, **kwds)
+                return r
+            except Exception:
+                self.refresh_index()
+                r = func(self, *args, **kwds)
+                return r
+        return wrapper
+    @auto_refresh
     def new_obj(self, obj: objects.Object) -> None:
         self.object_list.append(obj)
         if not self.out_of_range(obj.pos):
             self.pos_to_objs(obj.pos).append(obj)
+    @auto_refresh
     def get_objs_from_pos(self, pos: positions.Coordinate) -> list[objects.Object]:
         if self.out_of_range(pos):
             return []
         return self.pos_to_objs(pos)
+    @auto_refresh
     def get_objs_from_pos_and_type[T: objects.Object](self, pos: positions.Coordinate, object_type: type[T]) -> list[T]:
         if self.out_of_range(pos):
             return []
         return [o for o in self.pos_to_objs(pos) if isinstance(o, object_type)]
+    @auto_refresh
     def get_objs_from_pos_and_special_noun(self, pos: positions.Coordinate, noun_type: type[objects.SupportsIsReferenceOf]) -> list[objects.Object]:
         if self.out_of_range(pos):
             return []
         return [o for o in self.pos_to_objs(pos) if noun_type.isreferenceof(o)]
+    @auto_refresh
     def get_objs_from_type[T: objects.Object](self, object_type: type[T]) -> list[T]:
         return [o for o in self.object_list if isinstance(o, object_type)]
+    @auto_refresh
     def get_objs_from_special_noun(self, object_type: type[objects.SupportsIsReferenceOf]) -> list[objects.Object]:
         return [o for o in self.object_list if object_type.isreferenceof(o)]
+    @auto_refresh
     def del_obj(self, obj: objects.Object) -> None:
         if not self.out_of_range(obj.pos):
             self.pos_to_objs(obj.pos).remove(obj)
         self.object_list.remove(obj)
+    @auto_refresh
     def del_objs_from_pos(self, pos: positions.Coordinate) -> bool:
         if self.out_of_range(pos):
             return False
@@ -78,6 +97,7 @@ class Space(object):
             self.object_list.remove(obj)
         self.object_pos_index[self.pos_to_index(pos)].clear()
         return deleted
+    @auto_refresh
     def del_objs_from_pos_and_type(self, pos: positions.Coordinate, object_type: type) -> bool:
         del_objects = filter(lambda o: isinstance(o, object_type), self.pos_to_objs(pos))
         deleted = False
@@ -87,6 +107,7 @@ class Space(object):
             if not self.out_of_range(obj.pos):
                 self.pos_to_objs(pos).remove(obj)
         return deleted
+    @auto_refresh
     def del_objs_from_pos_and_special_noun(self, pos: positions.Coordinate, noun_type: type[objects.SupportsIsReferenceOf]) -> bool:
         del_objects = filter(lambda o: noun_type.isreferenceof(o), self.pos_to_objs(pos))
         deleted = False
@@ -96,14 +117,18 @@ class Space(object):
             if not self.out_of_range(obj.pos):
                 self.pos_to_objs(pos).remove(obj)
         return deleted
+    @auto_refresh
     def get_spaces(self) -> list[objects.SpaceObject]:
         return [o for o in self.object_list if isinstance(o, objects.SpaceObject)]
+    @auto_refresh
     def get_spaces_from_pos(self, pos: positions.Coordinate) -> list[objects.SpaceObject]:
         if self.out_of_range(pos):
             return []
         return [o for o in self.pos_to_objs(pos) if isinstance(o, objects.SpaceObject)]
+    @auto_refresh
     def get_levels(self) -> list[objects.LevelObject]:
         return [o for o in self.object_list if isinstance(o, objects.LevelObject)]
+    @auto_refresh
     def get_levels_from_pos(self, pos: positions.Coordinate) -> list[objects.LevelObject]:
         if self.out_of_range(pos):
             return []

@@ -21,7 +21,7 @@ class LevelJson(TypedDict):
 
 max_move_count: int = 24
 infinite_move_number: int = 6
-MoveInfo = tuple[objects.Object, Optional[tuple[spaces.Space, positions.Coordinate, positions.Direction]]]
+MoveInfo = tuple[objects.Object, list[tuple[refs.SpaceID, positions.Coordinate, positions.Direction]]]
 
 class Level(object):
     def __init__(self, level_id: refs.LevelID, space_list: list[spaces.Space], *, super_level_id: Optional[refs.LevelID] = None, main_space_id: Optional[refs.SpaceID] = None, map_info: Optional[MapLevelExtraJson] = None, collected: Optional[dict[type[collects.Collectible], bool]] = None, ) -> None:
@@ -82,45 +82,35 @@ class Level(object):
         for space in self.space_list:
             for obj in space.object_list:
                 obj.move_number = 0
-    def move_obj_between_spaces(self, old_space: spaces.Space, obj: objects.Object, new_space: spaces.Space, pos: positions.Coordinate) -> None:
-        if obj in old_space.object_list:
-            old_space.del_obj(obj)
-        obj = copy.deepcopy(obj)
-        obj.reset_uuid()
-        obj.old_state.space = old_space.space_id
-        obj.old_state.pos = obj.pos
-        obj.pos = pos
-        new_space.new_obj(obj)
-    def move_obj_in_space(self, space: spaces.Space, obj: objects.Object, pos: positions.Coordinate) -> None:
-        if obj in space.object_list:
-            space.del_obj(obj)
-        obj = copy.deepcopy(obj)
-        obj.reset_uuid()
-        obj.old_state.pos = obj.pos
-        obj.pos = pos
-        space.new_obj(obj)
+    @staticmethod
+    def merge_move_list(move_list: list[MoveInfo]) -> list[MoveInfo]:
+        move_dict: dict[objects.Object, list[tuple[refs.SpaceID, positions.Coordinate, positions.Direction]]] = {}
+        for obj, new_info_list in move_list:
+            move_dict.setdefault(obj, [])
+            move_dict[obj].extend(new_info_list)
+        return [(o, l) for o, l in move_dict.items()]
     def move_objs_from_move_list(self, move_list: list[MoveInfo]) -> None:
-        delete_list: list[objects.Object] = []
-        move_list = basics.remove_same_elements(move_list)
-        for move_obj, new_info in move_list:
+        move_list = self.merge_move_list(move_list)
+        for old_obj, new_info_list in move_list:
+            new_info_list = basics.remove_same_elements(new_info_list)
             for space in self.space_list:
-                if move_obj in space.object_list:
+                if old_obj in space.object_list:
                     old_space = space
-            if new_info is None:
-                if move_obj not in delete_list:
-                    delete_list.append(move_obj)
-                continue
-            new_space, new_pos, new_direct = new_info
-            move_obj.move_number += 1
-            if old_space == new_space:
-                self.move_obj_in_space(old_space, move_obj, new_pos)
-            else:
-                self.move_obj_between_spaces(old_space, move_obj, new_space, new_pos)
-            move_obj.direct = new_direct
-        for del_obj in delete_list:
-            for space in self.space_list:
-                if del_obj in space.object_list:
-                    space.del_obj(del_obj)
+            old_obj.move_number += 1
+            old_obj.old_state.pos = old_obj.pos
+            old_obj.old_state.direct = old_obj.direct
+            old_obj.old_state.space = old_space.space_id
+            old_obj.old_state.level = self.level_id
+            for new_space_id, new_pos, new_direct in new_info_list:
+                new_space = self.get_space(new_space_id)
+                if new_space is None:
+                    continue
+                new_obj = copy.deepcopy(old_obj)
+                new_obj.reset_uuid()
+                new_obj.pos = new_pos
+                new_obj.direct = new_direct
+                new_space.new_obj(new_obj)
+            old_space.del_obj(old_obj)
         if len(move_list) != 0 and "move" not in self.sound_events:
             self.sound_events.append("move")
     def meet_prefix_conditions(self, space: spaces.Space, obj: objects.Object, prefix_info_list: list[rules.PrefixInfo], is_meta: bool = False) -> bool:
@@ -287,8 +277,8 @@ class Level(object):
                 super_space_id = space.space_id + 1
             passed.append(space.space_id)
             if self.get_space(super_space_id) is None:
-                exit_list.append((obj, None))
                 exit_space = True
+                exit_list.append((obj, []))
             else:
                 super_space_list = self.find_super_spaces(super_space_id)
                 for super_space, space_obj in super_space_list:
@@ -313,7 +303,7 @@ class Level(object):
                 else:
                     push_list.extend(new_move_list)
             if push:
-                push_list.append((obj, (space, new_pos, direct)))
+                push_list.append((obj, [(space.space_id, new_pos, direct)]))
         simple = False
         if not space.out_of_range(new_pos):
             stop_objects = [o for o in space.get_objs_from_pos(new_pos) if o.properties.enabled(objects.TextStop) and not o.properties.enabled(objects.TextPush)]
@@ -354,9 +344,9 @@ class Level(object):
                     if new_push_object.properties.disabled(objects.TextEnter):
                         squeeze = False
                         break
-                    squeeze_list.append((new_push_object, None))
+                    squeeze_list.append((new_push_object, []))
             if squeeze:
-                squeeze_list.append((obj, (space, new_pos, direct)))
+                squeeze_list.append((obj, [(space.space_id, new_pos, direct)]))
         enter_space = False
         enter_list: list[MoveInfo] = []
         if not space.out_of_range(new_pos) and not obj.properties.disabled(objects.TextEnter):
@@ -383,17 +373,17 @@ class Level(object):
                     enter_list.extend(new_move_list)
                     enter_space = True
         if enter_space and len(enter_list) == 0:
-            enter_list.append((obj, None))
+            enter_list.append((obj, []))
         if exit_space:
-            return basics.remove_same_elements(exit_list)
+            return self.merge_move_list(exit_list)
         elif push:
-            return basics.remove_same_elements(push_list)
+            return self.merge_move_list(push_list)
         elif enter_space:
-            return basics.remove_same_elements(enter_list)
+            return self.merge_move_list(enter_list)
         elif squeeze:
-            return basics.remove_same_elements(squeeze_list)
+            return self.merge_move_list(squeeze_list)
         elif simple:
-            return [(obj, (space, new_pos, direct))]
+            return [(obj, [(space.space_id, new_pos, direct)])]
         else:
             return None
     def you(self, direct: positions.PlayerOperation) -> bool:
@@ -419,7 +409,6 @@ class Level(object):
                         obj.move_number += 1
                     else:
                         pushing_game = True
-            move_list = basics.remove_same_elements(move_list)
             self.move_objs_from_move_list(move_list)
         return pushing_game
     def select(self, direct: positions.PlayerOperation) -> Optional[refs.LevelID]:
@@ -440,7 +429,7 @@ class Level(object):
                         level_objs = space.get_levels_from_pos(new_pos)
                         path_objs = space.get_objs_from_pos_and_type(new_pos, objects.Path)
                         if any(map(lambda p: p.unlocked, path_objs)) or len(level_objs) != 0:
-                            self.move_obj_in_space(space, obj, new_pos)
+                            obj.pos = new_pos
             return None
     def move(self) -> bool:
         self.reset_move_numbers()
@@ -457,7 +446,6 @@ class Level(object):
                             obj.move_number += 1
                         else:
                             pushing_game = True
-                move_list = basics.remove_same_elements(move_list)
                 self.move_objs_from_move_list(move_list)
         self.reset_move_numbers()
         finished = False
@@ -483,7 +471,6 @@ class Level(object):
                             obj.move_number += 1
                         else:
                             pushing_game = True
-            move_list = basics.remove_same_elements(move_list)
             self.move_objs_from_move_list(move_list)
         return pushing_game
     def shift(self) -> bool:
@@ -501,7 +488,6 @@ class Level(object):
                             obj.move_number += 1
                         else:
                             pushing_game = True
-                move_list = basics.remove_same_elements(move_list)
                 self.move_objs_from_move_list(move_list)
         self.reset_move_numbers()
         finished = False
@@ -522,7 +508,6 @@ class Level(object):
                             finished = False
                         else:
                             pushing_game = True
-            move_list = basics.remove_same_elements(move_list)
             self.move_objs_from_move_list(move_list)
         return pushing_game
     def tele(self) -> None:
@@ -554,7 +539,9 @@ class Level(object):
                         other_tele_space, other_tele_obj = random.choice(other_tele_objs)
                         tele_list.append((space, obj, other_tele_space, other_tele_obj.pos))
         for old_space, obj, new_space, pos in tele_list:
-            self.move_obj_between_spaces(old_space, obj, new_space, pos)
+            old_space.del_obj(obj)
+            obj.pos = pos
+            new_space.new_obj(obj)
         if len(tele_list) != 0:
             self.sound_events.append("tele")
     def sink(self) -> None:
@@ -876,10 +863,13 @@ class Level(object):
         space_surface = pygame.Surface(space_surface_size, pygame.SRCALPHA)
         object_list: list[tuple[Optional[refs.SpaceID], objects.Object]] = []
         obj_surface_list: list[tuple[positions.Coordinate, positions.Coordinate, pygame.Surface, objects.Object]] = []
-        for other_space in self.space_list:
-            for other_object in other_space.object_list:
-                if (smooth is not None) and other_object.old_state.space == space.space_id and isinstance(other_object, displays.order):
-                    object_list.append((other_space.space_id, other_object))
+        if smooth is not None:
+            for other_space in self.space_list:
+                if other_space.space_id == space.space_id:
+                    continue
+                for other_object in other_space.object_list:
+                    if other_object.old_state.space == space.space_id and isinstance(other_object, displays.order):
+                        object_list.append((other_space.space_id, other_object))
         object_list.extend([(None, o) for o in space.object_list if isinstance(o, displays.order) and (space.space_id, o) not in object_list])
         for super_space_id, obj in object_list:
             if not isinstance(obj, displays.order):
@@ -900,40 +890,40 @@ class Level(object):
                     default_surface = self.space_to_surface(space_of_object, wiggle, (scaled_sprite_size, scaled_sprite_size), depth + 1, smooth)
                     obj_surface = displays.simple_object_to_surface(obj, wiggle=wiggle, default_surface=default_surface, debug=debug)
             if (smooth is not None) and (obj.old_state.pos is not None):
-                if smooth >= 0.0 and smooth <= 1.0:
-                    old_surface_pos = positions.Coordinate(obj.old_state.pos[0] * scaled_sprite_size, obj.old_state.pos[1] * scaled_sprite_size)
-                    if obj.old_state.space is not None:
-                        new_surface_info = self.recursion_get_object_surface_info(obj.old_state.pos, obj.old_state.space, space.space_id)
-                        if len(new_surface_info) != 0:
-                            new_surface_info = sorted(new_surface_info, key=lambda t: t[0])
-                            min_space_depth = new_surface_info[0][0]
-                            for space_depth, old_surface_pos, old_surface_size in new_surface_info:
-                                if space_depth > min_space_depth:
-                                    break
-                                if super_space_id is not None:
-                                    old_super_space = self.get_exact_space(super_space_id)
-                                    for old_super_space_object in [o for o in space.get_spaces() if o.space_id == super_space_id]:
-                                        old_surface_pos = (obj.old_state.pos[0] * scaled_sprite_size, obj.old_state.pos[1] * scaled_sprite_size)
-                                        old_surface_size = (scaled_sprite_size, scaled_sprite_size)
-                                        new_surface_pos = ((obj.pos.x / old_super_space.width + old_super_space_object.pos.x) * scaled_sprite_size, (obj.pos.y / old_super_space.height + old_super_space_object.pos.y) * scaled_sprite_size)
-                                        new_surface_size = (obj_surface_size[0] / old_super_space.width, obj_surface_size[1] / old_super_space.height)
-                                        obj_surface_pos = positions.Coordinate(int(new_surface_pos[0] + (old_surface_pos[0] - new_surface_pos[0]) * smooth), int(new_surface_pos[1] + (old_surface_pos[1] - new_surface_pos[1]) * smooth))
-                                        obj_surface_size = positions.Coordinate(int(new_surface_size[0] + (old_surface_size[0] - new_surface_size[0]) * smooth), int(new_surface_size[1] + (old_surface_size[1] - new_surface_size[1]) * smooth))
-                                        obj_surface_list.append((obj_surface_pos, obj_surface_size, obj_surface, obj))
-                                else:
-                                    old_surface_pos = (old_surface_pos[0] * space_surface_size[0], old_surface_pos[1] * space_surface_size[1])
-                                    old_surface_size = (old_surface_size[0] * space_surface_size[0], old_surface_size[1] * space_surface_size[1])
-                                    obj_surface_pos = positions.Coordinate(int(obj_surface_pos[0] + (old_surface_pos[0] - obj_surface_pos[0]) * smooth), int(obj_surface_pos[1] + (old_surface_pos[1] - obj_surface_pos[1]) * smooth))
-                                    obj_surface_size = positions.Coordinate(int(obj_surface_size[0] + (old_surface_size[0] - obj_surface_size[0]) * smooth), int(obj_surface_size[1] + (old_surface_size[1] - obj_surface_size[1]) * smooth))
-                                    obj_surface_list.append((obj_surface_pos, obj_surface_size, obj_surface, obj))
-                    else:
-                        obj_surface_pos = positions.Coordinate(
-                            int((obj_surface_pos[0] + (old_surface_pos[0] - obj_surface_pos[0]) * smooth)),
-                            int((obj_surface_pos[1] + (old_surface_pos[1] - obj_surface_pos[1]) * smooth))
-                        )
-                        obj_surface_list.append((obj_surface_pos, obj_surface_size, obj_surface, obj))
-                else:
+                if smooth < 0.0 or smooth > 1.0:
                     raise ValueError(smooth)
+                old_surface_pos = positions.Coordinate(obj.old_state.pos[0] * scaled_sprite_size, obj.old_state.pos[1] * scaled_sprite_size)
+                if obj.old_state.space is not None:
+                    new_surface_info = self.recursion_get_object_surface_info(obj.old_state.pos, obj.old_state.space, space.space_id)
+                    if len(new_surface_info) == 0:
+                        continue
+                    new_surface_info = sorted(new_surface_info, key=lambda t: t[0])
+                    min_space_depth = new_surface_info[0][0]
+                    for space_depth, old_surface_pos, old_surface_size in new_surface_info:
+                        if space_depth > min_space_depth:
+                            break
+                        if super_space_id is not None:
+                            old_super_space = self.get_exact_space(super_space_id)
+                            for old_super_space_object in [o for o in space.get_spaces() if o.space_id == super_space_id]:
+                                old_surface_pos = (obj.old_state.pos[0] * scaled_sprite_size, obj.old_state.pos[1] * scaled_sprite_size)
+                                old_surface_size = (scaled_sprite_size, scaled_sprite_size)
+                                new_surface_pos = ((obj.pos.x / old_super_space.width + old_super_space_object.pos.x) * scaled_sprite_size, (obj.pos.y / old_super_space.height + old_super_space_object.pos.y) * scaled_sprite_size)
+                                new_surface_size = (obj_surface_size[0] / old_super_space.width, obj_surface_size[1] / old_super_space.height)
+                                obj_surface_pos = positions.Coordinate(int(new_surface_pos[0] + (old_surface_pos[0] - new_surface_pos[0]) * smooth), int(new_surface_pos[1] + (old_surface_pos[1] - new_surface_pos[1]) * smooth))
+                                obj_surface_size = positions.Coordinate(int(new_surface_size[0] + (old_surface_size[0] - new_surface_size[0]) * smooth), int(new_surface_size[1] + (old_surface_size[1] - new_surface_size[1]) * smooth))
+                                obj_surface_list.append((obj_surface_pos, obj_surface_size, obj_surface, obj))
+                        else:
+                            old_surface_pos = (old_surface_pos[0] * space_surface_size[0], old_surface_pos[1] * space_surface_size[1])
+                            old_surface_size = (old_surface_size[0] * space_surface_size[0], old_surface_size[1] * space_surface_size[1])
+                            obj_surface_pos = positions.Coordinate(int(obj_surface_pos[0] + (old_surface_pos[0] - obj_surface_pos[0]) * smooth), int(obj_surface_pos[1] + (old_surface_pos[1] - obj_surface_pos[1]) * smooth))
+                            obj_surface_size = positions.Coordinate(int(obj_surface_size[0] + (old_surface_size[0] - obj_surface_size[0]) * smooth), int(obj_surface_size[1] + (old_surface_size[1] - obj_surface_size[1]) * smooth))
+                            obj_surface_list.append((obj_surface_pos, obj_surface_size, obj_surface, obj))
+                else:
+                    obj_surface_pos = positions.Coordinate(
+                        int((obj_surface_pos[0] + (old_surface_pos[0] - obj_surface_pos[0]) * smooth)),
+                        int((obj_surface_pos[1] + (old_surface_pos[1] - obj_surface_pos[1]) * smooth))
+                    )
+                    obj_surface_list.append((obj_surface_pos, obj_surface_size, obj_surface, obj))
             else:
                 obj_surface_list.append((obj_surface_pos, obj_surface_size, obj_surface, obj))
         obj_surface_list.sort(key=lambda o: [isinstance(o[-1], t) for t in displays.order].index(True), reverse=True)

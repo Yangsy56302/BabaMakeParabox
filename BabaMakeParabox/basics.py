@@ -19,7 +19,7 @@ def absclampf(__num: float, __lim: float, /) -> float:
 import pygame
 pygame.init()
 
-versions = "3.925"
+versions: str = "3.926"
 def compare_versions(ver_1: str, ver_2: str) -> Literal[-1, 0, 1]:
     for char_1, char_2 in zip(ver_1, ver_2):
         if ord(char_1) > ord(char_2):
