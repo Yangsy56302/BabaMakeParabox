@@ -2,12 +2,15 @@ from typing import Any, NotRequired, Optional, TypeGuard, TypedDict
 import math
 import uuid
 from BabaMakeParabox import basics, collects, colors, positions, refs
-from BabaMakeParabox.positions import Coordinate
 
 class SpaceObjectExtra(TypedDict):
-    pass
+    static_transform: positions.SpaceTransform
+    dynamic_transform: positions.SpaceTransform
 
-default_space_object_extra: SpaceObjectExtra = {}
+default_space_object_extra: SpaceObjectExtra = {
+    "static_transform": positions.default_space_transform.copy(),
+    "dynamic_transform": positions.default_space_transform.copy()
+}
 
 class LevelObjectIcon(TypedDict):
     name: str
@@ -115,7 +118,14 @@ class ObjectJson(TypedDict):
     path_extra: NotRequired[PathExtra]
 
 class OldObjectState(object):
-    def __init__(self, *, pos: Optional[positions.Coordinate] = None, direct: Optional[positions.Direction] = None, space: Optional[refs.SpaceID] = None, level: Optional[refs.LevelID] = None) -> None:
+    def __init__(
+        self,
+        *,
+        pos: Optional[positions.Coordinate] = None,
+        direct: Optional[positions.Direction] = None,
+        space: Optional[refs.SpaceID] = None,
+        level: Optional[refs.LevelID] = None
+    ) -> None:
         self.pos: Optional[positions.Coordinate] = pos
         self.direct: Optional[positions.Direction] = direct
         self.space: Optional[refs.SpaceID] = space
@@ -130,10 +140,18 @@ class Object(object):
     display_name: str
     sprite_color: colors.PaletteIndex
     sprite_varients: tuple[int, ...] = (0x0, )
-    def __init__(self, pos: positions.Coordinate, direct: positions.Direction = positions.Direction.S, *, space_id: Optional[refs.SpaceID] = None, level_id: Optional[refs.LevelID] = None) -> None:
+    def __init__(
+        self,
+        pos: positions.Coordinate,
+        direct: positions.Direction = positions.Direction.S,
+        *,
+        space_id: Optional[refs.SpaceID] = None,
+        level_id: Optional[refs.LevelID] = None
+    ) -> None:
         self.uuid: uuid.UUID = uuid.uuid4()
         self.pos: positions.Coordinate = pos
         self.direct: positions.Direction = direct
+        self.direct_mapping: dict[positions.Direction, positions.Direction] = {d: d for d in positions.Direction}
         self.old_state: OldObjectState = OldObjectState()
         self.space_id: Optional[refs.SpaceID] = space_id
         self.level_id: Optional[refs.LevelID] = level_id
@@ -154,10 +172,13 @@ class Object(object):
         return string
     def reset_uuid(self) -> None:
         self.uuid = uuid.uuid4()
+    def set_direct_mapping(self, mapping: dict[positions.Direction, positions.Direction]) -> None:
+        self.direct = mapping[self.direct_mapping[self.direct]]
+        self.direct_mapping = mapping.copy()
     def set_sprite(self, **kwds) -> None:
         self.sprite_state = 0
     def to_json(self) -> ObjectJson:
-        json_object: ObjectJson = {"type": self.json_name, "position": tuple(self.pos), "direction": positions.direction_to_str(self.direct)}
+        json_object: ObjectJson = {"type": self.json_name, "position": tuple(self.pos), "direction": self.direct.to_str()} # type: ignore
         if self.space_id is not None:
             json_object = {**json_object, "space_id": self.space_id.to_json()}
         if self.level_id is not None:
@@ -188,7 +209,7 @@ class Animated(Object):
 class Directional(Object):
     sprite_varients: tuple[int, ...] = tuple(i * 0x8 for i in range(0x4))
     def set_sprite(self, **kwds) -> None:
-        self.sprite_state = int(math.log2(positions.direction_to_bit(self.direct))) * 0x8
+        self.sprite_state = int(math.log2(int(self.direct.to_bit()))) * 0x8
 
 class AnimatedDirectional(Object):
     sprite_varients: tuple[int, ...] = \
@@ -197,7 +218,7 @@ class AnimatedDirectional(Object):
         tuple(i * 0x8 + 0x2 for i in range(0x4)) + \
         tuple(i * 0x8 + 0x3 for i in range(0x4))
     def set_sprite(self, round_num: int = 0, **kwds) -> None:
-        self.sprite_state = int(math.log2(positions.direction_to_bit(self.direct))) * 0x8 | round_num % 4
+        self.sprite_state = int(math.log2(int(self.direct.to_bit()))) * 0x8 | round_num % 4
 
 class Character(Object):
     sprite_varients: tuple[int, ...] = \
@@ -208,9 +229,9 @@ class Character(Object):
     def set_sprite(self, **kwds) -> None:
         if self.move_number > 0:
             temp_state = (self.sprite_state & 0x3) + 1 if (self.sprite_state & 0x3) != 0x3 else 0x0
-            self.sprite_state = int(math.log2(positions.direction_to_bit(self.direct))) * 0x8 | temp_state
+            self.sprite_state = int(math.log2(int(self.direct.to_bit()))) * 0x8 | temp_state
         else:
-            self.sprite_state = int(math.log2(positions.direction_to_bit(self.direct))) * 0x8 | (self.sprite_state & 0x3)
+            self.sprite_state = int(math.log2(int(self.direct.to_bit()))) * 0x8 | (self.sprite_state & 0x3)
 
 class Baba(Character):
     json_name = "baba"
@@ -389,10 +410,18 @@ class Cursor(Static):
 class SpaceObject(Object):
     light_overlay: colors.ColorHex = 0x000000
     dark_overlay: colors.ColorHex = 0xFFFFFF
-    def __init__(self, pos: positions.Coordinate, direct: positions.Direction = positions.Direction.S, *, space_id: refs.SpaceID, level_id: Optional[refs.LevelID] = None, space_object_extra: SpaceObjectExtra = default_space_object_extra) -> None:
+    def __init__(
+        self,
+        pos: positions.Coordinate,
+        direct: positions.Direction = positions.Direction.S,
+        *,
+        space_id: refs.SpaceID,
+        level_id: Optional[refs.LevelID] = None,
+        space_object_extra: SpaceObjectExtra = default_space_object_extra
+    ) -> None:
         self.space_id: refs.SpaceID
         super().__init__(pos, direct, space_id=space_id, level_id=level_id)
-        self.space_object_extra: SpaceObjectExtra = space_object_extra
+        self.space_object_extra: SpaceObjectExtra = space_object_extra.copy()
     def to_json(self) -> ObjectJson:
         return {**super().to_json(), "space_object_extra": self.space_object_extra}
 
@@ -412,7 +441,15 @@ space_object_types: list[type[SpaceObject]] = [Space, Clone]
 default_space_object_type: type[SpaceObject] = Space
 
 class LevelObject(Object):
-    def __init__(self, pos: positions.Coordinate, direct: positions.Direction = positions.Direction.S, *, space_id: Optional[refs.SpaceID] = None, level_id: refs.LevelID, level_object_extra: LevelObjectExtra = default_level_object_extra) -> None:
+    def __init__(
+        self,
+        pos: positions.Coordinate,
+        direct: positions.Direction = positions.Direction.S,
+        *,
+        space_id: Optional[refs.SpaceID] = None,
+        level_id: refs.LevelID,
+        level_object_extra: LevelObjectExtra = default_level_object_extra
+    ) -> None:
         self.level_id: refs.LevelID
         super().__init__(pos, direct, space_id=space_id, level_id=level_id)
         self.level_object_extra: LevelObjectExtra = level_object_extra
@@ -433,16 +470,33 @@ class Path(Tiled):
     sprite_name = "line"
     display_name = "Path"
     sprite_color: colors.PaletteIndex = (0, 2)
-    def __init__(self, pos: positions.Coordinate, direct: positions.Direction = positions.Direction.S, *, space_id: Optional[refs.SpaceID] = None, level_id: Optional[refs.LevelID] = None, unlocked: bool = False, conditions: Optional[dict[type[collects.Collectible], int]] = None, space_object_info: Optional[refs.SpaceID] = None, level_object_info: Optional[refs.LevelID] = None) -> None:
-        super().__init__(pos, direct, space_id=space_object_info, level_id=level_object_info)
+    def __init__(
+        self,
+        pos: positions.Coordinate,
+        direct: positions.Direction = positions.Direction.S,
+        *,
+        space_id: Optional[refs.SpaceID] = None,
+        level_id: Optional[refs.LevelID] = None,
+        unlocked: bool = False,
+        conditions: Optional[dict[type[collects.Collectible], int]] = None
+    ) -> None:
+        super().__init__(pos, direct, space_id=space_id, level_id=level_id)
         self.unlocked: bool = unlocked
         self.conditions: dict[type[collects.Collectible], int] = conditions if conditions is not None else {}
     def to_json(self) -> ObjectJson:
         return {**super().to_json(), "path_extra": {"unlocked": self.unlocked, "conditions": {k.json_name: v for k, v in self.conditions.items()}}}
 
 class Game(Object):
-    def __init__(self, pos: positions.Coordinate, direct: positions.Direction = positions.Direction.S, *, space_id: Optional[refs.SpaceID] = None, level_id: Optional[refs.LevelID] = None, ref_type, space_object_info: refs.SpaceID | None = None, level_object_info: refs.LevelID | None = None) -> None:
-        super().__init__(pos, direct, space_id=space_object_info, level_id=level_object_info)
+    def __init__(
+        self,
+        pos: positions.Coordinate,
+        direct: positions.Direction = positions.Direction.S,
+        *,
+        space_id: Optional[refs.SpaceID] = None,
+        level_id: Optional[refs.LevelID] = None,
+        ref_type: type[Object]
+    ) -> None:
+        super().__init__(pos, direct, space_id=space_id, level_id=level_id)
         self.ref_type = ref_type
     json_name = "game"
     display_name = "Game"
@@ -762,6 +816,83 @@ class TextTele(Property):
     display_name = "TELE"
     sprite_color: colors.PaletteIndex = (1, 4)
 
+class TransformProperty(Property):
+    sprite_color: colors.PaletteIndex = (1, 4)
+
+class DirectionalProperty(TransformProperty):
+    ref_direct: positions.Direction
+    ref_transform: positions.SpaceTransform
+
+class DirectFixProperty(DirectionalProperty):
+    pass
+
+class TextUp(DirectFixProperty):
+    json_name = "text_up"
+    sprite_name = "text_up"
+    display_name = "UP"
+    ref_direct = positions.Direction.W
+    ref_transform = {"direct": ref_direct.to_str(), "flip": False}
+
+class TextDown(DirectFixProperty):
+    json_name = "text_down"
+    sprite_name = "text_down"
+    display_name = "DOWN"
+    ref_direct = positions.Direction.S
+    ref_transform = {"direct": ref_direct.to_str(), "flip": False}
+
+class TextLeft(DirectFixProperty):
+    json_name = "text_left"
+    sprite_name = "text_left"
+    display_name = "LEFT"
+    ref_direct = positions.Direction.A
+    ref_transform = {"direct": ref_direct.to_str(), "flip": False}
+
+class TextRight(DirectFixProperty):
+    json_name = "text_right"
+    sprite_name = "text_right"
+    display_name = "RIGHT"
+    ref_direct = positions.Direction.D
+    ref_transform = {"direct": ref_direct.to_str(), "flip": False}
+
+direct_fix_properties: list[type[DirectFixProperty]] = [TextLeft, TextUp, TextRight, TextDown]
+
+class DirectRotateProperty(DirectionalProperty):
+    pass
+
+class TextTurn(DirectRotateProperty):
+    json_name = "text_turn"
+    sprite_name = "text_turn"
+    display_name = "TURN"
+    ref_direct = positions.Direction.A
+    ref_transform = {"direct": ref_direct.to_str(), "flip": False}
+
+class TextDeturn(DirectRotateProperty):
+    json_name = "text_deturn"
+    sprite_name = "text_deturn"
+    display_name = "DETURN"
+    ref_direct = positions.Direction.D
+    ref_transform = {"direct": ref_direct.to_str(), "flip": False}
+
+direct_rotate_properties: list[type[DirectRotateProperty]] = [TextTurn, TextDeturn]
+
+class DirectMappingProperty(TransformProperty):
+    ref_mapping: dict[positions.Direction, positions.Direction]
+    ref_transform: positions.SpaceTransform
+
+class TextFlip(DirectMappingProperty):
+    json_name = "text_flip"
+    sprite_name = "text_mirror"
+    display_name = "FLIP"
+    ref_mapping = {
+        positions.Direction.W: positions.Direction.W,
+        positions.Direction.S: positions.Direction.S,
+        positions.Direction.A: positions.Direction.D,
+        positions.Direction.D: positions.Direction.A,
+    }
+    ref_transform = {"direct": "S", "flip": True}
+
+direct_mapping_properties: list[type[DirectMappingProperty]] = [TextFlip]
+
 class TextEnter(Property):
     json_name = "text_enter"
     sprite_name = "text_enter"
@@ -909,12 +1040,13 @@ class TextParabox(RangedNoun):
 SupportsReferenceType = GeneralNoun | RangedNoun
 SupportsIsReferenceOf = FixedNoun | RangedNoun
 
-noun_class_list: list[type[Noun]] = []
-noun_class_list.extend([TextBaba, TextKeke, TextMe, TextPatrick, TextSkull, TextGhost])
-noun_class_list.extend([TextWall, TextHedge, TextIce, TextTile, TextGrass, TextWater, TextLava])
-noun_class_list.extend([TextDoor, TextKey, TextBox, TextRock, TextFruit, TextBelt, TextSun, TextMoon, TextStar, TextWhat, TextLove, TextFlag])
-noun_class_list.extend([TextLine, TextDot, TextCursor])
-noun_class_list.extend([TextText, TextSpace, TextClone, TextLevel, TextPath, TextGame])
+noun_class_list: list[type[Noun]] = [
+    TextBaba, TextKeke, TextMe, TextPatrick, TextSkull, TextGhost,
+    TextWall, TextHedge, TextIce, TextTile, TextGrass, TextWater, TextLava,
+    TextDoor, TextKey, TextBox, TextRock, TextFruit, TextBelt, TextSun, TextMoon, TextStar, TextWhat, TextLove, TextFlag,
+    TextLine, TextDot, TextCursor,
+    TextText, TextSpace, TextClone, TextLevel, TextPath, TextGame
+]
 
 for noun_class in noun_class_list:
     if not hasattr(noun_class, "json_name"):
@@ -929,15 +1061,23 @@ for noun_class in noun_class_list:
 special_noun_class_list: list[type[SpecialNoun]] = []
 special_noun_class_list.extend([TextAll, TextInfinity, TextEpsilon, TextParabox])
 
-text_class_list: list[type[Text]] = []
+prop_class_list: list[type[Property]] = [
+    TextYou, TextMove, TextStop, TextPush,
+    TextSink, TextFloat, TextOpen, TextShut, TextHot, TextMelt,
+    TextWin, TextDefeat, TextShift, TextTele,
+    TextUp, TextDown, TextLeft, TextRight, TextTurn, TextDeturn, TextFlip,
+    TextEnter, TextLeave, TextBonus, TextHide, TextWord, TextSelect, TextTextPlus, TextTextMinus, TextEnd, TextDone
+]
+
+text_class_list: list[type[Text]] = [
+    TextText_, TextOften, TextSeldom, TextMeta,
+    TextOn, TextNear, TextNextto, TextWithout, TextFeeling,
+    TextIs, TextHas, TextMake, TextWrite,
+    TextNot, TextAnd
+]
 text_class_list.extend(noun_class_list)
 text_class_list.extend(special_noun_class_list)
-text_class_list.extend([TextText_, TextOften, TextSeldom, TextMeta])
-text_class_list.extend([TextOn, TextNear, TextNextto, TextWithout, TextFeeling])
-text_class_list.extend([TextIs, TextHas, TextMake, TextWrite])
-text_class_list.extend([TextNot, TextAnd])
-text_class_list.extend([TextYou, TextMove, TextStop, TextPush, TextSink, TextFloat, TextOpen, TextShut, TextHot, TextMelt, TextWin, TextDefeat, TextShift, TextTele])
-text_class_list.extend([TextEnter, TextLeave, TextBonus, TextHide, TextWord, TextSelect, TextTextPlus, TextTextMinus, TextEnd, TextDone])
+text_class_list.extend(prop_class_list)
 
 object_class_only: list[type[Object]] = [Text, Game]
 object_used: list[type[Object]] = text_class_list + [t.ref_type for t in noun_class_list if t.ref_type not in object_class_only]
@@ -1075,9 +1215,9 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
         raise ValueError(json_object["type"])
     pos = positions.Coordinate(*json_object["position"])
     if basics.compare_versions(ver if ver is not None else "0.0", "3.91") == -1:
-        direct = positions.str_to_direction(json_object["orientation"]) # type: ignore
+        direct = positions.str_to_direct(json_object["orientation"]) # type: ignore
     else:
-        direct = positions.str_to_direction(json_object["direction"])
+        direct = positions.str_to_direct(json_object["direction"])
     if issubclass(object_type, LevelObject):
         if level_id is not None:
             return object_type(

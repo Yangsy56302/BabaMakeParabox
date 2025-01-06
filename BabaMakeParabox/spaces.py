@@ -14,6 +14,8 @@ class Space(object):
         self.space_id: refs.SpaceID = space_id
         self.size: positions.Coordinate = size
         self.color: colors.ColorHex = color if color is not None else colors.random_space_color()
+        self.static_transform: positions.SpaceTransform = positions.default_space_transform.copy()
+        self.dynamic_transform: positions.SpaceTransform = positions.default_space_transform.copy()
         self.object_list: list[objects.Object] = []
         self.object_pos_index: list[list[objects.Object]]
         self.properties: dict[type[objects.SpaceObject], objects.Properties] = {p: objects.Properties() for p in objects.space_object_types}
@@ -197,8 +199,41 @@ class Space(object):
             else:
                 connected = {positions.Direction.W: False, positions.Direction.S: False, positions.Direction.A: False, positions.Direction.D: False}
             obj.set_sprite(round_num=round_num, connected=connected)
-    def default_input_position(self, side: positions.Direction) -> positions.Coordinate:
-        match side:
+    def get_stacked_transform(self, static: positions.SpaceTransform, dynamic: positions.SpaceTransform) -> positions.SpaceTransform:
+        transform = positions.get_stacked_transform(
+            positions.get_stacked_transform(self.static_transform, self.dynamic_transform),
+            positions.get_stacked_transform(static, dynamic)
+        )
+        return transform
+    def calc_enter_transnum(self, transnum: float, pos: positions.Coordinate, side: positions.Direction, transform: positions.SpaceTransform) -> float:
+        new_side = positions.turn(side, positions.str_to_direct(transform["direct"]))
+        if new_side in (positions.Direction.W, positions.Direction.S):
+            new_transnum = (transnum * self.width) - pos[0]
+        else:
+            new_transnum = (transnum * self.height) - pos[1]
+        if transform["flip"]:
+            new_transnum = 1.0 - new_transnum
+        return new_transnum
+    def calc_leave_transnum(self, transnum: float, pos: positions.Coordinate, side: positions.Direction, transform: positions.SpaceTransform) -> float:
+        new_side = positions.turn(side, positions.str_to_direct(transform["direct"]))
+        if new_side in (positions.Direction.W, positions.Direction.S):
+            new_transnum = (transnum + pos[0]) / self.width
+        else:
+            new_transnum = (transnum + pos[1]) / self.height
+        return new_transnum
+    def get_leave_transnum_from_pos(self, pos: positions.Coordinate, side: positions.Direction, transform: positions.SpaceTransform) -> float:
+        new_side = positions.turn(side, positions.str_to_direct(transform["direct"]))
+        if new_side in (positions.Direction.W, positions.Direction.S):
+            new_transnum = (pos[0] + 0.5) / self.width
+        else:
+            new_transnum = (pos[1] + 0.5) / self.height
+        if transform["flip"]:
+            new_transnum = 1.0 - new_transnum
+        return new_transnum
+    def get_enter_pos_by_default(self, side: positions.Direction, transform: positions.SpaceTransform) -> positions.Coordinate:
+        new_side = positions.swap_direction(side) if transform["flip"] and side in (positions.Direction.A, positions.Direction.D) else side
+        new_side = positions.turn(new_side, positions.str_to_direct(transform["direct"]))
+        match new_side:
             case positions.Direction.W:
                 return positions.Coordinate(self.width // 2, -1)
             case positions.Direction.A:
@@ -207,31 +242,19 @@ class Space(object):
                 return positions.Coordinate(self.width // 2, self.height)
             case positions.Direction.D:
                 return positions.Coordinate(self.width, self.height // 2)
-    def pos_to_transnum(self, pos: positions.Coordinate, side: positions.Direction) -> float:
-        if side in (positions.Direction.W, positions.Direction.S):
-            return (pos[0] + 0.5) / self.width
-        else:
-            return (pos[1] + 0.5) / self.height
-    def transnum_to_pos(self, num: float, side: positions.Direction) -> positions.Coordinate:
-        match side:
+    def get_enter_pos(self, transnum: float, side: positions.Direction, transform: positions.SpaceTransform) -> positions.Coordinate:
+        new_side = positions.swap_direction(side) if transform["flip"] and side in (positions.Direction.A, positions.Direction.D) else side
+        new_side = positions.turn(new_side, positions.str_to_direct(transform["direct"]))
+        new_transnum = (1.0 - transnum) if transform["flip"] and side in (positions.Direction.A, positions.Direction.D) else transnum
+        match new_side:
             case positions.Direction.W:
-                return positions.Coordinate(int((num * self.width)), -1)
+                return positions.Coordinate(int((new_transnum * self.width)), -1)
             case positions.Direction.S:
-                return positions.Coordinate(int((num * self.width)), self.height)
+                return positions.Coordinate(int((new_transnum * self.width)), self.height)
             case positions.Direction.A:
-                return positions.Coordinate(-1, int((num * self.height)))
+                return positions.Coordinate(-1, int((new_transnum * self.height)))
             case positions.Direction.D:
-                return positions.Coordinate(self.width, int((num * self.height)))
-    def transnum_to_smaller_transnum(self, num: float, pos: positions.Coordinate, side: positions.Direction) -> float:
-        if side in (positions.Direction.W, positions.Direction.S):
-            return (num * self.width) - pos[0]
-        else:
-            return (num * self.height) - pos[1]
-    def transnum_to_bigger_transnum(self, num: float, pos: positions.Coordinate, side: positions.Direction) -> float:
-        if side in (positions.Direction.W, positions.Direction.S):
-            return (num + pos[0]) / self.width
-        else:
-            return (num + pos[1]) / self.height
+                return positions.Coordinate(self.width, int((new_transnum * self.height)))
     def to_json(self) -> SpaceJson:
         json_object: SpaceJson = {"id": self.space_id.to_json(), "size": (self.width, self.height), "color": self.color, "object_list": []}
         for obj in self.object_list:

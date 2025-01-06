@@ -65,6 +65,7 @@ class Levelpack(object):
         new_prop_list: list[tuple[objects.Object, tuple[type[objects.Text], int]]] = []
         global_rule_info_list = [rules.get_info_from_rule(r) for r in self.rule_list]
         global_rule_info_list = [r for r in global_rule_info_list if r is not None]
+        # text_word
         for space in active_level.space_list:
             outer_space_rule_list, outer_space_rule_info = active_level.recursion_rules(space)
             for rule_info in space.rule_info + global_rule_info_list + outer_space_rule_info:
@@ -110,6 +111,7 @@ class Levelpack(object):
             space.set_rule()
         new_prop_list = []
         for space in active_level.space_list:
+            # space & levelpack
             for rule_info in space.rule_info + global_rule_info_list:
                 prefix_info_list = rule_info.prefix_info_list
                 noun_negated_tier = rule_info.noun_negated_tier
@@ -157,6 +159,7 @@ class Levelpack(object):
                                     new_prop_list.append((obj, (prop_type, prop_negated_tier)))
                                 else:
                                     obj.special_operator_properties[oper_type].update(prop_type, prop_negated_tier)
+            # outer space
             outer_space_rule_list, outer_space_rule_info = active_level.recursion_rules(space)
             for rule_info in outer_space_rule_info:
                 prefix_info_list = rule_info.prefix_info_list
@@ -471,12 +474,12 @@ class Levelpack(object):
         for space in active_level.space_list:
             for obj in space.object_list:
                 old_prop_dict[obj.uuid] = obj.properties
-            for path in space.get_objs_from_type(objects.Path):
-                unlocked = True
-                for bonus_type, bonus_counts in path.conditions.items():
-                    if len({c for c in self.collectibles if isinstance(c, bonus_type)}) < bonus_counts:
-                        unlocked = False
-                path.unlocked = unlocked
+                if isinstance(obj, objects.Path):
+                    unlocked = True
+                    for bonus_type, bonus_counts in obj.conditions.items():
+                        if len({c for c in self.collectibles if isinstance(c, bonus_type)}) < bonus_counts:
+                            unlocked = False
+                    obj.unlocked = unlocked
         for level in self.level_list:
             for space in level.space_list:
                 for level_obj in [o for o in space.get_levels() if o.level_id == active_level.level_id]:
@@ -486,14 +489,15 @@ class Levelpack(object):
             for obj in space.object_list:
                 obj.old_state = objects.OldObjectState()
         return old_prop_dict
-    def turn(self, active_level: levels.Level, op: positions.PlayerOperation) -> ReturnInfo:
+    def tick(self, active_level: levels.Level, op: positions.NullableDirection) -> ReturnInfo:
         old_prop_dict: dict[uuid.UUID, objects.Properties] = self.prepare(active_level)
         active_level.sound_events = []
         active_level.created_levels = []
         game_push = False
         game_push |= active_level.you(op)
         game_push |= active_level.move()
-        self.update_rules(active_level, old_prop_dict)
+        # BIY had this parsing step
+        # self.update_rules(active_level, old_prop_dict)
         game_push |= active_level.shift()
         self.update_rules(active_level, old_prop_dict)
         self.transform(active_level)
@@ -504,6 +508,10 @@ class Levelpack(object):
         self.update_rules(active_level, old_prop_dict)
         active_level.tele()
         selected_level = active_level.select(op)
+        self.update_rules(active_level, old_prop_dict)
+        active_level.direction()
+        active_level.flip()
+        active_level.turn()
         self.update_rules(active_level, old_prop_dict)
         done = active_level.done()
         active_level.sink()
@@ -528,8 +536,10 @@ class Levelpack(object):
                 path.unlocked = unlocked
         if active_level.collected[collects.Bonus] and win:
             self.collectibles.add(collects.Bonus(active_level.level_id))
-        return {"win": win, "end": end, "done": done, "transform": transform,
-                "game_push": game_push, "selected_level": selected_level}
+        return {
+            "win": win, "end": end, "done": done, "transform": transform,
+            "game_push": game_push, "selected_level": selected_level
+        }
     def to_json(self) -> LevelpackJson:
         json_object: LevelpackJson = {
             "ver": basics.versions,

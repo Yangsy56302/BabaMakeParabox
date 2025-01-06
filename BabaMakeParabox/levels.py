@@ -64,11 +64,11 @@ class Level(object):
                 self.space_list[i] = space
                 return
         self.space_list.append(space)
-    def find_super_spaces(self, space_object_info: refs.SpaceID) -> list[tuple[spaces.Space, objects.SpaceObject]]:
+    def find_super_spaces(self, space_object_id: refs.SpaceID) -> list[tuple[spaces.Space, objects.SpaceObject]]:
         return_value: list[tuple[spaces.Space, objects.SpaceObject]] = []
         for super_space in self.space_list:
             for obj in super_space.get_spaces():
-                if space_object_info == obj.space_id:
+                if space_object_id == obj.space_id:
                     return_value.append((super_space, obj))
         return return_value
     def refresh_all_list(self) -> None:
@@ -269,26 +269,33 @@ class Level(object):
         passed = passed[:] if passed is not None else []
         pos = pos if pos is not None else obj.pos
         new_pos = positions.front_position(pos, direct)
-        exit_space = False
-        exit_list: list[MoveInfo] = []
+        leave_space = False
+        leave_list: list[MoveInfo] = []
         if space.out_of_range(new_pos) and not obj.properties.disabled(objects.TextLeave):
-            super_space_id = space.space_id
+            old_space_id = space.space_id
+            old_space = self.get_space(old_space_id)
             if passed.count(space.space_id) > infinite_move_number:
-                super_space_id = space.space_id + 1
+                old_space_id = space.space_id + 1
             passed.append(space.space_id)
-            if self.get_space(super_space_id) is None:
-                exit_space = True
-                exit_list.append((obj, []))
-            else:
-                super_space_list = self.find_super_spaces(super_space_id)
+            if old_space is not None:
+                super_space_list = self.find_super_spaces(old_space_id)
                 for super_space, space_obj in super_space_list:
-                    if super_space.properties[type(space_obj)].disabled(objects.TextLeave):
+                    if old_space.properties[type(space_obj)].disabled(objects.TextLeave):
                         continue
-                    new_transnum = super_space.transnum_to_bigger_transnum(transnum, space_obj.pos, direct) if transnum is not None else space.pos_to_transnum(obj.pos, direct)
-                    new_move_list = self.get_move_list(super_space, obj, direct, space_obj.pos, pushed, passed, new_transnum, depth)
+                    transform = space.get_stacked_transform(space_obj.space_object_extra["static_transform"], space_obj.space_object_extra["dynamic_transform"])
+                    new_direct = positions.swap_direction(direct) if transform["flip"] and direct in (positions.Direction.A, positions.Direction.D) else direct
+                    new_direct = positions.turn(new_direct, positions.str_to_direct(transform["direct"]))
+                    if transnum is not None:
+                        new_transnum = space.calc_leave_transnum(transnum, space_obj.pos, direct, transform)
+                    else:
+                        new_transnum = space.get_leave_transnum_from_pos(obj.pos, direct, transform)
+                    new_move_list = self.get_move_list(super_space, obj, new_direct, space_obj.pos, pushed, passed, new_transnum, depth)
                     if new_move_list is not None:
-                        exit_space = True
-                        exit_list.extend(new_move_list)
+                        leave_space = True
+                        leave_list.extend(new_move_list)
+            else:
+                leave_space = True
+                leave_list.append((obj, []))
         push_objects = [o for o in space.get_objs_from_pos(new_pos) if o.properties.enabled(objects.TextPush)]
         unpushable_objects: list[objects.Object] = []
         push = False
@@ -324,16 +331,19 @@ class Level(object):
         squeeze = False
         squeeze_list: list[MoveInfo] = []
         if isinstance(obj, objects.SpaceObject) and (not space.out_of_range(new_pos)) and (not simple) and len(stop_objects) == 0:
-            sub_space = self.get_space(obj.space_id)
-            if sub_space is not None:
-                if not sub_space.properties[type(obj)].disabled(objects.TextEnter):
+            squeeze_space = self.get_space(obj.space_id)
+            if squeeze_space is not None:
+                if not squeeze_space.properties[type(obj)].disabled(objects.TextEnter):
                     squeeze = True
                     for new_push_object in push_objects:
                         if new_push_object.properties.disabled(objects.TextEnter):
                             squeeze = False
                             break
-                        input_pos = sub_space.default_input_position(direct)
-                        squeeze_move_list = self.get_move_list(sub_space, new_push_object, positions.swap_direction(direct), input_pos, pushed=pushed + [obj], depth=depth)
+                        transform = positions.inverse_transform(squeeze_space.get_stacked_transform(obj.space_object_extra["static_transform"], obj.space_object_extra["dynamic_transform"]))
+                        new_direct = positions.swap_direction(direct) if transform["flip"] and direct in (positions.Direction.A, positions.Direction.D) else direct
+                        new_direct = positions.turn(new_direct, positions.str_to_direct(transform["direct"]))
+                        input_pos = squeeze_space.get_enter_pos_by_default(new_direct, transform)
+                        squeeze_move_list = self.get_move_list(squeeze_space, new_push_object, positions.swap_direction(new_direct), input_pos, pushed=pushed + [obj], depth=depth)
                         if squeeze_move_list is None:
                             squeeze = False
                             break
@@ -351,31 +361,55 @@ class Level(object):
         enter_list: list[MoveInfo] = []
         if not space.out_of_range(new_pos) and not obj.properties.disabled(objects.TextEnter):
             sub_space_obj_list = [o for o in space.get_spaces_from_pos(new_pos) if not o.properties.disabled(objects.TextEnter)]
-            for space_obj in sub_space_obj_list:
-                sub_space = self.get_space(space_obj.space_id)
+            for sub_space_obj in sub_space_obj_list:
+                sub_space = self.get_space(sub_space_obj.space_id)
                 if sub_space is None:
                     enter_space = True
                     continue
-                input_pos = sub_space.transnum_to_pos(transnum, positions.swap_direction(direct)) if transnum is not None else sub_space.default_input_position(positions.swap_direction(direct))
-                new_transnum = space.transnum_to_smaller_transnum(transnum, space_obj.pos, positions.swap_direction(direct)) if transnum is not None else 0.5
+                if sub_space.properties[type(sub_space_obj)].disabled(objects.TextEnter):
+                    continue
                 if passed.count(sub_space.space_id) > infinite_move_number:
-                    sub_space = self.get_space(sub_space.space_id - 1)
-                    if sub_space is None:
+                    epsilon_space_id = sub_space.space_id - 1
+                    epsilon_space = self.get_space(epsilon_space_id)
+                    if epsilon_space is None:
                         enter_space = True
                         continue
-                    input_pos = sub_space.default_input_position(positions.swap_direction(direct))
-                    new_transnum = 0.5
-                if sub_space.properties[type(space_obj)].disabled(objects.TextEnter):
+                    if epsilon_space.properties[type(sub_space_obj)].disabled(objects.TextEnter):
+                        continue
+                    epsilon_space_list = self.find_super_spaces(epsilon_space.space_id)
+                    for _, epsilon_space_obj in epsilon_space_list:
+                        if epsilon_space_obj.properties.disabled(objects.TextEnter):
+                            continue
+                        transform = positions.inverse_transform(epsilon_space.get_stacked_transform(epsilon_space_obj.space_object_extra["static_transform"], epsilon_space_obj.space_object_extra["dynamic_transform"]))
+                        new_direct = positions.swap_direction(direct) if transform["flip"] and direct in (positions.Direction.A, positions.Direction.D) else direct
+                        new_direct = positions.turn(new_direct, positions.str_to_direct(transform["direct"]))
+                        input_pos = epsilon_space.get_enter_pos_by_default(positions.swap_direction(new_direct), transform)
+                        new_transnum = 0.5
+                        passed.append(space.space_id)
+                        new_move_list = self.get_move_list(epsilon_space, obj, positions.swap_direction(new_direct), input_pos, pushed, passed, new_transnum, depth)
+                        if new_move_list is not None:
+                            enter_list.extend(new_move_list)
+                            enter_space = True
                     continue
+                transform = sub_space.get_stacked_transform(sub_space_obj.space_object_extra["static_transform"], sub_space_obj.space_object_extra["dynamic_transform"])
+                inversed_transform = positions.inverse_transform(transform)
+                new_direct = positions.swap_direction(direct) if inversed_transform["flip"] and direct in (positions.Direction.A, positions.Direction.D) else direct
+                new_direct = positions.turn(new_direct, positions.str_to_direct(inversed_transform["direct"]))
+                if transnum is not None:
+                    input_pos = sub_space.get_enter_pos(transnum, positions.swap_direction(direct), inversed_transform)
+                    new_transnum = space.calc_enter_transnum(transnum, sub_space_obj.pos, positions.swap_direction(direct), inversed_transform)
+                else:
+                    input_pos = sub_space.get_enter_pos_by_default(positions.swap_direction(direct), inversed_transform)
+                    new_transnum = 0.5
                 passed.append(space.space_id)
-                new_move_list = self.get_move_list(sub_space, obj, direct, input_pos, pushed, passed, new_transnum, depth)
+                new_move_list = self.get_move_list(sub_space, obj, new_direct, input_pos, pushed, passed, new_transnum, depth)
                 if new_move_list is not None:
                     enter_list.extend(new_move_list)
                     enter_space = True
         if enter_space and len(enter_list) == 0:
             enter_list.append((obj, []))
-        if exit_space:
-            return self.merge_move_list(exit_list)
+        if leave_space:
+            return self.merge_move_list(leave_list)
         elif push:
             return self.merge_move_list(push_list)
         elif enter_space:
@@ -386,9 +420,9 @@ class Level(object):
             return [(obj, [(space.space_id, new_pos, direct)])]
         else:
             return None
-    def you(self, direct: positions.PlayerOperation) -> bool:
+    def you(self, direct: positions.NullableDirection) -> bool:
         self.reset_move_numbers()
-        if direct == positions.NoDirect.O:
+        if direct == positions.NullDirection.O:
             return False
         pushing_game = False
         finished = False
@@ -411,8 +445,8 @@ class Level(object):
                         pushing_game = True
             self.move_objs_from_move_list(move_list)
         return pushing_game
-    def select(self, direct: positions.PlayerOperation) -> Optional[refs.LevelID]:
-        if direct == positions.NoDirect.O:
+    def select(self, direct: positions.NullableDirection) -> Optional[refs.LevelID]:
+        if direct == positions.NullDirection.O:
             level_objs: list[objects.LevelObject] = []
             for space in self.space_list:
                 select_objs = [o for o in space.object_list if o.properties.enabled(objects.TextSelect)]
@@ -431,6 +465,47 @@ class Level(object):
                         if any(map(lambda p: p.unlocked, path_objs)) or len(level_objs) != 0:
                             obj.pos = new_pos
             return None
+    def direction(self) -> None:
+        for prop in objects.direct_fix_properties:
+            for space in self.space_list:
+                for obj in space.object_list:
+                    if obj.properties.enabled(prop):
+                        if isinstance(obj, objects.SpaceObject):
+                            obj.space_object_extra["static_transform"] = prop.ref_transform.copy()
+                        obj.direct = prop.ref_direct
+                if space.properties[objects.default_space_object_type].enabled(prop):
+                    space.static_transform = prop.ref_transform.copy()
+            if self.properties[objects.default_level_object_type].enabled(prop):
+                pass # NotImplemented
+    def flip(self) -> None:
+        for space in self.space_list:
+            space.dynamic_transform = positions.default_space_transform.copy()
+            for obj in space.get_spaces():
+                obj.space_object_extra["dynamic_transform"] = positions.default_space_transform.copy()
+        for prop in objects.direct_mapping_properties:
+            for space in self.space_list:
+                for obj in space.object_list:
+                    if obj.properties.get(prop) % 2 == 1:
+                        if isinstance(obj, objects.SpaceObject):
+                            obj.space_object_extra["dynamic_transform"] = positions.get_stacked_transform(obj.space_object_extra["dynamic_transform"], prop.ref_transform)
+                        obj.set_direct_mapping(prop.ref_mapping)
+                if space.properties[objects.default_space_object_type].get(prop) % 2 == 1:
+                    space.dynamic_transform = positions.get_stacked_transform(space.dynamic_transform, prop.ref_transform)
+            if self.properties[objects.default_level_object_type].get(prop) % 2 == 1:
+                pass # NotImplemented
+    def turn(self) -> None:
+        for space in self.space_list:
+            for obj in space.object_list:
+                turn_count = (obj.properties.get(objects.TextTurn) - obj.properties.get(objects.TextDeturn)) % 4
+                for _ in range(turn_count):
+                    obj.direct = positions.turn_right(obj.direct)
+                    if isinstance(obj, objects.SpaceObject):
+                        obj.space_object_extra["static_transform"] = positions.get_stacked_transform(obj.space_object_extra["static_transform"], {"direct": "A", "flip": False})
+            turn_count = (space.properties[objects.default_space_object_type].get(objects.TextTurn) - space.properties[objects.default_space_object_type].get(objects.TextDeturn)) % 4
+            for _ in range(turn_count):
+                space.static_transform = positions.get_stacked_transform(space.static_transform, {"direct": "A", "flip": False})
+        if self.properties[objects.default_level_object_type].get(objects.TextFlip) % 2 == 1:
+            pass # NotImplemented
     def move(self) -> bool:
         self.reset_move_numbers()
         pushing_game = False
@@ -810,7 +885,15 @@ class Level(object):
                 if obj.properties.enabled(objects.TextYou):
                     return True
         return False
-    def recursion_get_object_surface_info(self, old_pos: positions.Coordinate, old_space_id: refs.SpaceID, current_space_id: refs.SpaceID, depth: int = 0, passed: Optional[list[refs.SpaceID]] = None) -> list[tuple[int, tuple[float, float], tuple[float, float]]]:
+    def recursion_get_object_surface_info(
+        self,
+        old_pos: positions.Coordinate,
+        old_space_id: refs.SpaceID,
+        current_space_id: refs.SpaceID,
+        depth: int = 0,
+        passed: Optional[list[refs.SpaceID]] = None
+    ) -> list[tuple[int, tuple[float, float], tuple[float, float]]]:
+        return_list: list[tuple[int, tuple[float, float], tuple[float, float]]] = []
         current_space = self.get_space(current_space_id)
         if current_space is None:
             return []
@@ -822,7 +905,6 @@ class Level(object):
             )]
         passed = copy.deepcopy(passed) if passed is not None else []
         new_passed = copy.deepcopy(passed)
-        return_list: list[tuple[int, tuple[float, float], tuple[float, float]]] = []
         if current_space_id in passed:
             inf_sub_space = self.get_space(current_space_id - 1)
             if inf_sub_space is None:
@@ -833,8 +915,14 @@ class Level(object):
                 for new_depth, new_pos, new_size in self.recursion_get_object_surface_info(old_pos, old_space_id, current_space_id - 1, passed=new_passed):
                     return_list.append((
                         new_depth + 1,
-                        ((new_pos[0] + space_obj.pos.x) / current_space.width, (new_pos[1] + space_obj.pos.y) / current_space.height),
-                        (new_size[0] / current_space.width, new_size[1] / current_space.height)
+                        positions.transform_relative_pos(
+                            positions.default_space_transform, # NotImplemented
+                            ((new_pos[0] + space_obj.pos.x) / current_space.width, (new_pos[1] + space_obj.pos.y) / current_space.height)
+                        ),
+                        positions.transform_relative_pos(
+                            positions.default_space_transform, # NotImplemented
+                            (new_size[0] / current_space.width, new_size[1] / current_space.height)
+                        )
                     ))
             return return_list
         new_passed.append(copy.deepcopy(current_space_id))
@@ -844,11 +932,18 @@ class Level(object):
             sub_space = self.get_space(space_obj.space_id)
             if sub_space is None:
                 continue
+            transform = sub_space.get_stacked_transform(space_obj.space_object_extra["static_transform"], space_obj.space_object_extra["dynamic_transform"])
             for new_depth, new_pos, new_size in self.recursion_get_object_surface_info(old_pos, old_space_id, space_obj.space_id, passed=new_passed):
                 return_list.append((
                     new_depth + 1,
-                    ((new_pos[0] + space_obj.pos.x) / current_space.width, (new_pos[1] + space_obj.pos.y) / current_space.height),
-                    (new_size[0] / current_space.width, new_size[1] / current_space.height)
+                    positions.transform_relative_pos(
+                        transform,
+                        ((new_pos[0] + space_obj.pos.x) / current_space.width, (new_pos[1] + space_obj.pos.y) / current_space.height)
+                    ),
+                    positions.transform_relative_pos(
+                        transform,
+                        (new_size[0] / current_space.width, new_size[1] / current_space.height)
+                    )
                 ))
         return return_list
     def space_to_surface(self, space: spaces.Space, wiggle: int, size: positions.CoordTuple, depth: int = 0, smooth: Optional[float] = None, cursor: Optional[positions.Coordinate] = None, debug: bool = False) -> pygame.Surface:
@@ -861,17 +956,10 @@ class Level(object):
             return space_surface
         space_surface_size = (space.width * scaled_sprite_size, space.height * scaled_sprite_size)
         space_surface = pygame.Surface(space_surface_size, pygame.SRCALPHA)
-        object_list: list[tuple[Optional[refs.SpaceID], objects.Object]] = []
+        object_list: list[objects.Object] = []
         obj_surface_list: list[tuple[positions.Coordinate, positions.Coordinate, pygame.Surface, objects.Object]] = []
-        if smooth is not None:
-            for other_space in self.space_list:
-                if other_space.space_id == space.space_id:
-                    continue
-                for other_object in other_space.object_list:
-                    if other_object.old_state.space == space.space_id and isinstance(other_object, displays.order):
-                        object_list.append((other_space.space_id, other_object))
-        object_list.extend([(None, o) for o in space.object_list if isinstance(o, displays.order) and (space.space_id, o) not in object_list])
-        for super_space_id, obj in object_list:
+        object_list.extend([o for o in space.object_list if isinstance(o, displays.order) and (space.space_id, o) not in object_list])
+        for obj in object_list:
             if not isinstance(obj, displays.order):
                 continue
             if obj.properties.enabled(objects.TextHide):
@@ -885,47 +973,21 @@ class Level(object):
             obj_surface_pos: positions.Coordinate = positions.Coordinate(obj.pos.x * scaled_sprite_size, obj.pos.y * scaled_sprite_size)
             obj_surface_size: positions.Coordinate = positions.Coordinate(scaled_sprite_size, scaled_sprite_size)
             if isinstance(obj, objects.SpaceObject):
-                space_of_object = self.get_space(obj.space_id)
-                if space_of_object is not None:
-                    default_surface = self.space_to_surface(space_of_object, wiggle, (scaled_sprite_size, scaled_sprite_size), depth + 1, smooth)
+                sub_space = self.get_space(obj.space_id)
+                if sub_space is not None:
+                    default_surface = self.space_to_surface(sub_space, wiggle, (scaled_sprite_size, scaled_sprite_size), depth + 1, smooth)
                     obj_surface = displays.simple_object_to_surface(obj, wiggle=wiggle, default_surface=default_surface, debug=debug)
-            if (smooth is not None) and (obj.old_state.pos is not None):
-                if smooth < 0.0 or smooth > 1.0:
-                    raise ValueError(smooth)
-                old_surface_pos = positions.Coordinate(obj.old_state.pos[0] * scaled_sprite_size, obj.old_state.pos[1] * scaled_sprite_size)
-                if obj.old_state.space is not None:
-                    new_surface_info = self.recursion_get_object_surface_info(obj.old_state.pos, obj.old_state.space, space.space_id)
-                    if len(new_surface_info) == 0:
-                        continue
-                    new_surface_info = sorted(new_surface_info, key=lambda t: t[0])
-                    min_space_depth = new_surface_info[0][0]
-                    for space_depth, old_surface_pos, old_surface_size in new_surface_info:
-                        if space_depth > min_space_depth:
-                            break
-                        if super_space_id is not None:
-                            old_super_space = self.get_exact_space(super_space_id)
-                            for old_super_space_object in [o for o in space.get_spaces() if o.space_id == super_space_id]:
-                                old_surface_pos = (obj.old_state.pos[0] * scaled_sprite_size, obj.old_state.pos[1] * scaled_sprite_size)
-                                old_surface_size = (scaled_sprite_size, scaled_sprite_size)
-                                new_surface_pos = ((obj.pos.x / old_super_space.width + old_super_space_object.pos.x) * scaled_sprite_size, (obj.pos.y / old_super_space.height + old_super_space_object.pos.y) * scaled_sprite_size)
-                                new_surface_size = (obj_surface_size[0] / old_super_space.width, obj_surface_size[1] / old_super_space.height)
-                                obj_surface_pos = positions.Coordinate(int(new_surface_pos[0] + (old_surface_pos[0] - new_surface_pos[0]) * smooth), int(new_surface_pos[1] + (old_surface_pos[1] - new_surface_pos[1]) * smooth))
-                                obj_surface_size = positions.Coordinate(int(new_surface_size[0] + (old_surface_size[0] - new_surface_size[0]) * smooth), int(new_surface_size[1] + (old_surface_size[1] - new_surface_size[1]) * smooth))
-                                obj_surface_list.append((obj_surface_pos, obj_surface_size, obj_surface, obj))
-                        else:
-                            old_surface_pos = (old_surface_pos[0] * space_surface_size[0], old_surface_pos[1] * space_surface_size[1])
-                            old_surface_size = (old_surface_size[0] * space_surface_size[0], old_surface_size[1] * space_surface_size[1])
-                            obj_surface_pos = positions.Coordinate(int(obj_surface_pos[0] + (old_surface_pos[0] - obj_surface_pos[0]) * smooth), int(obj_surface_pos[1] + (old_surface_pos[1] - obj_surface_pos[1]) * smooth))
-                            obj_surface_size = positions.Coordinate(int(obj_surface_size[0] + (old_surface_size[0] - obj_surface_size[0]) * smooth), int(obj_surface_size[1] + (old_surface_size[1] - obj_surface_size[1]) * smooth))
-                            obj_surface_list.append((obj_surface_pos, obj_surface_size, obj_surface, obj))
-                else:
-                    obj_surface_pos = positions.Coordinate(
-                        int((obj_surface_pos[0] + (old_surface_pos[0] - obj_surface_pos[0]) * smooth)),
-                        int((obj_surface_pos[1] + (old_surface_pos[1] - obj_surface_pos[1]) * smooth))
-                    )
-                    obj_surface_list.append((obj_surface_pos, obj_surface_size, obj_surface, obj))
-            else:
-                obj_surface_list.append((obj_surface_pos, obj_surface_size, obj_surface, obj))
+                transform = positions.get_stacked_transform(obj.space_object_extra["static_transform"], obj.space_object_extra["dynamic_transform"])
+                if transform["flip"]:
+                    obj_surface = pygame.transform.flip(obj_surface, flip_x=True, flip_y=False)
+                match transform["direct"]:
+                    case "W": obj_surface = pygame.transform.rotate(obj_surface, 180)
+                    case "S": pass
+                    case "A": obj_surface = pygame.transform.rotate(obj_surface, 270)
+                    case "D": obj_surface = pygame.transform.rotate(obj_surface, 90)
+            # NotImplemented
+            # smooth interpolation has been temporarily removed
+            obj_surface_list.append((obj_surface_pos, obj_surface_size, obj_surface, obj))
         obj_surface_list.sort(key=lambda o: [isinstance(o[-1], t) for t in displays.order].index(True), reverse=True)
         for pos, size, surface, obj in obj_surface_list:
             space_surface.blit(pygame.transform.scale(surface, size), pos)
@@ -947,6 +1009,14 @@ class Level(object):
             infinite_tier_surface = displays.set_alpha(infinite_tier_surface, 0x80 if depth > 0 else 0x40)
             infinite_tier_surface = pygame.transform.scale_by(infinite_tier_surface, space.height * pixel_size / abs(space.space_id.infinite_tier))
             space_surface.blit(infinite_tier_surface, ((space_surface.get_width() - infinite_tier_surface.get_width()) // 2, 0))
+        transform = positions.get_stacked_transform(space.static_transform, space.dynamic_transform)
+        if transform["flip"]:
+            space_surface = pygame.transform.flip(space_surface, flip_x=True, flip_y=False)
+        match transform["direct"]:
+            case "W": space_surface = pygame.transform.rotate(space_surface, 180)
+            case "S": pass
+            case "A": space_surface = pygame.transform.rotate(space_surface, 270)
+            case "D": space_surface = pygame.transform.rotate(space_surface, 90)
         return space_surface
     def to_json(self) -> LevelJson:
         json_object: LevelJson = {"id": self.level_id.to_json(), "space_list": [], "main_space": self.main_space_id.to_json()}

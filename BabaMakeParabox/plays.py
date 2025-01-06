@@ -12,12 +12,12 @@ class GameIsDefeatError(Exception):
 class GameIsDoneError(Exception):
     pass
 
-movements: dict[str, tuple[str, positions.PlayerOperation, positions.Coordinate]] = {
+movements: dict[str, tuple[str, positions.NullableDirection, positions.Coordinate]] = {
     "W": ("S", positions.Direction.W, positions.Coordinate(0, -1)),
     "S": ("W", positions.Direction.S, positions.Coordinate(0, 1)),
     "A": ("D", positions.Direction.A, positions.Coordinate(-1, 0)),
     "D": ("A", positions.Direction.D, positions.Coordinate(1, 0)),
-    " ": ("None", positions.NoDirect.O, positions.Coordinate(0, 0))
+    " ": ("None", positions.NullDirection.O, positions.Coordinate(0, 0))
 }
 
 def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
@@ -139,7 +139,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 if keys[key] and not keys.get(negative_key, False):
                     new_history: tuple[levelpacks.Levelpack, levelpacks.ReturnInfo, refs.LevelID, refs.SpaceID] = (
                         copy.deepcopy(levelpack),
-                        levelpack.turn(current_level, op),
+                        levelpack.tick(current_level, op),
                         current_level.level_id,
                         current_space.space_id
                     )
@@ -313,7 +313,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 display_offset_speed[1] = display_offset_speed[1] / 2
             del offset_used
         if display_refresh:
-            # not used
+            # NotImplemented
             display_refresh = False
         if levelpack_refresh:
             if current_level.game_properties.enabled(objects.TextWin):
