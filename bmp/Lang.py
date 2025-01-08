@@ -3,7 +3,7 @@ import os
 import math
 from typing import Optional
 
-from bmp import Base
+import bmp.Base
 
 width: int = 80
 height: int = 25
@@ -20,7 +20,7 @@ for name in [n for n in os.listdir("lang") if n.endswith(".json")]:
 
 chinese: str = "zh_CN"
 english: str = "en_US"
-current_language_name: str = Base.options["lang"] if Base.options["lang"] != "" else chinese
+current_language_name: str = bmp.Base.options["lang"] if bmp.Base.options["lang"] != "" else chinese
 
 def set_current_language(name: str) -> None:
     global current_language_name
@@ -47,7 +47,7 @@ def seperator_line(title: Optional[str] = None) -> str:
             "]<" + ("-" * math.ceil((width - 8 - len(title)) / 2)) + "=#"
 
 def cls() -> None:
-    if Base.current_os == Base.windows:
+    if bmp.Base.current_os == bmp.Base.windows:
         print("\x1B[2J\x1B[0f", end=None)
     else:
         print("\x1B[2J\x1B[3J\x1B[H", end=None)
