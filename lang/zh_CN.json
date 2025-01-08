@@ -22,8 +22,6 @@
     "title.warning": "[程序警告]",
     "title.directory": "[文件夹“{dir}”]",
     "title.savepoint": "[临时存档]",
-    "seperator": "#=--------------------------------------------------------------",
-    "seperator.title": "#=--{text:-<60}",
     "confirm.yes": "[是（默认）：Y，否：n]",
     "confirm.no": "[是：y，否（默认）：N]",
     "launch.welcome": "欢迎来到 Baba Make Parabox！",

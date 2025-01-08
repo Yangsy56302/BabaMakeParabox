@@ -44,6 +44,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     pygame.display.set_icon(pygame.image.load(os.path.join(".", "logo", "a8icon.png")))
     window.fill("#000000")
     pygame.key.stop_text_input()
+    pygame.key.set_repeat(500, 200)
     clock = pygame.time.Clock()
     keybinds = {
         pygame.K_w: "W",
@@ -238,7 +239,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     display_refresh = True
                     press_key_to_continue = False
             elif keys["O"]:
-                languages.lang_print("seperator.title", text=languages.lang_format("title.savepoint"))
+                languages.lang_print(languages.seperator_line(languages.lang_format("title.savepoint")))
                 savepoint_name = ""
                 if keys["LCTRL"] or keys["RCTRL"]:
                     savepoint_name = languages.lang_input("input.savepoint.name")
@@ -256,7 +257,7 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 else:
                     languages.lang_print("warn.savepoint.not_found", value=savepoint_name)
             elif keys["P"]:
-                languages.lang_print("seperator.title", text=languages.lang_format("title.savepoint"))
+                languages.lang_print(languages.seperator_line(languages.lang_format("title.savepoint")))
                 savepoint_name = ""
                 if keys["LCTRL"] or keys["RCTRL"]:
                     savepoint_name = languages.lang_input("input.savepoint.name")
@@ -264,29 +265,29 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 savepoint_dict[savepoint_name] = (copy.deepcopy(levelpack), levelpack_info.copy(), current_level.level_id, current_space.space_id)
                 languages.lang_print("play.savepoint.saved", value=savepoint_name)
             elif keys["TAB"]:
-                languages.lang_print("seperator.title", text=languages.lang_format("title.info"))
+                languages.lang_print(languages.seperator_line(languages.lang_format("title.info")))
                 languages.lang_print("play.level.current.name", value=current_level.level_id.name)
                 languages.lang_print("play.space.current.name", value=current_space.space_id.name)
                 languages.lang_print("play.space.current.infinite_tier", value=current_space.space_id.infinite_tier)
-                languages.lang_print("seperator.title", text=languages.lang_format("title.space.rule_list"))
+                languages.lang_print(languages.seperator_line(languages.lang_format("title.space.rule_list")))
                 for rule in current_space.rule_list:
                     str_list = []
                     for object_type in rule:
                         str_list.append(object_type.display_name)
                     print(" ".join(str_list))
-                languages.lang_print("seperator.title", text=languages.lang_format("title.level.rule_list"))
+                languages.lang_print(languages.seperator_line(languages.lang_format("title.level.rule_list")))
                 for rule in current_level.recursion_rules(current_space)[0]:
                     str_list = []
                     for object_type in rule:
                         str_list.append(object_type.display_name)
                     print(" ".join(str_list))
-                languages.lang_print("seperator.title", text=languages.lang_format("title.levelpack.rule_list"))
+                languages.lang_print(languages.seperator_line(languages.lang_format("title.levelpack.rule_list")))
                 for rule in levelpack.rule_list:
                     str_list = []
                     for object_type in rule:
                         str_list.append(object_type.display_name)
                     print(" ".join(str_list))
-                languages.lang_print("seperator.title", text=languages.lang_format("title.collectibles"))
+                languages.lang_print(languages.seperator_line(languages.lang_format("title.collectibles")))
                 if len(levelpack.collectibles) == 0:
                     languages.lang_print("play.levelpack.collectibles.empty")
                 else:
@@ -421,11 +422,11 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             levelpack_refresh = False
         if level_changed:
             space_changed = True
-            languages.lang_print("seperator.title", text=languages.lang_format("title.level"))
+            languages.lang_print(languages.seperator_line(languages.lang_format("title.level")))
             languages.lang_print("play.level.current.name", value=current_level.level_id.name)
             level_changed = False
         if space_changed:
-            languages.lang_print("seperator.title", text=languages.lang_format("title.space"))
+            languages.lang_print(languages.seperator_line(languages.lang_format("title.space")))
             languages.lang_print("play.space.current.name", value=current_space.space_id.name)
             languages.lang_print("play.space.current.infinite_tier", value=current_space.space_id.infinite_tier)
             space_changed = False
@@ -434,12 +435,21 @@ def play(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
         window.fill("#000000")
         space_surface_size = window.get_size()
         space_surface_pos = (0, 0)
-        if window.get_width() // current_space.width > window.get_height() // current_space.height:
-            space_surface_size = (window.get_height() * current_space.width // current_space.height, window.get_height())
-            space_surface_pos = ((window.get_width() - space_surface_size[0]) // 2, 0)
-        elif window.get_width() // current_space.width < window.get_height() // current_space.height:
-            space_surface_size = (window.get_width(), window.get_width() * current_space.height // current_space.width)
-            space_surface_pos = (0, (window.get_height() - space_surface_size[1]) // 2)
+        match current_space.static_transform["direct"]:
+            case "W" | "S":
+                if window.get_width() // current_space.width > window.get_height() // current_space.height:
+                    space_surface_size = (window.get_height() * current_space.width // current_space.height, window.get_height())
+                    space_surface_pos = ((window.get_width() - space_surface_size[0]) // 2, 0)
+                elif window.get_width() // current_space.width < window.get_height() // current_space.height:
+                    space_surface_size = (window.get_width(), window.get_width() * current_space.height // current_space.width)
+                    space_surface_pos = (0, (window.get_height() - space_surface_size[1]) // 2)
+            case "A" | "D":
+                if window.get_width() // current_space.height > window.get_height() // current_space.width:
+                    space_surface_size = (window.get_height() * current_space.height // current_space.width, window.get_height())
+                    space_surface_pos = ((window.get_width() - space_surface_size[0]) // 2, 0)
+                elif window.get_width() // current_space.height < window.get_height() // current_space.width:
+                    space_surface_size = (window.get_width(), window.get_width() * current_space.width // current_space.height)
+                    space_surface_pos = (0, (window.get_height() - space_surface_size[1]) // 2)
         if not current_level.game_properties.enabled(objects.TextHide):
             if not current_level.properties[objects.default_level_object_type].enabled(objects.TextHide):
                 smooth_value = displays.calc_smooth(frame_since_last_move)

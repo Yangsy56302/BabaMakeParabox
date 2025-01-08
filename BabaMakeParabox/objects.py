@@ -1178,6 +1178,8 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
     level_id: Optional[refs.LevelID] = None
     space_object_extra: Optional[SpaceObjectExtra] = None
     level_object_extra: Optional[LevelObjectExtra] = None
+    org_space_object_extra: SpaceObjectExtra = default_space_object_extra
+    org_level_object_extra: LevelObjectExtra = default_level_object_extra
     if basics.compare_versions(ver if ver is not None else "0.0", "3.8") == -1:
         old_space_id = json_object.get("world")
         if old_space_id is not None:
@@ -1185,7 +1187,7 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
         old_level_id = json_object.get("level")
         if old_level_id is not None:
             level_id = refs.LevelID(old_level_id.get("name", ""))
-            level_object_extra = {"icon": old_level_id.get("icon", default_level_object_extra["icon"])}
+            org_level_object_extra = {"icon": old_level_id.get("icon", default_level_object_extra["icon"])}
     elif basics.compare_versions(ver if ver is not None else "0.0", "3.91") == -1:
         space_id_json = json_object.get("world_id")
         if space_id_json is not None:
@@ -1193,8 +1195,8 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
         level_id_json = json_object.get("level_id")
         if level_id_json is not None:
             level_id = refs.LevelID(**level_id_json)
-        space_object_extra = json_object.get("world_object_extra")
-        level_object_extra = json_object.get("level_object_extra")
+        org_space_object_extra = json_object.get("world_object_extra", default_space_object_extra)
+        org_level_object_extra = json_object.get("level_object_extra", default_level_object_extra)
     else:
         space_id_json = json_object.get("space_id")
         if space_id_json is not None:
@@ -1202,10 +1204,14 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
         level_id_json = json_object.get("level_id")
         if level_id_json is not None:
             level_id = refs.LevelID(**level_id_json)
-        space_object_extra = json_object.get("space_object_extra")
-        level_object_extra = json_object.get("level_object_extra")
-    space_object_extra = space_object_extra if space_object_extra is not None else default_space_object_extra
-    level_object_extra = level_object_extra if level_object_extra is not None else default_level_object_extra
+        org_space_object_extra = json_object.get("space_object_extra", default_space_object_extra)
+        org_level_object_extra = json_object.get("level_object_extra", default_level_object_extra)
+    space_object_extra = default_space_object_extra.copy()
+    if org_space_object_extra is not None:
+        space_object_extra.update(org_space_object_extra)
+    level_object_extra = default_level_object_extra.copy()
+    if org_level_object_extra is not None:
+        level_object_extra.update(org_level_object_extra)
     object_type = name_to_class.get(json_object["type"])
     if object_type is None:
         if json_object["type"].startswith("text_text_"):

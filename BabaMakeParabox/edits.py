@@ -23,6 +23,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     pygame.display.set_caption(f"Baba Make Parabox Editor Version {basics.versions}")
     pygame.display.set_icon(pygame.image.load(os.path.join(".", "logo", "c8icon.png")))
     pygame.key.stop_text_input()
+    pygame.key.set_repeat(200, 50)
     clock = pygame.time.Clock()
     keybinds = {
         pygame.K_w: "W",
@@ -151,7 +152,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                             history.append(copy.deepcopy(levelpack))
                             if issubclass(current_object_type, objects.LevelObject):
                                 if keys["LCTRL"] or keys["RCTRL"]:
-                                    languages.lang_print("seperator.title", text=languages.lang_format("title.new"))
+                                    languages.lang_print(languages.seperator_line(languages.lang_format("title.new")))
                                     name = languages.lang_input("edit.level.new.name")
                                     level_id: refs.LevelID = refs.LevelID(name)
                                     if levelpack.get_level(level_id) is None:
@@ -175,7 +176,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                             elif issubclass(current_object_type, objects.SpaceObject):
                                 space_id: refs.SpaceID = current_space.space_id
                                 if keys["LCTRL"] or keys["RCTRL"]:
-                                    languages.lang_print("seperator.title", text=languages.lang_format("title.new"))
+                                    languages.lang_print(languages.seperator_line(languages.lang_format("title.new")))
                                     name = languages.lang_input("edit.space.new.name")
                                     while True:
                                         infinite_tier = languages.lang_input("edit.space.new.infinite_tier")
@@ -192,7 +193,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                                 unlocked = False
                                 conditions: dict[type[collects.Collectible], int] = {}
                                 if keys["LCTRL"] or keys["RCTRL"]:
-                                    languages.lang_print("seperator.title", text=languages.lang_format("title.new"))
+                                    languages.lang_print(languages.seperator_line(languages.lang_format("title.new")))
                                     unlocked = languages.lang_input("edit.path.new.unlocked") in languages.yes
                                     more_condition = languages.lang_input("edit.path.new.condition") in languages.yes
                                     while more_condition:
@@ -287,7 +288,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                         current_object_type = object_type_shortcuts[(i - 1) % 10]
         elif keys["N"]:
             if keys["LALT"] or keys["RALT"]:
-                languages.lang_print("seperator.title", text=languages.lang_format("title.new"))
+                languages.lang_print(languages.seperator_line(languages.lang_format("title.new")))
                 if languages.lang_input("edit.level.new") not in languages.no:
                     history.append(copy.deepcopy(levelpack))
                     level_name = languages.lang_input("edit.level.new.name")
@@ -377,7 +378,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     space_changed = True
         # delete current space / level (alt)
         elif keys["M"]:
-            languages.lang_print("seperator.title", text=languages.lang_format("title.delete"))
+            languages.lang_print(languages.seperator_line(languages.lang_format("title.delete")))
             if keys["LALT"] or keys["RALT"]:
                 if languages.lang_input("edit.level.delete") in languages.yes:
                     levelpack.level_list.pop(current_level_index)
@@ -391,7 +392,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     space_changed = True
         # add global rule; remove global rule (shift)
         elif keys["R"]:
-            languages.lang_print("seperator.title", text=languages.lang_format("title.levelpack.rule_list"))
+            languages.lang_print(languages.seperator_line(languages.lang_format("title.levelpack.rule_list")))
             text_rule = languages.lang_input("edit.levelpack.new.rule").upper().split()
             type_rule: rules.Rule = []
             valid_input = True
@@ -411,7 +412,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     levelpack.rule_list.remove(type_rule)
                 else:
                     levelpack.rule_list.append(type_rule)
-            languages.lang_print("seperator.title", text=languages.lang_format("title.levelpack.rule_list"))
+            languages.lang_print(languages.seperator_line(languages.lang_format("title.levelpack.rule_list")))
             for rule in levelpack.rule_list:
                 str_list = []
                 for object_type in rule:
@@ -419,7 +420,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 print(" ".join(str_list))
         # edit id for current space / level (alt)
         elif keys["T"]:
-            languages.lang_print("seperator.title", text=languages.lang_format("title.rename"))
+            languages.lang_print(languages.seperator_line(languages.lang_format("title.rename")))
             if keys["LALT"] or keys["RALT"]:
                 current_level.level_id.name = languages.lang_input("edit.level.rename")
             else:
@@ -466,13 +467,13 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                                 current_level.set_space(new_space)
         if level_changed:
             space_changed = True
-            languages.lang_print("seperator.title", text=languages.lang_format("title.level"))
+            languages.lang_print(languages.seperator_line(languages.lang_format("title.level")))
             current_level_index = current_level_index % len(levelpack.level_list) if current_level_index >= 0 else len(levelpack.level_list) - 1
             current_level = levelpack.level_list[current_level_index]
             languages.lang_print("edit.level.current.name", value=current_level.level_id.name)
             level_changed = False
         if space_changed:
-            languages.lang_print("seperator.title", text=languages.lang_format("title.space"))
+            languages.lang_print(languages.seperator_line(languages.lang_format("title.space")))
             if current_cursor_pos[0] > current_space.width:
                 current_cursor_pos = positions.Coordinate(current_space.width, current_cursor_pos[1])
             if current_cursor_pos[1] > current_space.height:

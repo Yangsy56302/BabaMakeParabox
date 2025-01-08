@@ -191,16 +191,44 @@ def get_stacked_transform(transformend: SpaceTransform, transfer: SpaceTransform
     result["direct"] = turn(str_to_direct(result["direct"]), str_to_direct(transfer["direct"])).to_str()
     return result
 
-def transform_relative_pos(transform: SpaceTransform, pos: CoordTupleFloat) -> CoordTupleFloat:
+def transform_absolute_size(transform: SpaceTransform, size: CoordTupleFloat) -> CoordTupleFloat:
     if transform["flip"]:
-        pos = Coordinate(1.0 - pos[0], pos[1])
+        size = (-size[0], size[1])
     match transform["direct"]:
         case "W":
-            pos = Coordinate(1.0 - pos[0], 1.0 - pos[1])
+            size = (-size[0], -size[1])
         case "S":
             pass
         case "A":
-            pos = Coordinate(pos[1], 1.0 - pos[0])
+            size = (size[1], -size[0])
         case "D":
-            pos = Coordinate(1.0 - pos[1], pos[0])
+            size = (-size[1], size[0])
+    return size
+
+def transform_absolute_pos(transform: SpaceTransform, pos: CoordTupleFloat, size: CoordTupleFloat) -> CoordTupleFloat:
+    if transform["flip"]:
+        pos = (size[0] - pos[0], pos[1])
+    match transform["direct"]:
+        case "W":
+            pos = (size[0] - pos[0], size[1] - pos[1])
+        case "S":
+            pass
+        case "A":
+            pos = (pos[1], size[0] - pos[0])
+        case "D":
+            pos = (size[1] - pos[1], pos[0])
+    return pos
+
+def transform_relative_pos(transform: SpaceTransform, pos: CoordTupleFloat) -> CoordTupleFloat:
+    if transform["flip"]:
+        pos = (1.0 - pos[0], pos[1])
+    match transform["direct"]:
+        case "W":
+            pos = (1.0 - pos[0], 1.0 - pos[1])
+        case "S":
+            pass
+        case "A":
+            pos = (pos[1], 1.0 - pos[0])
+        case "D":
+            pos = (1.0 - pos[1], pos[0])
     return pos

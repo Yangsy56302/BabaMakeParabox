@@ -23,8 +23,8 @@ class LevelpackJson(TypedDict):
 
 class Levelpack(object):
     def __init__(self, level_list: list[levels.Level], name: Optional[str] = None, author: Optional[str] = None, main_level_id: Optional[refs.LevelID] = None, collectibles: Optional[set[collects.Collectible]] = None, rule_list: Optional[list[rules.Rule]] = None) -> None:
-        self.name: str = name if name is not None else "Unnamed"
-        self.author: str = author if author is not None else "Unknown"
+        self.name: Optional[str] = name
+        self.author: Optional[str] = author
         self.level_list: list[levels.Level] = list(level_list)
         self.main_level_id: refs.LevelID = main_level_id if main_level_id is not None else self.level_list[0].level_id
         self.collectibles: set[collects.Collectible] = collectibles if collectibles is not None else set()
@@ -543,12 +543,13 @@ class Levelpack(object):
     def to_json(self) -> LevelpackJson:
         json_object: LevelpackJson = {
             "ver": basics.versions,
-            "name": self.name,
             "main_level": self.main_level_id.to_json(),
             "collectibles": list(map(collects.Collectible.to_json, self.collectibles)),
             "level_list": list(map(levels.Level.to_json, self.level_list)),
             "rule_list": []
         }
+        if self.name is not None: json_object["name"] = self.name
+        if self.author is not None: json_object["author"] = self.author
         for rule in self.rule_list:
             json_object["rule_list"].append([])
             for obj in rule:

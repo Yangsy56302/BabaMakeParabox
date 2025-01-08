@@ -1,8 +1,12 @@
 import json
 import os
-from typing import Final
+import math
+from typing import Optional
 
 from BabaMakeParabox import basics
+
+width: int = 80
+height: int = 25
 
 class Language(dict[str, str]):
     def __getitem__(self, key: str) -> str:
@@ -34,6 +38,13 @@ def lang_print(message_id: str, /, **formats) -> None:
 
 def lang_input(message_id: str, /, **formats) -> str:
     return input(language_dict[current_language_name][message_id].format(**formats))
+
+def seperator_line(title: Optional[str] = None) -> str:
+    if title is None:
+        return "#=" + ("-" * (width - 4)) + "=#"
+    else:
+        return "#=" + ("-" * math.floor((width - 8 - len(title)) / 2)) + ">[" + title + \
+            "]<" + ("-" * math.ceil((width - 8 - len(title)) / 2)) + "=#"
 
 def cls() -> None:
     if basics.current_os == basics.windows:
