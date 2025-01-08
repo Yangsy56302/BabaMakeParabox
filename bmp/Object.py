@@ -1,7 +1,7 @@
 from typing import Any, NotRequired, Optional, TypeGuard, TypedDict
 import math
 import uuid
-from BabaMakeParabox import Base, Collect, Color, Locate, Ref
+from bmp import Base, Collect, Color, Locate, Ref
 
 class SpaceObjectExtra(TypedDict):
     static_transform: Locate.SpaceTransform

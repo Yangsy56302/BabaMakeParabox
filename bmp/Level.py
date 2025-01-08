@@ -5,7 +5,7 @@ import uuid
 import math
 import os
 
-from BabaMakeParabox import Base, Collect, Color, Locate, Object, Ref, Render, Rule, Space
+from bmp import Base, Collect, Color, Locate, Object, Ref, Render, Rule, Space
 
 import pygame
 

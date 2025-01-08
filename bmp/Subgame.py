@@ -1,4 +1,4 @@
-from BabaMakeParabox import Color, Object, Render
+from bmp import Color, Object, Render
 
 import pygame
 

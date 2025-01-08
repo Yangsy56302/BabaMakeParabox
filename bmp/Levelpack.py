@@ -1,7 +1,7 @@
 from typing import Any, Optional, TypedDict, NotRequired
 import uuid
 
-from BabaMakeParabox import Base, Collect, Level, Locate, Object, Ref, Rule, Space
+from bmp import Base, Collect, Level, Locate, Object, Ref, Rule, Space
 
 class ReturnInfo(TypedDict):
     win: bool

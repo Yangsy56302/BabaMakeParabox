@@ -5,7 +5,7 @@ import traceback
 
 import pygame
 
-from BabaMakeParabox import Base, Collect, Color, Editor, Game, Lang, Level, Levelpack, Locate, Object, Ref, Render, Rule, Space, Subgame
+from bmp import Base, Collect, Color, Editor, Game, Lang, Level, Levelpack, Locate, Object, Ref, Render, Rule, Space, Subgame
 
 def show_dir(path: str, filter_func: Optional[Callable[[str], bool]] = None, tab: int = 0) -> None:
     def default_filter_func(filename: str) -> bool:

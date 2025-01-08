@@ -2,7 +2,7 @@ import random
 import copy
 import os
 
-from BabaMakeParabox import Audio, Base, Collect, Color, Lang, Level, Levelpack, Locate, Object, Ref, Render, Space
+from bmp import Audio, Base, Collect, Color, Lang, Level, Levelpack, Locate, Object, Ref, Render, Space
 
 import pygame
 

@@ -3,7 +3,7 @@ import os
 import math
 from typing import Optional
 
-from BabaMakeParabox import Base
+from bmp import Base
 
 width: int = 80
 height: int = 25

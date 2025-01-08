@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Callable, Optional
 
-from BabaMakeParabox import Object
+from bmp import Object
 
 Rule = list[type[Object.Text]]
 

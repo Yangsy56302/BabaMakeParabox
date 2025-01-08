@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import BabaMakeParabox as bmp
+import bmp
 import os
 
 if __name__ == "__main__":

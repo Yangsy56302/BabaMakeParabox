@@ -1,5 +1,5 @@
 from typing import TypedDict
-from BabaMakeParabox import Ref
+from bmp import Ref
 
 class CollectibleJson(TypedDict):
     type: str

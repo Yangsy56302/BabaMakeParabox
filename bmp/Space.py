@@ -1,7 +1,7 @@
 from typing import Any, Optional, TypedDict, Callable
 import random
 
-from BabaMakeParabox import Base, Color, Locate, Object, Ref, Rule
+from bmp import Base, Color, Locate, Object, Ref, Rule
 
 class SpaceJson(TypedDict):
     id: Ref.SpaceIDJson

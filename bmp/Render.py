@@ -2,7 +2,7 @@ from typing import Optional
 import os
 import string
 
-from BabaMakeParabox import Base, Color, Object
+from bmp import Base, Color, Object
 
 import pygame
 
