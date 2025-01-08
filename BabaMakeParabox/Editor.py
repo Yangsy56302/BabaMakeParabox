@@ -2,11 +2,11 @@ import os
 import copy
 import random
 
-from BabaMakeParabox import basics, languages, colors, positions, refs, objects, collects, rules, spaces, displays, levels, levelpacks
+from BabaMakeParabox import Base, Collect, Color, Lang, Level, Levelpack, Locate, Object, Ref, Render, Rule, Space
 
 import pygame
 
-def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
+def levelpack_editor(levelpack: Levelpack.Levelpack) -> Levelpack.Levelpack:
     for level in levelpack.level_list:
         for space in level.space_list:
             space.set_sprite_states(0)
@@ -15,12 +15,12 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     current_level = levelpack.level_list[current_level_index]
     current_space_index: int = 0
     current_space = current_level.space_list[current_space_index]
-    current_object_type = objects.Baba
-    current_direct = positions.Direction.S
-    current_cursor_pos = positions.Coordinate(0, 0)
+    current_object_type = Object.Baba
+    current_direct = Locate.Direction.S
+    current_cursor_pos = Locate.Coordinate(0, 0)
     current_clipboard = []
     window = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
-    pygame.display.set_caption(f"Baba Make Parabox Editor Version {basics.versions}")
+    pygame.display.set_caption(f"Baba Make Parabox Editor Version {Base.versions}")
     pygame.display.set_icon(pygame.image.load(os.path.join(".", "logo", "c8icon.png")))
     pygame.key.stop_text_input()
     pygame.key.set_repeat(200, 50)
@@ -70,25 +70,25 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
     keys = {v: False for v in keybinds.values()}
     keys.update({v: False for v in keymods.values()})
     mouses: tuple[int, int, int, int, int] = (0, 0, 0, 0, 0)
-    mouse_pos: positions.Coordinate
-    mouse_pos_in_space: positions.Coordinate
+    mouse_pos: Locate.Coordinate
+    mouse_pos_in_space: Locate.Coordinate
     space_surface_size = window.get_size()
     space_surface_pos = (0, 0)
-    colors.set_palette(os.path.join(".", "palettes", basics.options["palette"]))
-    displays.current_sprites.update()
-    window.fill(colors.current_palette[0, 4])
-    object_type_shortcuts: dict[int, type[objects.Object]] = {k: objects.name_to_class[v] for k, v in enumerate(basics.options["object_type_shortcuts"])}
+    Color.set_palette(os.path.join(".", "palettes", Base.options["palette"]))
+    Render.current_sprites.update()
+    window.fill(Color.current_palette[0, 4])
+    object_type_shortcuts: dict[int, type[Object.Object]] = {k: Object.name_to_class[v] for k, v in enumerate(Base.options["object_type_shortcuts"])}
     level_changed = True
     space_changed = True
     frame = 0
     wiggle = 1
     editor_running = True
-    milliseconds = 1000 // basics.options["fps"]
-    real_fps = basics.options["fps"]
+    milliseconds = 1000 // Base.options["fps"]
+    real_fps = Base.options["fps"]
     show_fps = False
     while editor_running:
         frame += 1
-        if frame % (basics.options["fps"] // 6) == 0:
+        if frame % (Base.options["fps"] // 6) == 0:
             wiggle = wiggle % 3 + 1
         for key in keybinds.values():
             keys[key] = False
@@ -118,8 +118,8 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             int(mouse_scroll[0]), int(mouse_scroll[1])
         )
         del new_mouses
-        mouse_pos = positions.Coordinate(*pygame.mouse.get_pos())
-        mouse_pos_in_space = positions.Coordinate(
+        mouse_pos = Locate.Coordinate(*pygame.mouse.get_pos())
+        mouse_pos_in_space = Locate.Coordinate(
             (mouse_pos[0] - space_surface_pos[0]) * current_space.width // space_surface_size[0],
             (mouse_pos[1] - space_surface_pos[1]) * current_space.height // space_surface_size[1]
         )
@@ -130,7 +130,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 if mouses[0] == 1:
                     if keys["LALT"] or keys["RALT"]: # enter space; enter level (shift)
                         if keys["LSHIFT"] or keys["RSHIFT"]:
-                            sub_level_objs: list[objects.LevelObject] = current_space.get_levels_from_pos(mouse_pos_in_space)
+                            sub_level_objs: list[Object.LevelObject] = current_space.get_levels_from_pos(mouse_pos_in_space)
                             sub_levels = [levelpack.get_level(o.level_id) for o in sub_level_objs]
                             sub_levels = [w for w in sub_levels if w is not None]
                             if len(sub_levels) != 0:
@@ -139,7 +139,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                                     current_level = level
                                     level_changed = True
                         else:
-                            sub_space_objs: list[objects.SpaceObject] = current_space.get_spaces_from_pos(mouse_pos_in_space)
+                            sub_space_objs: list[Object.SpaceObject] = current_space.get_spaces_from_pos(mouse_pos_in_space)
                             sub_spaces = [current_level.get_space(o.space_id) for o in sub_space_objs]
                             sub_spaces = [w for w in sub_spaces if w is not None]
                             if len(sub_spaces) != 0:
@@ -150,71 +150,71 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     else: # place object; with detail (shift); allow overlap (ctrl)
                         if keys["LSHIFT"] or keys["RSHIFT"] or len(current_space.get_objs_from_pos(current_cursor_pos)) == 0:
                             history.append(copy.deepcopy(levelpack))
-                            if issubclass(current_object_type, objects.LevelObject):
+                            if issubclass(current_object_type, Object.LevelObject):
                                 if keys["LCTRL"] or keys["RCTRL"]:
-                                    languages.lang_print(languages.seperator_line(languages.lang_format("title.new")))
-                                    name = languages.lang_input("edit.level.new.name")
-                                    level_id: refs.LevelID = refs.LevelID(name)
+                                    Lang.lang_print(Lang.seperator_line(Lang.lang_format("title.new")))
+                                    name = Lang.lang_input("edit.level.new.name")
+                                    level_id: Ref.LevelID = Ref.LevelID(name)
                                     if levelpack.get_level(level_id) is None:
                                         level_id = current_level.level_id
-                                    icon_name = languages.lang_input("edit.level.new.icon.name")
+                                    icon_name = Lang.lang_input("edit.level.new.icon.name")
                                     icon_name = icon_name if icon_name != "" else "empty"
                                     while True:
-                                        icon_color = languages.lang_input("edit.level.new.icon.color")
+                                        icon_color = Lang.lang_input("edit.level.new.icon.color")
                                         try:
-                                            icon_color = colors.str_to_hex(icon_color) if icon_color != "" else colors.current_palette[0, 3]
+                                            icon_color = Color.str_to_hex(icon_color) if icon_color != "" else Color.current_palette[0, 3]
                                         except ValueError:
-                                            languages.lang_print("warn.value.invalid", value=icon_color, cls="color")
+                                            Lang.lang_print("warn.value.invalid", value=icon_color, cls="color")
                                         else:
                                             break
                                 else:
-                                    level_id: refs.LevelID = current_level.level_id
+                                    level_id: Ref.LevelID = current_level.level_id
                                     icon_name = "empty"
-                                    icon_color = colors.current_palette[0, 3]
-                                level_object_extra: objects.LevelObjectExtra = {"icon": {"name": icon_name, "color": icon_color}}
+                                    icon_color = Color.current_palette[0, 3]
+                                level_object_extra: Object.LevelObjectExtra = {"icon": {"name": icon_name, "color": icon_color}}
                                 current_space.new_obj(current_object_type(current_cursor_pos, current_direct, level_id=level_id, level_object_extra=level_object_extra))
-                            elif issubclass(current_object_type, objects.SpaceObject):
-                                space_id: refs.SpaceID = current_space.space_id
+                            elif issubclass(current_object_type, Object.SpaceObject):
+                                space_id: Ref.SpaceID = current_space.space_id
                                 if keys["LCTRL"] or keys["RCTRL"]:
-                                    languages.lang_print(languages.seperator_line(languages.lang_format("title.new")))
-                                    name = languages.lang_input("edit.space.new.name")
+                                    Lang.lang_print(Lang.seperator_line(Lang.lang_format("title.new")))
+                                    name = Lang.lang_input("edit.space.new.name")
                                     while True:
-                                        infinite_tier = languages.lang_input("edit.space.new.infinite_tier")
+                                        infinite_tier = Lang.lang_input("edit.space.new.infinite_tier")
                                         try:
                                             infinite_tier = int(infinite_tier) if infinite_tier != "" else 0
                                         except ValueError:
-                                            languages.lang_print("warn.value.invalid", value=infinite_tier, cls="int")
+                                            Lang.lang_print("warn.value.invalid", value=infinite_tier, cls="int")
                                         else:
                                             break
-                                    if current_level.get_space(refs.SpaceID(name, infinite_tier)) is not None:
-                                        space_id = refs.SpaceID(name, infinite_tier)
+                                    if current_level.get_space(Ref.SpaceID(name, infinite_tier)) is not None:
+                                        space_id = Ref.SpaceID(name, infinite_tier)
                                 current_space.new_obj(current_object_type(current_cursor_pos, current_direct, space_id=space_id))
-                            elif issubclass(current_object_type, objects.Path):
+                            elif issubclass(current_object_type, Object.Path):
                                 unlocked = False
-                                conditions: dict[type[collects.Collectible], int] = {}
+                                conditions: dict[type[Collect.Collectible], int] = {}
                                 if keys["LCTRL"] or keys["RCTRL"]:
-                                    languages.lang_print(languages.seperator_line(languages.lang_format("title.new")))
-                                    unlocked = languages.lang_input("edit.path.new.unlocked") in languages.yes
-                                    more_condition = languages.lang_input("edit.path.new.condition") in languages.yes
+                                    Lang.lang_print(Lang.seperator_line(Lang.lang_format("title.new")))
+                                    unlocked = Lang.lang_input("edit.path.new.unlocked") in Lang.yes
+                                    more_condition = Lang.lang_input("edit.path.new.condition") in Lang.yes
                                     while more_condition:
                                         while True:
-                                            for collects_type, collects_name in collects.collectible_dict.items():
-                                                languages.lang_print("edit.path.new.condition.type", key=collects_type, value=collects_name)
-                                            collects_type = {v: k for k, v in collects.collectible_dict.items()}.get(languages.lang_input("input.string"))
+                                            for collects_type, collects_name in Collect.collectible_dict.items():
+                                                Lang.lang_print("edit.path.new.condition.type", key=collects_type, value=collects_name)
+                                            collects_type = {v: k for k, v in Collect.collectible_dict.items()}.get(Lang.lang_input("input.string"))
                                             if collects_type is None:
-                                                languages.lang_print("warn.value.invalid", value=collects_type, cls=collects.Collectible.__name__)
+                                                Lang.lang_print("warn.value.invalid", value=collects_type, cls=Collect.Collectible.__name__)
                                                 continue
                                             break
                                         while True:
-                                            collects_count = languages.lang_input("input.number")
+                                            collects_count = Lang.lang_input("input.number")
                                             try:
                                                 collects_count = int(collects_count)
                                             except ValueError:
-                                                languages.lang_print("warn.value.invalid", value=collects_count, cls="int")
+                                                Lang.lang_print("warn.value.invalid", value=collects_count, cls="int")
                                             else:
                                                 break
                                         conditions[collects_type] = collects_count
-                                        more_condition = languages.lang_input("edit.path.new.condition") in languages.yes
+                                        more_condition = Lang.lang_input("edit.path.new.condition") in Lang.yes
                                 current_space.new_obj(current_object_type(current_cursor_pos, current_direct, unlocked=unlocked, conditions=conditions))
                             else:
                                 current_space.new_obj(current_object_type(current_cursor_pos, current_direct))
@@ -245,11 +245,11 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                             current_space_index -= 1
                             space_changed = True
                     elif keys["LSHIFT"] or keys["RSHIFT"]:
-                        obj_to_noun = objects.get_noun_from_type(current_object_type)
-                        if obj_to_noun in objects.object_used:
+                        obj_to_noun = Object.get_noun_from_type(current_object_type)
+                        if obj_to_noun in Object.object_used:
                             current_object_type = obj_to_noun
                     else:
-                        current_object_type_list = [t for t in objects.name_to_class.values() if t in objects.object_used]
+                        current_object_type_list = [t for t in Object.name_to_class.values() if t in Object.object_used]
                         current_object_type_index = current_object_type_list.index(current_object_type)
                         current_object_type = current_object_type_list[current_object_type_index - 1 if current_object_type_index >= 0 else len(current_object_type_list) - 1]
                 elif mouses[4]:
@@ -262,144 +262,144 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                             current_space_index += 1
                             space_changed = True
                     elif keys["LSHIFT"] or keys["RSHIFT"]:
-                        if issubclass(current_object_type, objects.GeneralNoun) and current_object_type.ref_type in objects.object_used:
+                        if issubclass(current_object_type, Object.GeneralNoun) and current_object_type.ref_type in Object.object_used:
                             current_object_type = current_object_type.ref_type
                     else:
-                        current_object_type_list = [t for t in objects.name_to_class.values() if t in objects.object_used]
+                        current_object_type_list = [t for t in Object.name_to_class.values() if t in Object.object_used]
                         current_object_type_index = current_object_type_list.index(current_object_type)
                         current_object_type = current_object_type_list[current_object_type_index + 1 if current_object_type_index < len(current_object_type_list) - 1 else 0]
         # cursor move; object facing change (alt)
         if keys["W"] or keys["UP"]:
-            current_direct = positions.Direction.W
+            current_direct = Locate.Direction.W
         elif keys["S"] or keys["DOWN"]:
-            current_direct = positions.Direction.S
+            current_direct = Locate.Direction.S
         elif keys["A"] or keys["LEFT"]:
-            current_direct = positions.Direction.A
+            current_direct = Locate.Direction.A
         elif keys["D"] or keys["RIGHT"]:
-            current_direct = positions.Direction.D
+            current_direct = Locate.Direction.D
         # object select from palette / save to palette (shift)
         elif any(map(lambda i: keys[str(i)], range(10))):
             for i in range(10):
                 if keys[str(i)]:
                     if keys["LSHIFT"] or keys["RSHIFT"]:
                         object_type_shortcuts[(i - 1) % 10] = current_object_type
-                        basics.options["object_type_shortcuts"][(i - 1) % 10] = current_object_type.json_name
+                        Base.options["object_type_shortcuts"][(i - 1) % 10] = current_object_type.json_name
                     else:
                         current_object_type = object_type_shortcuts[(i - 1) % 10]
         elif keys["N"]:
             if keys["LALT"] or keys["RALT"]:
-                languages.lang_print(languages.seperator_line(languages.lang_format("title.new")))
-                if languages.lang_input("edit.level.new") not in languages.no:
+                Lang.lang_print(Lang.seperator_line(Lang.lang_format("title.new")))
+                if Lang.lang_input("edit.level.new") not in Lang.no:
                     history.append(copy.deepcopy(levelpack))
-                    level_name = languages.lang_input("edit.level.new.name")
-                    level_id: refs.LevelID = refs.LevelID(level_name)
-                    super_level_name = languages.lang_input("edit.level.new.super_level.name")
-                    super_level_id: refs.LevelID = refs.LevelID(super_level_name) if super_level_name != "" else current_level.level_id
-                    name = languages.lang_input("edit.space.new.name")
+                    level_name = Lang.lang_input("edit.level.new.name")
+                    level_id: Ref.LevelID = Ref.LevelID(level_name)
+                    super_level_name = Lang.lang_input("edit.level.new.super_level.name")
+                    super_level_id: Ref.LevelID = Ref.LevelID(super_level_name) if super_level_name != "" else current_level.level_id
+                    name = Lang.lang_input("edit.space.new.name")
                     while True:
-                        width = languages.lang_input("edit.space.new.width")
+                        width = Lang.lang_input("edit.space.new.width")
                         try:
-                            width = int(width) if width != "" else basics.options["default_new_space"]["width"]
+                            width = int(width) if width != "" else Base.options["default_new_space"]["width"]
                         except ValueError:
-                            languages.lang_print("warn.value.invalid", value=width, cls="int")
+                            Lang.lang_print("warn.value.invalid", value=width, cls="int")
                         else:
                             break
                     while True:
-                        height = languages.lang_input("edit.space.new.height")
+                        height = Lang.lang_input("edit.space.new.height")
                         try:
-                            height = int(height) if height != "" else basics.options["default_new_space"]["height"]
+                            height = int(height) if height != "" else Base.options["default_new_space"]["height"]
                         except ValueError:
-                            languages.lang_print("warn.value.invalid", value=height, cls="int")
+                            Lang.lang_print("warn.value.invalid", value=height, cls="int")
                         else:
                             break
-                    size = positions.Coordinate(width, height)
+                    size = Locate.Coordinate(width, height)
                     while True:
-                        infinite_tier = languages.lang_input("edit.space.new.infinite_tier")
+                        infinite_tier = Lang.lang_input("edit.space.new.infinite_tier")
                         try:
                             infinite_tier = int(infinite_tier) if infinite_tier != "" else 0
                         except ValueError:
-                            languages.lang_print("warn.value.invalid", value=infinite_tier, cls="int")
+                            Lang.lang_print("warn.value.invalid", value=infinite_tier, cls="int")
                         else:
                             break
                     while True:
-                        color = languages.lang_input("edit.space.new.color")
+                        color = Lang.lang_input("edit.space.new.color")
                         try:
-                            color = colors.str_to_hex(color) if color != "" else basics.options["default_new_space"]["color"]
+                            color = Color.str_to_hex(color) if color != "" else Base.options["default_new_space"]["color"]
                         except ValueError:
-                            languages.lang_print("warn.value.invalid", value=color, cls="color")
+                            Lang.lang_print("warn.value.invalid", value=color, cls="color")
                         else:
                             break
-                    default_space = spaces.Space(refs.SpaceID(name, infinite_tier), size, color)
-                    if languages.lang_input("edit.level.new.is_map") in languages.yes:
+                    default_space = Space.Space(Ref.SpaceID(name, infinite_tier), size, color)
+                    if Lang.lang_input("edit.level.new.is_map") in Lang.yes:
                         pass
-                    levelpack.level_list.append(levels.Level(level_id, [default_space], super_level_id=super_level_id, main_space_id=refs.SpaceID(name, infinite_tier), map_info=None))
+                    levelpack.level_list.append(Level.Level(level_id, [default_space], super_level_id=super_level_id, main_space_id=Ref.SpaceID(name, infinite_tier), map_info=None))
                     current_level_index = len(levelpack.level_list) - 1
                     current_space_index = 0
                     level_changed = True
             else:
-                if languages.lang_input("edit.space.new") not in languages.no:
+                if Lang.lang_input("edit.space.new") not in Lang.no:
                     history.append(copy.deepcopy(levelpack))
-                    name = languages.lang_input("edit.space.new.name")
+                    name = Lang.lang_input("edit.space.new.name")
                     while True:
-                        width = languages.lang_input("edit.space.new.width")
+                        width = Lang.lang_input("edit.space.new.width")
                         try:
-                            width = int(width) if width != "" else basics.options["default_new_space"]["width"]
+                            width = int(width) if width != "" else Base.options["default_new_space"]["width"]
                         except ValueError:
-                            languages.lang_print("warn.value.invalid", value=width, cls="int")
+                            Lang.lang_print("warn.value.invalid", value=width, cls="int")
                         else:
                             break
                     while True:
-                        height = languages.lang_input("edit.space.new.height")
+                        height = Lang.lang_input("edit.space.new.height")
                         try:
-                            height = int(height) if height != "" else basics.options["default_new_space"]["height"]
+                            height = int(height) if height != "" else Base.options["default_new_space"]["height"]
                         except ValueError:
-                            languages.lang_print("warn.value.invalid", value=height, cls="int")
+                            Lang.lang_print("warn.value.invalid", value=height, cls="int")
                         else:
                             break
-                    size = positions.Coordinate(width, height)
+                    size = Locate.Coordinate(width, height)
                     while True:
-                        infinite_tier = languages.lang_input("edit.space.new.infinite_tier")
+                        infinite_tier = Lang.lang_input("edit.space.new.infinite_tier")
                         try:
                             infinite_tier = int(infinite_tier) if infinite_tier != "" else 0
                         except ValueError:
-                            languages.lang_print("warn.value.invalid", value=infinite_tier, cls="int")
+                            Lang.lang_print("warn.value.invalid", value=infinite_tier, cls="int")
                         else:
                             break
                     while True:
-                        color = languages.lang_input("edit.space.new.color")
+                        color = Lang.lang_input("edit.space.new.color")
                         try:
-                            color = colors.str_to_hex(color) if color != "" else basics.options["default_new_space"]["color"]
+                            color = Color.str_to_hex(color) if color != "" else Base.options["default_new_space"]["color"]
                         except ValueError:
-                            languages.lang_print("warn.value.invalid", value=color, cls="color")
+                            Lang.lang_print("warn.value.invalid", value=color, cls="color")
                         else:
                             break
-                    current_level.space_list.append(spaces.Space(refs.SpaceID(name, infinite_tier), size, color))
+                    current_level.space_list.append(Space.Space(Ref.SpaceID(name, infinite_tier), size, color))
                     current_space_index = len(current_level.space_list) - 1
                     space_changed = True
         # delete current space / level (alt)
         elif keys["M"]:
-            languages.lang_print(languages.seperator_line(languages.lang_format("title.delete")))
+            Lang.lang_print(Lang.seperator_line(Lang.lang_format("title.delete")))
             if keys["LALT"] or keys["RALT"]:
-                if languages.lang_input("edit.level.delete") in languages.yes:
+                if Lang.lang_input("edit.level.delete") in Lang.yes:
                     levelpack.level_list.pop(current_level_index)
                     current_level_index -= 1
                     current_space_index = 0
                     level_changed = True
             else:
-                if languages.lang_input("edit.space.delete") in languages.yes:
+                if Lang.lang_input("edit.space.delete") in Lang.yes:
                     current_level.space_list.pop(current_space_index)
                     current_space_index -= 1
                     space_changed = True
         # add global rule; remove global rule (shift)
         elif keys["R"]:
-            languages.lang_print(languages.seperator_line(languages.lang_format("title.levelpack.rule_list")))
-            text_rule = languages.lang_input("edit.levelpack.new.rule").upper().split()
-            type_rule: rules.Rule = []
+            Lang.lang_print(Lang.seperator_line(Lang.lang_format("title.levelpack.rule_list")))
+            text_rule = Lang.lang_input("edit.levelpack.new.rule").upper().split()
+            type_rule: Rule.Rule = []
             valid_input = True
             for text in text_rule:
-                object_type = objects.name_to_class.get(text)
+                object_type = Object.name_to_class.get(text)
                 if object_type is not None:
-                    if issubclass(object_type, objects.Text):
+                    if issubclass(object_type, Object.Text):
                         type_rule.append(object_type)
                     else:
                         valid_input = False
@@ -412,7 +412,7 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                     levelpack.rule_list.remove(type_rule)
                 else:
                     levelpack.rule_list.append(type_rule)
-            languages.lang_print(languages.seperator_line(languages.lang_format("title.levelpack.rule_list")))
+            Lang.lang_print(Lang.seperator_line(Lang.lang_format("title.levelpack.rule_list")))
             for rule in levelpack.rule_list:
                 str_list = []
                 for object_type in rule:
@@ -420,17 +420,17 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                 print(" ".join(str_list))
         # edit id for current space / level (alt)
         elif keys["T"]:
-            languages.lang_print(languages.seperator_line(languages.lang_format("title.rename")))
+            Lang.lang_print(Lang.seperator_line(Lang.lang_format("title.rename")))
             if keys["LALT"] or keys["RALT"]:
-                current_level.level_id.name = languages.lang_input("edit.level.rename")
+                current_level.level_id.name = Lang.lang_input("edit.level.rename")
             else:
-                current_space.space_id.name = languages.lang_input("edit.space.rename")
+                current_space.space_id.name = Lang.lang_input("edit.space.rename")
                 while True:
-                    infinite_tier = languages.lang_input("edit.space.new.infinite_tier")
+                    infinite_tier = Lang.lang_input("edit.space.new.infinite_tier")
                     try:
                         current_space.space_id.infinite_tier = int(infinite_tier)
                     except ValueError:
-                        languages.lang_print("warn.value.invalid", value=infinite_tier, cls="int")
+                        Lang.lang_print("warn.value.invalid", value=infinite_tier, cls="int")
                     else:
                         break
         # undo
@@ -445,21 +445,21 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
             history.append(copy.deepcopy(levelpack))
             current_clipboard = current_space.get_objs_from_pos(current_cursor_pos)
             current_clipboard = copy.deepcopy(current_clipboard)
-            list(map(objects.Object.reset_uuid, current_clipboard))
+            list(map(Object.Object.reset_uuid, current_clipboard))
             current_space.del_objs_from_pos(current_cursor_pos)
         elif keys["C"] and (keys["LCTRL"] or keys["RCTRL"]):
             history.append(copy.deepcopy(levelpack))
             current_clipboard = current_space.get_objs_from_pos(current_cursor_pos)
             current_clipboard = copy.deepcopy(current_clipboard)
-            list(map(objects.Object.reset_uuid, current_clipboard))
+            list(map(Object.Object.reset_uuid, current_clipboard))
         elif keys["V"] and (keys["LCTRL"] or keys["RCTRL"]):
             history.append(copy.deepcopy(levelpack))
             current_clipboard = copy.deepcopy(current_clipboard)
-            list(map(objects.Object.reset_uuid, current_clipboard))
+            list(map(Object.Object.reset_uuid, current_clipboard))
             for obj in current_clipboard:
                 obj.pos = current_cursor_pos
                 current_space.new_obj(obj)
-                if isinstance(obj, objects.SpaceObject):
+                if isinstance(obj, Object.SpaceObject):
                     for level in levelpack.level_list:
                         space = level.get_space(obj.space_id)
                         if space is not None:
@@ -467,59 +467,59 @@ def levelpack_editor(levelpack: levelpacks.Levelpack) -> levelpacks.Levelpack:
                                 current_level.set_space(new_space)
         if level_changed:
             space_changed = True
-            languages.lang_print(languages.seperator_line(languages.lang_format("title.level")))
+            Lang.lang_print(Lang.seperator_line(Lang.lang_format("title.level")))
             current_level_index = current_level_index % len(levelpack.level_list) if current_level_index >= 0 else len(levelpack.level_list) - 1
             current_level = levelpack.level_list[current_level_index]
-            languages.lang_print("edit.level.current.name", value=current_level.level_id.name)
+            Lang.lang_print("edit.level.current.name", value=current_level.level_id.name)
             level_changed = False
         if space_changed:
-            languages.lang_print(languages.seperator_line(languages.lang_format("title.space")))
+            Lang.lang_print(Lang.seperator_line(Lang.lang_format("title.space")))
             if current_cursor_pos[0] > current_space.width:
-                current_cursor_pos = positions.Coordinate(current_space.width, current_cursor_pos[1])
+                current_cursor_pos = Locate.Coordinate(current_space.width, current_cursor_pos[1])
             if current_cursor_pos[1] > current_space.height:
-                current_cursor_pos = positions.Coordinate(current_cursor_pos[0], current_space.height)
+                current_cursor_pos = Locate.Coordinate(current_cursor_pos[0], current_space.height)
             current_space_index = current_space_index % len(current_level.space_list) if current_space_index >= 0 else len(current_level.space_list) - 1
             current_space = current_level.space_list[current_space_index]
-            languages.lang_print("edit.space.current.name", value=current_space.space_id.name)
-            languages.lang_print("edit.space.current.infinite_tier", value=current_space.space_id.infinite_tier)
+            Lang.lang_print("edit.space.current.name", value=current_space.space_id.name)
+            Lang.lang_print("edit.space.current.infinite_tier", value=current_space.space_id.infinite_tier)
             space_changed = False
         # display
         for space in current_level.space_list:
             space.set_sprite_states(0)
-        window.fill(colors.current_palette[0, 4])
+        window.fill(Color.current_palette[0, 4])
         space_surface_size = (window.get_height() * current_space.width // current_space.height, window.get_height())
         space_surface_pos = (0, 0)
         space_surface = current_level.space_to_surface(current_space, wiggle, space_surface_size, cursor=current_cursor_pos, debug=True)
         window.blit(pygame.transform.scale(space_surface, space_surface_size), space_surface_pos)
-        obj_surface = displays.simple_type_to_surface(current_object_type, wiggle=wiggle, debug=True)
-        if issubclass(current_object_type, objects.SpaceObject):
+        obj_surface = Render.simple_type_to_surface(current_object_type, wiggle=wiggle, debug=True)
+        if issubclass(current_object_type, Object.SpaceObject):
             space = current_level.get_space(current_space.space_id)
             if space is not None:
-                obj_surface = displays.simple_type_to_surface(current_object_type, wiggle=wiggle, default_surface=space_surface, debug=True)
-        obj_surface = pygame.transform.scale(obj_surface, (displays.sprite_size * displays.gui_scale, displays.sprite_size * displays.gui_scale))
-        window.blit(obj_surface, (window.get_width() - displays.sprite_size * displays.gui_scale, 0))
+                obj_surface = Render.simple_type_to_surface(current_object_type, wiggle=wiggle, default_surface=space_surface, debug=True)
+        obj_surface = pygame.transform.scale(obj_surface, (Render.sprite_size * Render.gui_scale, Render.sprite_size * Render.gui_scale))
+        window.blit(obj_surface, (window.get_width() - Render.sprite_size * Render.gui_scale, 0))
         for index, object_type in object_type_shortcuts.items():
-            obj_surface = displays.simple_type_to_surface(object_type, wiggle=wiggle, debug=True)
-            if issubclass(object_type, objects.SpaceObject):
+            obj_surface = Render.simple_type_to_surface(object_type, wiggle=wiggle, debug=True)
+            if issubclass(object_type, Object.SpaceObject):
                 space = current_level.get_space(current_space.space_id)
                 if space is not None:
-                    obj_surface = displays.simple_type_to_surface(object_type, wiggle=wiggle, default_surface=space_surface, debug=True)
-            obj_surface = pygame.transform.scale_by(obj_surface, displays.gui_scale)
-            obj_surface_pos = (window.get_width() + (index % 5 * displays.sprite_size * displays.gui_scale) - (displays.sprite_size * displays.gui_scale * 5),
-                               window.get_height() + (index // 5 * displays.sprite_size * displays.gui_scale) - (displays.sprite_size * displays.gui_scale * 2))
+                    obj_surface = Render.simple_type_to_surface(object_type, wiggle=wiggle, default_surface=space_surface, debug=True)
+            obj_surface = pygame.transform.scale_by(obj_surface, Render.gui_scale)
+            obj_surface_pos = (window.get_width() + (index % 5 * Render.sprite_size * Render.gui_scale) - (Render.sprite_size * Render.gui_scale * 5),
+                               window.get_height() + (index // 5 * Render.sprite_size * Render.gui_scale) - (Render.sprite_size * Render.gui_scale * 2))
             obj_surface.blit(
-                displays.set_alpha(displays.current_sprites.get("text_" + str((index + 1) % 10), 0, wiggle), 0x80),
-                (displays.sprite_size * (displays.gui_scale - 1), displays.sprite_size * (displays.gui_scale - 1))
+                Render.set_alpha(Render.current_sprites.get("text_" + str((index + 1) % 10), 0, wiggle), 0x80),
+                (Render.sprite_size * (Render.gui_scale - 1), Render.sprite_size * (Render.gui_scale - 1))
             )
             window.blit(obj_surface, obj_surface_pos)
-        real_fps = min(1000 / milliseconds, (real_fps * (basics.options["fps"] - 1) + 1000 / milliseconds) / basics.options["fps"])
+        real_fps = min(1000 / milliseconds, (real_fps * (Base.options["fps"] - 1) + 1000 / milliseconds) / Base.options["fps"])
         if keys["F1"]:
             show_fps = not show_fps
         if show_fps:
             real_fps_string = str(int(real_fps))
             for i in range(len(real_fps_string)):
-                window.blit(displays.current_sprites.get(f"text_{real_fps_string[i]}", 0, wiggle), (i * displays.sprite_size, 0))
+                window.blit(Render.current_sprites.get(f"text_{real_fps_string[i]}", 0, wiggle), (i * Render.sprite_size, 0))
         pygame.display.flip()
-        milliseconds = clock.tick(basics.options["fps"])
+        milliseconds = clock.tick(Base.options["fps"])
     pygame.display.quit()
     return levelpack

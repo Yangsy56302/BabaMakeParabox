@@ -1,14 +1,14 @@
 from typing import TypedDict
-from BabaMakeParabox import refs
+from BabaMakeParabox import Ref
 
 class CollectibleJson(TypedDict):
     type: str
-    source: refs.LevelIDJson
+    source: Ref.LevelIDJson
 
 class Collectible(object):
     json_name: str
-    def __init__(self, source: refs.LevelID) -> None:
-        self.source: refs.LevelID = source
+    def __init__(self, source: Ref.LevelID) -> None:
+        self.source: Ref.LevelID = source
     def __eq__(self, collectible: "Collectible") -> bool:
         return type(self) == type(collectible) and self.source == collectible.source
     def __hash__(self) -> int:

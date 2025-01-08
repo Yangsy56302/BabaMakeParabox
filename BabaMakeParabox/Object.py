@@ -1,20 +1,20 @@
 from typing import Any, NotRequired, Optional, TypeGuard, TypedDict
 import math
 import uuid
-from BabaMakeParabox import basics, collects, colors, positions, refs
+from BabaMakeParabox import Base, Collect, Color, Locate, Ref
 
 class SpaceObjectExtra(TypedDict):
-    static_transform: positions.SpaceTransform
-    dynamic_transform: positions.SpaceTransform
+    static_transform: Locate.SpaceTransform
+    dynamic_transform: Locate.SpaceTransform
 
 default_space_object_extra: SpaceObjectExtra = {
-    "static_transform": positions.default_space_transform.copy(),
-    "dynamic_transform": positions.default_space_transform.copy()
+    "static_transform": Locate.default_space_transform.copy(),
+    "dynamic_transform": Locate.default_space_transform.copy()
 }
 
 class LevelObjectIcon(TypedDict):
     name: str
-    color: colors.ColorHex
+    color: Color.ColorHex
 
 class LevelObjectExtra(TypedDict):
     icon: LevelObjectIcon
@@ -109,11 +109,11 @@ class Properties(object):
 
 class ObjectJson(TypedDict):
     type: str
-    position: positions.CoordTuple
-    direction: positions.DirectStr
-    space_id: NotRequired[refs.SpaceIDJson]
+    position: Locate.CoordTuple
+    direction: Locate.DirectStr
+    space_id: NotRequired[Ref.SpaceIDJson]
     space_object_extra: NotRequired[SpaceObjectExtra]
-    level_id: NotRequired[refs.LevelIDJson]
+    level_id: NotRequired[Ref.LevelIDJson]
     level_object_extra: NotRequired[LevelObjectExtra]
     path_extra: NotRequired[PathExtra]
 
@@ -121,15 +121,15 @@ class OldObjectState(object):
     def __init__(
         self,
         *,
-        pos: Optional[positions.Coordinate] = None,
-        direct: Optional[positions.Direction] = None,
-        space: Optional[refs.SpaceID] = None,
-        level: Optional[refs.LevelID] = None
+        pos: Optional[Locate.Coordinate] = None,
+        direct: Optional[Locate.Direction] = None,
+        space: Optional[Ref.SpaceID] = None,
+        level: Optional[Ref.LevelID] = None
     ) -> None:
-        self.pos: Optional[positions.Coordinate] = pos
-        self.direct: Optional[positions.Direction] = direct
-        self.space: Optional[refs.SpaceID] = space
-        self.level: Optional[refs.LevelID] = level
+        self.pos: Optional[Locate.Coordinate] = pos
+        self.direct: Optional[Locate.Direction] = direct
+        self.space: Optional[Ref.SpaceID] = space
+        self.level: Optional[Ref.LevelID] = level
 
 special_operators: tuple[type["Operator"], ...]
 
@@ -138,23 +138,23 @@ class Object(object):
     json_name: str
     sprite_name: str
     display_name: str
-    sprite_color: colors.PaletteIndex
+    sprite_color: Color.PaletteIndex
     sprite_varients: tuple[int, ...] = (0x0, )
     def __init__(
         self,
-        pos: positions.Coordinate,
-        direct: positions.Direction = positions.Direction.S,
+        pos: Locate.Coordinate,
+        direct: Locate.Direction = Locate.Direction.S,
         *,
-        space_id: Optional[refs.SpaceID] = None,
-        level_id: Optional[refs.LevelID] = None
+        space_id: Optional[Ref.SpaceID] = None,
+        level_id: Optional[Ref.LevelID] = None
     ) -> None:
         self.uuid: uuid.UUID = uuid.uuid4()
-        self.pos: positions.Coordinate = pos
-        self.direct: positions.Direction = direct
-        self.direct_mapping: dict[positions.Direction, positions.Direction] = {d: d for d in positions.Direction}
+        self.pos: Locate.Coordinate = pos
+        self.direct: Locate.Direction = direct
+        self.direct_mapping: dict[Locate.Direction, Locate.Direction] = {d: d for d in Locate.Direction}
         self.old_state: OldObjectState = OldObjectState()
-        self.space_id: Optional[refs.SpaceID] = space_id
-        self.level_id: Optional[refs.LevelID] = level_id
+        self.space_id: Optional[Ref.SpaceID] = space_id
+        self.level_id: Optional[Ref.LevelID] = level_id
         self.properties: Properties = Properties()
         self.special_operator_properties: dict[type["Operator"], Properties] = {o: Properties() for o in special_operators}
         self.move_number: int = 0
@@ -172,7 +172,7 @@ class Object(object):
         return string
     def reset_uuid(self) -> None:
         self.uuid = uuid.uuid4()
-    def set_direct_mapping(self, mapping: dict[positions.Direction, positions.Direction]) -> None:
+    def set_direct_mapping(self, mapping: dict[Locate.Direction, Locate.Direction]) -> None:
         self.direct = mapping[self.direct_mapping[self.direct]]
         self.direct_mapping = mapping.copy()
     def set_sprite(self, **kwds) -> None:
@@ -197,9 +197,9 @@ class Static(Object):
 
 class Tiled(Object):
     sprite_varients: tuple[int, ...] = tuple(i for i in range(0x10))
-    def set_sprite(self, connected: Optional[dict[positions.Direction, bool]] = None, **kwds) -> None:
-        connected = {positions.Direction.W: False, positions.Direction.S: False, positions.Direction.A: False, positions.Direction.D: False} if connected is None else connected
-        self.sprite_state = (connected[positions.Direction.D] * 0x1) | (connected[positions.Direction.W] * 0x2) | (connected[positions.Direction.A] * 0x4) | (connected[positions.Direction.S] * 0x8)
+    def set_sprite(self, connected: Optional[dict[Locate.Direction, bool]] = None, **kwds) -> None:
+        connected = {Locate.Direction.W: False, Locate.Direction.S: False, Locate.Direction.A: False, Locate.Direction.D: False} if connected is None else connected
+        self.sprite_state = (connected[Locate.Direction.D] * 0x1) | (connected[Locate.Direction.W] * 0x2) | (connected[Locate.Direction.A] * 0x4) | (connected[Locate.Direction.S] * 0x8)
 
 class Animated(Object):
     sprite_varients: tuple[int, ...] = tuple(i for i in range(0x4))
@@ -237,205 +237,205 @@ class Baba(Character):
     json_name = "baba"
     sprite_name = "baba"
     display_name = "Baba"
-    sprite_color: colors.PaletteIndex = (0, 3)
+    sprite_color: Color.PaletteIndex = (0, 3)
 
 class Keke(Character):
     json_name = "keke"
     sprite_name = "keke"
     display_name = "Keke"
-    sprite_color: colors.PaletteIndex = (2, 2)
+    sprite_color: Color.PaletteIndex = (2, 2)
 
 class Me(Character):
     json_name = "me"
     sprite_name = "me"
     display_name = "Me"
-    sprite_color: colors.PaletteIndex = (3, 1)
+    sprite_color: Color.PaletteIndex = (3, 1)
 
 class Patrick(Directional):
     json_name = "patrick"
     sprite_name = "patrick"
     display_name = "Patrick"
-    sprite_color: colors.PaletteIndex = (4, 1)
+    sprite_color: Color.PaletteIndex = (4, 1)
 
 class Skull(Directional):
     json_name = "skull"
     sprite_name = "skull"
     display_name = "Skull"
-    sprite_color: colors.PaletteIndex = (2, 1)
+    sprite_color: Color.PaletteIndex = (2, 1)
 
 class Ghost(Directional):
     json_name = "ghost"
     sprite_name = "ghost"
     display_name = "Ghost"
-    sprite_color: colors.PaletteIndex = (4, 2)
+    sprite_color: Color.PaletteIndex = (4, 2)
 
 class Wall(Tiled):
     json_name = "wall"
     sprite_name = "wall"
     display_name = "Wall"
-    sprite_color: colors.PaletteIndex = (1, 1)
+    sprite_color: Color.PaletteIndex = (1, 1)
 
 class Hedge(Tiled):
     json_name = "hedge"
     sprite_name = "hedge"
     display_name = "Hedge"
-    sprite_color: colors.PaletteIndex = (5, 1)
+    sprite_color: Color.PaletteIndex = (5, 1)
 
 class Ice(Tiled):
     json_name = "ice"
     sprite_name = "ice"
     display_name = "Ice"
-    sprite_color: colors.PaletteIndex = (1, 1)
+    sprite_color: Color.PaletteIndex = (1, 1)
 
 class Tile(Static):
     json_name = "tile"
     sprite_name = "tile"
     display_name = "Tile"
-    sprite_color: colors.PaletteIndex = (0, 0)
+    sprite_color: Color.PaletteIndex = (0, 0)
 
 class Grass(Tiled):
     json_name = "grass"
     sprite_name = "grass"
     display_name = "Grass"
-    sprite_color: colors.PaletteIndex = (5, 0)
+    sprite_color: Color.PaletteIndex = (5, 0)
 
 class Water(Tiled):
     json_name = "water"
     sprite_name = "water"
     display_name = "Water"
-    sprite_color: colors.PaletteIndex = (1, 3)
+    sprite_color: Color.PaletteIndex = (1, 3)
 
 class Lava(Tiled):
     json_name = "lava"
     sprite_name = "water"
     display_name = "Lava"
-    sprite_color: colors.PaletteIndex = (2, 3)
+    sprite_color: Color.PaletteIndex = (2, 3)
 
 class Door(Static):
     json_name = "door"
     sprite_name = "door"
     display_name = "Door"
-    sprite_color: colors.PaletteIndex = (2, 2)
+    sprite_color: Color.PaletteIndex = (2, 2)
 
 class Key(Static):
     json_name = "key"
     sprite_name = "key"
     display_name = "Key"
-    sprite_color: colors.PaletteIndex = (2, 4)
+    sprite_color: Color.PaletteIndex = (2, 4)
 
 class Box(Static):
     json_name = "box"
     sprite_name = "box"
     display_name = "Box"
-    sprite_color: colors.PaletteIndex = (6, 1)
+    sprite_color: Color.PaletteIndex = (6, 1)
 
 class Rock(Static):
     json_name = "rock"
     sprite_name = "rock"
     display_name = "Rock"
-    sprite_color: colors.PaletteIndex = (6, 2)
+    sprite_color: Color.PaletteIndex = (6, 2)
 
 class Fruit(Static):
     json_name = "fruit"
     sprite_name = "fruit"
     display_name = "Fruit"
-    sprite_color: colors.PaletteIndex = (2, 2)
+    sprite_color: Color.PaletteIndex = (2, 2)
 
 class Belt(AnimatedDirectional):
     json_name = "belt"
     sprite_name = "belt"
     display_name = "Belt"
-    sprite_color: colors.PaletteIndex = (1, 1)
+    sprite_color: Color.PaletteIndex = (1, 1)
 
 class Sun(Static):
     json_name = "sun"
     sprite_name = "sun"
     display_name = "Sun"
-    sprite_color: colors.PaletteIndex = (2, 4)
+    sprite_color: Color.PaletteIndex = (2, 4)
 
 class Moon(Static):
     json_name = "moon"
     sprite_name = "moon"
     display_name = "Moon"
-    sprite_color: colors.PaletteIndex = (2, 4)
+    sprite_color: Color.PaletteIndex = (2, 4)
 
 class Star(Static):
     json_name = "star"
     sprite_name = "star"
     display_name = "Star"
-    sprite_color: colors.PaletteIndex = (2, 4)
+    sprite_color: Color.PaletteIndex = (2, 4)
 
 class What(Static):
     json_name = "what"
     sprite_name = "what"
     display_name = "What"
-    sprite_color: colors.PaletteIndex = (0, 3)
+    sprite_color: Color.PaletteIndex = (0, 3)
 
 class Love(Static):
     json_name = "love"
     sprite_name = "love"
     display_name = "Love"
-    sprite_color: colors.PaletteIndex = (4, 2)
+    sprite_color: Color.PaletteIndex = (4, 2)
 
 class Flag(Static):
     json_name = "flag"
     sprite_name = "flag"
     display_name = "Flag"
-    sprite_color: colors.PaletteIndex = (2, 4)
+    sprite_color: Color.PaletteIndex = (2, 4)
 
 class Line(Tiled):
     json_name = "line"
     sprite_name = "line"
     display_name = "Line"
-    sprite_color: colors.PaletteIndex = (0, 3)
+    sprite_color: Color.PaletteIndex = (0, 3)
 
 class Dot(Static):
     json_name = "dot"
     sprite_name = "dot"
     display_name = "Dot"
-    sprite_color: colors.PaletteIndex = (0, 3)
+    sprite_color: Color.PaletteIndex = (0, 3)
 
 class Orb(Static):
     json_name = "orb"
     sprite_name = "orb"
     display_name = "Orb"
-    sprite_color: colors.PaletteIndex = (4, 1)
+    sprite_color: Color.PaletteIndex = (4, 1)
 
 class Cursor(Static):
     json_name = "cursor"
     sprite_name = "cursor"
     display_name = "Cursor"
-    sprite_color: colors.PaletteIndex = (4, 2)
+    sprite_color: Color.PaletteIndex = (4, 2)
 
 class SpaceObject(Object):
-    light_overlay: colors.ColorHex = 0x000000
-    dark_overlay: colors.ColorHex = 0xFFFFFF
+    light_overlay: Color.ColorHex = 0x000000
+    dark_overlay: Color.ColorHex = 0xFFFFFF
     def __init__(
         self,
-        pos: positions.Coordinate,
-        direct: positions.Direction = positions.Direction.S,
+        pos: Locate.Coordinate,
+        direct: Locate.Direction = Locate.Direction.S,
         *,
-        space_id: refs.SpaceID,
-        level_id: Optional[refs.LevelID] = None,
+        space_id: Ref.SpaceID,
+        level_id: Optional[Ref.LevelID] = None,
         space_object_extra: SpaceObjectExtra = default_space_object_extra
     ) -> None:
-        self.space_id: refs.SpaceID
+        self.space_id: Ref.SpaceID
         super().__init__(pos, direct, space_id=space_id, level_id=level_id)
         self.space_object_extra: SpaceObjectExtra = space_object_extra.copy()
     def to_json(self) -> ObjectJson:
         return {**super().to_json(), "space_object_extra": self.space_object_extra}
 
 class Space(SpaceObject):
-    dark_overlay: colors.ColorHex = 0xC0C0C0
+    dark_overlay: Color.ColorHex = 0xC0C0C0
     json_name = "space"
     display_name = "Space"
-    sprite_color: colors.PaletteIndex = (1, 3)
+    sprite_color: Color.PaletteIndex = (1, 3)
         
 class Clone(SpaceObject):
-    light_overlay: colors.ColorHex = 0x404040
+    light_overlay: Color.ColorHex = 0x404040
     json_name = "clone"
     display_name = "Clone"
-    sprite_color: colors.PaletteIndex = (1, 4)
+    sprite_color: Color.PaletteIndex = (1, 4)
 
 space_object_types: list[type[SpaceObject]] = [Space, Clone]
 default_space_object_type: type[SpaceObject] = Space
@@ -443,14 +443,14 @@ default_space_object_type: type[SpaceObject] = Space
 class LevelObject(Object):
     def __init__(
         self,
-        pos: positions.Coordinate,
-        direct: positions.Direction = positions.Direction.S,
+        pos: Locate.Coordinate,
+        direct: Locate.Direction = Locate.Direction.S,
         *,
-        space_id: Optional[refs.SpaceID] = None,
-        level_id: refs.LevelID,
+        space_id: Optional[Ref.SpaceID] = None,
+        level_id: Ref.LevelID,
         level_object_extra: LevelObjectExtra = default_level_object_extra
     ) -> None:
-        self.level_id: refs.LevelID
+        self.level_id: Ref.LevelID
         super().__init__(pos, direct, space_id=space_id, level_id=level_id)
         self.level_object_extra: LevelObjectExtra = level_object_extra
     def to_json(self) -> ObjectJson:
@@ -460,7 +460,7 @@ class Level(LevelObject):
     json_name = "level"
     sprite_name = "level"
     display_name = "Level"
-    sprite_color: colors.PaletteIndex = (4, 1)
+    sprite_color: Color.PaletteIndex = (4, 1)
 
 level_object_types: tuple[type[LevelObject], ...] = (Level, )
 default_level_object_type: type[LevelObject] = Level
@@ -469,38 +469,38 @@ class Path(Tiled):
     json_name = "path"
     sprite_name = "line"
     display_name = "Path"
-    sprite_color: colors.PaletteIndex = (0, 2)
+    sprite_color: Color.PaletteIndex = (0, 2)
     def __init__(
         self,
-        pos: positions.Coordinate,
-        direct: positions.Direction = positions.Direction.S,
+        pos: Locate.Coordinate,
+        direct: Locate.Direction = Locate.Direction.S,
         *,
-        space_id: Optional[refs.SpaceID] = None,
-        level_id: Optional[refs.LevelID] = None,
+        space_id: Optional[Ref.SpaceID] = None,
+        level_id: Optional[Ref.LevelID] = None,
         unlocked: bool = False,
-        conditions: Optional[dict[type[collects.Collectible], int]] = None
+        conditions: Optional[dict[type[Collect.Collectible], int]] = None
     ) -> None:
         super().__init__(pos, direct, space_id=space_id, level_id=level_id)
         self.unlocked: bool = unlocked
-        self.conditions: dict[type[collects.Collectible], int] = conditions if conditions is not None else {}
+        self.conditions: dict[type[Collect.Collectible], int] = conditions if conditions is not None else {}
     def to_json(self) -> ObjectJson:
         return {**super().to_json(), "path_extra": {"unlocked": self.unlocked, "conditions": {k.json_name: v for k, v in self.conditions.items()}}}
 
 class Game(Object):
     def __init__(
         self,
-        pos: positions.Coordinate,
-        direct: positions.Direction = positions.Direction.S,
+        pos: Locate.Coordinate,
+        direct: Locate.Direction = Locate.Direction.S,
         *,
-        space_id: Optional[refs.SpaceID] = None,
-        level_id: Optional[refs.LevelID] = None,
+        space_id: Optional[Ref.SpaceID] = None,
+        level_id: Optional[Ref.LevelID] = None,
         ref_type: type[Object]
     ) -> None:
         super().__init__(pos, direct, space_id=space_id, level_id=level_id)
         self.ref_type = ref_type
     json_name = "game"
     display_name = "Game"
-    sprite_color: colors.PaletteIndex = (4, 2)
+    sprite_color: Color.PaletteIndex = (4, 2)
 
 class Text(Object):
     pass
@@ -515,17 +515,17 @@ class Prefix(Text):
     pass
 
 class Infix(Text):
-    sprite_color: colors.PaletteIndex = (0, 3)
+    sprite_color: Color.PaletteIndex = (0, 3)
 
 class Operator(Text):
-    sprite_color: colors.PaletteIndex = (0, 3)
+    sprite_color: Color.PaletteIndex = (0, 3)
 
 class Property(Text):
     pass
 
 class TextBaba(GeneralNoun):
     ref_type = Baba
-    sprite_color: colors.PaletteIndex = (4, 1)
+    sprite_color: Color.PaletteIndex = (4, 1)
 
 class TextKeke(GeneralNoun):
     ref_type = Keke
@@ -544,18 +544,18 @@ class TextGhost(GeneralNoun):
 
 class TextWall(GeneralNoun):
     ref_type = Wall
-    sprite_color: colors.PaletteIndex = (0, 1)
+    sprite_color: Color.PaletteIndex = (0, 1)
 
 class TextHedge(GeneralNoun):
     ref_type = Hedge
 
 class TextIce(GeneralNoun):
     ref_type = Ice
-    sprite_color: colors.PaletteIndex = (1, 3)
+    sprite_color: Color.PaletteIndex = (1, 3)
 
 class TextTile(GeneralNoun):
     ref_type = Tile
-    sprite_color: colors.PaletteIndex = (0, 1)
+    sprite_color: Color.PaletteIndex = (0, 1)
 
 class TextGrass(GeneralNoun):
     ref_type = Grass
@@ -578,14 +578,14 @@ class TextBox(GeneralNoun):
 
 class TextRock(GeneralNoun):
     ref_type = Rock
-    sprite_color: colors.PaletteIndex = (6, 1)
+    sprite_color: Color.PaletteIndex = (6, 1)
 
 class TextFruit(GeneralNoun):
     ref_type = Fruit
 
 class TextBelt(GeneralNoun):
     ref_type = Belt
-    sprite_color: colors.PaletteIndex = (1, 3)
+    sprite_color: Color.PaletteIndex = (1, 3)
 
 class TextSun(GeneralNoun):
     ref_type = Sun
@@ -613,14 +613,14 @@ class TextDot(GeneralNoun):
 
 class TextCursor(GeneralNoun):
     ref_type = Cursor
-    sprite_color: colors.PaletteIndex = (2, 4)
+    sprite_color: Color.PaletteIndex = (2, 4)
 
 class TextText(GeneralNoun):
     ref_type = Text
     json_name = "text_text"
     sprite_name = "text_text"
     display_name = "TEXT"
-    sprite_color: colors.PaletteIndex = (4, 1)
+    sprite_color: Color.PaletteIndex = (4, 1)
 
 class TextLevelObject(GeneralNoun):
     ref_type = LevelObject
@@ -653,25 +653,25 @@ class TextOften(Prefix):
     json_name = "text_often"
     sprite_name = "text_often"
     display_name = "OFTEN"
-    sprite_color: colors.PaletteIndex = (5, 4)
+    sprite_color: Color.PaletteIndex = (5, 4)
 
 class TextSeldom(Prefix):
     json_name = "text_seldom"
     sprite_name = "text_seldom"
     display_name = "SELDOM"
-    sprite_color: colors.PaletteIndex = (3, 2)
+    sprite_color: Color.PaletteIndex = (3, 2)
 
 class TextMeta(Prefix):
     json_name = "text_meta"
     sprite_name = "text_meta"
     display_name = "META"
-    sprite_color: colors.PaletteIndex = (4, 1)
+    sprite_color: Color.PaletteIndex = (4, 1)
 
 class TextText_(Text):
     json_name = "text_text_"
     sprite_name = "text_text_underline"
     display_name = "TEXT_"
-    sprite_color: colors.PaletteIndex = (4, 0)
+    sprite_color: Color.PaletteIndex = (4, 0)
 
 class TextOn(Infix):
     json_name = "text_on"
@@ -724,104 +724,104 @@ class TextNot(Text):
     json_name = "text_not"
     sprite_name = "text_not"
     display_name = "NOT"
-    sprite_color: colors.PaletteIndex = (2, 2)
+    sprite_color: Color.PaletteIndex = (2, 2)
 
 class TextAnd(Text):
     json_name = "text_and"
     sprite_name = "text_and"
     display_name = "AND"
-    sprite_color: colors.PaletteIndex = (0, 3)
+    sprite_color: Color.PaletteIndex = (0, 3)
 
 class TextYou(Property):
     json_name = "text_you"
     sprite_name = "text_you"
     display_name = "YOU"
-    sprite_color: colors.PaletteIndex = (4, 1)
+    sprite_color: Color.PaletteIndex = (4, 1)
 
 class TextMove(Property):
     json_name = "text_move"
     sprite_name = "text_move"
     display_name = "MOVE"
-    sprite_color: colors.PaletteIndex = (5, 4)
+    sprite_color: Color.PaletteIndex = (5, 4)
 
 class TextStop(Property):
     json_name = "text_stop"
     sprite_name = "text_stop"
     display_name = "STOP"
-    sprite_color: colors.PaletteIndex = (5, 1)
+    sprite_color: Color.PaletteIndex = (5, 1)
 
 class TextPush(Property):
     json_name = "text_push"
     sprite_name = "text_push"
     display_name = "PUSH"
-    sprite_color: colors.PaletteIndex = (6, 1)
+    sprite_color: Color.PaletteIndex = (6, 1)
 
 class TextSink(Property):
     json_name = "text_sink"
     sprite_name = "text_sink"
     display_name = "SINK"
-    sprite_color: colors.PaletteIndex = (1, 3)
+    sprite_color: Color.PaletteIndex = (1, 3)
 
 class TextFloat(Property):
     json_name = "text_float"
     sprite_name = "text_float"
     display_name = "FLOAT"
-    sprite_color: colors.PaletteIndex = (1, 4)
+    sprite_color: Color.PaletteIndex = (1, 4)
 
 class TextOpen(Property):
     json_name = "text_open"
     sprite_name = "text_open"
     display_name = "OPEN"
-    sprite_color: colors.PaletteIndex = (2, 4)
+    sprite_color: Color.PaletteIndex = (2, 4)
 
 class TextShut(Property):
     json_name = "text_shut"
     sprite_name = "text_shut"
     display_name = "SHUT"
-    sprite_color: colors.PaletteIndex = (2, 2)
+    sprite_color: Color.PaletteIndex = (2, 2)
 
 class TextHot(Property):
     json_name = "text_hot"
     sprite_name = "text_hot"
     display_name = "HOT"
-    sprite_color: colors.PaletteIndex = (2, 3)
+    sprite_color: Color.PaletteIndex = (2, 3)
 
 class TextMelt(Property):
     json_name = "text_melt"
     sprite_name = "text_melt"
     display_name = "MELT"
-    sprite_color: colors.PaletteIndex = (1, 3)
+    sprite_color: Color.PaletteIndex = (1, 3)
 
 class TextWin(Property):
     json_name = "text_win"
     sprite_name = "text_win"
     display_name = "WIN"
-    sprite_color: colors.PaletteIndex = (2, 4)
+    sprite_color: Color.PaletteIndex = (2, 4)
 
 class TextDefeat(Property):
     json_name = "text_defeat"
     sprite_name = "text_defeat"
     display_name = "DEFEAT"
-    sprite_color: colors.PaletteIndex = (2, 1)
+    sprite_color: Color.PaletteIndex = (2, 1)
 
 class TextShift(Property):
     json_name = "text_shift"
     sprite_name = "text_shift"
     display_name = "SHIFT"
-    sprite_color: colors.PaletteIndex = (1, 3)
+    sprite_color: Color.PaletteIndex = (1, 3)
 
 class TextTele(Property):
     json_name = "text_tele"
     sprite_name = "text_tele"
     display_name = "TELE"
-    sprite_color: colors.PaletteIndex = (1, 4)
+    sprite_color: Color.PaletteIndex = (1, 4)
 
 class TransformProperty(Property):
-    sprite_color: colors.PaletteIndex = (1, 4)
+    sprite_color: Color.PaletteIndex = (1, 4)
 
 class DirectionalProperty(TransformProperty):
-    ref_direct: positions.Direction
-    ref_transform: positions.SpaceTransform
+    ref_direct: Locate.Direction
+    ref_transform: Locate.SpaceTransform
 
 class DirectFixProperty(DirectionalProperty):
     pass
@@ -830,28 +830,28 @@ class TextUp(DirectFixProperty):
     json_name = "text_up"
     sprite_name = "text_up"
     display_name = "UP"
-    ref_direct = positions.Direction.W
+    ref_direct = Locate.Direction.W
     ref_transform = {"direct": ref_direct.to_str(), "flip": False}
 
 class TextDown(DirectFixProperty):
     json_name = "text_down"
     sprite_name = "text_down"
     display_name = "DOWN"
-    ref_direct = positions.Direction.S
+    ref_direct = Locate.Direction.S
     ref_transform = {"direct": ref_direct.to_str(), "flip": False}
 
 class TextLeft(DirectFixProperty):
     json_name = "text_left"
     sprite_name = "text_left"
     display_name = "LEFT"
-    ref_direct = positions.Direction.A
+    ref_direct = Locate.Direction.A
     ref_transform = {"direct": ref_direct.to_str(), "flip": False}
 
 class TextRight(DirectFixProperty):
     json_name = "text_right"
     sprite_name = "text_right"
     display_name = "RIGHT"
-    ref_direct = positions.Direction.D
+    ref_direct = Locate.Direction.D
     ref_transform = {"direct": ref_direct.to_str(), "flip": False}
 
 direct_fix_properties: list[type[DirectFixProperty]] = [TextLeft, TextUp, TextRight, TextDown]
@@ -863,31 +863,31 @@ class TextTurn(DirectRotateProperty):
     json_name = "text_turn"
     sprite_name = "text_turn"
     display_name = "TURN"
-    ref_direct = positions.Direction.A
+    ref_direct = Locate.Direction.A
     ref_transform = {"direct": ref_direct.to_str(), "flip": False}
 
 class TextDeturn(DirectRotateProperty):
     json_name = "text_deturn"
     sprite_name = "text_deturn"
     display_name = "DETURN"
-    ref_direct = positions.Direction.D
+    ref_direct = Locate.Direction.D
     ref_transform = {"direct": ref_direct.to_str(), "flip": False}
 
 direct_rotate_properties: list[type[DirectRotateProperty]] = [TextTurn, TextDeturn]
 
 class DirectMappingProperty(TransformProperty):
-    ref_mapping: dict[positions.Direction, positions.Direction]
-    ref_transform: positions.SpaceTransform
+    ref_mapping: dict[Locate.Direction, Locate.Direction]
+    ref_transform: Locate.SpaceTransform
 
 class TextFlip(DirectMappingProperty):
     json_name = "text_flip"
     sprite_name = "text_flip"
     display_name = "FLIP"
     ref_mapping = {
-        positions.Direction.W: positions.Direction.W,
-        positions.Direction.S: positions.Direction.S,
-        positions.Direction.A: positions.Direction.D,
-        positions.Direction.D: positions.Direction.A,
+        Locate.Direction.W: Locate.Direction.W,
+        Locate.Direction.S: Locate.Direction.S,
+        Locate.Direction.A: Locate.Direction.D,
+        Locate.Direction.D: Locate.Direction.A,
     }
     ref_transform = {"direct": "S", "flip": True}
 
@@ -897,61 +897,61 @@ class TextEnter(Property):
     json_name = "text_enter"
     sprite_name = "text_enter"
     display_name = "ENTER"
-    sprite_color: colors.PaletteIndex = (5, 4)
+    sprite_color: Color.PaletteIndex = (5, 4)
     
 class TextLeave(Property):
     json_name = "text_leave"
     sprite_name = "text_leave"
     display_name = "LEAVE"
-    sprite_color: colors.PaletteIndex = (2, 2)
+    sprite_color: Color.PaletteIndex = (2, 2)
 
 class TextBonus(Property):
     json_name = "text_bonus"
     sprite_name = "text_bonus"
     display_name = "BONUS"
-    sprite_color: colors.PaletteIndex = (4, 1)
+    sprite_color: Color.PaletteIndex = (4, 1)
 
 class TextHide(Property):
     json_name = "text_hide"
     sprite_name = "text_hide"
     display_name = "HIDE"
-    sprite_color: colors.PaletteIndex = (3, 2)
+    sprite_color: Color.PaletteIndex = (3, 2)
 
 class TextWord(Property):
     json_name = "text_word"
     sprite_name = "text_word"
     display_name = "WORD"
-    sprite_color: colors.PaletteIndex = (0, 3)
+    sprite_color: Color.PaletteIndex = (0, 3)
 
 class TextSelect(Property):
     json_name = "text_select"
     sprite_name = "text_select"
     display_name = "SELECT"
-    sprite_color: colors.PaletteIndex = (2, 4)
+    sprite_color: Color.PaletteIndex = (2, 4)
 
 class TextTextPlus(Property):
     json_name = "text_text+"
     sprite_name = "text_text_plus"
     display_name = "TEXT+"
-    sprite_color: colors.PaletteIndex = (4, 1)
+    sprite_color: Color.PaletteIndex = (4, 1)
 
 class TextTextMinus(Property):
     json_name = "text_text-"
     sprite_name = "text_text_minus"
     display_name = "TEXT-"
-    sprite_color: colors.PaletteIndex = (4, 2)
+    sprite_color: Color.PaletteIndex = (4, 2)
 
 class TextEnd(Property):
     json_name = "text_end"
     sprite_name = "text_end"
     display_name = "END"
-    sprite_color: colors.PaletteIndex = (0, 3)
+    sprite_color: Color.PaletteIndex = (0, 3)
 
 class TextDone(Property):
     json_name = "text_done"
     sprite_name = "text_done"
     display_name = "DONE"
-    sprite_color: colors.PaletteIndex = (0, 3)
+    sprite_color: Color.PaletteIndex = (0, 3)
 
 class Metatext(GeneralNoun):
     ref_type: type[Text]
@@ -1095,7 +1095,7 @@ nouns_in_not_all: tuple[type[Noun], ...] = (TextText, )
 types_in_not_all: tuple[type[Object], ...] = (Text, )
 
 metatext_class_dict: dict[int, list[type[Metatext]]] = {}
-current_metatext_tier: int = basics.options["metatext"]["tier"]
+current_metatext_tier: int = Base.options["metatext"]["tier"]
 
 def generate_metatext(T: type[Text]) -> type[Metatext]:
     new_type_name = "Text" + T.__name__
@@ -1146,8 +1146,8 @@ def generate_metatext_at_tier(tier: int) -> list[type[Metatext]]:
         class_to_noun_dict[new_type.ref_type] = new_type
     return new_metatext_class_list
 
-if basics.options["metatext"]["enabled"]:
-    generate_metatext_at_tier(basics.options["metatext"]["tier"])
+if Base.options["metatext"]["enabled"]:
+    generate_metatext_at_tier(Base.options["metatext"]["tier"])
     
 def same_float_prop(obj_1: Object, obj_2: Object):
     return not (obj_1.properties.has(TextFloat) ^ obj_2.properties.has(TextFloat))
@@ -1174,36 +1174,36 @@ def get_noun_from_type(object_type: type[Object]) -> type[Noun]:
 def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object:
     global current_metatext_tier
     global class_to_noun_dict, object_used, name_to_class, noun_class_list, text_class_list
-    space_id: Optional[refs.SpaceID] = None
-    level_id: Optional[refs.LevelID] = None
+    space_id: Optional[Ref.SpaceID] = None
+    level_id: Optional[Ref.LevelID] = None
     space_object_extra: Optional[SpaceObjectExtra] = None
     level_object_extra: Optional[LevelObjectExtra] = None
     org_space_object_extra: SpaceObjectExtra = default_space_object_extra
     org_level_object_extra: LevelObjectExtra = default_level_object_extra
-    if basics.compare_versions(ver if ver is not None else "0.0", "3.8") == -1:
+    if Base.compare_versions(ver if ver is not None else "0.0", "3.8") == -1:
         old_space_id = json_object.get("world")
         if old_space_id is not None:
-            space_id = refs.SpaceID(old_space_id.get("name", ""), old_space_id.get("infinite_tier", 0))
+            space_id = Ref.SpaceID(old_space_id.get("name", ""), old_space_id.get("infinite_tier", 0))
         old_level_id = json_object.get("level")
         if old_level_id is not None:
-            level_id = refs.LevelID(old_level_id.get("name", ""))
+            level_id = Ref.LevelID(old_level_id.get("name", ""))
             org_level_object_extra = {"icon": old_level_id.get("icon", default_level_object_extra["icon"])}
-    elif basics.compare_versions(ver if ver is not None else "0.0", "3.91") == -1:
+    elif Base.compare_versions(ver if ver is not None else "0.0", "3.91") == -1:
         space_id_json = json_object.get("world_id")
         if space_id_json is not None:
-            space_id = refs.SpaceID(**space_id_json)
+            space_id = Ref.SpaceID(**space_id_json)
         level_id_json = json_object.get("level_id")
         if level_id_json is not None:
-            level_id = refs.LevelID(**level_id_json)
+            level_id = Ref.LevelID(**level_id_json)
         org_space_object_extra = json_object.get("world_object_extra", default_space_object_extra)
         org_level_object_extra = json_object.get("level_object_extra", default_level_object_extra)
     else:
         space_id_json = json_object.get("space_id")
         if space_id_json is not None:
-            space_id = refs.SpaceID(**space_id_json)
+            space_id = Ref.SpaceID(**space_id_json)
         level_id_json = json_object.get("level_id")
         if level_id_json is not None:
-            level_id = refs.LevelID(**level_id_json)
+            level_id = Ref.LevelID(**level_id_json)
         org_space_object_extra = json_object.get("space_object_extra", default_space_object_extra)
         org_level_object_extra = json_object.get("level_object_extra", default_level_object_extra)
     space_object_extra = default_space_object_extra.copy()
@@ -1219,11 +1219,11 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
             generate_metatext_at_tier(current_metatext_tier)
             return json_to_object(json_object, ver)
         raise ValueError(json_object["type"])
-    pos = positions.Coordinate(*json_object["position"])
-    if basics.compare_versions(ver if ver is not None else "0.0", "3.91") == -1:
-        direct = positions.str_to_direct(json_object["orientation"]) # type: ignore
+    pos = Locate.Coordinate(*json_object["position"])
+    if Base.compare_versions(ver if ver is not None else "0.0", "3.91") == -1:
+        direct = Locate.str_to_direct(json_object["orientation"]) # type: ignore
     else:
-        direct = positions.str_to_direct(json_object["direction"])
+        direct = Locate.str_to_direct(json_object["direction"])
     if issubclass(object_type, LevelObject):
         if level_id is not None:
             return object_type(
@@ -1248,8 +1248,8 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
         path_extra = json_object.get("path_extra")
         if path_extra is None:
             path_extra = {"unlocked": False, "conditions": {}}
-        reversed_collectible_dict = {v: k for k, v in collects.collectible_dict.items()}
-        conditions: dict[type[collects.Collectible], int] = {reversed_collectible_dict[k]: v for k, v in path_extra["conditions"].items()}
+        reversed_collectible_dict = {v: k for k, v in Collect.collectible_dict.items()}
+        conditions: dict[type[Collect.Collectible], int] = {reversed_collectible_dict[k]: v for k, v in path_extra["conditions"].items()}
         return object_type(
             pos=pos,
             direct=direct,

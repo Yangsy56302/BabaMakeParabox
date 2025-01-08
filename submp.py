@@ -1,4 +1,4 @@
-import BabaMakeParabox.subs as submp
+import BabaMakeParabox.Subgame as submp
 
 import sys
 
