@@ -881,7 +881,7 @@ class DirectMappingProperty(TransformProperty):
 
 class TextFlip(DirectMappingProperty):
     json_name = "text_flip"
-    sprite_name = "text_mirror"
+    sprite_name = "text_flip"
     display_name = "FLIP"
     ref_mapping = {
         positions.Direction.W: positions.Direction.W,

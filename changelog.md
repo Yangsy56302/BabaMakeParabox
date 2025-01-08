@@ -32,7 +32,7 @@
 #### 1.31
 + **世界**
     + 现在有固定颜色了。
-+ **命令行**
++ **终端**
     + _用途增多。_
 
 ### 1.4
@@ -187,7 +187,7 @@
     + 添加了10个调色板栏位。
 
 ### 2.7
-+ **命令行**
++ **终端**
     + 新增了翻译系统。
 
 ### 2.8
@@ -359,7 +359,7 @@
         + 重命名为`objects.BmpObj`。
         + **`json_name`**
             + 添加。
-            + 代替`typename`用于JSON格式内的物体名称，且使用类似 Baba Is You 的下划线命名法（`text_baba`）。
+            + 替代`typename`用于JSON格式内的物体名称，且使用类似 Baba Is You 的下划线命名法（`text_baba`）。
 
 ##### 3.211
 + **技术性**
@@ -503,7 +503,7 @@ Baba Make Parabox v3.621 是 2024.10.22 更新的一个版本，添加了两个�
     + **前缀修饰词`SELDOM`和`OFTEN`，中缀修饰词`WITHOUT`**
         + 添加。
     + 更改了中缀修饰词的判定方式。
-+ **命令行**
++ **终端**
     + 多数非预期输入现在不会使程序崩溃，而是会要求玩家重新输入了。
 
 ##### 3.622
@@ -538,9 +538,9 @@ Baba Make Parabox v3.7 是 2024.11.27 更新的一个版本，添加了对多重
             + ~~这下不仅很快就能理解，还容易扩展多了。~~
     + **`objects.Properties`**
         + 添加。
-        + 用于系统化管理物体、世界、关卡和“游戏”的一般属性，同时附带管理其余运算符文本所添加的特殊属性的功能。
-        + 代替`rules.PropertyDict`。
-            + ~~同时也代替了多个毫不相干的类型中几乎所有用于存储属性词的硬编码变量。~~
+        + 用于系统化管理物体，世界，关卡和“游戏”的一般属性，同时附带管理其余运算符文本所添加的特殊属性的功能。
+        + 替代`rules.PropertyDict`。
+            + ~~同时也替代了多个毫不相干的类型中几乎所有用于存储属性词的硬编码变量。~~
     + **`objects.Game`**
         + 现在作为“用于指出需要创建新窗口的临时物体”的类被使用，而不再仅是`objects.TextGame`的指代对象。
     + **`basics.get_json_dump_kwds`**
@@ -567,7 +567,7 @@ Baba Make Parabox v3.701 是 2024.11.28 更新的一个版本，回退了 3.7 �
     + **杂项**
         + **`NEG`**
             + 移除。~~对此我只能说，删的真™好。~~
-+ **命令行**
++ **终端**
     + 现在部分情况下（选择关卡包文件等）会自动显示文件夹内的指定类型文件。
     + 输入文件名时又需要包含后缀名了。
     + 更新了许多文本。
@@ -592,7 +592,7 @@ Baba Make Parabox v3.701 是 2024.11.28 更新的一个版本，回退了 3.7 �
 ##### 3.702
 Baba Make Parabox v3.702 是 2024.11.29 更新的一个版本，整理了以前版本产生的杂乱代码，修复了一些漏洞。
 
-+ **命令行**
++ **终端**
     + **分隔线**
         + 现在可附带标题。
     + 更新了部分文本。
@@ -758,7 +758,7 @@ Baba Make Parabox v3.82 是 2024.12.04 更新的一个版本，为程序加入�
     + **`objects.World`，`objects.Clone`，和`objects.Level`**
         + 不再直接出现在除`objects.py`以外的源代码内。
             + 不再用重复的代码对`objects.World`和`objects.Clone`两种情况分别进行处理，而改为使用for循环遍历列表`objects.world_pointers`内的元素进行处理；
-            + 需要使用`objects.World`来代替`worlds.World`的情况改为使用`objects.default_world_pointer`；
+            + 需要使用`objects.World`来替代`worlds.World`的情况改为使用`objects.default_world_pointer`；
             + `objects.Level`的改变同上，后续更新可能会加入多种不同类型的关卡物体，该版本对此功能进行了预留。
     + **`displays.simple_object_to_surface`和`displays.simple_type_to_surface`**
         + 添加。
@@ -796,11 +796,11 @@ Baba Make Parabox v3.83 是 2024.12.05 更新的一个版本，为物体添加�
     + **`objects.BmpObject`**
         + 添加了属性`old_state`，用于记录上文所说的状态。
         + 现在使用`pos: spaces.Coord`而非`x: int`和`y: int`记录坐标。
-            + 代替了`pos: property`。
+            + 替代`pos: property`。
         + `sprite_varients`的类型标注改为`tuple[int, ...]`。
     + **`worlds.World`**
         + 现在使用`size: spaces.Coord`而非`width: int`和`height: int`记录坐标。
-            + 代替了`size: property`。
+            + 替代`size: property`。
     + **`refs.LevelID`和`refs.WorldID`**
         + 新增了暂未使用的用于互相转换的实例方法。
 
@@ -825,7 +825,7 @@ Baba Make Parabox v3.9 是 2024.12.06 更新的一个版本，加入了指向特
     + 最晚在这个版本，编辑器的光标改为白色。
     + 为了规避物体移动过渡动画没有考虑到纹理实际大小的因素，`CURSOR`物体的大小现在与其他物体一致。
         + 这不包括没有过渡动画的编辑器光标。
-+ **命令行**
++ **终端**
     + 现在答案为布尔值的问题可以识别`True`，`False`，`1`，`0`，`是`，`否`这六个回答了。
         + `True`和`False`包括常见大小写形式和英文首字母缩写。
 + **技术性**
@@ -841,7 +841,7 @@ Baba Make Parabox v3.9 是 2024.12.06 更新的一个版本，加入了指向特
                 + 用于不能使用`issubclass`或`isinstance`识别的物体类型。
                     + 直接派生类有`FixedNoun`，`RangedNoun`，和`TextEmpty`。
                         + 间接派生类包括`TextAll`，`TextGroup`，`TextInfinity`等。
-                    + 使用类方法`isreferenceof`代替上述内置函数。
+                    + 使用类方法`isreferenceof`替代上述内置函数。
             + **`TextLevel`，`TextWorld`，和`TextClone`**
                 + 现在继承自新的类型（`TextLevelObject`和`TextWorldObject`）。
     + **`levels.Level.get_move_list`**
@@ -890,7 +890,7 @@ Baba Make Parabox v3.92 是 2024.12.08 更新的一个版本，使新生成的�
             + 原物体拥有空间信息时仍会指向原本所指的空间。
             + `IS`暂不遵循该设定。
             + 关卡同理。
-+ **命令行**
++ **终端**
     + 文件后缀名（如`.json`）现在是可选输入项，而不必在输入时去除。
     + 现在游戏会等到在主菜单内选择非预期选项时自行退出，从而可以在编辑完关卡包之后直接游玩。
         + 程序异常之后仍然会停止运行。
@@ -953,7 +953,7 @@ Baba Make Parabox v3.923 是 2024.12.09 更新的一个版本，修复了一些�
         + 游戏因尝试渲染临时物体`Game`而崩溃；
         + `submp.exe`未经加载调色盘就试图读取纹理而导致崩溃。
 + **技术性**
-    + 从选项文件中移除了`fpw`，其在代码内被表达式`fps // 6`代替。
+    + 从选项文件中移除了`fpw`，其在代码内被表达式`fps // 6`替代。
 
 #### 3.924
 Baba Make Parabox v3.924 是 2024.12.09 更新的一个版本，修复了更多有关`GAME`的漏洞。
@@ -993,3 +993,61 @@ Baba Make Parabox v3.926 是 2025.01.05 更新的一个版本，修复了空间�
     + **`spaces.Space.auto_refresh`**
         + 添加。
         + 静态修饰器方法，被其修饰的方法在抛出异常时，将会刷新位置索引，然后重新尝试运行一次。
+
+## 4.0
+Baba Make Parabox v4.0 是 2025.01.08 更新的一个版本，加入了与方向相关的属性词。
++ **规则**
+    + **属性`UP`，`DOWN`，`LEFT`，`RIGHT`，`TURN`，`DETURN`和`FLIP`**
+        + 添加。
+        + 用于改变物体朝向，旋转物体，以及翻转物体。
+        + 暂时不支持`FACING`，后续版本跟进。
++ **空间**
+    + 添加了该版本内新属性词的作用效果。
++ **外观**
+    + 暂时移除了平滑动画。
++ **控制**
+    + 再次支持通过长按键盘重复输入。
+        + 相对于游玩途中，关卡包编辑器内按键的重复速度会更快。
++ **终端**
+    + **分隔线**
+        + 更改了样式。
+            + **技术性**：改为使用新的函数`languages.seperator_line`获取。
++ **技术性**
+    + **`positions`**
+        + **`turn_left`，`turn_right`和`turn`**
+            + 添加。
+        + **`Direction.to_bit`和`Direction.to_str`**
+            + 添加。
+            + 替代`direction_to_bit`和`direction_to_str`。
+        + **`PlayerOperation`**
+            + 重命名为`NullableDirection`。
+        + **`str_to_direction`**
+            + 重命名为`str_to_direct`。
+        + **`SpaceTransform`及其相关函数**
+            + 添加。
+            + 用于存储空间物体的变换效果。
+    + **`spaces`**
+        + **`Space`**
+            + **`static_transform`和`dynamic_transform`，及其相关函数**
+                + 添加。
+            + 重命名了用于计算物体转移后所处位置的函数。
+    + **`objects`**
+        + **`Object`**
+            + 现在初始化物体时会用默认值补全读取`space_object_extra`和`level_object_extra`时缺失的部分了。
+            + **`direct_mapping`**
+                + 添加。
+                + 用于存储物体的非恒定变换效果（如`FLIP`导致的翻转）。
+            + **`set_direct_mapping`**
+                + 添加。
+                + 用于在设置上述属性的同时改变物体方向。
+        + **`SpaceObjectExtra`**
+            + 现在有实际用途了。
+        + `noun_class_list`，`text_class_list`等含有类型的长列表改为在初始化时补全，而非反复调用`list.extend`。
+    + **`levelpacks.Levelpack`**
+        + **`turn`**
+            + 重命名为`tick`。
+            + 取消了在`levels.Level.move`和`levels.Level.shift`之间调用的`levels.Level.update_rules`。
+        + **`name`和`author`**
+            + 改为可选属性。
+            + **漏洞**：修复了读取关卡包时没有读取这些字段的漏洞。
+    + 对部分过长的代码行进行了换行处理。
