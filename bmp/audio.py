@@ -1,7 +1,8 @@
 import os
 
-import pygame.mixer
+import pygame
 
+pygame.mixer.init()
 sounds: dict[str, pygame.mixer.Sound] = {}
 
 for name in [n for n in os.listdir("sounds") if n.endswith(".ogg")]:

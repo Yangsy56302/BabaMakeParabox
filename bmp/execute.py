@@ -68,7 +68,7 @@ def pre_edit() -> bool:
     bmp.lang.lang_print("launch.open.levelpack")
     bmp.lang.lang_print("launch.open.levelpack.empty.editor")
     input_filename = bmp.lang.lang_input("input.file.name")
-    size = bmp.loc.Coordinate(bmp.base.options["default_new_space"]["width"], bmp.base.options["default_new_space"]["height"])
+    size = (bmp.base.options["default_new_space"]["width"], bmp.base.options["default_new_space"]["height"])
     color = bmp.base.options["default_new_space"]["color"]
     if input_filename != "":
         input_filename += "" if bmp.base.options["debug"] or input_filename.endswith(".json") else ".json"

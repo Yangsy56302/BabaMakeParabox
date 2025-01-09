@@ -1,4 +1,4 @@
-from typing import Any, Optional, TypedDict, NotRequired
+from typing import Optional, TypedDict, NotRequired
 import uuid
 
 import bmp.base
@@ -191,7 +191,7 @@ class Levelpack(object):
                         prop_type = prop_info.prop_type
                         prop_negated_tier = prop_info.prop_negated_tier
                         if issubclass(object_type, bmp.obj.Game) and issubclass(oper_type, bmp.obj.TextIs):
-                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and active_level.meet_prefix_conditions(space, bmp.obj.Object(bmp.loc.Coordinate(0, 0)), prefix_info_list, True):
+                            if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and active_level.meet_prefix_conditions(space, bmp.obj.Object((0, 0)), prefix_info_list, True):
                                 active_level.game_properties.update(prop_type, prop_negated_tier)
                         for obj in new_match_obj_list:
                             if active_level.meet_infix_conditions(space, obj, infix_info_list, old_prop_dict.get(obj.uuid)) and active_level.meet_prefix_conditions(space, obj, prefix_info_list):
@@ -496,7 +496,7 @@ class Levelpack(object):
             for obj in space.object_list:
                 obj.old_state = bmp.obj.OldObjectState()
         return old_prop_dict
-    def tick(self, active_level: bmp.level.Level, op: bmp.loc.NullableDirection) -> ReturnInfo:
+    def tick(self, active_level: bmp.level.Level, op: Optional[bmp.loc.Orient]) -> ReturnInfo:
         old_prop_dict: dict[uuid.UUID, bmp.obj.Properties] = self.prepare(active_level)
         active_level.sound_events = []
         active_level.created_levels = []

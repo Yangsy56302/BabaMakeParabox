@@ -1,3 +1,4 @@
+from typing import Optional
 import random
 import copy
 import os
@@ -23,12 +24,12 @@ class GameIsDefeatError(Exception):
 class GameIsDoneError(Exception):
     pass
 
-movements: dict[str, tuple[str, bmp.loc.NullableDirection, bmp.loc.Coordinate]] = {
-    "W": ("S", bmp.loc.Direction.W, bmp.loc.Coordinate(0, -1)),
-    "S": ("W", bmp.loc.Direction.S, bmp.loc.Coordinate(0, 1)),
-    "A": ("D", bmp.loc.Direction.A, bmp.loc.Coordinate(-1, 0)),
-    "D": ("A", bmp.loc.Direction.D, bmp.loc.Coordinate(1, 0)),
-    " ": ("None", bmp.loc.NullDirection.O, bmp.loc.Coordinate(0, 0))
+movements: dict[str, tuple[str, Optional[bmp.loc.Orient], bmp.loc.Coord]] = {
+    "W": ("S", bmp.loc.Orient.W, (0, -1)),
+    "S": ("W", bmp.loc.Orient.S, (0, 1)),
+    "A": ("D", bmp.loc.Orient.A, (-1, 0)),
+    "D": ("A", bmp.loc.Orient.D, (1, 0)),
+    " ": ("None", None, (0, 0))
 }
 
 def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
@@ -84,10 +85,10 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
     keys = {v: False for v in keybinds.values()}
     keys.update({v: False for v in keymods.values()})
     mouses: tuple[int, int, int, int, int] = (0, 0, 0, 0, 0)
-    mouse_pos: bmp.loc.Coordinate
-    mouse_pos_in_space: bmp.loc.Coordinate
-    space_surface_size: bmp.loc.CoordTuple = window.get_size()
-    space_surface_pos: bmp.loc.CoordTuple = (0, 0)
+    mouse_pos: bmp.loc.Coord[int]
+    mouse_pos_in_space: bmp.loc.Coord[int]
+    space_surface_size: bmp.loc.Coord[int] = window.get_size()
+    space_surface_pos: bmp.loc.Coord[int] = (0, 0)
     bmp.color.set_palette(os.path.join(".", "palettes", bmp.base.options["palette"]))
     bmp.render.current_sprites.update()
     level_changed = False
@@ -141,8 +142,8 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
             int(mouse_scroll[0]), int(mouse_scroll[1])
         )
         del new_mouses
-        mouse_pos = bmp.loc.Coordinate(*pygame.mouse.get_pos())
-        mouse_pos_in_space = bmp.loc.Coordinate(
+        mouse_pos = pygame.mouse.get_pos()
+        mouse_pos_in_space = (
             (mouse_pos[0] - space_surface_pos[0]) * current_space.width // space_surface_size[0],
             (mouse_pos[1] - space_surface_pos[1]) * current_space.height // space_surface_size[1]
         )

@@ -27,8 +27,8 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
     current_space_index: int = 0
     current_space = current_level.space_list[current_space_index]
     current_object_type = bmp.obj.Baba
-    current_direct = bmp.loc.Direction.S
-    current_cursor_pos = bmp.loc.Coordinate(0, 0)
+    current_direct = bmp.loc.Orient.S
+    current_cursor_pos = (0, 0)
     current_clipboard = []
     window = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
     pygame.display.set_caption(f"Baba Make Parabox Editor Version {bmp.base.versions}")
@@ -81,8 +81,8 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
     keys = {v: False for v in keybinds.values()}
     keys.update({v: False for v in keymods.values()})
     mouses: tuple[int, int, int, int, int] = (0, 0, 0, 0, 0)
-    mouse_pos: bmp.loc.Coordinate
-    mouse_pos_in_space: bmp.loc.Coordinate
+    mouse_pos: bmp.loc.Coord
+    mouse_pos_in_space: bmp.loc.Coord
     space_surface_size = window.get_size()
     space_surface_pos = (0, 0)
     bmp.color.set_palette(os.path.join(".", "palettes", bmp.base.options["palette"]))
@@ -129,8 +129,8 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
             int(mouse_scroll[0]), int(mouse_scroll[1])
         )
         del new_mouses
-        mouse_pos = bmp.loc.Coordinate(*pygame.mouse.get_pos())
-        mouse_pos_in_space = bmp.loc.Coordinate(
+        mouse_pos = pygame.mouse.get_pos()
+        mouse_pos_in_space = (
             (mouse_pos[0] - space_surface_pos[0]) * current_space.width // space_surface_size[0],
             (mouse_pos[1] - space_surface_pos[1]) * current_space.height // space_surface_size[1]
         )
@@ -281,13 +281,13 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                         current_object_type = current_object_type_list[current_object_type_index + 1 if current_object_type_index < len(current_object_type_list) - 1 else 0]
         # cursor move; object facing change (alt)
         if keys["W"] or keys["UP"]:
-            current_direct = bmp.loc.Direction.W
+            current_direct = bmp.loc.Orient.W
         elif keys["S"] or keys["DOWN"]:
-            current_direct = bmp.loc.Direction.S
+            current_direct = bmp.loc.Orient.S
         elif keys["A"] or keys["LEFT"]:
-            current_direct = bmp.loc.Direction.A
+            current_direct = bmp.loc.Orient.A
         elif keys["D"] or keys["RIGHT"]:
-            current_direct = bmp.loc.Direction.D
+            current_direct = bmp.loc.Orient.D
         # object select from palette / save to palette (shift)
         elif any(map(lambda i: keys[str(i)], range(10))):
             for i in range(10):
@@ -323,7 +323,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                             bmp.lang.lang_print("warn.value.invalid", value=height, cls="int")
                         else:
                             break
-                    size = bmp.loc.Coordinate(width, height)
+                    size = (width, height)
                     while True:
                         infinite_tier = bmp.lang.lang_input("edit.space.new.infinite_tier")
                         try:
@@ -367,7 +367,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                             bmp.lang.lang_print("warn.value.invalid", value=height, cls="int")
                         else:
                             break
-                    size = bmp.loc.Coordinate(width, height)
+                    size = (width, height)
                     while True:
                         infinite_tier = bmp.lang.lang_input("edit.space.new.infinite_tier")
                         try:
@@ -486,9 +486,9 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
         if space_changed:
             bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.space")))
             if current_cursor_pos[0] > current_space.width:
-                current_cursor_pos = bmp.loc.Coordinate(current_space.width, current_cursor_pos[1])
+                current_cursor_pos = (current_space.width, current_cursor_pos[1])
             if current_cursor_pos[1] > current_space.height:
-                current_cursor_pos = bmp.loc.Coordinate(current_cursor_pos[0], current_space.height)
+                current_cursor_pos = (current_cursor_pos[0], current_space.height)
             current_space_index = current_space_index % len(current_level.space_list) if current_space_index >= 0 else len(current_level.space_list) - 1
             current_space = current_level.space_list[current_space_index]
             bmp.lang.lang_print("edit.space.current.name", value=current_space.space_id.name)

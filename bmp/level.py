@@ -28,7 +28,7 @@ class LevelJson(TypedDict):
 
 max_move_count: int = 24
 infinite_move_number: int = 6
-MoveInfo = tuple[bmp.obj.Object, list[tuple[bmp.ref.SpaceID, bmp.loc.Coordinate, bmp.loc.Direction]]]
+MoveInfo = tuple[bmp.obj.Object, list[tuple[bmp.ref.SpaceID, bmp.loc.Coord[int], bmp.loc.Orient]]]
 
 class Level(object):
     def __init__(self, level_id: bmp.ref.LevelID, space_list: list[bmp.space.Space], *, super_level_id: Optional[bmp.ref.LevelID] = None, main_space_id: Optional[bmp.ref.SpaceID] = None, map_info: Optional[MapLevelExtraJson] = None, collected: Optional[dict[type[bmp.collect.Collectible], bool]] = None, ) -> None:
@@ -91,7 +91,7 @@ class Level(object):
                 obj.move_number = 0
     @staticmethod
     def merge_move_list(move_list: list[MoveInfo]) -> list[MoveInfo]:
-        move_dict: dict[bmp.obj.Object, list[tuple[bmp.ref.SpaceID, bmp.loc.Coordinate, bmp.loc.Direction]]] = {}
+        move_dict: dict[bmp.obj.Object, list[tuple[bmp.ref.SpaceID, bmp.loc.Coord[int], bmp.loc.Orient]]] = {}
         for obj, new_info_list in move_list:
             move_dict.setdefault(obj, [])
             move_dict[obj].extend(new_info_list)
@@ -137,15 +137,15 @@ class Level(object):
             meet_infix_condition = True
             if infix_info.infix_type in (bmp.obj.TextOn, bmp.obj.TextNear, bmp.obj.TextNextto):
                 matched_objs: list[bmp.obj.Object] = [obj]
-                find_range: list[bmp.loc.Coordinate]
+                find_range: list[bmp.loc.Coord[int]]
                 if infix_info.infix_type == bmp.obj.TextOn:
-                    find_range = [bmp.loc.Coordinate(obj.pos.x, obj.pos.y)]
+                    find_range = [(obj.x, obj.y)]
                 elif infix_info.infix_type == bmp.obj.TextNear:
-                    find_range = [bmp.loc.Coordinate(obj.pos.x - 1, obj.pos.y - 1), bmp.loc.Coordinate(obj.pos.x, obj.pos.y - 1), bmp.loc.Coordinate(obj.pos.x + 1, obj.pos.y - 1),
-                                  bmp.loc.Coordinate(obj.pos.x - 1, obj.pos.y), bmp.loc.Coordinate(obj.pos.x, obj.pos.y), bmp.loc.Coordinate(obj.pos.x + 1, obj.pos.y),
-                                  bmp.loc.Coordinate(obj.pos.x - 1, obj.pos.y + 1), bmp.loc.Coordinate(obj.pos.x, obj.pos.y + 1), bmp.loc.Coordinate(obj.pos.x + 1, obj.pos.y + 1)]
+                    find_range = [(obj.x - 1, obj.y - 1), (obj.x, obj.y - 1), (obj.x + 1, obj.y - 1),
+                                  (obj.x - 1, obj.y), (obj.x, obj.y), (obj.x + 1, obj.y),
+                                  (obj.x - 1, obj.y + 1), (obj.x, obj.y + 1), (obj.x + 1, obj.y + 1)]
                 elif infix_info.infix_type == bmp.obj.TextNextto:
-                    find_range = [bmp.loc.Coordinate(obj.pos.x, obj.pos.y - 1), bmp.loc.Coordinate(obj.pos.x - 1, obj.pos.y), bmp.loc.Coordinate(obj.pos.x + 1, obj.pos.y), bmp.loc.Coordinate(obj.pos.x, obj.pos.y + 1)]
+                    find_range = [(obj.x, obj.y - 1), (obj.x - 1, obj.y), (obj.x + 1, obj.y), (obj.x, obj.y + 1)]
                 for match_negated, match_noun in infix_info[2]: # type: ignore
                     match_objs: list[bmp.obj.Object] = []
                     match_noun: type[bmp.obj.Noun]
@@ -264,7 +264,7 @@ class Level(object):
                 else:
                     space.new_obj(new_object_type(obj.pos, obj.direct, space_id=obj.space_id, level_id=obj.level_id))
     def get_move_list(self, space: bmp.space.Space, obj: bmp.obj.Object, \
-        direct: bmp.loc.Direction, pos: Optional[bmp.loc.Coordinate] = None, \
+        direct: bmp.loc.Orient, pos: Optional[bmp.loc.Coord[int]] = None, \
             pushed: Optional[list[bmp.obj.Object]] = None, passed: Optional[list[bmp.ref.SpaceID]] = None, \
                 transnum: Optional[float] = None, depth: int = 0) -> Optional[list[MoveInfo]]:
         if depth > 100:
@@ -290,7 +290,7 @@ class Level(object):
                     if old_space.properties[type(space_obj)].disabled(bmp.obj.TextLeave):
                         continue
                     transform = space.get_stacked_transform(space_obj.space_object_extra["static_transform"], space_obj.space_object_extra["dynamic_transform"])
-                    new_direct = bmp.loc.swap_direction(direct) if transform["flip"] and direct in (bmp.loc.Direction.A, bmp.loc.Direction.D) else direct
+                    new_direct = bmp.loc.swap_direction(direct) if transform["flip"] and direct in (bmp.loc.Orient.A, bmp.loc.Orient.D) else direct
                     new_direct = bmp.loc.turn(new_direct, bmp.loc.str_to_direct(transform["direct"]))
                     if transnum is not None:
                         new_transnum = space.calc_leave_transnum(transnum, space_obj.pos, direct, transform)
@@ -347,7 +347,7 @@ class Level(object):
                             squeeze = False
                             break
                         transform = bmp.loc.inverse_transform(squeeze_space.get_stacked_transform(obj.space_object_extra["static_transform"], obj.space_object_extra["dynamic_transform"]))
-                        new_direct = bmp.loc.swap_direction(direct) if transform["flip"] and direct in (bmp.loc.Direction.A, bmp.loc.Direction.D) else direct
+                        new_direct = bmp.loc.swap_direction(direct) if transform["flip"] and direct in (bmp.loc.Orient.A, bmp.loc.Orient.D) else direct
                         new_direct = bmp.loc.turn(new_direct, bmp.loc.str_to_direct(transform["direct"]))
                         input_pos = squeeze_space.get_enter_pos_by_default(new_direct, transform)
                         squeeze_move_list = self.get_move_list(squeeze_space, new_push_object, bmp.loc.swap_direction(new_direct), input_pos, pushed=pushed + [obj], depth=depth)
@@ -388,7 +388,7 @@ class Level(object):
                         if epsilon_space_obj.properties.disabled(bmp.obj.TextEnter):
                             continue
                         transform = bmp.loc.inverse_transform(epsilon_space.get_stacked_transform(epsilon_space_obj.space_object_extra["static_transform"], epsilon_space_obj.space_object_extra["dynamic_transform"]))
-                        new_direct = bmp.loc.swap_direction(direct) if transform["flip"] and direct in (bmp.loc.Direction.A, bmp.loc.Direction.D) else direct
+                        new_direct = bmp.loc.swap_direction(direct) if transform["flip"] and direct in (bmp.loc.Orient.A, bmp.loc.Orient.D) else direct
                         new_direct = bmp.loc.turn(new_direct, bmp.loc.str_to_direct(transform["direct"]))
                         input_pos = epsilon_space.get_enter_pos_by_default(bmp.loc.swap_direction(new_direct), transform)
                         new_transnum = 0.5
@@ -400,7 +400,7 @@ class Level(object):
                     continue
                 transform = sub_space.get_stacked_transform(sub_space_obj.space_object_extra["static_transform"], sub_space_obj.space_object_extra["dynamic_transform"])
                 inversed_transform = bmp.loc.inverse_transform(transform)
-                new_direct = bmp.loc.swap_direction(direct) if inversed_transform["flip"] and direct in (bmp.loc.Direction.A, bmp.loc.Direction.D) else direct
+                new_direct = bmp.loc.swap_direction(direct) if inversed_transform["flip"] and direct in (bmp.loc.Orient.A, bmp.loc.Orient.D) else direct
                 new_direct = bmp.loc.turn(new_direct, bmp.loc.str_to_direct(inversed_transform["direct"]))
                 if transnum is not None:
                     input_pos = sub_space.get_enter_pos(transnum, bmp.loc.swap_direction(direct), inversed_transform)
@@ -427,9 +427,9 @@ class Level(object):
             return [(obj, [(space.space_id, new_pos, direct)])]
         else:
             return None
-    def you(self, direct: bmp.loc.NullableDirection) -> bool:
+    def you(self, direct: Optional[bmp.loc.Orient]) -> bool:
         self.reset_move_numbers()
-        if direct == bmp.loc.NullDirection.O:
+        if direct is None:
             return False
         pushing_game = False
         finished = False
@@ -452,8 +452,8 @@ class Level(object):
                         pushing_game = True
             self.move_objs_from_move_list(move_list)
         return pushing_game
-    def select(self, direct: bmp.loc.NullableDirection) -> Optional[bmp.ref.LevelID]:
-        if direct == bmp.loc.NullDirection.O:
+    def select(self, direct: Optional[bmp.loc.Orient]) -> Optional[bmp.ref.LevelID]:
+        if direct is None:
             level_objs: list[bmp.obj.LevelObject] = []
             for space in self.space_list:
                 select_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextSelect)]
@@ -522,7 +522,7 @@ class Level(object):
                 move_list = []
                 for obj in [o for o in space.object_list if o.move_number < global_move_count]:
                     if not obj.properties.enabled(bmp.obj.TextFloat):
-                        new_move_list = self.get_move_list(space, obj, bmp.loc.Direction.S)
+                        new_move_list = self.get_move_list(space, obj, bmp.loc.Orient.S)
                         if new_move_list is not None:
                             move_list.extend(new_move_list)
                             obj.move_number += 1
@@ -564,7 +564,7 @@ class Level(object):
                 move_list = []
                 for obj in [o for o in space.object_list if o.move_number < global_shift_count]:
                     if not obj.properties.enabled(bmp.obj.TextFloat):
-                        new_move_list = self.get_move_list(space, obj, bmp.loc.Direction.S)
+                        new_move_list = self.get_move_list(space, obj, bmp.loc.Orient.S)
                         if new_move_list is not None:
                             move_list.extend(new_move_list)
                             obj.move_number += 1
@@ -598,7 +598,7 @@ class Level(object):
         for space in self.space_list:
             if space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextTele):
                 pass
-        tele_list: list[tuple[bmp.space.Space, bmp.obj.Object, bmp.space.Space, bmp.loc.Coordinate]] = []
+        tele_list: list[tuple[bmp.space.Space, bmp.obj.Object, bmp.space.Space, bmp.loc.Coord[int]]] = []
         object_list: list[tuple[bmp.space.Space, bmp.obj.Object]] = []
         for space in self.space_list:
             object_list.extend([(space, o) for o in space.object_list])
@@ -894,7 +894,7 @@ class Level(object):
         return False
     def recursion_get_object_surface_info(
         self,
-        old_pos: bmp.loc.Coordinate,
+        old_pos: bmp.loc.Coord[int],
         old_space_id: bmp.ref.SpaceID,
         current_space_id: bmp.ref.SpaceID,
         depth: int = 0,
@@ -924,7 +924,7 @@ class Level(object):
                         new_depth + 1,
                         bmp.loc.transform_relative_pos(
                             bmp.loc.default_space_transform, # NotImplemented
-                            ((new_pos[0] + space_obj.pos.x) / current_space.width, (new_pos[1] + space_obj.pos.y) / current_space.height)
+                            ((new_pos[0] + space_obj.x) / current_space.width, (new_pos[1] + space_obj.y) / current_space.height)
                         ),
                         bmp.loc.transform_relative_pos(
                             bmp.loc.default_space_transform, # NotImplemented
@@ -945,7 +945,7 @@ class Level(object):
                     new_depth + 1,
                     bmp.loc.transform_relative_pos(
                         transform,
-                        ((new_pos[0] + space_obj.pos.x) / current_space.width, (new_pos[1] + space_obj.pos.y) / current_space.height)
+                        ((new_pos[0] + space_obj.x) / current_space.width, (new_pos[1] + space_obj.y) / current_space.height)
                     ),
                     bmp.loc.transform_relative_pos(
                         transform,
@@ -953,18 +953,18 @@ class Level(object):
                     )
                 ))
         return return_list
-    def space_to_surface(self, space: bmp.space.Space, wiggle: int, size: bmp.loc.CoordTuple, depth: int = 0, smooth: Optional[float] = None, cursor: Optional[bmp.loc.Coordinate] = None, debug: bool = False) -> pygame.Surface:
+    def space_to_surface(self, space: bmp.space.Space, wiggle: int, size: bmp.loc.Coord[int], depth: int = 0, smooth: Optional[float] = None, cursor: Optional[bmp.loc.Coord[int]] = None, debug: bool = False) -> pygame.Surface:
         pixel_size = math.ceil(max(size[0] / space.width, size[1] / space.height) / bmp.render.sprite_size)
         scaled_sprite_size = pixel_size * bmp.render.sprite_size
         if depth > bmp.base.options["space_display_recursion_depth"] or space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextHide):
             space_surface = pygame.Surface((scaled_sprite_size, scaled_sprite_size), pygame.SRCALPHA)
             space_surface.fill(space.color)
-            space_surface = bmp.render.simple_object_to_surface(bmp.obj.SpaceObject(bmp.loc.Coordinate(0, 0), space_id=space.space_id), default_surface=space_surface)
+            space_surface = bmp.render.simple_object_to_surface(bmp.obj.SpaceObject((0, 0), space_id=space.space_id), default_surface=space_surface)
             return space_surface
         space_surface_size = (space.width * scaled_sprite_size, space.height * scaled_sprite_size)
         space_surface = pygame.Surface(space_surface_size, pygame.SRCALPHA)
         object_list: list[bmp.obj.Object] = []
-        obj_surface_list: list[tuple[bmp.loc.Coordinate, bmp.loc.Coordinate, pygame.Surface, bmp.obj.Object]] = []
+        obj_surface_list: list[tuple[bmp.loc.Coord[int], bmp.loc.Coord[int], pygame.Surface, bmp.obj.Object]] = []
         object_list.extend([o for o in space.object_list if isinstance(o, bmp.render.order) and (space.space_id, o) not in object_list])
         for obj in object_list:
             if not isinstance(obj, bmp.render.order):
@@ -977,8 +977,8 @@ class Level(object):
                 for _ in range(self.game_properties.get(bmp.obj.TextWord)):
                     obj_type = bmp.obj.get_noun_from_type(obj_type)
                 obj_surface = bmp.render.simple_type_to_surface(obj_type, wiggle=wiggle, debug=debug)
-            obj_surface_pos: bmp.loc.Coordinate = bmp.loc.Coordinate(obj.pos.x * scaled_sprite_size, obj.pos.y * scaled_sprite_size)
-            obj_surface_size: bmp.loc.Coordinate = bmp.loc.Coordinate(scaled_sprite_size, scaled_sprite_size)
+            obj_surface_pos: bmp.loc.Coord[int] = (obj.x * scaled_sprite_size, obj.y * scaled_sprite_size)
+            obj_surface_size: bmp.loc.Coord[int] = (scaled_sprite_size, scaled_sprite_size)
             if isinstance(obj, bmp.obj.SpaceObject):
                 sub_space = self.get_space(obj.space_id)
                 if sub_space is not None:

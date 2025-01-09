@@ -1,143 +1,119 @@
-from collections import namedtuple
 from typing import Literal, TypedDict
 from enum import Enum
 
-Coordinate = namedtuple("Coordinate", ("x", "y"))
-CoordTuple = tuple[int, int]
-CoordTupleFloat = tuple[float, float]
+type Coord[T] = tuple[T, T]
 
-DirectInt = Literal[0x2, 0x4, 0x8, 0x1]
-DirectStr = Literal["W", "A", "S", "D"]
+OrientInt = Literal[0x2, 0x8, 0x4, 0x1]
+OrientStr = Literal["W", "S", "A", "D"]
 
-class Direction(Enum):
+class Orient(Enum):
     W = "W"
-    A = "A"
     S = "S"
+    A = "A"
     D = "D"
-    def to_bit(self) -> DirectInt:
+    def to_bit(self) -> OrientInt:
         match self:
-            case Direction.W:
+            case Orient.W:
                 return 0x2
-            case Direction.A:
-                return 0x4
-            case Direction.S:
+            case Orient.S:
                 return 0x8
-            case Direction.D:
+            case Orient.A:
+                return 0x4
+            case Orient.D:
                 return 0x1
             case _:
                 raise ValueError(self)
-    def to_str(self) -> DirectStr:
+    def to_str(self) -> OrientStr:
         match self:
-            case Direction.W:
+            case Orient.W:
                 return "W"
-            case Direction.A:
-                return "A"
-            case Direction.S:
+            case Orient.S:
                 return "S"
-            case Direction.D:
+            case Orient.A:
+                return "A"
+            case Orient.D:
                 return "D"
             case _:
                 raise ValueError(self)
 
-NullDirectInt = Literal[0x10]
-NullDirectStr = Literal["O"]
-class NullDirection(Enum):
-    O = 0x10
-    def to_bit(self) -> NullDirectInt:
-        match self:
-            case NullDirection.O:
-                return 0x10
-            case _:
-                raise ValueError(self)
-    def to_str(self) -> NullDirectStr:
-        match self:
-            case NullDirection.O:
-                return "O"
-            case _:
-                raise ValueError(self)
-
-NullableDirection = Direction | NullDirection
-NullableDirectInt = DirectInt | NullDirectInt
-NullableDirectStr = DirectStr | NullDirectStr
-
-def bit_to_direct(direction: DirectInt) -> Direction:
+def bit_to_direct(direction: OrientInt) -> Orient:
     match direction:
         case 0x2:
-            return Direction.W
+            return Orient.W
         case 0x4:
-            return Direction.A
+            return Orient.A
         case 0x8:
-            return Direction.S
+            return Orient.S
         case 0x1:
-            return Direction.D
+            return Orient.D
 
-def str_to_direct(direction: DirectStr) -> Direction:
+def str_to_direct(direction: OrientStr) -> Orient:
     match direction:
         case "W":
-            return Direction.W
+            return Orient.W
         case "A":
-            return Direction.A
+            return Orient.A
         case "S":
-            return Direction.S
+            return Orient.S
         case "D":
-            return Direction.D
+            return Orient.D
 
-def front_position(coord: Coordinate, direct: Direction) -> Coordinate:
+def front_position(coord: Coord[int], direct: Orient) -> Coord[int]:
     match direct:
-        case Direction.W:
-            return Coordinate(coord[0], coord[1] - 1)
-        case Direction.A:
-            return Coordinate(coord[0] - 1, coord[1])
-        case Direction.S:
-            return Coordinate(coord[0], coord[1] + 1)
-        case Direction.D:
-            return Coordinate(coord[0] + 1, coord[1])
+        case Orient.W:
+            return (coord[0], coord[1] - 1)
+        case Orient.A:
+            return (coord[0] - 1, coord[1])
+        case Orient.S:
+            return (coord[0], coord[1] + 1)
+        case Orient.D:
+            return (coord[0] + 1, coord[1])
 
-def swap_direction(direction: Direction) -> Direction:
+def swap_direction(direction: Orient) -> Orient:
     match direction:
-        case Direction.W:
-            return Direction.S
-        case Direction.A:
-            return Direction.D
-        case Direction.S:
-            return Direction.W
-        case Direction.D:
-            return Direction.A
+        case Orient.W:
+            return Orient.S
+        case Orient.A:
+            return Orient.D
+        case Orient.S:
+            return Orient.W
+        case Orient.D:
+            return Orient.A
 
-def turn_left(direction: Direction) -> Direction:
+def turn_left(direction: Orient) -> Orient:
     match direction:
-        case Direction.W:
-            return Direction.A
-        case Direction.A:
-            return Direction.S
-        case Direction.S:
-            return Direction.D
-        case Direction.D:
-            return Direction.W
+        case Orient.W:
+            return Orient.A
+        case Orient.A:
+            return Orient.S
+        case Orient.S:
+            return Orient.D
+        case Orient.D:
+            return Orient.W
 
-def turn_right(direction: Direction) -> Direction:
+def turn_right(direction: Orient) -> Orient:
     match direction:
-        case Direction.W:
-            return Direction.D
-        case Direction.A:
-            return Direction.W
-        case Direction.S:
-            return Direction.A
-        case Direction.D:
-            return Direction.S
+        case Orient.W:
+            return Orient.D
+        case Orient.A:
+            return Orient.W
+        case Orient.S:
+            return Orient.A
+        case Orient.D:
+            return Orient.S
 
-def turn(old_direction: Direction, new_direction: Direction) -> Direction:
+def turn(old_direction: Orient, new_direction: Orient) -> Orient:
     match new_direction:
-        case Direction.W:
+        case Orient.W:
             return swap_direction(old_direction)
-        case Direction.A:
+        case Orient.A:
             return turn_right(old_direction)
-        case Direction.S:
+        case Orient.S:
             return old_direction
-        case Direction.D:
+        case Orient.D:
             return turn_left(old_direction)
 
-def on_line(*coords: Coordinate) -> bool:
+def on_line(*coords: Coord[int]) -> bool:
     if coords[1][0] - coords[0][0] == 1 and coords[1][1] - coords[0][1] == 0:
         delta = (1, 0)
     elif coords[1][0] - coords[0][0] == 0 and coords[1][1] - coords[0][1] == 1:
@@ -150,7 +126,7 @@ def on_line(*coords: Coordinate) -> bool:
     return True
 
 class SpaceTransform(TypedDict):
-    direct: DirectStr
+    direct: OrientStr
     flip: bool
 
 default_space_transform: SpaceTransform = {
@@ -191,7 +167,7 @@ def get_stacked_transform(transformend: SpaceTransform, transfer: SpaceTransform
     result["direct"] = turn(str_to_direct(result["direct"]), str_to_direct(transfer["direct"])).to_str()
     return result
 
-def transform_absolute_size(transform: SpaceTransform, size: CoordTupleFloat) -> CoordTupleFloat:
+def transform_absolute_size(transform: SpaceTransform, size: Coord) -> Coord:
     if transform["flip"]:
         size = (-size[0], size[1])
     match transform["direct"]:
@@ -205,7 +181,7 @@ def transform_absolute_size(transform: SpaceTransform, size: CoordTupleFloat) ->
             size = (-size[1], size[0])
     return size
 
-def transform_absolute_pos(transform: SpaceTransform, pos: CoordTupleFloat, size: CoordTupleFloat) -> CoordTupleFloat:
+def transform_absolute_pos(transform: SpaceTransform, pos: Coord, size: Coord) -> Coord:
     if transform["flip"]:
         pos = (size[0] - pos[0], pos[1])
     match transform["direct"]:
@@ -219,7 +195,7 @@ def transform_absolute_pos(transform: SpaceTransform, pos: CoordTupleFloat, size
             pos = (size[1] - pos[1], pos[0])
     return pos
 
-def transform_relative_pos(transform: SpaceTransform, pos: CoordTupleFloat) -> CoordTupleFloat:
+def transform_relative_pos(transform: SpaceTransform, pos: Coord) -> Coord:
     if transform["flip"]:
         pos = (1.0 - pos[0], pos[1])
     match transform["direct"]:

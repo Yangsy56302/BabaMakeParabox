@@ -113,8 +113,8 @@ class Properties(object):
 
 class ObjectJson(TypedDict):
     type: str
-    position: bmp.loc.CoordTuple
-    direction: bmp.loc.DirectStr
+    position: bmp.loc.Coord[int]
+    direction: bmp.loc.OrientStr
     space_id: NotRequired[bmp.ref.SpaceIDJson]
     space_object_extra: NotRequired[SpaceObjectExtra]
     level_id: NotRequired[bmp.ref.LevelIDJson]
@@ -125,13 +125,13 @@ class OldObjectState(object):
     def __init__(
         self,
         *,
-        pos: Optional[bmp.loc.Coordinate] = None,
-        direct: Optional[bmp.loc.Direction] = None,
+        pos: Optional[bmp.loc.Coord[int]] = None,
+        direct: Optional[bmp.loc.Orient] = None,
         space: Optional[bmp.ref.SpaceID] = None,
         level: Optional[bmp.ref.LevelID] = None
     ) -> None:
-        self.pos: Optional[bmp.loc.Coordinate] = pos
-        self.direct: Optional[bmp.loc.Direction] = direct
+        self.pos: Optional[bmp.loc.Coord[int]] = pos
+        self.direct: Optional[bmp.loc.Orient] = direct
         self.space: Optional[bmp.ref.SpaceID] = space
         self.level: Optional[bmp.ref.LevelID] = level
 
@@ -146,16 +146,16 @@ class Object(object):
     sprite_varients: tuple[int, ...] = (0x0, )
     def __init__(
         self,
-        pos: bmp.loc.Coordinate,
-        direct: bmp.loc.Direction = bmp.loc.Direction.S,
+        pos: bmp.loc.Coord[int],
+        direct: bmp.loc.Orient = bmp.loc.Orient.S,
         *,
         space_id: Optional[bmp.ref.SpaceID] = None,
         level_id: Optional[bmp.ref.LevelID] = None
     ) -> None:
         self.uuid: uuid.UUID = uuid.uuid4()
-        self.pos: bmp.loc.Coordinate = pos
-        self.direct: bmp.loc.Direction = direct
-        self.direct_mapping: dict[bmp.loc.Direction, bmp.loc.Direction] = {d: d for d in bmp.loc.Direction}
+        self.pos: bmp.loc.Coord[int] = pos
+        self.direct: bmp.loc.Orient = direct
+        self.direct_mapping: dict[bmp.loc.Orient, bmp.loc.Orient] = {d: d for d in bmp.loc.Orient}
         self.old_state: OldObjectState = OldObjectState()
         self.space_id: Optional[bmp.ref.SpaceID] = space_id
         self.level_id: Optional[bmp.ref.LevelID] = level_id
@@ -174,9 +174,21 @@ class Object(object):
         string += f"\tspace_id={self.space_id}, level_id={self.level_id}\n"
         string += f"\tproperties: \n{self.properties}\n"
         return string
+    @property
+    def x(self) -> int:
+        return self.pos[0]
+    @x.setter
+    def x(self, value: int) -> None:
+        self.pos = (value, self.pos[1])
+    @property
+    def y(self) -> int:
+        return self.pos[1]
+    @y.setter
+    def y(self, value: int) -> None:
+        self.pos = (self.pos[0], value)
     def reset_uuid(self) -> None:
         self.uuid = uuid.uuid4()
-    def set_direct_mapping(self, mapping: dict[bmp.loc.Direction, bmp.loc.Direction]) -> None:
+    def set_direct_mapping(self, mapping: dict[bmp.loc.Orient, bmp.loc.Orient]) -> None:
         self.direct = mapping[self.direct_mapping[self.direct]]
         self.direct_mapping = mapping.copy()
     def set_sprite(self, **kwds) -> None:
@@ -201,9 +213,9 @@ class Static(Object):
 
 class Tiled(Object):
     sprite_varients: tuple[int, ...] = tuple(i for i in range(0x10))
-    def set_sprite(self, connected: Optional[dict[bmp.loc.Direction, bool]] = None, **kwds) -> None:
-        connected = {bmp.loc.Direction.W: False, bmp.loc.Direction.S: False, bmp.loc.Direction.A: False, bmp.loc.Direction.D: False} if connected is None else connected
-        self.sprite_state = (connected[bmp.loc.Direction.D] * 0x1) | (connected[bmp.loc.Direction.W] * 0x2) | (connected[bmp.loc.Direction.A] * 0x4) | (connected[bmp.loc.Direction.S] * 0x8)
+    def set_sprite(self, connected: Optional[dict[bmp.loc.Orient, bool]] = None, **kwds) -> None:
+        connected = {bmp.loc.Orient.W: False, bmp.loc.Orient.S: False, bmp.loc.Orient.A: False, bmp.loc.Orient.D: False} if connected is None else connected
+        self.sprite_state = (connected[bmp.loc.Orient.D] * 0x1) | (connected[bmp.loc.Orient.W] * 0x2) | (connected[bmp.loc.Orient.A] * 0x4) | (connected[bmp.loc.Orient.S] * 0x8)
 
 class Animated(Object):
     sprite_varients: tuple[int, ...] = tuple(i for i in range(0x4))
@@ -416,8 +428,8 @@ class SpaceObject(Object):
     dark_overlay: bmp.color.ColorHex = 0xFFFFFF
     def __init__(
         self,
-        pos: bmp.loc.Coordinate,
-        direct: bmp.loc.Direction = bmp.loc.Direction.S,
+        pos: bmp.loc.Coord[int],
+        direct: bmp.loc.Orient = bmp.loc.Orient.S,
         *,
         space_id: bmp.ref.SpaceID,
         level_id: Optional[bmp.ref.LevelID] = None,
@@ -447,8 +459,8 @@ default_space_object_type: type[SpaceObject] = Space
 class LevelObject(Object):
     def __init__(
         self,
-        pos: bmp.loc.Coordinate,
-        direct: bmp.loc.Direction = bmp.loc.Direction.S,
+        pos: bmp.loc.Coord[int],
+        direct: bmp.loc.Orient = bmp.loc.Orient.S,
         *,
         space_id: Optional[bmp.ref.SpaceID] = None,
         level_id: bmp.ref.LevelID,
@@ -476,8 +488,8 @@ class Path(Tiled):
     sprite_color: bmp.color.PaletteIndex = (0, 2)
     def __init__(
         self,
-        pos: bmp.loc.Coordinate,
-        direct: bmp.loc.Direction = bmp.loc.Direction.S,
+        pos: bmp.loc.Coord[int],
+        direct: bmp.loc.Orient = bmp.loc.Orient.S,
         *,
         space_id: Optional[bmp.ref.SpaceID] = None,
         level_id: Optional[bmp.ref.LevelID] = None,
@@ -493,8 +505,8 @@ class Path(Tiled):
 class Game(Object):
     def __init__(
         self,
-        pos: bmp.loc.Coordinate,
-        direct: bmp.loc.Direction = bmp.loc.Direction.S,
+        pos: bmp.loc.Coord[int],
+        direct: bmp.loc.Orient = bmp.loc.Orient.S,
         *,
         space_id: Optional[bmp.ref.SpaceID] = None,
         level_id: Optional[bmp.ref.LevelID] = None,
@@ -824,7 +836,7 @@ class TransformProperty(Property):
     sprite_color: bmp.color.PaletteIndex = (1, 4)
 
 class DirectionalProperty(TransformProperty):
-    ref_direct: bmp.loc.Direction
+    ref_direct: bmp.loc.Orient
     ref_transform: bmp.loc.SpaceTransform
 
 class DirectFixProperty(DirectionalProperty):
@@ -834,28 +846,28 @@ class TextUp(DirectFixProperty):
     json_name = "text_up"
     sprite_name = "text_up"
     display_name = "UP"
-    ref_direct = bmp.loc.Direction.W
+    ref_direct = bmp.loc.Orient.W
     ref_transform = {"direct": ref_direct.to_str(), "flip": False}
 
 class TextDown(DirectFixProperty):
     json_name = "text_down"
     sprite_name = "text_down"
     display_name = "DOWN"
-    ref_direct = bmp.loc.Direction.S
+    ref_direct = bmp.loc.Orient.S
     ref_transform = {"direct": ref_direct.to_str(), "flip": False}
 
 class TextLeft(DirectFixProperty):
     json_name = "text_left"
     sprite_name = "text_left"
     display_name = "LEFT"
-    ref_direct = bmp.loc.Direction.A
+    ref_direct = bmp.loc.Orient.A
     ref_transform = {"direct": ref_direct.to_str(), "flip": False}
 
 class TextRight(DirectFixProperty):
     json_name = "text_right"
     sprite_name = "text_right"
     display_name = "RIGHT"
-    ref_direct = bmp.loc.Direction.D
+    ref_direct = bmp.loc.Orient.D
     ref_transform = {"direct": ref_direct.to_str(), "flip": False}
 
 direct_fix_properties: list[type[DirectFixProperty]] = [TextLeft, TextUp, TextRight, TextDown]
@@ -867,20 +879,20 @@ class TextTurn(DirectRotateProperty):
     json_name = "text_turn"
     sprite_name = "text_turn"
     display_name = "TURN"
-    ref_direct = bmp.loc.Direction.A
+    ref_direct = bmp.loc.Orient.A
     ref_transform = {"direct": ref_direct.to_str(), "flip": False}
 
 class TextDeturn(DirectRotateProperty):
     json_name = "text_deturn"
     sprite_name = "text_deturn"
     display_name = "DETURN"
-    ref_direct = bmp.loc.Direction.D
+    ref_direct = bmp.loc.Orient.D
     ref_transform = {"direct": ref_direct.to_str(), "flip": False}
 
 direct_rotate_properties: list[type[DirectRotateProperty]] = [TextTurn, TextDeturn]
 
 class DirectMappingProperty(TransformProperty):
-    ref_mapping: dict[bmp.loc.Direction, bmp.loc.Direction]
+    ref_mapping: dict[bmp.loc.Orient, bmp.loc.Orient]
     ref_transform: bmp.loc.SpaceTransform
 
 class TextFlip(DirectMappingProperty):
@@ -888,10 +900,10 @@ class TextFlip(DirectMappingProperty):
     sprite_name = "text_flip"
     display_name = "FLIP"
     ref_mapping = {
-        bmp.loc.Direction.W: bmp.loc.Direction.W,
-        bmp.loc.Direction.S: bmp.loc.Direction.S,
-        bmp.loc.Direction.A: bmp.loc.Direction.D,
-        bmp.loc.Direction.D: bmp.loc.Direction.A,
+        bmp.loc.Orient.W: bmp.loc.Orient.W,
+        bmp.loc.Orient.S: bmp.loc.Orient.S,
+        bmp.loc.Orient.A: bmp.loc.Orient.D,
+        bmp.loc.Orient.D: bmp.loc.Orient.A,
     }
     ref_transform = {"direct": "S", "flip": True}
 
@@ -1223,7 +1235,7 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
             generate_metatext_at_tier(current_metatext_tier)
             return json_to_object(json_object, ver)
         raise ValueError(json_object["type"])
-    pos = bmp.loc.Coordinate(*json_object["position"])
+    pos: bmp.loc.Coord[int] = (json_object["position"][0], json_object["position"][1])
     if bmp.base.compare_versions(ver if ver is not None else "0.0", "3.91") == -1:
         direct = bmp.loc.str_to_direct(json_object["orientation"]) # type: ignore
     else:
