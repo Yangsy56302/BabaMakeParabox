@@ -26,9 +26,10 @@ _……大概吧。_
 ### 下载
 
 请跳转到[Github](https://github.com/Yangsy56302/BabaMakeParabox)，
-点击页面右上方写着**Code**的绿色按钮，在展开的下拉菜单里点击最靠下的的**Download zip**即可下载。
+点击页面右上方写着**Code**的绿色按钮，在展开的下拉菜单里点击最靠下的的**Download zip**即可下载所需的压缩包。
+您也可以点击[此链接](https://github.com/Yangsy56302/BabaMakeParabox/archive/refs/heads/main.zip)以直接下载。
 
-该流程下载的压缩包（`BabaMakeParabox-main.zip`）内含有**可执行程序（bmp.exe）**，**源代码（BabaMakeParabox/）**，
+压缩包（`BabaMakeParabox-main.zip`）内含有**可执行程序（bmp.exe）**，**源代码（BabaMakeParabox/）**，
 **Baba Make Parabox 添加的新纹理（sprites_new/）**， **Baba Is You 的部分音效（sounds/）** 等内容。
 
 备用下载地址包括需要特殊手段访问的[Gitlab](https://gitlab.com/Yangsy56302/BabaMakeParabox)，
