@@ -1,8 +1,9 @@
-from typing import Any, NotRequired, Optional, TypedDict
+from typing import NotRequired, Optional, TypedDict
 import random
 import copy
 import math
 import os
+from tqdm import tqdm
 
 import bmp.base
 import bmp.collect
@@ -26,7 +27,7 @@ class LevelJson(TypedDict):
     main_space: bmp.ref.SpaceIDJson
     space_list: list[bmp.space.SpaceJson]
 
-max_move_count: int = 24
+max_move_count: int = 120
 infinite_move_number: int = 6
 MoveInfo = tuple[bmp.obj.Object, list[tuple[bmp.ref.SpaceID, bmp.loc.Coord[int], bmp.loc.Orient]]]
 
@@ -105,7 +106,7 @@ class Level(object):
                     old_space = space
             old_obj.move_number += 1
             old_obj.old_state.pos = old_obj.pos
-            old_obj.old_state.direct = old_obj.direct
+            old_obj.old_state.direct = old_obj.orient
             old_obj.old_state.space = old_space.space_id
             old_obj.old_state.level = self.level_id
             for new_space_id, new_pos, new_direct in new_info_list:
@@ -115,7 +116,7 @@ class Level(object):
                 new_obj = copy.deepcopy(old_obj)
                 new_obj.reset_uuid()
                 new_obj.pos = new_pos
-                new_obj.direct = new_direct
+                new_obj.orient = new_direct
                 new_space.new_obj(new_obj)
             old_space.del_obj(old_obj)
         if len(move_list) != 0 and "move" not in self.sound_events:
@@ -247,22 +248,22 @@ class Level(object):
             for _ in range(new_noun_count):
                 if issubclass(new_object_type, bmp.obj.Game):
                     if isinstance(obj, (bmp.obj.LevelObject, bmp.obj.SpaceObject)):
-                        space.new_obj(bmp.obj.Game(obj.pos, obj.direct, ref_type=bmp.obj.get_noun_from_type(type(obj))))
+                        space.new_obj(bmp.obj.Game(obj.pos, obj.orient, ref_type=bmp.obj.get_noun_from_type(type(obj))))
                     else:
-                        space.new_obj(bmp.obj.Game(obj.pos, obj.direct, ref_type=type(obj)))
+                        space.new_obj(bmp.obj.Game(obj.pos, obj.orient, ref_type=type(obj)))
                 elif issubclass(new_object_type, bmp.obj.LevelObject):
                     level_object_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": obj.json_name, "color": bmp.color.current_palette[obj.sprite_color]}}
                     if obj.level_id is not None:
-                        space.new_obj(new_object_type(obj.pos, obj.direct, level_id=obj.level_id, level_object_extra=level_object_extra))
+                        space.new_obj(new_object_type(obj.pos, obj.orient, level_id=obj.level_id, level_extra=level_object_extra))
                     else:
-                        space.new_obj(new_object_type(obj.pos, obj.direct, level_id=self.level_id, level_object_extra=level_object_extra))
+                        space.new_obj(new_object_type(obj.pos, obj.orient, level_id=self.level_id, level_extra=level_object_extra))
                 elif issubclass(new_object_type, bmp.obj.SpaceObject):
                     if obj.space_id is not None:
-                        space.new_obj(new_object_type(obj.pos, obj.direct, space_id=obj.space_id))
+                        space.new_obj(new_object_type(obj.pos, obj.orient, space_id=obj.space_id))
                     else:
-                        space.new_obj(new_object_type(obj.pos, obj.direct, space_id=space.space_id))
+                        space.new_obj(new_object_type(obj.pos, obj.orient, space_id=space.space_id))
                 else:
-                    space.new_obj(new_object_type(obj.pos, obj.direct, space_id=obj.space_id, level_id=obj.level_id))
+                    space.new_obj(new_object_type(obj.pos, obj.orient, space_id=obj.space_id, level_id=obj.level_id))
     def get_move_list(self, space: bmp.space.Space, obj: bmp.obj.Object, \
         direct: bmp.loc.Orient, pos: Optional[bmp.loc.Coord[int]] = None, \
             pushed: Optional[list[bmp.obj.Object]] = None, passed: Optional[list[bmp.ref.SpaceID]] = None, \
@@ -289,9 +290,9 @@ class Level(object):
                 for super_space, space_obj in super_space_list:
                     if old_space.properties[type(space_obj)].disabled(bmp.obj.TextLeave):
                         continue
-                    transform = space.get_stacked_transform(space_obj.space_object_extra["static_transform"], space_obj.space_object_extra["dynamic_transform"])
+                    transform = space.get_stacked_transform(space_obj.space_extra["static_transform"], space_obj.space_extra["dynamic_transform"])
                     new_direct = bmp.loc.swap_direction(direct) if transform["flip"] and direct in (bmp.loc.Orient.A, bmp.loc.Orient.D) else direct
-                    new_direct = bmp.loc.turn(new_direct, bmp.loc.str_to_direct(transform["direct"]))
+                    new_direct = bmp.loc.turn(new_direct, bmp.loc.Orient[transform["direct"]])
                     if transnum is not None:
                         new_transnum = space.calc_leave_transnum(transnum, space_obj.pos, direct, transform)
                     else:
@@ -346,9 +347,9 @@ class Level(object):
                         if new_push_object.properties.disabled(bmp.obj.TextEnter):
                             squeeze = False
                             break
-                        transform = bmp.loc.inverse_transform(squeeze_space.get_stacked_transform(obj.space_object_extra["static_transform"], obj.space_object_extra["dynamic_transform"]))
+                        transform = bmp.loc.inverse_transform(squeeze_space.get_stacked_transform(obj.space_extra["static_transform"], obj.space_extra["dynamic_transform"]))
                         new_direct = bmp.loc.swap_direction(direct) if transform["flip"] and direct in (bmp.loc.Orient.A, bmp.loc.Orient.D) else direct
-                        new_direct = bmp.loc.turn(new_direct, bmp.loc.str_to_direct(transform["direct"]))
+                        new_direct = bmp.loc.turn(new_direct, bmp.loc.Orient[transform["direct"]])
                         input_pos = squeeze_space.get_enter_pos_by_default(new_direct, transform)
                         squeeze_move_list = self.get_move_list(squeeze_space, new_push_object, bmp.loc.swap_direction(new_direct), input_pos, pushed=pushed + [obj], depth=depth)
                         if squeeze_move_list is None:
@@ -387,21 +388,22 @@ class Level(object):
                     for _, epsilon_space_obj in epsilon_space_list:
                         if epsilon_space_obj.properties.disabled(bmp.obj.TextEnter):
                             continue
-                        transform = bmp.loc.inverse_transform(epsilon_space.get_stacked_transform(epsilon_space_obj.space_object_extra["static_transform"], epsilon_space_obj.space_object_extra["dynamic_transform"]))
-                        new_direct = bmp.loc.swap_direction(direct) if transform["flip"] and direct in (bmp.loc.Orient.A, bmp.loc.Orient.D) else direct
-                        new_direct = bmp.loc.turn(new_direct, bmp.loc.str_to_direct(transform["direct"]))
-                        input_pos = epsilon_space.get_enter_pos_by_default(bmp.loc.swap_direction(new_direct), transform)
+                        transform = bmp.loc.inverse_transform(epsilon_space.get_stacked_transform(epsilon_space_obj.space_extra["static_transform"], epsilon_space_obj.space_extra["dynamic_transform"]))
+                        inversed_transform = bmp.loc.inverse_transform(transform)
+                        new_direct = bmp.loc.swap_direction(direct) if inversed_transform["flip"] and direct in (bmp.loc.Orient.A, bmp.loc.Orient.D) else direct
+                        new_direct = bmp.loc.turn(new_direct, bmp.loc.Orient[transform["direct"]])
+                        input_pos = epsilon_space.get_enter_pos_by_default(bmp.loc.swap_direction(new_direct), inversed_transform)
                         new_transnum = 0.5
                         passed.append(space.space_id)
-                        new_move_list = self.get_move_list(epsilon_space, obj, bmp.loc.swap_direction(new_direct), input_pos, pushed, passed, new_transnum, depth)
+                        new_move_list = self.get_move_list(epsilon_space, obj, new_direct, input_pos, pushed, passed, new_transnum, depth)
                         if new_move_list is not None:
                             enter_list.extend(new_move_list)
                             enter_space = True
                     continue
-                transform = sub_space.get_stacked_transform(sub_space_obj.space_object_extra["static_transform"], sub_space_obj.space_object_extra["dynamic_transform"])
+                transform = sub_space.get_stacked_transform(sub_space_obj.space_extra["static_transform"], sub_space_obj.space_extra["dynamic_transform"])
                 inversed_transform = bmp.loc.inverse_transform(transform)
                 new_direct = bmp.loc.swap_direction(direct) if inversed_transform["flip"] and direct in (bmp.loc.Orient.A, bmp.loc.Orient.D) else direct
-                new_direct = bmp.loc.turn(new_direct, bmp.loc.str_to_direct(inversed_transform["direct"]))
+                new_direct = bmp.loc.turn(new_direct, bmp.loc.Orient[transform["direct"]])
                 if transnum is not None:
                     input_pos = sub_space.get_enter_pos(transnum, bmp.loc.swap_direction(direct), inversed_transform)
                     new_transnum = space.calc_enter_transnum(transnum, sub_space_obj.pos, bmp.loc.swap_direction(direct), inversed_transform)
@@ -443,8 +445,8 @@ class Level(object):
                 if len(you_objs) != 0:
                     finished = False
                 for obj in you_objs:
-                    obj.direct = direct
-                    new_move_list = self.get_move_list(space, obj, obj.direct)
+                    obj.orient = direct
+                    new_move_list = self.get_move_list(space, obj, obj.orient)
                     if new_move_list is not None:
                         move_list.extend(new_move_list)
                         obj.move_number += 1
@@ -478,8 +480,8 @@ class Level(object):
                 for obj in space.object_list:
                     if obj.properties.enabled(prop):
                         if isinstance(obj, bmp.obj.SpaceObject):
-                            obj.space_object_extra["static_transform"] = prop.ref_transform.copy()
-                        obj.direct = prop.ref_direct
+                            obj.space_extra["static_transform"] = prop.ref_transform.copy()
+                        obj.orient = prop.ref_direct
                 if space.properties[bmp.obj.default_space_object_type].enabled(prop):
                     space.static_transform = prop.ref_transform.copy()
             if self.properties[bmp.obj.default_level_object_type].enabled(prop):
@@ -488,13 +490,13 @@ class Level(object):
         for space in self.space_list:
             space.dynamic_transform = bmp.loc.default_space_transform.copy()
             for obj in space.get_spaces():
-                obj.space_object_extra["dynamic_transform"] = bmp.loc.default_space_transform.copy()
+                obj.space_extra["dynamic_transform"] = bmp.loc.default_space_transform.copy()
         for prop in bmp.obj.direct_mapping_properties:
             for space in self.space_list:
                 for obj in space.object_list:
                     if obj.properties.get(prop) % 2 == 1:
                         if isinstance(obj, bmp.obj.SpaceObject):
-                            obj.space_object_extra["dynamic_transform"] = bmp.loc.get_stacked_transform(obj.space_object_extra["dynamic_transform"], prop.ref_transform)
+                            obj.space_extra["dynamic_transform"] = bmp.loc.get_stacked_transform(obj.space_extra["dynamic_transform"], prop.ref_transform)
                         obj.set_direct_mapping(prop.ref_mapping)
                 if space.properties[bmp.obj.default_space_object_type].get(prop) % 2 == 1:
                     space.dynamic_transform = bmp.loc.get_stacked_transform(space.dynamic_transform, prop.ref_transform)
@@ -505,9 +507,9 @@ class Level(object):
             for obj in space.object_list:
                 turn_count = (obj.properties.get(bmp.obj.TextTurn) - obj.properties.get(bmp.obj.TextDeturn)) % 4
                 for _ in range(turn_count):
-                    obj.direct = bmp.loc.turn_right(obj.direct)
+                    obj.orient = bmp.loc.turn_right(obj.orient)
                     if isinstance(obj, bmp.obj.SpaceObject):
-                        obj.space_object_extra["static_transform"] = bmp.loc.get_stacked_transform(obj.space_object_extra["static_transform"], {"direct": "A", "flip": False})
+                        obj.space_extra["static_transform"] = bmp.loc.get_stacked_transform(obj.space_extra["static_transform"], {"direct": "A", "flip": False})
             turn_count = (space.properties[bmp.obj.default_space_object_type].get(bmp.obj.TextTurn) - space.properties[bmp.obj.default_space_object_type].get(bmp.obj.TextDeturn)) % 4
             for _ in range(turn_count):
                 space.static_transform = bmp.loc.get_stacked_transform(space.static_transform, {"direct": "A", "flip": False})
@@ -541,13 +543,13 @@ class Level(object):
                 if len(move_objs) != 0:
                     finished = False
                 for obj in move_objs:
-                    new_move_list = self.get_move_list(space, obj, obj.direct)
+                    new_move_list = self.get_move_list(space, obj, obj.orient)
                     if new_move_list is not None:
                         move_list = new_move_list
                         obj.move_number += 1
                     else:
-                        obj.direct = bmp.loc.swap_direction(obj.direct)
-                        new_move_list = self.get_move_list(space, obj, obj.direct)
+                        obj.orient = bmp.loc.swap_direction(obj.orient)
+                        new_move_list = self.get_move_list(space, obj, obj.orient)
                         if new_move_list is not None:
                             move_list = new_move_list
                             obj.move_number += 1
@@ -583,7 +585,7 @@ class Level(object):
                 for shifter_obj in shifter_objs:
                     shifted_objs = [o for o in space.get_objs_from_pos(shifter_obj.pos) if obj != shifter_obj and bmp.obj.same_float_prop(obj, shifter_obj)]
                     for obj in shifted_objs:
-                        new_move_list = self.get_move_list(space, obj, shifter_obj.direct)
+                        new_move_list = self.get_move_list(space, obj, shifter_obj.orient)
                         if new_move_list is not None:
                             move_list.extend(new_move_list)
                             obj.move_number += 1
@@ -771,24 +773,24 @@ class Level(object):
                     for _ in range(make_noun_count):
                         if issubclass(make_object_type, bmp.obj.Game):
                             if isinstance(obj, (bmp.obj.LevelObject, bmp.obj.SpaceObject)):
-                                space.new_obj(bmp.obj.Game(obj.pos, obj.direct, ref_type=bmp.obj.get_noun_from_type(type(obj))))
+                                space.new_obj(bmp.obj.Game(obj.pos, obj.orient, ref_type=bmp.obj.get_noun_from_type(type(obj))))
                             else:
-                                space.new_obj(bmp.obj.Game(obj.pos, obj.direct, ref_type=type(obj)))
+                                space.new_obj(bmp.obj.Game(obj.pos, obj.orient, ref_type=type(obj)))
                         elif issubclass(make_object_type, bmp.obj.LevelObject):
                             if len(space.get_objs_from_pos_and_type(obj.pos, make_object_type)) == 0:
                                 level_object_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": obj.json_name, "color": bmp.color.current_palette[obj.sprite_color]}}
                                 if obj.level_id is not None:
-                                    space.new_obj(make_object_type(obj.pos, obj.direct, level_id=obj.level_id, level_object_extra=level_object_extra))
+                                    space.new_obj(make_object_type(obj.pos, obj.orient, level_id=obj.level_id, level_extra=level_object_extra))
                                 else:
-                                    space.new_obj(make_object_type(obj.pos, obj.direct, level_id=self.level_id, level_object_extra=level_object_extra))
+                                    space.new_obj(make_object_type(obj.pos, obj.orient, level_id=self.level_id, level_extra=level_object_extra))
                         elif issubclass(make_object_type, bmp.obj.SpaceObject):
                             if len(space.get_objs_from_pos_and_type(obj.pos, make_object_type)) == 0:
                                 if obj.space_id is not None:
-                                    space.new_obj(make_object_type(obj.pos, obj.direct, space_id=obj.space_id))
+                                    space.new_obj(make_object_type(obj.pos, obj.orient, space_id=obj.space_id))
                                 else:
-                                    space.new_obj(make_object_type(obj.pos, obj.direct, space_id=space.space_id))
+                                    space.new_obj(make_object_type(obj.pos, obj.orient, space_id=space.space_id))
                         else:
-                            space.new_obj(make_object_type(obj.pos, obj.direct, space_id=obj.space_id, level_id=obj.level_id))
+                            space.new_obj(make_object_type(obj.pos, obj.orient, space_id=obj.space_id, level_id=obj.level_id))
     def text_plus_and_text_minus(self) -> None:
         for space in self.space_list:
             delete_list = []
@@ -800,7 +802,7 @@ class Level(object):
                 new_type = bmp.obj.get_noun_from_type(type(text_plus_obj))
                 if not issubclass(new_type, bmp.obj.TextText):
                     delete_list.append(text_plus_obj)
-                    space.new_obj(new_type(text_plus_obj.pos, text_plus_obj.direct, space_id=text_plus_obj.space_id, level_id=text_plus_obj.level_id))
+                    space.new_obj(new_type(text_plus_obj.pos, text_plus_obj.orient, space_id=text_plus_obj.space_id, level_id=text_plus_obj.level_id))
             for text_minus_obj in text_minus_objs:
                 if text_minus_obj in text_plus_objs:
                     continue
@@ -811,20 +813,20 @@ class Level(object):
                     continue
                 delete_list.append(text_minus_obj)
                 if issubclass(new_type, bmp.obj.Game):
-                    space.new_obj(bmp.obj.Game(text_minus_obj.pos, text_minus_obj.direct, ref_type=bmp.obj.TextGame))
+                    space.new_obj(bmp.obj.Game(text_minus_obj.pos, text_minus_obj.orient, ref_type=bmp.obj.TextGame))
                 elif issubclass(new_type, bmp.obj.LevelObject):
                     level_object_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": text_minus_obj.json_name, "color": bmp.color.current_palette[text_minus_obj.sprite_color]}}
                     if text_minus_obj.level_id is not None:
-                        space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.direct, level_id=self.level_id, level_object_extra=level_object_extra))
+                        space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.orient, level_id=self.level_id, level_extra=level_object_extra))
                     else:
-                        space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.direct, level_id=self.level_id, level_object_extra=level_object_extra))
+                        space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.orient, level_id=self.level_id, level_extra=level_object_extra))
                 elif issubclass(new_type, bmp.obj.SpaceObject):
                     if text_minus_obj.space_id is not None:
-                        space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.direct, space_id=text_minus_obj.space_id))
+                        space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.orient, space_id=text_minus_obj.space_id))
                     else:
-                        space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.direct, space_id=space.space_id))
+                        space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.orient, space_id=space.space_id))
                 else:
-                    space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.direct, space_id=text_minus_obj.space_id, level_id=text_minus_obj.level_id))
+                    space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.orient, space_id=text_minus_obj.space_id, level_id=text_minus_obj.level_id))
             for obj in delete_list:
                 self.destroy_obj(space, obj)
     def game(self) -> None:
@@ -939,7 +941,7 @@ class Level(object):
             sub_space = self.get_space(space_obj.space_id)
             if sub_space is None:
                 continue
-            transform = sub_space.get_stacked_transform(space_obj.space_object_extra["static_transform"], space_obj.space_object_extra["dynamic_transform"])
+            transform = sub_space.get_stacked_transform(space_obj.space_extra["static_transform"], space_obj.space_extra["dynamic_transform"])
             for new_depth, new_pos, new_size in self.recursion_get_object_surface_info(old_pos, old_space_id, space_obj.space_id, passed=new_passed):
                 return_list.append((
                     new_depth + 1,
@@ -958,7 +960,7 @@ class Level(object):
         scaled_sprite_size = pixel_size * bmp.render.sprite_size
         if depth > bmp.base.options["space_display_recursion_depth"] or space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextHide):
             space_surface = pygame.Surface((scaled_sprite_size, scaled_sprite_size), pygame.SRCALPHA)
-            space_surface.fill(space.color)
+            space_surface.fill(space.color if space.color is not None else bmp.color.current_palette[0, 4])
             space_surface = bmp.render.simple_object_to_surface(bmp.obj.SpaceObject((0, 0), space_id=space.space_id), default_surface=space_surface)
             return space_surface
         space_surface_size = (space.width * scaled_sprite_size, space.height * scaled_sprite_size)
@@ -984,7 +986,7 @@ class Level(object):
                 if sub_space is not None:
                     default_surface = self.space_to_surface(sub_space, wiggle, (scaled_sprite_size, scaled_sprite_size), depth + 1, smooth)
                     obj_surface = bmp.render.simple_object_to_surface(obj, wiggle=wiggle, default_surface=default_surface, debug=debug)
-                transform = bmp.loc.get_stacked_transform(obj.space_object_extra["static_transform"], obj.space_object_extra["dynamic_transform"])
+                transform = bmp.loc.get_stacked_transform(obj.space_extra["static_transform"], obj.space_extra["dynamic_transform"])
                 if transform["flip"]:
                     obj_surface = pygame.transform.flip(obj_surface, flip_x=True, flip_y=False)
                 match transform["direct"]:
@@ -1004,7 +1006,7 @@ class Level(object):
                    cursor[1] * scaled_sprite_size - (surface.get_height() - bmp.render.sprite_size) * pixel_size // 2)
             space_surface.blit(pygame.transform.scale(surface, (pixel_size * surface.get_width(), pixel_size * surface.get_height())), pos)
         space_background = pygame.Surface(space_surface.get_size(), pygame.SRCALPHA)
-        space_background.fill(pygame.Color(*bmp.color.hex_to_rgb(space.color)))
+        space_background.fill(pygame.Color(*bmp.color.hex_to_rgb(space.color if space.color is not None else bmp.color.current_palette[0, 4])))
         space_background.blit(space_surface, (0, 0))
         space_surface = space_background
         if space.space_id.infinite_tier != 0 and depth == 0:
@@ -1031,7 +1033,13 @@ class Level(object):
             json_object["super_level"] = self.super_level_id.to_json()
         if self.map_info is not None:
             json_object["map_info"] = self.map_info
-        for space in self.space_list:
+        for space in tqdm(
+            self.space_list,
+            desc=bmp.lang.lang_format("saving.level.space_list"),
+            unit=bmp.lang.lang_format("space.name"),
+            position=1,
+            **bmp.lang.default_tqdm_args
+        ):
             json_object["space_list"].append(space.to_json())
         return json_object
 
@@ -1042,7 +1050,13 @@ def json_to_level(json_object: LevelJson, ver: Optional[str] = None) -> Level:
         level_id: bmp.ref.LevelID = bmp.ref.LevelID(json_object["name"]) # type: ignore
         super_level_id = bmp.ref.LevelID(json_object["super_level"]) # type: ignore
         main_space_id: bmp.ref.SpaceID = bmp.ref.SpaceID(json_object["main_world"]) # type: ignore
-        for space in json_object["world_list"]: # type: ignore
+        for space in tqdm(
+            json_object["world_list"], # type: ignore
+            desc=bmp.lang.lang_format("loading.level.space_list"),
+            unit=bmp.lang.lang_format("space.name"),
+            position=1,
+            **bmp.lang.default_tqdm_args
+        ):
             space_list.append(bmp.space.json_to_space(space, ver))
     elif bmp.base.compare_versions(ver if ver is not None else "0.0", "3.91") == -1:
         level_id: bmp.ref.LevelID = bmp.ref.LevelID(**json_object["id"])
@@ -1050,7 +1064,13 @@ def json_to_level(json_object: LevelJson, ver: Optional[str] = None) -> Level:
         if super_level_json is not None:
             super_level_id = bmp.ref.LevelID(**super_level_json)
         main_space_id: bmp.ref.SpaceID = bmp.ref.SpaceID(**json_object["main_world"]) # type: ignore
-        for space in json_object["world_list"]: # type: ignore
+        for space in tqdm(
+            json_object["world_list"], # type: ignore
+            desc=bmp.lang.lang_format("loading.level.space_list"),
+            unit=bmp.lang.lang_format("space.name"),
+            position=1,
+            **bmp.lang.default_tqdm_args
+        ):
             space_list.append(bmp.space.json_to_space(space, ver))
     else:
         level_id: bmp.ref.LevelID = bmp.ref.LevelID(**json_object["id"])
@@ -1058,10 +1078,18 @@ def json_to_level(json_object: LevelJson, ver: Optional[str] = None) -> Level:
         if super_level_json is not None:
             super_level_id = bmp.ref.LevelID(**super_level_json)
         main_space_id: bmp.ref.SpaceID = bmp.ref.SpaceID(**json_object["main_space"])
-        for space in json_object["space_list"]:
+        for space in tqdm(
+            json_object["space_list"],
+            desc=bmp.lang.lang_format("loading.level.space_list"),
+            unit=bmp.lang.lang_format("space.name"),
+            position=1,
+            **bmp.lang.default_tqdm_args
+        ):
             space_list.append(bmp.space.json_to_space(space, ver))
-    return Level(level_id=level_id,
-                 space_list=space_list,
-                 super_level_id=super_level_id,
-                 main_space_id=main_space_id,
-                 map_info=json_object.get("map_info"))
+    return Level(
+        level_id=level_id,
+        space_list=space_list,
+        super_level_id=super_level_id,
+        main_space_id=main_space_id,
+        map_info=json_object.get("map_info")
+    )

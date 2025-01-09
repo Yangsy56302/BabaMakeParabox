@@ -1,5 +1,5 @@
-from typing import Any, Optional, TypedDict, Callable
-import random
+from typing import NotRequired, Optional, TypedDict
+from tqdm import tqdm
 
 import bmp.base
 import bmp.color
@@ -11,23 +11,22 @@ import bmp.rule
 class SpaceJson(TypedDict):
     id: bmp.ref.SpaceIDJson
     size: bmp.loc.Coord[int]
-    color: bmp.color.ColorHex
+    color: NotRequired[bmp.color.ColorHex]
     object_list: list[bmp.obj.ObjectJson]
 
 class Space(object):
     def __init__(self, space_id: bmp.ref.SpaceID, size: bmp.loc.Coord[int], color: Optional[bmp.color.ColorHex] = None) -> None:
         self.space_id: bmp.ref.SpaceID = space_id
         self.size: bmp.loc.Coord[int] = size
-        self.color: bmp.color.ColorHex = color if color is not None else bmp.color.random_space_color()
-        self.static_transform: bmp.loc.SpaceTransform = bmp.loc.default_space_transform.copy()
-        self.dynamic_transform: bmp.loc.SpaceTransform = bmp.loc.default_space_transform.copy()
+        self.color: Optional[bmp.color.ColorHex] = color
         self.object_list: list[bmp.obj.Object] = []
         self.object_pos_index: list[list[bmp.obj.Object]]
         self.properties: dict[type[bmp.obj.SpaceObject], bmp.obj.Properties] = {p: bmp.obj.Properties() for p in bmp.obj.space_object_types}
         self.special_operator_properties: dict[type[bmp.obj.SpaceObject], dict[type[bmp.obj.Operator], bmp.obj.Properties]] = {p: {o: bmp.obj.Properties() for o in bmp.obj.special_operators} for p in bmp.obj.space_object_types}
         self.rule_list: list[bmp.rule.Rule] = []
         self.rule_info: list[bmp.rule.RuleInfo] = []
-        self.refresh_index()
+        self.static_transform: bmp.loc.SpaceTransform = bmp.loc.default_space_transform.copy()
+        self.dynamic_transform: bmp.loc.SpaceTransform = bmp.loc.default_space_transform.copy()
     def __eq__(self, space: "Space") -> bool:
         return self.space_id == space.space_id
     @property
@@ -64,38 +63,38 @@ class Space(object):
                 r = func(self, *args, **kwds)
                 return r
         return wrapper
-    @auto_refresh
+    # @auto_refresh
     def new_obj(self, obj: bmp.obj.Object) -> None:
         self.object_list.append(obj)
         if not self.out_of_range(obj.pos):
             self.pos_to_objs(obj.pos).append(obj)
-    @auto_refresh
+    # @auto_refresh
     def get_objs_from_pos(self, pos: bmp.loc.Coord[int]) -> list[bmp.obj.Object]:
         if self.out_of_range(pos):
             return []
         return self.pos_to_objs(pos)
-    @auto_refresh
+    # @auto_refresh
     def get_objs_from_pos_and_type[T: bmp.obj.Object](self, pos: bmp.loc.Coord[int], object_type: type[T]) -> list[T]:
         if self.out_of_range(pos):
             return []
         return [o for o in self.pos_to_objs(pos) if isinstance(o, object_type)]
-    @auto_refresh
+    # @auto_refresh
     def get_objs_from_pos_and_special_noun(self, pos: bmp.loc.Coord[int], noun_type: type[bmp.obj.SupportsIsReferenceOf]) -> list[bmp.obj.Object]:
         if self.out_of_range(pos):
             return []
         return [o for o in self.pos_to_objs(pos) if noun_type.isreferenceof(o)]
-    @auto_refresh
+    # @auto_refresh
     def get_objs_from_type[T: bmp.obj.Object](self, object_type: type[T]) -> list[T]:
         return [o for o in self.object_list if isinstance(o, object_type)]
-    @auto_refresh
+    # @auto_refresh
     def get_objs_from_special_noun(self, object_type: type[bmp.obj.SupportsIsReferenceOf]) -> list[bmp.obj.Object]:
         return [o for o in self.object_list if object_type.isreferenceof(o)]
-    @auto_refresh
+    # @auto_refresh
     def del_obj(self, obj: bmp.obj.Object) -> None:
+        self.object_list.remove(obj)
         if not self.out_of_range(obj.pos):
             self.pos_to_objs(obj.pos).remove(obj)
-        self.object_list.remove(obj)
-    @auto_refresh
+    # @auto_refresh
     def del_objs_from_pos(self, pos: bmp.loc.Coord[int]) -> bool:
         if self.out_of_range(pos):
             return False
@@ -104,7 +103,7 @@ class Space(object):
             self.object_list.remove(obj)
         self.object_pos_index[self.pos_to_index(pos)].clear()
         return deleted
-    @auto_refresh
+    # @auto_refresh
     def del_objs_from_pos_and_type(self, pos: bmp.loc.Coord[int], object_type: type) -> bool:
         del_objects = filter(lambda o: isinstance(o, object_type), self.pos_to_objs(pos))
         deleted = False
@@ -114,7 +113,7 @@ class Space(object):
             if not self.out_of_range(obj.pos):
                 self.pos_to_objs(pos).remove(obj)
         return deleted
-    @auto_refresh
+    # @auto_refresh
     def del_objs_from_pos_and_special_noun(self, pos: bmp.loc.Coord[int], noun_type: type[bmp.obj.SupportsIsReferenceOf]) -> bool:
         del_objects = filter(lambda o: noun_type.isreferenceof(o), self.pos_to_objs(pos))
         deleted = False
@@ -124,18 +123,18 @@ class Space(object):
             if not self.out_of_range(obj.pos):
                 self.pos_to_objs(pos).remove(obj)
         return deleted
-    @auto_refresh
+    # @auto_refresh
     def get_spaces(self) -> list[bmp.obj.SpaceObject]:
         return [o for o in self.object_list if isinstance(o, bmp.obj.SpaceObject)]
-    @auto_refresh
+    # @auto_refresh
     def get_spaces_from_pos(self, pos: bmp.loc.Coord[int]) -> list[bmp.obj.SpaceObject]:
         if self.out_of_range(pos):
             return []
         return [o for o in self.pos_to_objs(pos) if isinstance(o, bmp.obj.SpaceObject)]
-    @auto_refresh
+    # @auto_refresh
     def get_levels(self) -> list[bmp.obj.LevelObject]:
         return [o for o in self.object_list if isinstance(o, bmp.obj.LevelObject)]
-    @auto_refresh
+    # @auto_refresh
     def get_levels_from_pos(self, pos: bmp.loc.Coord[int]) -> list[bmp.obj.LevelObject]:
         if self.out_of_range(pos):
             return []
@@ -192,17 +191,14 @@ class Space(object):
     def set_sprite_states(self, round_num: int = 0) -> None:
         for obj in self.object_list:
             if isinstance(obj, bmp.obj.Tiled):
-                w_pos = bmp.loc.front_position(obj.pos, bmp.loc.Orient.W)
-                w = len(self.get_objs_from_pos_and_type(w_pos, type(obj))) != 0
-                s_pos = bmp.loc.front_position(obj.pos, bmp.loc.Orient.S)
-                s = len(self.get_objs_from_pos_and_type(s_pos, type(obj))) != 0
-                a_pos = bmp.loc.front_position(obj.pos, bmp.loc.Orient.A)
-                a = len(self.get_objs_from_pos_and_type(a_pos, type(obj))) != 0
-                d_pos = bmp.loc.front_position(obj.pos, bmp.loc.Orient.D)
-                d = len(self.get_objs_from_pos_and_type(d_pos, type(obj))) != 0
-                connected = {bmp.loc.Orient.W: w, bmp.loc.Orient.S: s, bmp.loc.Orient.A: a, bmp.loc.Orient.D: d}
+                connected = {
+                    o: len(self.get_objs_from_pos_and_type(
+                        bmp.loc.front_position(obj.pos, o), type(obj)
+                    )) != 0
+                    for o in bmp.loc.Orient
+                }
             else:
-                connected = {bmp.loc.Orient.W: False, bmp.loc.Orient.S: False, bmp.loc.Orient.A: False, bmp.loc.Orient.D: False}
+                connected = {o: False for o in bmp.loc.Orient}
             obj.set_sprite(round_num=round_num, connected=connected)
     def get_stacked_transform(self, static: bmp.loc.SpaceTransform, dynamic: bmp.loc.SpaceTransform) -> bmp.loc.SpaceTransform:
         transform = bmp.loc.get_stacked_transform(
@@ -211,7 +207,7 @@ class Space(object):
         )
         return transform
     def calc_enter_transnum(self, transnum: float, pos: bmp.loc.Coord[int], side: bmp.loc.Orient, transform: bmp.loc.SpaceTransform) -> float:
-        new_side = bmp.loc.turn(side, bmp.loc.str_to_direct(transform["direct"]))
+        new_side = bmp.loc.turn(side, bmp.loc.Orient[transform["direct"]])
         if new_side in (bmp.loc.Orient.W, bmp.loc.Orient.S):
             new_transnum = (transnum * self.width) - pos[0]
         else:
@@ -220,14 +216,14 @@ class Space(object):
             new_transnum = 1.0 - new_transnum
         return new_transnum
     def calc_leave_transnum(self, transnum: float, pos: bmp.loc.Coord[int], side: bmp.loc.Orient, transform: bmp.loc.SpaceTransform) -> float:
-        new_side = bmp.loc.turn(side, bmp.loc.str_to_direct(transform["direct"]))
+        new_side = bmp.loc.turn(side, bmp.loc.Orient[transform["direct"]])
         if new_side in (bmp.loc.Orient.W, bmp.loc.Orient.S):
             new_transnum = (transnum + pos[0]) / self.width
         else:
             new_transnum = (transnum + pos[1]) / self.height
         return new_transnum
     def get_leave_transnum_from_pos(self, pos: bmp.loc.Coord[int], side: bmp.loc.Orient, transform: bmp.loc.SpaceTransform) -> float:
-        new_side = bmp.loc.turn(side, bmp.loc.str_to_direct(transform["direct"]))
+        new_side = bmp.loc.turn(side, bmp.loc.Orient[transform["direct"]])
         if new_side in (bmp.loc.Orient.W, bmp.loc.Orient.S):
             new_transnum = (pos[0] + 0.5) / self.width
         else:
@@ -237,7 +233,7 @@ class Space(object):
         return new_transnum
     def get_enter_pos_by_default(self, side: bmp.loc.Orient, transform: bmp.loc.SpaceTransform) -> bmp.loc.Coord[int]:
         new_side = bmp.loc.swap_direction(side) if transform["flip"] and side in (bmp.loc.Orient.A, bmp.loc.Orient.D) else side
-        new_side = bmp.loc.turn(new_side, bmp.loc.str_to_direct(transform["direct"]))
+        new_side = bmp.loc.turn(new_side, bmp.loc.Orient[transform["direct"]])
         match new_side:
             case bmp.loc.Orient.W:
                 return (self.width // 2, -1)
@@ -249,7 +245,7 @@ class Space(object):
                 return (self.width, self.height // 2)
     def get_enter_pos(self, transnum: float, side: bmp.loc.Orient, transform: bmp.loc.SpaceTransform) -> bmp.loc.Coord[int]:
         new_side = bmp.loc.swap_direction(side) if transform["flip"] and side in (bmp.loc.Orient.A, bmp.loc.Orient.D) else side
-        new_side = bmp.loc.turn(new_side, bmp.loc.str_to_direct(transform["direct"]))
+        new_side = bmp.loc.turn(new_side, bmp.loc.Orient[transform["direct"]])
         new_transnum = (1.0 - transnum) if transform["flip"] and side in (bmp.loc.Orient.A, bmp.loc.Orient.D) else transnum
         match new_side:
             case bmp.loc.Orient.W:
@@ -261,8 +257,16 @@ class Space(object):
             case bmp.loc.Orient.D:
                 return (self.width, int((new_transnum * self.height)))
     def to_json(self) -> SpaceJson:
-        json_object: SpaceJson = {"id": self.space_id.to_json(), "size": (self.width, self.height), "color": self.color, "object_list": []}
-        for obj in self.object_list:
+        json_object: SpaceJson = {"id": self.space_id.to_json(), "size": (self.width, self.height), "object_list": []}
+        if self.color is not None:
+            json_object["color"] = self.color
+        for obj in tqdm(
+            self.object_list,
+            desc=bmp.lang.lang_format("saving.space.object_list"),
+            unit=bmp.lang.lang_format("object.name"),
+            position=2,
+            **bmp.lang.default_tqdm_args
+        ):
             json_object["object_list"].append(obj.to_json())
         return json_object
 
@@ -274,9 +278,15 @@ def json_to_space(json_object: SpaceJson, ver: Optional[str] = None) -> Space:
     new_space = Space(
         space_id=space_id,
         size=(json_object["size"][0], json_object["size"][1]),
-        color=json_object["color"]
+        color=json_object.get("color")
     )
-    for obj in json_object["object_list"]:
-        new_space.new_obj(bmp.obj.json_to_object(obj, ver))
+    for obj in tqdm(
+        json_object["object_list"],
+        desc=bmp.lang.lang_format("loading.space.object_list"),
+        unit=bmp.lang.lang_format("object.name"),
+        position=2,
+        **bmp.lang.default_tqdm_args
+    ):
+        new_space.object_list.append(bmp.obj.json_to_object(obj, ver))
     new_space.refresh_index()
     return new_space

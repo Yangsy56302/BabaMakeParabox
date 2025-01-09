@@ -87,7 +87,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
     space_surface_pos = (0, 0)
     bmp.color.set_palette(os.path.join(".", "palettes", bmp.base.options["palette"]))
     bmp.render.current_sprites.update()
-    window.fill(bmp.color.current_palette[0, 4])
+    window.fill("#000000")
     object_type_shortcuts: dict[int, type[bmp.obj.Object]] = {k: bmp.obj.name_to_class[v] for k, v in enumerate(bmp.base.options["object_type_shortcuts"])}
     level_changed = True
     space_changed = True
@@ -183,7 +183,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                     icon_name = "empty"
                                     icon_color = bmp.color.current_palette[0, 3]
                                 level_object_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": icon_name, "color": icon_color}}
-                                current_space.new_obj(current_object_type(current_cursor_pos, current_direct, level_id=level_id, level_object_extra=level_object_extra))
+                                current_space.new_obj(current_object_type(current_cursor_pos, current_direct, level_id=level_id, level_extra=level_object_extra))
                             elif issubclass(current_object_type, bmp.obj.SpaceObject):
                                 space_id: bmp.ref.SpaceID = current_space.space_id
                                 if keys["LCTRL"] or keys["RCTRL"]:

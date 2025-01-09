@@ -1,7 +1,7 @@
 import json
 import os
 import math
-from typing import Optional
+from typing import Any, Optional
 
 import bmp.base
 
@@ -51,3 +51,10 @@ def cls() -> None:
         print("\x1B[2J\x1B[0f", end=None)
     else:
         print("\x1B[2J\x1B[3J\x1B[H", end=None)
+
+default_tqdm_args: dict[str, Any] = {
+    "dynamic_ncols": True,
+    "mininterval": 0.0625,
+    "maxinterval": 1,
+    "leave": False
+}

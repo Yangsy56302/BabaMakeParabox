@@ -118,9 +118,9 @@ def simple_type_to_surface(object_type: type[bmp.obj.Object], varient: int = 0, 
 
 def simple_object_to_surface(obj: bmp.obj.Object, wiggle: int = 1, default_surface: Optional[pygame.Surface] = None, debug: bool = False) -> pygame.Surface:
     if isinstance(obj, bmp.obj.LevelObject):
-        obj_surface = set_surface_color_dark(current_sprites.get(obj.json_name, obj.sprite_state, wiggle, raw=True).copy(), obj.level_object_extra["icon"]["color"])
-        icon_surface = current_sprites.get(obj.level_object_extra["icon"]["name"], 0, wiggle, raw=True).copy()
-        icon_surface = set_surface_color_light(set_surface_color_dark(icon_surface, obj.level_object_extra["icon"]["color"]), 0xC0C0C0)
+        obj_surface = set_surface_color_dark(current_sprites.get(obj.json_name, obj.sprite_state, wiggle, raw=True).copy(), obj.level_extra["icon"]["color"])
+        icon_surface = current_sprites.get(obj.level_extra["icon"]["name"], 0, wiggle, raw=True).copy()
+        icon_surface = set_surface_color_light(set_surface_color_dark(icon_surface, obj.level_extra["icon"]["color"]), 0xC0C0C0)
         icon_surface_pos = ((obj_surface.get_width() - icon_surface.get_width()) // 2,
                             (obj_surface.get_height() - icon_surface.get_height()) // 2)
         obj_surface.blit(icon_surface, icon_surface_pos)

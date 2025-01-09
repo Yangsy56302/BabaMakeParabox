@@ -11,7 +11,7 @@ class SpaceObjectExtra(TypedDict):
     static_transform: bmp.loc.SpaceTransform
     dynamic_transform: bmp.loc.SpaceTransform
 
-default_space_object_extra: SpaceObjectExtra = {
+default_space_extra: SpaceObjectExtra = {
     "static_transform": bmp.loc.default_space_transform.copy(),
     "dynamic_transform": bmp.loc.default_space_transform.copy()
 }
@@ -27,7 +27,17 @@ class PathExtra(TypedDict):
     unlocked: bool
     conditions: dict[str, int]
 
-default_level_object_extra: LevelObjectExtra = {"icon": {"name": "empty", "color": 0xFFFFFF}}
+default_level_extra: LevelObjectExtra = {"icon": {"name": "empty", "color": 0xFFFFFF}}
+
+class ObjectJson(TypedDict):
+    type: str
+    pos: bmp.loc.Coord[int]
+    orient: bmp.loc.OrientStr
+    space_id: NotRequired[bmp.ref.SpaceIDJson]
+    space_extra: NotRequired[SpaceObjectExtra]
+    level_id: NotRequired[bmp.ref.LevelIDJson]
+    level_extra: NotRequired[LevelObjectExtra]
+    path_extra: NotRequired[PathExtra]
 
 PropertiesDict = dict[type["Text"], dict[int, int]]
 
@@ -111,16 +121,6 @@ class Properties(object):
     def disabled_dict(self) -> dict[type["Text"], int]:
         return {k: v for k, v in {k: self.calc_count(v, 1) for k, v in self.__dict.items()}.items() if v != 0}
 
-class ObjectJson(TypedDict):
-    type: str
-    position: bmp.loc.Coord[int]
-    direction: bmp.loc.OrientStr
-    space_id: NotRequired[bmp.ref.SpaceIDJson]
-    space_object_extra: NotRequired[SpaceObjectExtra]
-    level_id: NotRequired[bmp.ref.LevelIDJson]
-    level_object_extra: NotRequired[LevelObjectExtra]
-    path_extra: NotRequired[PathExtra]
-
 class OldObjectState(object):
     def __init__(
         self,
@@ -154,7 +154,7 @@ class Object(object):
     ) -> None:
         self.uuid: uuid.UUID = uuid.uuid4()
         self.pos: bmp.loc.Coord[int] = pos
-        self.direct: bmp.loc.Orient = direct
+        self.orient: bmp.loc.Orient = direct
         self.direct_mapping: dict[bmp.loc.Orient, bmp.loc.Orient] = {d: d for d in bmp.loc.Orient}
         self.old_state: OldObjectState = OldObjectState()
         self.space_id: Optional[bmp.ref.SpaceID] = space_id
@@ -168,12 +168,8 @@ class Object(object):
     def __hash__(self) -> int:
         return hash(self.uuid)
     def __repr__(self) -> str:
-        string = ""
-        string += f"{self.__class__.__name__}\n"
-        string += f"\tpos={self.pos}, direct={self.direct}\n"
-        string += f"\tspace_id={self.space_id}, level_id={self.level_id}\n"
-        string += f"\tproperties: \n{self.properties}\n"
-        return string
+        string = f"object {self.json_name} at {self.pos} facing {self.orient}"
+        return "<" + string + ">"
     @property
     def x(self) -> int:
         return self.pos[0]
@@ -189,12 +185,12 @@ class Object(object):
     def reset_uuid(self) -> None:
         self.uuid = uuid.uuid4()
     def set_direct_mapping(self, mapping: dict[bmp.loc.Orient, bmp.loc.Orient]) -> None:
-        self.direct = mapping[self.direct_mapping[self.direct]]
+        self.orient = mapping[self.direct_mapping[self.orient]]
         self.direct_mapping = mapping.copy()
     def set_sprite(self, **kwds) -> None:
         self.sprite_state = 0
     def to_json(self) -> ObjectJson:
-        json_object: ObjectJson = {"type": self.json_name, "position": tuple(self.pos), "direction": self.direct.to_str()} # type: ignore
+        json_object: ObjectJson = {"type": self.json_name, "pos": self.pos, "orient": self.orient.name}
         if self.space_id is not None:
             json_object = {**json_object, "space_id": self.space_id.to_json()}
         if self.level_id is not None:
@@ -225,7 +221,7 @@ class Animated(Object):
 class Directional(Object):
     sprite_varients: tuple[int, ...] = tuple(i * 0x8 for i in range(0x4))
     def set_sprite(self, **kwds) -> None:
-        self.sprite_state = int(math.log2(int(self.direct.to_bit()))) * 0x8
+        self.sprite_state = int(math.log2(int(self.orient.value))) * 0x8
 
 class AnimatedDirectional(Object):
     sprite_varients: tuple[int, ...] = \
@@ -234,7 +230,7 @@ class AnimatedDirectional(Object):
         tuple(i * 0x8 + 0x2 for i in range(0x4)) + \
         tuple(i * 0x8 + 0x3 for i in range(0x4))
     def set_sprite(self, round_num: int = 0, **kwds) -> None:
-        self.sprite_state = int(math.log2(int(self.direct.to_bit()))) * 0x8 | round_num % 4
+        self.sprite_state = int(math.log2(int(self.orient.value))) * 0x8 | round_num % 4
 
 class Character(Object):
     sprite_varients: tuple[int, ...] = \
@@ -245,9 +241,9 @@ class Character(Object):
     def set_sprite(self, **kwds) -> None:
         if self.move_number > 0:
             temp_state = (self.sprite_state & 0x3) + 1 if (self.sprite_state & 0x3) != 0x3 else 0x0
-            self.sprite_state = int(math.log2(int(self.direct.to_bit()))) * 0x8 | temp_state
+            self.sprite_state = int(math.log2(int(self.orient.value))) * 0x8 | temp_state
         else:
-            self.sprite_state = int(math.log2(int(self.direct.to_bit()))) * 0x8 | (self.sprite_state & 0x3)
+            self.sprite_state = int(math.log2(int(self.orient.value))) * 0x8 | (self.sprite_state & 0x3)
 
 class Baba(Character):
     json_name = "baba"
@@ -433,13 +429,17 @@ class SpaceObject(Object):
         *,
         space_id: bmp.ref.SpaceID,
         level_id: Optional[bmp.ref.LevelID] = None,
-        space_object_extra: SpaceObjectExtra = default_space_object_extra
+        space_extra: SpaceObjectExtra = default_space_extra
     ) -> None:
         self.space_id: bmp.ref.SpaceID
         super().__init__(pos, direct, space_id=space_id, level_id=level_id)
-        self.space_object_extra: SpaceObjectExtra = space_object_extra.copy()
+        self.space_extra: SpaceObjectExtra = space_extra.copy()
+    def __repr__(self) -> str:
+        string = super().__repr__()[1:-1]
+        string += f" stand for space {self.space_id!r}"
+        return "<" + string + ">"
     def to_json(self) -> ObjectJson:
-        return {**super().to_json(), "space_object_extra": self.space_object_extra}
+        return {**super().to_json(), "space_extra": self.space_extra}
 
 class Space(SpaceObject):
     dark_overlay: bmp.color.ColorHex = 0xC0C0C0
@@ -464,13 +464,17 @@ class LevelObject(Object):
         *,
         space_id: Optional[bmp.ref.SpaceID] = None,
         level_id: bmp.ref.LevelID,
-        level_object_extra: LevelObjectExtra = default_level_object_extra
+        level_extra: LevelObjectExtra = default_level_extra
     ) -> None:
         self.level_id: bmp.ref.LevelID
         super().__init__(pos, direct, space_id=space_id, level_id=level_id)
-        self.level_object_extra: LevelObjectExtra = level_object_extra
+        self.level_extra: LevelObjectExtra = level_extra
+    def __repr__(self) -> str:
+        string = super().__repr__()[1:-1]
+        string += f" stand for level {self.level_id!r}"
+        return "<" + string + ">"
     def to_json(self) -> ObjectJson:
-        return {**super().to_json(), "level_object_extra": self.level_object_extra}
+        return {**super().to_json(), "level_extra": self.level_extra}
 
 class Level(LevelObject):
     json_name = "level"
@@ -847,28 +851,28 @@ class TextUp(DirectFixProperty):
     sprite_name = "text_up"
     display_name = "UP"
     ref_direct = bmp.loc.Orient.W
-    ref_transform = {"direct": ref_direct.to_str(), "flip": False}
+    ref_transform = {"direct": ref_direct.name, "flip": False}
 
 class TextDown(DirectFixProperty):
     json_name = "text_down"
     sprite_name = "text_down"
     display_name = "DOWN"
     ref_direct = bmp.loc.Orient.S
-    ref_transform = {"direct": ref_direct.to_str(), "flip": False}
+    ref_transform = {"direct": ref_direct.name, "flip": False}
 
 class TextLeft(DirectFixProperty):
     json_name = "text_left"
     sprite_name = "text_left"
     display_name = "LEFT"
     ref_direct = bmp.loc.Orient.A
-    ref_transform = {"direct": ref_direct.to_str(), "flip": False}
+    ref_transform = {"direct": ref_direct.name, "flip": False}
 
 class TextRight(DirectFixProperty):
     json_name = "text_right"
     sprite_name = "text_right"
     display_name = "RIGHT"
     ref_direct = bmp.loc.Orient.D
-    ref_transform = {"direct": ref_direct.to_str(), "flip": False}
+    ref_transform = {"direct": ref_direct.name, "flip": False}
 
 direct_fix_properties: list[type[DirectFixProperty]] = [TextLeft, TextUp, TextRight, TextDown]
 
@@ -880,14 +884,14 @@ class TextTurn(DirectRotateProperty):
     sprite_name = "text_turn"
     display_name = "TURN"
     ref_direct = bmp.loc.Orient.A
-    ref_transform = {"direct": ref_direct.to_str(), "flip": False}
+    ref_transform = {"direct": ref_direct.name, "flip": False}
 
 class TextDeturn(DirectRotateProperty):
     json_name = "text_deturn"
     sprite_name = "text_deturn"
     display_name = "DETURN"
     ref_direct = bmp.loc.Orient.D
-    ref_transform = {"direct": ref_direct.to_str(), "flip": False}
+    ref_transform = {"direct": ref_direct.name, "flip": False}
 
 direct_rotate_properties: list[type[DirectRotateProperty]] = [TextTurn, TextDeturn]
 
@@ -1192,10 +1196,10 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
     global class_to_noun_dict, object_used, name_to_class, noun_class_list, text_class_list
     space_id: Optional[bmp.ref.SpaceID] = None
     level_id: Optional[bmp.ref.LevelID] = None
-    space_object_extra: Optional[SpaceObjectExtra] = None
-    level_object_extra: Optional[LevelObjectExtra] = None
-    org_space_object_extra: SpaceObjectExtra = default_space_object_extra
-    org_level_object_extra: LevelObjectExtra = default_level_object_extra
+    space_extra: Optional[SpaceObjectExtra] = None
+    level_extra: Optional[LevelObjectExtra] = None
+    org_space_extra: SpaceObjectExtra = default_space_extra
+    org_level_extra: LevelObjectExtra = default_level_extra
     if bmp.base.compare_versions(ver if ver is not None else "0.0", "3.8") == -1:
         old_space_id = json_object.get("world")
         if old_space_id is not None:
@@ -1203,7 +1207,7 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
         old_level_id = json_object.get("level")
         if old_level_id is not None:
             level_id = bmp.ref.LevelID(old_level_id.get("name", ""))
-            org_level_object_extra = {"icon": old_level_id.get("icon", default_level_object_extra["icon"])}
+            org_level_extra = {"icon": old_level_id.get("icon", default_level_extra["icon"])}
     elif bmp.base.compare_versions(ver if ver is not None else "0.0", "3.91") == -1:
         space_id_json = json_object.get("world_id")
         if space_id_json is not None:
@@ -1211,8 +1215,17 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
         level_id_json = json_object.get("level_id")
         if level_id_json is not None:
             level_id = bmp.ref.LevelID(**level_id_json)
-        org_space_object_extra = json_object.get("world_object_extra", default_space_object_extra)
-        org_level_object_extra = json_object.get("level_object_extra", default_level_object_extra)
+        org_space_extra = json_object.get("world_extra", default_space_extra)
+        org_level_extra = json_object.get("level_extra", default_level_extra)
+    elif bmp.base.compare_versions(ver if ver is not None else "0.0", "4.001") == -1:
+        space_id_json = json_object.get("space_id")
+        if space_id_json is not None:
+            space_id = bmp.ref.SpaceID(**space_id_json)
+        level_id_json = json_object.get("level_id")
+        if level_id_json is not None:
+            level_id = bmp.ref.LevelID(**level_id_json)
+        org_space_extra = json_object.get("space_extra", default_space_extra)
+        org_level_extra = json_object.get("level_extra", default_level_extra)
     else:
         space_id_json = json_object.get("space_id")
         if space_id_json is not None:
@@ -1220,26 +1233,30 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
         level_id_json = json_object.get("level_id")
         if level_id_json is not None:
             level_id = bmp.ref.LevelID(**level_id_json)
-        org_space_object_extra = json_object.get("space_object_extra", default_space_object_extra)
-        org_level_object_extra = json_object.get("level_object_extra", default_level_object_extra)
-    space_object_extra = default_space_object_extra.copy()
-    if org_space_object_extra is not None:
-        space_object_extra.update(org_space_object_extra)
-    level_object_extra = default_level_object_extra.copy()
-    if org_level_object_extra is not None:
-        level_object_extra.update(org_level_object_extra)
+        org_space_extra = json_object.get("space_extra", default_space_extra)
+        org_level_extra = json_object.get("level_extra", default_level_extra)
+    space_extra = default_space_extra.copy()
+    if org_space_extra is not None:
+        space_extra.update(org_space_extra)
+    level_extra = default_level_extra.copy()
+    if org_level_extra is not None:
+        level_extra.update(org_level_extra)
     object_type = name_to_class.get(json_object["type"])
+    if bmp.base.compare_versions(ver if ver is not None else "0.0", "4.001") == -1:
+        pos: bmp.loc.Coord[int] = (json_object["position"][0], json_object["position"][1]) # type: ignore
+        if bmp.base.compare_versions(ver if ver is not None else "0.0", "3.91") == -1:
+            direct = bmp.loc.Orient[json_object["orientation"]] # type: ignore
+        else:
+            direct = bmp.loc.Orient[json_object["direction"]] # type: ignore
+    else:
+        pos: bmp.loc.Coord[int] = (json_object["pos"][0], json_object["pos"][1])
+        direct = bmp.loc.Orient[json_object["orient"]]
     if object_type is None:
         if json_object["type"].startswith("text_text_"):
             current_metatext_tier += 1
             generate_metatext_at_tier(current_metatext_tier)
             return json_to_object(json_object, ver)
         raise ValueError(json_object["type"])
-    pos: bmp.loc.Coord[int] = (json_object["position"][0], json_object["position"][1])
-    if bmp.base.compare_versions(ver if ver is not None else "0.0", "3.91") == -1:
-        direct = bmp.loc.str_to_direct(json_object["orientation"]) # type: ignore
-    else:
-        direct = bmp.loc.str_to_direct(json_object["direction"])
     if issubclass(object_type, LevelObject):
         if level_id is not None:
             return object_type(
@@ -1247,7 +1264,7 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
                 direct=direct,
                 space_id=space_id,
                 level_id=level_id,
-                level_object_extra=level_object_extra
+                level_extra=level_extra
             )
         raise ValueError(level_id)
     if issubclass(object_type, SpaceObject):
@@ -1257,7 +1274,7 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
                 direct=direct,
                 space_id=space_id,
                 level_id=level_id,
-                space_object_extra=space_object_extra
+                space_extra=space_extra
             )
         raise ValueError(space_id)
     if issubclass(object_type, Path):

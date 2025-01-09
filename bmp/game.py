@@ -444,7 +444,7 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
             space_changed = False
         pygame.mixer.music.set_volume(1.0 if current_level.have_you() else 0.5)
         # display
-        window.fill("#000000")
+        window.fill(bmp.color.current_palette[0, 4])
         space_surface_size = window.get_size()
         space_surface_pos = (0, 0)
         match current_space.static_transform["direct"]:

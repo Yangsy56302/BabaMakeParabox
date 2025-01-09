@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import bmp.audio as audio
 import bmp.base as base
 import bmp.collect as collect

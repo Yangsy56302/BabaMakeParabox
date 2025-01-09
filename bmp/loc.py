@@ -7,56 +7,10 @@ OrientInt = Literal[0x2, 0x8, 0x4, 0x1]
 OrientStr = Literal["W", "S", "A", "D"]
 
 class Orient(Enum):
-    W = "W"
-    S = "S"
-    A = "A"
-    D = "D"
-    def to_bit(self) -> OrientInt:
-        match self:
-            case Orient.W:
-                return 0x2
-            case Orient.S:
-                return 0x8
-            case Orient.A:
-                return 0x4
-            case Orient.D:
-                return 0x1
-            case _:
-                raise ValueError(self)
-    def to_str(self) -> OrientStr:
-        match self:
-            case Orient.W:
-                return "W"
-            case Orient.S:
-                return "S"
-            case Orient.A:
-                return "A"
-            case Orient.D:
-                return "D"
-            case _:
-                raise ValueError(self)
-
-def bit_to_direct(direction: OrientInt) -> Orient:
-    match direction:
-        case 0x2:
-            return Orient.W
-        case 0x4:
-            return Orient.A
-        case 0x8:
-            return Orient.S
-        case 0x1:
-            return Orient.D
-
-def str_to_direct(direction: OrientStr) -> Orient:
-    match direction:
-        case "W":
-            return Orient.W
-        case "A":
-            return Orient.A
-        case "S":
-            return Orient.S
-        case "D":
-            return Orient.D
+    W = 0x2
+    S = 0x8
+    A = 0x4
+    D = 0x1
 
 def front_position(coord: Coord[int], direct: Orient) -> Coord[int]:
     match direct:
@@ -164,7 +118,7 @@ def get_stacked_transform(transformend: SpaceTransform, transfer: SpaceTransform
             match result["flip"]:
                 case "A" | "D":
                     result["flip"] = not result["flip"]
-    result["direct"] = turn(str_to_direct(result["direct"]), str_to_direct(transfer["direct"])).to_str()
+    result["direct"] = turn(Orient[result["direct"]], Orient[transfer["direct"]]).name
     return result
 
 def transform_absolute_size(transform: SpaceTransform, size: Coord) -> Coord:

@@ -1051,3 +1051,61 @@ Baba Make Parabox v4.0 是 2025.01.08 更新的一个版本，加入了与方向
             + 改为可选属性。
             + **漏洞**：修复了读取关卡包时没有读取这些字段的漏洞。
     + 对部分过长的代码行进行了换行处理。
+
+#### 4.001
+Baba Make Parabox v4.0 是 2025.01.09 更新的一个版本，添加了进度条，更改了许多位于代码内部，或用于关卡包文件中的名称，并修复了两个严重漏洞。
+
++ **终端**
+    + 通过第三方库`tqdm`添加了进度条，目前用于在加载及保存关卡包时显示进度。
+        + ~~不过目前几乎所有的关卡包都还没大到需要显示进度条的地步。~~
++ **技术性**
+    + 将包名从`BabaMakeParabox`改为`bmp`。
+        + 现在使用模块时会带上包名了。
+    + 重命名子模块：
+        | 旧的名称     | 新的名称    | 重命名的规则 |
+        | :----------- | :---------- | :----------- |
+        | `basics`     | `base`      | 更换为近义词 |
+        | `collects`   | `collect`   | 复数变单数   |
+        | `colors`     | `color`     | 复数变单数   |
+        | `displays`   | `render`    | 更换为近义词 |
+        | `edits`      | `editor`    | 更换为近义词 |
+        | `languages`  | `lang`      | 缩写         |
+        | `levelpacks` | `levelpack` | 复数变单数   |
+        | `levels`     | `level`     | 复数变单数   |
+        | `objects`    | `obj`       | 缩写         |
+        | `plays`      | `game`      | 更换为近义词 |
+        | `positions`  | `loc`       | 更换为近义词 |
+        | `refs`       | `ref`       | 复数变单数   |
+        | `rules`      | `rule`      | 复数变单数   |
+        | `sounds`     | `audio`     | 更换为近义词 |
+        | `spaces`     | `space`     | 复数变单数   |
+        | `subs`       | `sub`       | 复数变单数   |
+    + **`__init__`**
+        + 现在只包含`__all__`。
+            + 其余所有内容被转移到子模块`execute`。
+    + **`loc`**
+        + **`Coordinate`**
+            + 重命名为`Coord`。
+            + 现在是类型别名了（`type Coord[T] = tuple[T, T]`）。
+        + **`Direction`**
+            + 重命名为`Orient`。
+                + ~~`Orient`作为类名的复活赛打赢了！~~
+            + 内部值现在使用`int`，而非原本的`str`。
+            + 方法`to_str`和`to_bit`被属性`name`和`value`替代。
+        + `str_to_direct`和`bit_to_direct`被`Direct.__getitem__`和`Direct.__call__`替代。
+    + **`space.Space`**
+        + 属性`color`现在可以为`None`了。
+            + 此时空间会将目前所用调色板中用于背景的颜色作为自身的背景颜色。
+    + **`obj`**
+        + **`Object`**
+            + 重命名属性`direct`为`orient`。
+            + 更改了`__repr__`方法的返回值。
+        + **`SpaceObject.space_object_extra`，`default_space_object_extra`**
+            + 重命名，移除了`object`。
+                + `SpaceObjectExtra`并没有重命名为`SpaceExtra`。
+                + `level`同理。
+    + 更改了关卡包存储格式内部分字段的名称。
++ **漏洞**
+    + 修复了读取空间时误用`Space.new_obj`以添加物体而导致的漏洞。
+    + 修复了进入无穷小空间时，实际方向与预期相反的漏洞。
+    + **终端，分割线**：翻译条目不再包含额外的括号。
