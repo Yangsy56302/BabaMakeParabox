@@ -1,14 +1,15 @@
 from typing import TypedDict
-import bmp.Ref
+
+import bmp.ref
 
 class CollectibleJson(TypedDict):
     type: str
-    source: bmp.Ref.LevelIDJson
+    source: bmp.ref.LevelIDJson
 
 class Collectible(object):
     json_name: str
-    def __init__(self, source: bmp.Ref.LevelID) -> None:
-        self.source: bmp.Ref.LevelID = source
+    def __init__(self, source: bmp.ref.LevelID) -> None:
+        self.source: bmp.ref.LevelID = source
     def __eq__(self, collectible: "Collectible") -> bool:
         return type(self) == type(collectible) and self.source == collectible.source
     def __hash__(self) -> int:

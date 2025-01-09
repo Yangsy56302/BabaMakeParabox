@@ -2,16 +2,16 @@ from typing import Optional
 import os
 import string
 
-import bmp.Base
-import bmp.Color
-import bmp.Object
+import bmp.base
+import bmp.color
+import bmp.obj
 
 import pygame
 
 def calc_smooth(frame: int) -> Optional[float]:
-    multiplier = bmp.Base.options["smooth_animation_multiplier"]
+    multiplier = bmp.base.options["smooth_animation_multiplier"]
     if multiplier is not None:
-        smooth_value = frame / bmp.Base.options["fps"] * multiplier
+        smooth_value = frame / bmp.base.options["fps"] * multiplier
         if smooth_value >= 0 and smooth_value <= 1:
             return (1 - smooth_value) ** 4
 
@@ -23,19 +23,19 @@ def set_alpha(surface: pygame.Surface, alpha: int) -> pygame.Surface:
     new_surface.fill(pygame.Color(255, 255, 255, alpha), special_flags=pygame.BLEND_RGBA_MULT)
     return new_surface
 
-def set_surface_color_dark(surface: pygame.Surface, color: bmp.Color.ColorHex) -> pygame.Surface:
+def set_surface_color_dark(surface: pygame.Surface, color: bmp.color.ColorHex) -> pygame.Surface:
     if color == 0xFFFFFF:
         return surface.copy()
-    r, g, b = bmp.Color.hex_to_rgb(color)
+    r, g, b = bmp.color.hex_to_rgb(color)
     new_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
     new_surface.fill(pygame.Color(r, g, b, 255))
     new_surface.blit(surface, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
     return new_surface
 
-def set_surface_color_light(surface: pygame.Surface, color: bmp.Color.ColorHex) -> pygame.Surface:
+def set_surface_color_light(surface: pygame.Surface, color: bmp.color.ColorHex) -> pygame.Surface:
     if color == 0x000000:
         return surface.copy()
-    r, g, b = bmp.Color.hex_to_rgb(color)
+    r, g, b = bmp.color.hex_to_rgb(color)
     clr_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
     clr_surface.fill(pygame.Color(255 - r, 255 - g, 255 - b, 255))
     neg_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
@@ -54,11 +54,11 @@ class Sprites(object):
     def update(self) -> None:
         self.raw_sprites.clear()
         self.sprites.clear()
-        for object_type in bmp.Object.object_used:
+        for object_type in bmp.obj.object_used:
             sprite_name: str = getattr(object_type, "sprite_name", "")
             if sprite_name == "":
                 continue
-            sprite_color: bmp.Color.ColorHex = bmp.Color.current_palette[getattr(object_type, "sprite_color", (0, 3))]
+            sprite_color: bmp.color.ColorHex = bmp.color.current_palette[getattr(object_type, "sprite_color", (0, 3))]
             sprite_varients: list[int] = getattr(object_type, "sprite_varients")
             self.raw_sprites.setdefault(object_type.json_name, {})
             self.sprites.setdefault(object_type.json_name, {})
@@ -92,19 +92,19 @@ class Sprites(object):
         return self.sprites[name][varient][wiggle]
 current_sprites = Sprites()
 
-def simple_type_to_surface(object_type: type[bmp.Object.Object], varient: int = 0, wiggle: int = 1, default_surface: Optional[pygame.Surface] = None, debug: bool = False) -> pygame.Surface:
+def simple_type_to_surface(object_type: type[bmp.obj.Object], varient: int = 0, wiggle: int = 1, default_surface: Optional[pygame.Surface] = None, debug: bool = False) -> pygame.Surface:
     obj_surface = current_sprites.get("empty", 0, wiggle, raw=True)
-    if issubclass(object_type, bmp.Object.SpaceObject):
+    if issubclass(object_type, bmp.obj.SpaceObject):
         if default_surface is not None:
             obj_surface = default_surface.copy()
         else:
             obj_surface = pygame.Surface((sprite_size, sprite_size), pygame.SRCALPHA)
-            obj_surface.fill(bmp.Color.current_palette[object_type.sprite_color])
+            obj_surface.fill(bmp.color.current_palette[object_type.sprite_color])
         obj_surface = set_surface_color_light(obj_surface, object_type.light_overlay)
         obj_surface = set_surface_color_dark(obj_surface, object_type.dark_overlay)
     elif object_type.json_name in current_sprites.sprites.keys():
         obj_surface = current_sprites.get(object_type.json_name, varient, wiggle).copy()
-        if issubclass(object_type, bmp.Object.Metatext):
+        if issubclass(object_type, bmp.obj.Metatext):
             obj_surface = pygame.transform.scale(obj_surface, (sprite_size * len(str(object_type.meta_tier)), sprite_size * len(str(object_type.meta_tier))))
             tier_surface = pygame.Surface((sprite_size * len(str(object_type.meta_tier)), sprite_size), pygame.SRCALPHA)
             tier_surface.fill("#00000000")
@@ -116,8 +116,8 @@ def simple_type_to_surface(object_type: type[bmp.Object.Object], varient: int = 
             obj_surface.blit(tier_surface, tier_surface_pos)
     return obj_surface
 
-def simple_object_to_surface(obj: bmp.Object.Object, wiggle: int = 1, default_surface: Optional[pygame.Surface] = None, debug: bool = False) -> pygame.Surface:
-    if isinstance(obj, bmp.Object.LevelObject):
+def simple_object_to_surface(obj: bmp.obj.Object, wiggle: int = 1, default_surface: Optional[pygame.Surface] = None, debug: bool = False) -> pygame.Surface:
+    if isinstance(obj, bmp.obj.LevelObject):
         obj_surface = set_surface_color_dark(current_sprites.get(obj.json_name, obj.sprite_state, wiggle, raw=True).copy(), obj.level_object_extra["icon"]["color"])
         icon_surface = current_sprites.get(obj.level_object_extra["icon"]["name"], 0, wiggle, raw=True).copy()
         icon_surface = set_surface_color_light(set_surface_color_dark(icon_surface, obj.level_object_extra["icon"]["color"]), 0xC0C0C0)
@@ -126,13 +126,13 @@ def simple_object_to_surface(obj: bmp.Object.Object, wiggle: int = 1, default_su
         obj_surface.blit(icon_surface, icon_surface_pos)
     else:
         obj_surface = simple_type_to_surface(type(obj), obj.sprite_state, wiggle, default_surface, debug)
-        if isinstance(obj, bmp.Object.Path):
+        if isinstance(obj, bmp.obj.Path):
             if not obj.unlocked:
                 if debug:
                     obj_surface = set_alpha(obj_surface, 0x80)
                 else:
                     obj_surface.fill("#00000000")
-        if isinstance(obj, bmp.Object.SpaceObject) and obj.space_id.infinite_tier != 0:
+        if isinstance(obj, bmp.obj.SpaceObject) and obj.space_id.infinite_tier != 0:
             infinite_text_surface = current_sprites.get("text_infinity" if obj.space_id.infinite_tier > 0 else "text_epsilon", 0, wiggle, raw=True)
             infinite_tier_surface = pygame.Surface((sprite_size, sprite_size * abs(obj.space_id.infinite_tier)), pygame.SRCALPHA)
             infinite_tier_surface.fill("#00000000")
@@ -143,19 +143,19 @@ def simple_object_to_surface(obj: bmp.Object.Object, wiggle: int = 1, default_su
             obj_surface.blit(infinite_tier_surface, (0, 0))
     return obj_surface
 
-order: tuple[type[bmp.Object.Object], ...] = (
-    bmp.Object.Cursor,
-    bmp.Object.Operator,
-    bmp.Object.Noun,
-    bmp.Object.Property,
-    bmp.Object.Text,
-    bmp.Object.Character,
-    bmp.Object.LevelObject,
-    bmp.Object.Static,
-    bmp.Object.AnimatedDirectional,
-    bmp.Object.Directional,
-    bmp.Object.Animated,
-    bmp.Object.Tiled,
-    bmp.Object.SpaceObject,
-    bmp.Object.Object
+order: tuple[type[bmp.obj.Object], ...] = (
+    bmp.obj.Cursor,
+    bmp.obj.Operator,
+    bmp.obj.Noun,
+    bmp.obj.Property,
+    bmp.obj.Text,
+    bmp.obj.Character,
+    bmp.obj.LevelObject,
+    bmp.obj.Static,
+    bmp.obj.AnimatedDirectional,
+    bmp.obj.Directional,
+    bmp.obj.Animated,
+    bmp.obj.Tiled,
+    bmp.obj.SpaceObject,
+    bmp.obj.Object
 )

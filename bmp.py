@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import bmp
-import os
+from os import _exit
 
 if __name__ == "__main__":
-    os._exit(bmp.main())
+    _exit(bmp.execute.main())

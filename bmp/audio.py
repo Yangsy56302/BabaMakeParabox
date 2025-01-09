@@ -1,6 +1,6 @@
 import os
 
-import pygame
+import pygame.mixer
 
 sounds: dict[str, pygame.mixer.Sound] = {}
 
