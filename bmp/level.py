@@ -101,14 +101,13 @@ class Level(object):
         move_list = self.merge_move_list(move_list)
         for old_obj, new_info_list in move_list:
             new_info_list = bmp.base.remove_same_elements(new_info_list)
+            old_space: Optional[bmp.space.Space] = None
             for space in self.space_list:
                 if old_obj in space.object_list:
                     old_space = space
+            if old_space is None:
+                continue # how did we get here?
             old_obj.move_number += 1
-            old_obj.old_state.pos = old_obj.pos
-            old_obj.old_state.direct = old_obj.orient
-            old_obj.old_state.space = old_space.space_id
-            old_obj.old_state.level = self.level_id
             for new_space_id, new_pos, new_direct in new_info_list:
                 new_space = self.get_space(new_space_id)
                 if new_space is None:
@@ -133,12 +132,12 @@ class Level(object):
                 meet_prefix_condition = random.choice((True, False, False, False, False, False))
             return_value = return_value and (meet_prefix_condition if not prefix_info.negated else not meet_prefix_condition)
         return return_value
-    def meet_infix_conditions(self, space: bmp.space.Space, obj: bmp.obj.Object, infix_info_list: list[bmp.rule.InfixInfo], old_feeling: Optional[bmp.obj.Properties] = None) -> bool:
+    def meet_infix_conditions(self, space: bmp.space.Space, obj: bmp.obj.Object, infix_info_list: list[bmp.rule.InfixInfo]) -> bool:
         for infix_info in infix_info_list:
             meet_infix_condition = True
             if infix_info.infix_type in (bmp.obj.TextOn, bmp.obj.TextNear, bmp.obj.TextNextto):
                 matched_objs: list[bmp.obj.Object] = [obj]
-                find_range: list[bmp.loc.Coord[int]]
+                find_range: list[bmp.loc.Coord[int]] = []
                 if infix_info.infix_type == bmp.obj.TextOn:
                     find_range = [(obj.x, obj.y)]
                 elif infix_info.infix_type == bmp.obj.TextNear:
@@ -176,11 +175,11 @@ class Level(object):
                     if not meet_infix_condition:
                         break
             elif infix_info.infix_type == bmp.obj.TextFeeling:
-                if old_feeling is None:
+                if obj.old_state.prop is None:
                     meet_infix_condition = False
                 else:
                     for infix_noun_info in infix_info.infix_noun_info_list:
-                        if old_feeling.enabled(infix_noun_info.infix_noun_type) == infix_noun_info.negated:
+                        if obj.old_state.prop.enabled(infix_noun_info.infix_noun_type) == infix_noun_info.negated:
                             meet_infix_condition = False
             elif infix_info.infix_type == bmp.obj.TextWithout:
                 meet_infix_condition = True
@@ -206,12 +205,10 @@ class Level(object):
                             match_noun_list = [match_noun]
                     for new_match_noun in match_noun_list:
                         if issubclass(new_match_noun, bmp.obj.SupportsIsReferenceOf):
-                            for pos in find_range:
-                                match_objs.extend([o for o in space.get_objs_from_special_noun(new_match_noun) if o not in matched_objs])
+                            match_objs.extend([o for o in space.get_objs_from_special_noun(new_match_noun) if o not in matched_objs])
                         else:
                             new_match_type = new_match_noun.ref_type
-                            for pos in find_range:
-                                match_objs.extend([o for o in space.get_objs_from_type(new_match_type) if o not in matched_objs])
+                            match_objs.extend([o for o in space.get_objs_from_type(new_match_type) if o not in matched_objs])
                         if len(match_objs) >= match_count:
                             meet_infix_condition = False
                         else:
@@ -320,6 +317,7 @@ class Level(object):
             if push:
                 push_list.append((obj, [(space.space_id, new_pos, direct)]))
         simple = False
+        stop_objects: list[bmp.obj.Object] = []
         if not space.out_of_range(new_pos):
             stop_objects = [o for o in space.get_objs_from_pos(new_pos) if o.properties.enabled(bmp.obj.TextStop) and not o.properties.enabled(bmp.obj.TextPush)]
             if len(stop_objects + unpushable_objects) != 0:
@@ -456,13 +454,13 @@ class Level(object):
         return pushing_game
     def select(self, direct: Optional[bmp.loc.Orient]) -> Optional[bmp.ref.LevelID]:
         if direct is None:
-            level_objs: list[bmp.obj.LevelObject] = []
+            level_list: list[bmp.ref.LevelID] = []
             for space in self.space_list:
                 select_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextSelect)]
                 for obj in select_objs:
-                    level_objs.extend(space.get_levels_from_pos(obj.pos))
-            if len(level_objs) != 0:
-                return random.choice(level_objs).level_id
+                    level_list.extend([o.level_id for o in space.object_list if o.level_id is not None])
+            if len(level_list) != 0:
+                return random.choice(level_list)
         else:
             for space in self.space_list:
                 select_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextSelect)]
@@ -583,7 +581,7 @@ class Level(object):
             for space in self.space_list:
                 shifter_objs = [o for o in space.object_list if o.move_number < o.properties.get(bmp.obj.TextShift)]
                 for shifter_obj in shifter_objs:
-                    shifted_objs = [o for o in space.get_objs_from_pos(shifter_obj.pos) if obj != shifter_obj and bmp.obj.same_float_prop(obj, shifter_obj)]
+                    shifted_objs = [o for o in space.get_objs_from_pos(shifter_obj.pos) if o != shifter_obj and bmp.obj.same_float_prop(o, shifter_obj)]
                     for obj in shifted_objs:
                         new_move_list = self.get_move_list(space, obj, shifter_obj.orient)
                         if new_move_list is not None:
@@ -616,12 +614,12 @@ class Level(object):
             for tele_space, tele_obj in new_tele_objs:
                 other_tele_objs = new_tele_objs[:]
                 other_tele_objs.remove((tele_space, tele_obj))
-                for obj in space.get_objs_from_pos(tele_obj.pos):
+                for obj in tele_space.get_objs_from_pos(tele_obj.pos):
                     if obj == tele_obj:
                         continue
                     if bmp.obj.same_float_prop(obj, tele_obj):
                         other_tele_space, other_tele_obj = random.choice(other_tele_objs)
-                        tele_list.append((space, obj, other_tele_space, other_tele_obj.pos))
+                        tele_list.append((tele_space, obj, other_tele_space, other_tele_obj.pos))
         for old_space, obj, new_space, pos in tele_list:
             old_space.del_obj(obj)
             obj.pos = pos

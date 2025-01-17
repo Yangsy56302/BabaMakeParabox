@@ -15,12 +15,13 @@ class SpaceJson(TypedDict):
     object_list: list[bmp.obj.ObjectJson]
 
 class Space(object):
-    def __init__(self, space_id: bmp.ref.SpaceID, size: bmp.loc.Coord[int], color: Optional[bmp.color.ColorHex] = None) -> None:
+    def __init__(self, space_id: bmp.ref.SpaceID, size: bmp.loc.Coord[int], color: Optional[bmp.color.ColorHex] = None, object_list: Optional[list[bmp.obj.Object]] = None) -> None:
         self.space_id: bmp.ref.SpaceID = space_id
         self.size: bmp.loc.Coord[int] = size
         self.color: Optional[bmp.color.ColorHex] = color
-        self.object_list: list[bmp.obj.Object] = []
+        self.object_list: list[bmp.obj.Object] = object_list if object_list is not None else []
         self.object_pos_index: list[list[bmp.obj.Object]]
+        self.refresh_index()
         self.properties: dict[type[bmp.obj.SpaceObject], bmp.obj.Properties] = {p: bmp.obj.Properties() for p in bmp.obj.space_object_types}
         self.special_operator_properties: dict[type[bmp.obj.SpaceObject], dict[type[bmp.obj.Operator], bmp.obj.Properties]] = {p: {o: bmp.obj.Properties() for o in bmp.obj.special_operators} for p in bmp.obj.space_object_types}
         self.rule_list: list[bmp.rule.Rule] = []
@@ -89,7 +90,7 @@ class Space(object):
     # @auto_refresh
     def get_objs_from_special_noun(self, object_type: type[bmp.obj.SupportsIsReferenceOf]) -> list[bmp.obj.Object]:
         return [o for o in self.object_list if object_type.isreferenceof(o)]
-    # @auto_refresh
+    @auto_refresh
     def del_obj(self, obj: bmp.obj.Object) -> None:
         self.object_list.remove(obj)
         if not self.out_of_range(obj.pos):
@@ -144,7 +145,11 @@ class Space(object):
         new_info_list: list[bmp.rule.RuleInfo] = []
         for match_type, unmatch_type, next_stage, func in bmp.rule.how_to_match_rule[stage]:
             text_type_list: list[type[bmp.obj.Text]] = [type(o) for o in self.get_objs_from_pos_and_type(pos, bmp.obj.Text)]
-            text_type_list += [bmp.obj.get_noun_from_type(type(o)) for o in self.get_objs_from_pos(pos) if o.properties.has(bmp.obj.TextWord)]
+            text_type_list += [
+                bmp.obj.get_noun_from_type(type(o))
+                for o in self.get_objs_from_pos(pos)
+                if o.old_state.prop is not None and o.old_state.prop.enabled(bmp.obj.TextWord)
+            ]
             matched_list = [o for o in text_type_list if issubclass(o, tuple(match_type))]
             if len(unmatch_type) != 0:
                 matched_list = [o for o in matched_list if not issubclass(o, tuple(unmatch_type))]

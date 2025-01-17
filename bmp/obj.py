@@ -1,4 +1,4 @@
-from typing import Any, NotRequired, Optional, TypeGuard, TypedDict
+from typing import Any, NotRequired, Optional, TypeGuard, TypedDict, Self
 import math
 import uuid
 import bmp.base
@@ -39,6 +39,7 @@ class ObjectJson(TypedDict):
     level_extra: NotRequired[LevelObjectExtra]
     path_extra: NotRequired[PathExtra]
 
+# dict[type[property], dict[negated_number, negated_count]]
 PropertiesDict = dict[type["Text"], dict[int, int]]
 
 class Properties(object):
@@ -47,15 +48,8 @@ class Properties(object):
     def __bool__(self) -> bool:
         return len(self.__dict) != 0
     def __repr__(self) -> str:
-        string = ""
-        string += "Properties()\n"
-        string += "Enabled:\n"
-        for prop, count in self.enabled_dict().items():
-            string += f"\t{prop.__name__} * {count}\n"
-        string += "Disabled:\n"
-        for prop, count in self.disabled_dict().items():
-            string += f"\t{prop.__name__} * {count}\n"
-        return string
+        string = f"properties {self.__dict}"
+        return "<" + string + ">"
     @staticmethod
     def calc_count(negnum_dict: dict[int, int], negated_number: int = 0) -> int:
         if len(negnum_dict) == 0:
@@ -120,18 +114,22 @@ class Properties(object):
         return {k: v for k, v in {k: self.calc_count(v, 0) for k, v in self.__dict.items()}.items() if v != 0}
     def disabled_dict(self) -> dict[type["Text"], int]:
         return {k: v for k, v in {k: self.calc_count(v, 1) for k, v in self.__dict.items()}.items() if v != 0}
+    def copy(self) -> "Properties":
+        return Properties(self.__dict.copy())
 
 class OldObjectState(object):
     def __init__(
         self,
         *,
         pos: Optional[bmp.loc.Coord[int]] = None,
-        direct: Optional[bmp.loc.Orient] = None,
+        orient: Optional[bmp.loc.Orient] = None,
+        prop: Optional[Properties] = None,
         space: Optional[bmp.ref.SpaceID] = None,
         level: Optional[bmp.ref.LevelID] = None
     ) -> None:
         self.pos: Optional[bmp.loc.Coord[int]] = pos
-        self.direct: Optional[bmp.loc.Orient] = direct
+        self.orient: Optional[bmp.loc.Orient] = orient
+        self.prop: Optional[Properties] = prop
         self.space: Optional[bmp.ref.SpaceID] = space
         self.level: Optional[bmp.ref.LevelID] = level
 

@@ -180,6 +180,10 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                     break
         if not levelpack_refresh:
             if any(mouses) and not current_space.out_of_range(mouse_pos_in_space):
+                visible_space_list: list[bmp.space.Space] = [
+                    s for s in current_level.space_list
+                    if not s.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextHide)
+                ]
                 if mouses[0] == 1:
                     sub_space_objs: list[bmp.obj.SpaceObject] = current_space.get_spaces_from_pos(mouse_pos_in_space)
                     sub_spaces = [current_level.get_space(o.space_id) for o in sub_space_objs]
@@ -191,24 +195,20 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                             space_changed = True
                             display_refresh = True
                 elif mouses[2] == 1:
-                    super_spaces = [t[0] for t in current_level.find_super_spaces(current_space.space_id)]
+                    super_spaces: list[bmp.space.Space] = [
+                        t[0] for t in current_level.find_super_spaces(current_space.space_id)
+                        if not t[0].properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextHide)
+                    ]
                     if len(super_spaces) != 0:
                         current_space = random.choice(super_spaces)
                         space_changed = True
                 elif mouses[1] == 1:
-                    pass
-                elif mouses[3]:
-                    current_space_index = current_level.space_list.index(current_space)
-                    current_space_index -= 1
-                    current_space_index = current_space_index % len(current_level.space_list) if current_space_index >= 0 else len(current_level.space_list) - 1
-                    current_space = current_level.space_list[current_space_index]
-                    space_changed = True
-                    display_refresh = True
-                elif mouses[4]:
-                    current_space_index = current_level.space_list.index(current_space)
-                    current_space_index += 1
-                    current_space_index = current_space_index % len(current_level.space_list) if current_space_index >= 0 else len(current_level.space_list) - 1
-                    current_space = current_level.space_list[current_space_index]
+                    pass # maybe print informations of objects on cursor?
+                elif bool(mouses[3]) ^ bool(mouses[4]):
+                    current_space_index = visible_space_list.index(current_space) if current_space in visible_space_list else 0
+                    current_space_index += 1 if mouses[3] else -1
+                    current_space_index = current_space_index % len(visible_space_list) if current_space_index >= 0 else len(visible_space_list) - 1
+                    current_space = visible_space_list[current_space_index]
                     space_changed = True
                     display_refresh = True
             elif keys["ESCAPE"]:
