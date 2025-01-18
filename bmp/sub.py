@@ -8,7 +8,7 @@ def sub(json_name: str) -> None:
     pygame.init()
     window_size = (bmp.render.sprite_size * 10, bmp.render.sprite_size * 10)
     window = pygame.display.set_mode(window_size)
-    pygame.display.set_caption(bmp.obj.name_to_class[json_name].display_name)
+    pygame.display.set_caption(bmp.obj.name_to_class[json_name].get_name())
     bmp.color.set_palette("./palettes/variant.png")
     bmp.render.current_sprites.update()
     sprites = list(map(lambda i: bmp.render.current_sprites.get(json_name, 0, i), range(1, 4)))

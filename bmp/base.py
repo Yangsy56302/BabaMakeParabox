@@ -2,6 +2,7 @@ from typing import Literal, Optional, TypedDict, Callable, NotRequired
 import os
 import json
 import copy
+import string
 import platform
 
 def clampi(__min: int, __num: int, __max: int, /) -> int:
@@ -15,6 +16,17 @@ def clampf(__min: float, __num: float, __max: float, /) -> float:
 
 def absclampf(__num: float, __lim: float, /) -> float:
     return min(abs(__lim), max(__num, -abs(__lim)))
+
+def snake_to_big_camel(__str: str, /) -> str:
+    big_camel = ""
+    after_underscore: bool = False
+    for c in __str:
+        if c == "_":
+            after_underscore = True
+        else:
+            big_camel += c if not after_underscore else c.upper()
+            after_underscore = False
+    return big_camel
 
 import pygame
 pygame.init()

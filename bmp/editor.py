@@ -26,7 +26,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
     current_level = levelpack.level_list[current_level_index]
     current_space_index: int = 0
     current_space = current_level.space_list[current_space_index]
-    current_object_type = bmp.obj.Baba
+    current_object_type = bmp.obj.TextSpace
     current_direct = bmp.loc.Orient.S
     current_cursor_pos = (0, 0)
     current_clipboard = []
@@ -257,10 +257,10 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                             space_changed = True
                     elif keys["LSHIFT"] or keys["RSHIFT"]:
                         obj_to_noun = bmp.obj.get_noun_from_type(current_object_type)
-                        if obj_to_noun in bmp.obj.object_used:
+                        if obj_to_noun in bmp.obj.object_class_list:
                             current_object_type = obj_to_noun
                     else:
-                        current_object_type_list = [t for t in bmp.obj.name_to_class.values() if t in bmp.obj.object_used]
+                        current_object_type_list = [t for t in bmp.obj.name_to_class.values() if t in bmp.obj.object_class_list]
                         current_object_type_index = current_object_type_list.index(current_object_type)
                         current_object_type = current_object_type_list[current_object_type_index - 1 if current_object_type_index >= 0 else len(current_object_type_list) - 1]
                 elif mouses[4]:
@@ -273,10 +273,10 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                             current_space_index += 1
                             space_changed = True
                     elif keys["LSHIFT"] or keys["RSHIFT"]:
-                        if issubclass(current_object_type, bmp.obj.GeneralNoun) and current_object_type.ref_type in bmp.obj.object_used:
+                        if issubclass(current_object_type, bmp.obj.GeneralNoun) and current_object_type.ref_type in bmp.obj.object_class_list:
                             current_object_type = current_object_type.ref_type
                     else:
-                        current_object_type_list = [t for t in bmp.obj.name_to_class.values() if t in bmp.obj.object_used]
+                        current_object_type_list = [t for t in bmp.obj.name_to_class.values() if t in bmp.obj.object_class_list]
                         current_object_type_index = current_object_type_list.index(current_object_type)
                         current_object_type = current_object_type_list[current_object_type_index + 1 if current_object_type_index < len(current_object_type_list) - 1 else 0]
         # cursor move; object facing change (alt)
@@ -425,9 +425,9 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                     levelpack.rule_list.append(type_rule)
             bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.levelpack.rule_list")))
             for rule in levelpack.rule_list:
-                str_list = []
+                str_list: list[str] = []
                 for object_type in rule:
-                    str_list.append(object_type.display_name)
+                    str_list.append(object_type.get_name())
                 print(" ".join(str_list))
         # edit id for current space / level (alt)
         elif keys["T"]:

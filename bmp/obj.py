@@ -1,9 +1,13 @@
-from typing import Any, NotRequired, Optional, TypeGuard, TypedDict, Self
+from enum import Enum
+import json
+import os
+from typing import Any, Final, Literal, NotRequired, Optional, TypeGuard, TypedDict, Self
 import math
 import uuid
 import bmp.base
 import bmp.collect
 import bmp.color
+import bmp.lang
 import bmp.loc
 import bmp.ref
 
@@ -47,7 +51,7 @@ class Properties(object):
         self.__dict: PropertiesDict = prop if prop is not None else {}
     def __bool__(self) -> bool:
         return len(self.__dict) != 0
-    def __repr__(self) -> str:
+    def get_info(self) -> str:
         string = f"properties {self.__dict}"
         return "<" + string + ">"
     @staticmethod
@@ -140,8 +144,33 @@ class Object(object):
     json_name: str
     sprite_name: str
     display_name: str
-    sprite_color: bmp.color.PaletteIndex
-    sprite_varients: tuple[int, ...] = (0x0, )
+    sprite_palette: bmp.color.PaletteIndex
+    type SpriteCategory = Literal[
+        "none",
+        "static",
+        "tiled",
+        "animated",
+        "directional",
+        "animated_directional",
+        "character",
+    ]
+    sprite_category: SpriteCategory = "none"
+    sprite_varients: dict[SpriteCategory, list[int]] = {
+        "static": [0x0],
+        "tiled": list(i for i in range(0x10)),
+        "animated": list(i for i in range(0x4)),
+        "directional": list(i * 0x8 for i in range(0x4)),
+        "animated_directional": 
+            list(i * 0x8 for i in range(0x4)) + \
+            list(i * 0x8 + 0x1 for i in range(0x4)) + \
+            list(i * 0x8 + 0x2 for i in range(0x4)) + \
+            list(i * 0x8 + 0x3 for i in range(0x4)),
+        "character":
+            list(i * 0x8 for i in range(0x4)) + \
+            list(i * 0x8 + 0x1 for i in range(0x4)) + \
+            list(i * 0x8 + 0x2 for i in range(0x4)) + \
+            list(i * 0x8 + 0x3 for i in range(0x4)),
+    }
     def __init__(
         self,
         pos: bmp.loc.Coord[int],
@@ -165,7 +194,10 @@ class Object(object):
         return self.uuid == obj.uuid
     def __hash__(self) -> int:
         return hash(self.uuid)
-    def __repr__(self) -> str:
+    @classmethod
+    def get_name(cls) -> str:
+        return bmp.lang.lang_format(f"object.name.{cls.json_name}")
+    def get_info(self) -> str:
         string = f"object {self.json_name} at {self.pos} facing {self.orient}"
         return "<" + string + ">"
     @property
@@ -185,8 +217,27 @@ class Object(object):
     def set_direct_mapping(self, mapping: dict[bmp.loc.Orient, bmp.loc.Orient]) -> None:
         self.orient = mapping[self.direct_mapping[self.orient]]
         self.direct_mapping = mapping.copy()
-    def set_sprite(self, **kwds) -> None:
-        self.sprite_state = 0
+    def set_sprite(self, connected: Optional[dict[bmp.loc.Orient, bool]] = None, round_num: int = 0) -> None:
+        match self.sprite_category:
+            case "none":
+                pass
+            case "static":
+                self.sprite_state = 0
+            case "tiled":
+                connected = {o: False for o in bmp.loc.Orient} if connected is None else connected
+                self.sprite_state = (connected[bmp.loc.Orient.D] * 0x1) | (connected[bmp.loc.Orient.W] * 0x2) | (connected[bmp.loc.Orient.A] * 0x4) | (connected[bmp.loc.Orient.S] * 0x8)
+            case "animated":
+                self.sprite_state = round_num % 0x4
+            case "directional":
+                self.sprite_state = int(math.log2(int(self.orient.value))) * 0x8
+            case "animated_directional":
+                self.sprite_state = int(math.log2(int(self.orient.value))) * 0x8 | round_num % 0x4
+            case "character":
+                if self.move_number > 0:
+                    sprite_state_without_orient = (self.sprite_state & 0x3) + 1 if (self.sprite_state & 0x3) != 0x3 else 0x0
+                    self.sprite_state = int(math.log2(int(self.orient.value))) * 0x8 | sprite_state_without_orient
+                else:
+                    self.sprite_state = int(math.log2(int(self.orient.value))) * 0x8 | (self.sprite_state & 0x3)
     def to_json(self) -> ObjectJson:
         json_object: ObjectJson = {"type": self.json_name, "pos": self.pos, "orient": self.orient.name}
         if self.space_id is not None:
@@ -197,225 +248,13 @@ class Object(object):
 
 class NotRealObject(Object):
     pass
-
 Object.ref_type = NotRealObject
 
-class Static(Object):
-    sprite_varients: tuple[int, ...] = (0x0, )
-    def set_sprite(self, **kwds) -> None:
-        self.sprite_state = 0
-
-class Tiled(Object):
-    sprite_varients: tuple[int, ...] = tuple(i for i in range(0x10))
-    def set_sprite(self, connected: Optional[dict[bmp.loc.Orient, bool]] = None, **kwds) -> None:
-        connected = {bmp.loc.Orient.W: False, bmp.loc.Orient.S: False, bmp.loc.Orient.A: False, bmp.loc.Orient.D: False} if connected is None else connected
-        self.sprite_state = (connected[bmp.loc.Orient.D] * 0x1) | (connected[bmp.loc.Orient.W] * 0x2) | (connected[bmp.loc.Orient.A] * 0x4) | (connected[bmp.loc.Orient.S] * 0x8)
-
-class Animated(Object):
-    sprite_varients: tuple[int, ...] = tuple(i for i in range(0x4))
-    def set_sprite(self, round_num: int = 0, **kwds) -> None:
-        self.sprite_state = round_num % 0x4
-
-class Directional(Object):
-    sprite_varients: tuple[int, ...] = tuple(i * 0x8 for i in range(0x4))
-    def set_sprite(self, **kwds) -> None:
-        self.sprite_state = int(math.log2(int(self.orient.value))) * 0x8
-
-class AnimatedDirectional(Object):
-    sprite_varients: tuple[int, ...] = \
-        tuple(i * 0x8 for i in range(0x4)) + \
-        tuple(i * 0x8 + 0x1 for i in range(0x4)) + \
-        tuple(i * 0x8 + 0x2 for i in range(0x4)) + \
-        tuple(i * 0x8 + 0x3 for i in range(0x4))
-    def set_sprite(self, round_num: int = 0, **kwds) -> None:
-        self.sprite_state = int(math.log2(int(self.orient.value))) * 0x8 | round_num % 4
-
-class Character(Object):
-    sprite_varients: tuple[int, ...] = \
-        tuple(i * 0x8 for i in range(0x4)) + \
-        tuple(i * 0x8 + 0x1 for i in range(0x4)) + \
-        tuple(i * 0x8 + 0x2 for i in range(0x4)) + \
-        tuple(i * 0x8 + 0x3 for i in range(0x4))
-    def set_sprite(self, **kwds) -> None:
-        if self.move_number > 0:
-            temp_state = (self.sprite_state & 0x3) + 1 if (self.sprite_state & 0x3) != 0x3 else 0x0
-            self.sprite_state = int(math.log2(int(self.orient.value))) * 0x8 | temp_state
-        else:
-            self.sprite_state = int(math.log2(int(self.orient.value))) * 0x8 | (self.sprite_state & 0x3)
-
-class Baba(Character):
-    json_name = "baba"
-    sprite_name = "baba"
-    display_name = "Baba"
-    sprite_color: bmp.color.PaletteIndex = (0, 3)
-
-class Keke(Character):
-    json_name = "keke"
-    sprite_name = "keke"
-    display_name = "Keke"
-    sprite_color: bmp.color.PaletteIndex = (2, 2)
-
-class Me(Character):
-    json_name = "me"
-    sprite_name = "me"
-    display_name = "Me"
-    sprite_color: bmp.color.PaletteIndex = (3, 1)
-
-class Patrick(Directional):
-    json_name = "patrick"
-    sprite_name = "patrick"
-    display_name = "Patrick"
-    sprite_color: bmp.color.PaletteIndex = (4, 1)
-
-class Skull(Directional):
-    json_name = "skull"
-    sprite_name = "skull"
-    display_name = "Skull"
-    sprite_color: bmp.color.PaletteIndex = (2, 1)
-
-class Ghost(Directional):
-    json_name = "ghost"
-    sprite_name = "ghost"
-    display_name = "Ghost"
-    sprite_color: bmp.color.PaletteIndex = (4, 2)
-
-class Wall(Tiled):
-    json_name = "wall"
-    sprite_name = "wall"
-    display_name = "Wall"
-    sprite_color: bmp.color.PaletteIndex = (1, 1)
-
-class Hedge(Tiled):
-    json_name = "hedge"
-    sprite_name = "hedge"
-    display_name = "Hedge"
-    sprite_color: bmp.color.PaletteIndex = (5, 1)
-
-class Ice(Tiled):
-    json_name = "ice"
-    sprite_name = "ice"
-    display_name = "Ice"
-    sprite_color: bmp.color.PaletteIndex = (1, 1)
-
-class Tile(Static):
-    json_name = "tile"
-    sprite_name = "tile"
-    display_name = "Tile"
-    sprite_color: bmp.color.PaletteIndex = (0, 0)
-
-class Grass(Tiled):
-    json_name = "grass"
-    sprite_name = "grass"
-    display_name = "Grass"
-    sprite_color: bmp.color.PaletteIndex = (5, 0)
-
-class Water(Tiled):
-    json_name = "water"
-    sprite_name = "water"
-    display_name = "Water"
-    sprite_color: bmp.color.PaletteIndex = (1, 3)
-
-class Lava(Tiled):
-    json_name = "lava"
-    sprite_name = "water"
-    display_name = "Lava"
-    sprite_color: bmp.color.PaletteIndex = (2, 3)
-
-class Door(Static):
-    json_name = "door"
-    sprite_name = "door"
-    display_name = "Door"
-    sprite_color: bmp.color.PaletteIndex = (2, 2)
-
-class Key(Static):
-    json_name = "key"
-    sprite_name = "key"
-    display_name = "Key"
-    sprite_color: bmp.color.PaletteIndex = (2, 4)
-
-class Box(Static):
-    json_name = "box"
-    sprite_name = "box"
-    display_name = "Box"
-    sprite_color: bmp.color.PaletteIndex = (6, 1)
-
-class Rock(Static):
-    json_name = "rock"
-    sprite_name = "rock"
-    display_name = "Rock"
-    sprite_color: bmp.color.PaletteIndex = (6, 2)
-
-class Fruit(Static):
-    json_name = "fruit"
-    sprite_name = "fruit"
-    display_name = "Fruit"
-    sprite_color: bmp.color.PaletteIndex = (2, 2)
-
-class Belt(AnimatedDirectional):
-    json_name = "belt"
-    sprite_name = "belt"
-    display_name = "Belt"
-    sprite_color: bmp.color.PaletteIndex = (1, 1)
-
-class Sun(Static):
-    json_name = "sun"
-    sprite_name = "sun"
-    display_name = "Sun"
-    sprite_color: bmp.color.PaletteIndex = (2, 4)
-
-class Moon(Static):
-    json_name = "moon"
-    sprite_name = "moon"
-    display_name = "Moon"
-    sprite_color: bmp.color.PaletteIndex = (2, 4)
-
-class Star(Static):
-    json_name = "star"
-    sprite_name = "star"
-    display_name = "Star"
-    sprite_color: bmp.color.PaletteIndex = (2, 4)
-
-class What(Static):
-    json_name = "what"
-    sprite_name = "what"
-    display_name = "What"
-    sprite_color: bmp.color.PaletteIndex = (0, 3)
-
-class Love(Static):
-    json_name = "love"
-    sprite_name = "love"
-    display_name = "Love"
-    sprite_color: bmp.color.PaletteIndex = (4, 2)
-
-class Flag(Static):
-    json_name = "flag"
-    sprite_name = "flag"
-    display_name = "Flag"
-    sprite_color: bmp.color.PaletteIndex = (2, 4)
-
-class Line(Tiled):
-    json_name = "line"
-    sprite_name = "line"
-    display_name = "Line"
-    sprite_color: bmp.color.PaletteIndex = (0, 3)
-
-class Dot(Static):
-    json_name = "dot"
-    sprite_name = "dot"
-    display_name = "Dot"
-    sprite_color: bmp.color.PaletteIndex = (0, 3)
-
-class Orb(Static):
-    json_name = "orb"
-    sprite_name = "orb"
-    display_name = "Orb"
-    sprite_color: bmp.color.PaletteIndex = (4, 1)
-
-class Cursor(Static):
+class Cursor(Object):
     json_name = "cursor"
     sprite_name = "cursor"
-    display_name = "Cursor"
-    sprite_color: bmp.color.PaletteIndex = (4, 2)
+    sprite_category = "static"
+    sprite_palette: bmp.color.PaletteIndex = (4, 2)
 
 class SpaceObject(Object):
     light_overlay: bmp.color.ColorHex = 0x000000
@@ -432,8 +271,8 @@ class SpaceObject(Object):
         self.space_id: bmp.ref.SpaceID
         super().__init__(pos, direct, space_id=space_id, level_id=level_id)
         self.space_extra: SpaceObjectExtra = space_extra.copy()
-    def __repr__(self) -> str:
-        string = super().__repr__()[1:-1]
+    def get_info(self) -> str:
+        string = super().get_info()[1:-1]
         string += f" stand for space {self.space_id!r}"
         return "<" + string + ">"
     def to_json(self) -> ObjectJson:
@@ -442,19 +281,18 @@ class SpaceObject(Object):
 class Space(SpaceObject):
     dark_overlay: bmp.color.ColorHex = 0xC0C0C0
     json_name = "space"
-    display_name = "Space"
-    sprite_color: bmp.color.PaletteIndex = (1, 3)
+    sprite_palette: bmp.color.PaletteIndex = (1, 3)
         
 class Clone(SpaceObject):
     light_overlay: bmp.color.ColorHex = 0x404040
     json_name = "clone"
-    display_name = "Clone"
-    sprite_color: bmp.color.PaletteIndex = (1, 4)
+    sprite_palette: bmp.color.PaletteIndex = (1, 4)
 
 space_object_types: list[type[SpaceObject]] = [Space, Clone]
 default_space_object_type: type[SpaceObject] = Space
 
 class LevelObject(Object):
+    sprite_category: Object.SpriteCategory = "static"
     def __init__(
         self,
         pos: bmp.loc.Coord[int],
@@ -467,8 +305,8 @@ class LevelObject(Object):
         self.level_id: bmp.ref.LevelID
         super().__init__(pos, direct, space_id=space_id, level_id=level_id)
         self.level_extra: LevelObjectExtra = level_extra
-    def __repr__(self) -> str:
-        string = super().__repr__()[1:-1]
+    def get_info(self) -> str:
+        string = super().get_info()[1:-1]
         string += f" stand for level {self.level_id!r}"
         return "<" + string + ">"
     def to_json(self) -> ObjectJson:
@@ -477,17 +315,16 @@ class LevelObject(Object):
 class Level(LevelObject):
     json_name = "level"
     sprite_name = "level"
-    display_name = "Level"
-    sprite_color: bmp.color.PaletteIndex = (4, 1)
+    sprite_palette: bmp.color.PaletteIndex = (4, 1)
 
 level_object_types: tuple[type[LevelObject], ...] = (Level, )
 default_level_object_type: type[LevelObject] = Level
 
-class Path(Tiled):
+class Path(Object):
     json_name = "path"
     sprite_name = "line"
-    display_name = "Path"
-    sprite_color: bmp.color.PaletteIndex = (0, 2)
+    sprite_category: Object.SpriteCategory = "tiled"
+    sprite_palette: bmp.color.PaletteIndex = (0, 2)
     def __init__(
         self,
         pos: bmp.loc.Coord[int],
@@ -517,325 +354,216 @@ class Game(Object):
         super().__init__(pos, direct, space_id=space_id, level_id=level_id)
         self.ref_type = ref_type
     json_name = "game"
-    display_name = "Game"
-    sprite_color: bmp.color.PaletteIndex = (4, 2)
 
 class Text(Object):
-    pass
+    sprite_category = "static"
 
 class Noun(Text):
-    ref_type: type["Object"]
-
-class GeneralNoun(Noun):
     ref_type: type["Object"]
 
 class Prefix(Text):
     pass
 
 class Infix(Text):
-    sprite_color: bmp.color.PaletteIndex = (0, 3)
+    sprite_palette: bmp.color.PaletteIndex = (0, 3)
 
 class Operator(Text):
-    sprite_color: bmp.color.PaletteIndex = (0, 3)
+    sprite_palette: bmp.color.PaletteIndex = (0, 3)
 
 class Property(Text):
     pass
 
-class TextBaba(GeneralNoun):
-    ref_type = Baba
-    sprite_color: bmp.color.PaletteIndex = (4, 1)
-
-class TextKeke(GeneralNoun):
-    ref_type = Keke
-    
-class TextMe(GeneralNoun):
-    ref_type = Me
-
-class TextPatrick(GeneralNoun):
-    ref_type = Patrick
-
-class TextSkull(GeneralNoun):
-    ref_type = Skull
-
-class TextGhost(GeneralNoun):
-    ref_type = Ghost
-
-class TextWall(GeneralNoun):
-    ref_type = Wall
-    sprite_color: bmp.color.PaletteIndex = (0, 1)
-
-class TextHedge(GeneralNoun):
-    ref_type = Hedge
-
-class TextIce(GeneralNoun):
-    ref_type = Ice
-    sprite_color: bmp.color.PaletteIndex = (1, 3)
-
-class TextTile(GeneralNoun):
-    ref_type = Tile
-    sprite_color: bmp.color.PaletteIndex = (0, 1)
-
-class TextGrass(GeneralNoun):
-    ref_type = Grass
-
-class TextWater(GeneralNoun):
-    ref_type = Water
-
-class TextLava(GeneralNoun):
-    ref_type = Lava
-    sprite_name = "text_lava"
-
-class TextDoor(GeneralNoun):
-    ref_type = Door
-
-class TextKey(GeneralNoun):
-    ref_type = Key
-
-class TextBox(GeneralNoun):
-    ref_type = Box
-
-class TextRock(GeneralNoun):
-    ref_type = Rock
-    sprite_color: bmp.color.PaletteIndex = (6, 1)
-
-class TextFruit(GeneralNoun):
-    ref_type = Fruit
-
-class TextBelt(GeneralNoun):
-    ref_type = Belt
-    sprite_color: bmp.color.PaletteIndex = (1, 3)
-
-class TextSun(GeneralNoun):
-    ref_type = Sun
-
-class TextMoon(GeneralNoun):
-    ref_type = Moon
-
-class TextStar(GeneralNoun):
-    ref_type = Star
-
-class TextWhat(GeneralNoun):
-    ref_type = What
-
-class TextLove(GeneralNoun):
-    ref_type = Love
-
-class TextFlag(GeneralNoun):
-    ref_type = Flag
-
-class TextLine(GeneralNoun):
-    ref_type = Line
-
-class TextDot(GeneralNoun):
-    ref_type = Dot
+class GeneralNoun(Noun):
+    pass
 
 class TextCursor(GeneralNoun):
     ref_type = Cursor
-    sprite_color: bmp.color.PaletteIndex = (2, 4)
+    json_name = "text_cursor"
+    sprite_name = "text_cursor"
+    sprite_palette: bmp.color.PaletteIndex = (2, 4)
 
 class TextText(GeneralNoun):
     ref_type = Text
     json_name = "text_text"
     sprite_name = "text_text"
-    display_name = "TEXT"
-    sprite_color: bmp.color.PaletteIndex = (4, 1)
+    sprite_palette: bmp.color.PaletteIndex = (4, 1)
 
 class TextLevelObject(GeneralNoun):
     ref_type = LevelObject
 
 class TextLevel(GeneralNoun):
     ref_type = Level
+    json_name = "text_level"
+    sprite_name = "text_level"
+    sprite_palette = ref_type.sprite_palette
 
 class TextSpaceObject(GeneralNoun):
     ref_type = SpaceObject
 
 class TextSpace(GeneralNoun):
     ref_type = Space
+    json_name = "text_space"
     sprite_name = "text_space"
+    sprite_palette = ref_type.sprite_palette
 
 class TextClone(GeneralNoun):
     ref_type = Clone
+    json_name = "text_clone"
     sprite_name = "text_clone"
+    sprite_palette = ref_type.sprite_palette
 
 class TextPath(GeneralNoun):
     ref_type = Path
+    json_name = "text_path"
     sprite_name = "text_path"
+    sprite_palette = ref_type.sprite_palette
 
 class TextGame(GeneralNoun):
     ref_type = Game
     json_name = "text_game"
     sprite_name = "text_game"
-    display_name = "GAME"
+    sprite_palette: bmp.color.PaletteIndex = (4, 2)
 
 class TextOften(Prefix):
     json_name = "text_often"
     sprite_name = "text_often"
-    display_name = "OFTEN"
-    sprite_color: bmp.color.PaletteIndex = (5, 4)
+    sprite_palette: bmp.color.PaletteIndex = (5, 4)
 
 class TextSeldom(Prefix):
     json_name = "text_seldom"
     sprite_name = "text_seldom"
-    display_name = "SELDOM"
-    sprite_color: bmp.color.PaletteIndex = (3, 2)
+    sprite_palette: bmp.color.PaletteIndex = (3, 2)
 
 class TextMeta(Prefix):
     json_name = "text_meta"
     sprite_name = "text_meta"
-    display_name = "META"
-    sprite_color: bmp.color.PaletteIndex = (4, 1)
+    sprite_palette: bmp.color.PaletteIndex = (4, 1)
 
 class TextText_(Text):
     json_name = "text_text_"
     sprite_name = "text_text_underline"
-    display_name = "TEXT_"
-    sprite_color: bmp.color.PaletteIndex = (4, 0)
+    sprite_palette: bmp.color.PaletteIndex = (4, 0)
 
 class TextOn(Infix):
     json_name = "text_on"
     sprite_name = "text_on"
-    display_name = "ON"
 
 class TextNear(Infix):
     json_name = "text_near"
     sprite_name = "text_near"
-    display_name = "NEAR"
 
 class TextNextto(Infix):
     json_name = "text_nextto"
     sprite_name = "text_nextto"
-    display_name = "NEXTTO"
 
 class TextWithout(Infix):
     json_name = "text_without"
     sprite_name = "text_without"
-    display_name = "WITHOUT"
 
 class TextFeeling(Infix):
     json_name = "text_feeling"
     sprite_name = "text_feeling"
-    display_name = "FEELING"
 
 class TextIs(Operator):
     json_name = "text_is"
     sprite_name = "text_is"
-    display_name = "IS"
 
 class TextHas(Operator):
     json_name = "text_has"
     sprite_name = "text_has"
-    display_name = "HAS"
 
 class TextMake(Operator):
     json_name = "text_make"
     sprite_name = "text_make"
-    display_name = "MAKE"
 
 class TextWrite(Operator):
     json_name = "text_write"
     sprite_name = "text_write"
-    display_name = "WRITE"
 
 special_operators: tuple[type[Operator], ...] = (TextHas, TextMake, TextWrite)
 
 class TextNot(Text):
     json_name = "text_not"
     sprite_name = "text_not"
-    display_name = "NOT"
-    sprite_color: bmp.color.PaletteIndex = (2, 2)
+    sprite_palette: bmp.color.PaletteIndex = (2, 2)
 
 class TextAnd(Text):
     json_name = "text_and"
     sprite_name = "text_and"
-    display_name = "AND"
-    sprite_color: bmp.color.PaletteIndex = (0, 3)
+    sprite_palette: bmp.color.PaletteIndex = (0, 3)
 
 class TextYou(Property):
     json_name = "text_you"
     sprite_name = "text_you"
-    display_name = "YOU"
-    sprite_color: bmp.color.PaletteIndex = (4, 1)
+    sprite_palette: bmp.color.PaletteIndex = (4, 1)
 
 class TextMove(Property):
     json_name = "text_move"
     sprite_name = "text_move"
-    display_name = "MOVE"
-    sprite_color: bmp.color.PaletteIndex = (5, 4)
+    sprite_palette: bmp.color.PaletteIndex = (5, 4)
 
 class TextStop(Property):
     json_name = "text_stop"
     sprite_name = "text_stop"
-    display_name = "STOP"
-    sprite_color: bmp.color.PaletteIndex = (5, 1)
+    sprite_palette: bmp.color.PaletteIndex = (5, 1)
 
 class TextPush(Property):
     json_name = "text_push"
     sprite_name = "text_push"
-    display_name = "PUSH"
-    sprite_color: bmp.color.PaletteIndex = (6, 1)
+    sprite_palette: bmp.color.PaletteIndex = (6, 1)
 
 class TextSink(Property):
     json_name = "text_sink"
     sprite_name = "text_sink"
-    display_name = "SINK"
-    sprite_color: bmp.color.PaletteIndex = (1, 3)
+    sprite_palette: bmp.color.PaletteIndex = (1, 3)
 
 class TextFloat(Property):
     json_name = "text_float"
     sprite_name = "text_float"
-    display_name = "FLOAT"
-    sprite_color: bmp.color.PaletteIndex = (1, 4)
+    sprite_palette: bmp.color.PaletteIndex = (1, 4)
 
 class TextOpen(Property):
     json_name = "text_open"
     sprite_name = "text_open"
-    display_name = "OPEN"
-    sprite_color: bmp.color.PaletteIndex = (2, 4)
+    sprite_palette: bmp.color.PaletteIndex = (2, 4)
 
 class TextShut(Property):
     json_name = "text_shut"
     sprite_name = "text_shut"
-    display_name = "SHUT"
-    sprite_color: bmp.color.PaletteIndex = (2, 2)
+    sprite_palette: bmp.color.PaletteIndex = (2, 2)
 
 class TextHot(Property):
     json_name = "text_hot"
     sprite_name = "text_hot"
-    display_name = "HOT"
-    sprite_color: bmp.color.PaletteIndex = (2, 3)
+    sprite_palette: bmp.color.PaletteIndex = (2, 3)
 
 class TextMelt(Property):
     json_name = "text_melt"
     sprite_name = "text_melt"
-    display_name = "MELT"
-    sprite_color: bmp.color.PaletteIndex = (1, 3)
+    sprite_palette: bmp.color.PaletteIndex = (1, 3)
 
 class TextWin(Property):
     json_name = "text_win"
     sprite_name = "text_win"
-    display_name = "WIN"
-    sprite_color: bmp.color.PaletteIndex = (2, 4)
+    sprite_palette: bmp.color.PaletteIndex = (2, 4)
 
 class TextDefeat(Property):
     json_name = "text_defeat"
     sprite_name = "text_defeat"
-    display_name = "DEFEAT"
-    sprite_color: bmp.color.PaletteIndex = (2, 1)
+    sprite_palette: bmp.color.PaletteIndex = (2, 1)
 
 class TextShift(Property):
     json_name = "text_shift"
     sprite_name = "text_shift"
-    display_name = "SHIFT"
-    sprite_color: bmp.color.PaletteIndex = (1, 3)
+    sprite_palette: bmp.color.PaletteIndex = (1, 3)
 
 class TextTele(Property):
     json_name = "text_tele"
     sprite_name = "text_tele"
-    display_name = "TELE"
-    sprite_color: bmp.color.PaletteIndex = (1, 4)
+    sprite_palette: bmp.color.PaletteIndex = (1, 4)
 
 class TransformProperty(Property):
-    sprite_color: bmp.color.PaletteIndex = (1, 4)
+    sprite_palette: bmp.color.PaletteIndex = (1, 4)
 
 class DirectionalProperty(TransformProperty):
     ref_direct: bmp.loc.Orient
@@ -847,28 +575,24 @@ class DirectFixProperty(DirectionalProperty):
 class TextUp(DirectFixProperty):
     json_name = "text_up"
     sprite_name = "text_up"
-    display_name = "UP"
     ref_direct = bmp.loc.Orient.W
     ref_transform = {"direct": ref_direct.name, "flip": False}
 
 class TextDown(DirectFixProperty):
     json_name = "text_down"
     sprite_name = "text_down"
-    display_name = "DOWN"
     ref_direct = bmp.loc.Orient.S
     ref_transform = {"direct": ref_direct.name, "flip": False}
 
 class TextLeft(DirectFixProperty):
     json_name = "text_left"
     sprite_name = "text_left"
-    display_name = "LEFT"
     ref_direct = bmp.loc.Orient.A
     ref_transform = {"direct": ref_direct.name, "flip": False}
 
 class TextRight(DirectFixProperty):
     json_name = "text_right"
     sprite_name = "text_right"
-    display_name = "RIGHT"
     ref_direct = bmp.loc.Orient.D
     ref_transform = {"direct": ref_direct.name, "flip": False}
 
@@ -880,14 +604,12 @@ class DirectRotateProperty(DirectionalProperty):
 class TextTurn(DirectRotateProperty):
     json_name = "text_turn"
     sprite_name = "text_turn"
-    display_name = "TURN"
     ref_direct = bmp.loc.Orient.A
     ref_transform = {"direct": ref_direct.name, "flip": False}
 
 class TextDeturn(DirectRotateProperty):
     json_name = "text_deturn"
     sprite_name = "text_deturn"
-    display_name = "DETURN"
     ref_direct = bmp.loc.Orient.D
     ref_transform = {"direct": ref_direct.name, "flip": False}
 
@@ -900,7 +622,6 @@ class DirectMappingProperty(TransformProperty):
 class TextFlip(DirectMappingProperty):
     json_name = "text_flip"
     sprite_name = "text_flip"
-    display_name = "FLIP"
     ref_mapping = {
         bmp.loc.Orient.W: bmp.loc.Orient.W,
         bmp.loc.Orient.S: bmp.loc.Orient.S,
@@ -914,71 +635,60 @@ direct_mapping_properties: list[type[DirectMappingProperty]] = [TextFlip]
 class TextEnter(Property):
     json_name = "text_enter"
     sprite_name = "text_enter"
-    display_name = "ENTER"
-    sprite_color: bmp.color.PaletteIndex = (5, 4)
+    sprite_palette: bmp.color.PaletteIndex = (5, 4)
     
 class TextLeave(Property):
     json_name = "text_leave"
     sprite_name = "text_leave"
-    display_name = "LEAVE"
-    sprite_color: bmp.color.PaletteIndex = (2, 2)
+    sprite_palette: bmp.color.PaletteIndex = (2, 2)
 
 class TextBonus(Property):
     json_name = "text_bonus"
     sprite_name = "text_bonus"
-    display_name = "BONUS"
-    sprite_color: bmp.color.PaletteIndex = (4, 1)
+    sprite_palette: bmp.color.PaletteIndex = (4, 1)
 
 class TextHide(Property):
     json_name = "text_hide"
     sprite_name = "text_hide"
-    display_name = "HIDE"
-    sprite_color: bmp.color.PaletteIndex = (3, 2)
+    sprite_palette: bmp.color.PaletteIndex = (3, 2)
 
 class TextWord(Property):
     json_name = "text_word"
     sprite_name = "text_word"
-    display_name = "WORD"
-    sprite_color: bmp.color.PaletteIndex = (0, 3)
+    sprite_palette: bmp.color.PaletteIndex = (0, 3)
 
 class TextSelect(Property):
     json_name = "text_select"
     sprite_name = "text_select"
-    display_name = "SELECT"
-    sprite_color: bmp.color.PaletteIndex = (2, 4)
+    sprite_palette: bmp.color.PaletteIndex = (2, 4)
 
 class TextTextPlus(Property):
     json_name = "text_text+"
     sprite_name = "text_text_plus"
-    display_name = "TEXT+"
-    sprite_color: bmp.color.PaletteIndex = (4, 1)
+    sprite_palette: bmp.color.PaletteIndex = (4, 1)
 
 class TextTextMinus(Property):
     json_name = "text_text-"
     sprite_name = "text_text_minus"
-    display_name = "TEXT-"
-    sprite_color: bmp.color.PaletteIndex = (4, 2)
+    sprite_palette: bmp.color.PaletteIndex = (4, 2)
 
 class TextEnd(Property):
     json_name = "text_end"
     sprite_name = "text_end"
-    display_name = "END"
-    sprite_color: bmp.color.PaletteIndex = (0, 3)
+    sprite_palette: bmp.color.PaletteIndex = (0, 3)
 
 class TextDone(Property):
     json_name = "text_done"
     sprite_name = "text_done"
-    display_name = "DONE"
-    sprite_color: bmp.color.PaletteIndex = (0, 3)
+    sprite_palette: bmp.color.PaletteIndex = (0, 3)
 
 class Metatext(GeneralNoun):
     ref_type: type[Text]
     meta_tier: int
-    _base_ref_type: type[Text]
 
 class SpecialNoun(Noun):
     ref_type: type[NotRealObject] = NotRealObject
-    sprite_color = (0, 3)
+    sprite_palette = (0, 3)
     @classmethod
     def isreferenceof(cls, other: Object, **kwds) -> bool:
         raise NotImplementedError()
@@ -997,12 +707,10 @@ class RangedNoun(SpecialNoun):
 class TextEmpty(SpecialNoun):
     json_name = "text_empty"
     sprite_name = "text_empty"
-    display_name = "EMPTY"
 
 class TextAll(RangedNoun):
     json_name = "text_all"
     sprite_name = "text_all"
-    display_name = "ALL"
 
 class GroupNoun(RangedNoun):
     @classmethod
@@ -1012,8 +720,7 @@ class GroupNoun(RangedNoun):
 class TextGroup(GroupNoun):
     json_name = "text_group"
     sprite_name = "text_group"
-    display_name = "GROUP"
-    sprite_color = (3, 2)
+    sprite_palette = (3, 2)
 
 group_noun_types: tuple[type[GroupNoun], ...] = (TextGroup, )
 
@@ -1028,7 +735,6 @@ class SpecificSpaceNoun(FixedNoun):
 class TextInfinity(SpecificSpaceNoun):
     json_name = "text_infinity"
     sprite_name = "text_infinity"
-    display_name = "INFINITY"
     delta_infinite_tier = 1
     @classmethod
     def isreferenceof(cls, other: SpaceObject, **kwds) -> bool:
@@ -1040,7 +746,6 @@ class TextInfinity(SpecificSpaceNoun):
 class TextEpsilon(SpecificSpaceNoun):
     json_name = "text_epsilon"
     sprite_name = "text_epsilon"
-    display_name = "EPSILON"
     delta_infinite_tier = -1
     @classmethod
     def isreferenceof(cls, other: SpaceObject, **kwds) -> bool:
@@ -1053,32 +758,27 @@ class TextParabox(RangedNoun):
     ref_type = (TextInfinity, TextEpsilon)
     json_name = "text_parabox"
     sprite_name = "text_parabox"
-    display_name = "PARABOX"
 
 SupportsReferenceType = GeneralNoun | RangedNoun
 SupportsIsReferenceOf = FixedNoun | RangedNoun
 
-noun_class_list: list[type[Noun]] = [
-    TextBaba, TextKeke, TextMe, TextPatrick, TextSkull, TextGhost,
-    TextWall, TextHedge, TextIce, TextTile, TextGrass, TextWater, TextLava,
-    TextDoor, TextKey, TextBox, TextRock, TextFruit, TextBelt, TextSun, TextMoon, TextStar, TextWhat, TextLove, TextFlag,
-    TextLine, TextDot, TextCursor,
-    TextText, TextSpace, TextClone, TextLevel, TextPath, TextGame
+builtin_object_class_list: list[type[Object]] = [
+    *level_object_types,
+    *space_object_types,
+    Cursor, Path, Game,
 ]
-
-for noun_class in noun_class_list:
-    if not hasattr(noun_class, "json_name"):
-        setattr(noun_class, "json_name", "text_" + noun_class.ref_type.json_name)
-    if not hasattr(noun_class, "sprite_name"):
-        setattr(noun_class, "sprite_name", "text_" + noun_class.ref_type.sprite_name)
-    if not hasattr(noun_class, "display_name"):
-        setattr(noun_class, "display_name", noun_class.ref_type.display_name.upper())
-    if not hasattr(noun_class, "sprite_color"):
-        setattr(noun_class, "sprite_color", noun_class.ref_type.sprite_color)
-
-special_noun_class_list: list[type[SpecialNoun]] = []
-special_noun_class_list.extend([TextAll, TextInfinity, TextEpsilon, TextParabox])
-
+builtin_noun_class_list: list[type[Noun]] = [
+    TextCursor, TextText, TextSpace, TextClone, TextLevel, TextPath, TextGame
+]
+special_noun_class_list: list[type[SpecialNoun]] = [
+    TextAll, TextInfinity, TextEpsilon, TextParabox
+]
+other_text_class_list: list[type[Text]] = [
+    TextText_, TextOften, TextSeldom, TextMeta,
+    TextOn, TextNear, TextNextto, TextWithout, TextFeeling,
+    TextIs, TextHas, TextMake, TextWrite,
+    TextNot, TextAnd
+]
 prop_class_list: list[type[Property]] = [
     TextYou, TextMove, TextStop, TextPush,
     TextSink, TextFloat, TextOpen, TextShut, TextHot, TextMelt,
@@ -1087,96 +787,135 @@ prop_class_list: list[type[Property]] = [
     TextEnter, TextLeave, TextBonus, TextHide, TextWord, TextSelect, TextTextPlus, TextTextMinus, TextEnd, TextDone
 ]
 
-text_class_list: list[type[Text]] = [
-    TextText_, TextOften, TextSeldom, TextMeta,
-    TextOn, TextNear, TextNextto, TextWithout, TextFeeling,
-    TextIs, TextHas, TextMake, TextWrite,
-    TextNot, TextAnd
-]
-text_class_list.extend(noun_class_list)
-text_class_list.extend(special_noun_class_list)
-text_class_list.extend(prop_class_list)
-
-object_class_only: list[type[Object]] = [Text, Game]
-object_used: list[type[Object]] = text_class_list + [t.ref_type for t in noun_class_list if t.ref_type not in object_class_only]
-
-name_to_class: dict[str, type[Object]] = {t.json_name: t for t in object_used}
-name_to_class["world"] = Space
-name_to_class["text_world"] = TextSpace
-
-class_to_noun_dict: dict[type[Object], type[Noun]] = {t.ref_type: t for t in noun_class_list if t.ref_type not in object_class_only}
-class_to_noun_dict[Game] = TextGame
-    
+class_only: list[type[Object]] = [Text, Game]
 nouns_not_in_all: tuple[type[Noun], ...] = (TextAll, TextText, TextLevelObject, TextSpaceObject, TextGame)
 types_not_in_all: tuple[type[Object], ...] = (Text, LevelObject, SpaceObject, Game)
 nouns_in_not_all: tuple[type[Noun], ...] = (TextText, )
 types_in_not_all: tuple[type[Object], ...] = (Text, )
 
-metatext_class_dict: dict[int, list[type[Metatext]]] = {}
-current_metatext_tier: int = bmp.base.options["metatext"]["tier"]
+metatext_class_list: list[list[type[Metatext]]]
+current_metatext_tier: int
+
+generic_noun_class_list: list[type[Noun]]
+generic_object_class_list: list[type[Object]]
+noun_class_list: list[type[Noun]]
+text_class_list: list[type[Text]]
+object_class_list: list[type[Object]]
+name_to_class: dict[str, type[Object]]
+
+class_to_noun: dict[type[Object], type[Noun]]
+
+class SpriteDefinition(TypedDict):
+    name: NotRequired[str]
+    category: NotRequired[Object.SpriteCategory]
+    palette: NotRequired[bmp.color.PaletteIndex]
+
+default_sprite_definition: Final[SpriteDefinition] = {
+    "category": "static",
+    "palette": (0, 3)
+}
+
+class ObjectDefinition(TypedDict):
+    noun: NotRequired["ObjectDefinition"]
+    sprite: NotRequired[SpriteDefinition]
 
 def generate_metatext(T: type[Text]) -> type[Metatext]:
-    new_type_name = "Text" + T.__name__
-    new_type_tier = new_type_name.count("Text") - (1 if new_type_name[-4:] != "Text" and new_type_name[-5:] != "Text_" else 2)
-    new_type_base = T._base_ref_type if issubclass(T, Metatext) else T
+    new_type_name = bmp.base.snake_to_big_camel("text_" + T.json_name)
     new_type_vars: dict[str, Any] = {
         "json_name": "text_" + T.json_name,
-        "sprite_name": T.sprite_name,
         "ref_type": T,
-        "_base_ref_type": new_type_base,
-        "meta_tier": new_type_tier,
-        "display_name": "TEXT_" + T.display_name,
-        "sprite_color": T.sprite_color
+        "meta_tier": T.meta_tier if issubclass(T, Metatext) else 1,
+        "sprite_palette": tuple(T.sprite_palette)
     }
     new_type: type[Metatext] = type(new_type_name, (Metatext, ), new_type_vars)
     return new_type
 
-def generate_metatext_at_tier(tier: int) -> list[type[Metatext]]:
-    global class_to_noun_dict, object_used, name_to_class, noun_class_list, text_class_list
-    if metatext_class_dict.get(tier) is not None:
-        return metatext_class_dict[tier]
-    if tier < 1:
-        raise ValueError(str(tier))
-    if tier == 1:
-        new_metatext_class_list: list[type[Metatext]] = []
-        for noun in text_class_list:
-            new_metatext_class_list.append(generate_metatext(noun))
-        metatext_class_dict[1] = new_metatext_class_list
-        for new_type in new_metatext_class_list:
-            object_used.append(new_type)
-            name_to_class[new_type.json_name] = new_type
-            if "world" in new_type.json_name:
-                name_to_class[new_type.json_name.replace("world", "space")] = new_type
-            noun_class_list.append(new_type)
-            text_class_list.append(new_type)
-            class_to_noun_dict[new_type.ref_type] = new_type
-        return new_metatext_class_list
-    old_metatext_class_list = generate_metatext_at_tier(tier - 1)
-    new_metatext_class_list: list[type[Metatext]] = []
-    for noun in old_metatext_class_list:
-        new_metatext_class_list.append(generate_metatext(noun))
-    metatext_class_dict[tier] = new_metatext_class_list
-    for new_type in new_metatext_class_list:
-        object_used.append(new_type)
-        name_to_class[new_type.json_name] = new_type
-        noun_class_list.append(new_type)
-        text_class_list.append(new_type)
-        class_to_noun_dict[new_type.ref_type] = new_type
-    return new_metatext_class_list
+def create_object_class(obj_name: str, obj_def: ObjectDefinition) -> tuple[type[Object], type[Noun]]:
+    noun_def = obj_def.get("noun", {})
+    obj_cls_var: dict[str, Any] = {
+        "json_name": obj_name,
+        "ref_type": NotRealObject,
+        "sprite_name": obj_def.get("sprite", default_sprite_definition).get("name", obj_name),
+        "sprite_category": obj_def.get("sprite", default_sprite_definition).get("category", default_sprite_definition["category"]),
+        "sprite_palette": tuple(obj_def.get("sprite", default_sprite_definition).get("palette", default_sprite_definition["palette"])),
+    }
+    obj_cls: type[Object] = type(bmp.base.snake_to_big_camel(obj_name), (Object, ), obj_cls_var)
+    noun_cls_var: dict[str, Any] = {
+        "json_name": "text_" + obj_name,
+        "ref_type": obj_cls,
+        "sprite_name": "text_" + obj_cls_var["sprite_name"],
+        "sprite_category": "static",
+        "sprite_palette": tuple(obj_cls_var["sprite_palette"]),
+    }
+    _noun_sprite_def = noun_def.get("sprite", {}) 
+    if _noun_sprite_def is not None:
+        _noun_sprite_name = _noun_sprite_def.get("name")
+        if _noun_sprite_name is not None:
+            noun_cls_var["sprite_name"] = _noun_sprite_name
+        _noun_sprite_category = _noun_sprite_def.get("category")
+        if _noun_sprite_category is not None:
+            noun_cls_var["sprite_category"] = _noun_sprite_category
+        _noun_sprite_palette = _noun_sprite_def.get("palette")
+        if _noun_sprite_palette is not None:
+            noun_cls_var["sprite_palette"] = tuple(_noun_sprite_palette)
+    noun_cls: type[Noun] = type(bmp.base.snake_to_big_camel("text_" + obj_name), (Noun, ), noun_cls_var)
+    return obj_cls, noun_cls
 
-if bmp.base.options["metatext"]["enabled"]:
-    generate_metatext_at_tier(bmp.base.options["metatext"]["tier"])
-    
+def reload_object_class_list() -> None:
+    global generic_noun_class_list, generic_object_class_list, \
+        noun_class_list, text_class_list, object_class_list, \
+            metatext_class_list, current_metatext_tier, \
+                name_to_class, class_to_noun
+    generic_noun_class_list = []
+    generic_object_class_list = []
+    with open(os.path.join(".", "data", "def", "object.json"), mode="r", encoding="utf-8") as file:
+        object_definition_dict: dict[str, ObjectDefinition] = json.load(file)
+        for object_name, object_definition in object_definition_dict.items():
+            new_object_class, new_noun_class = create_object_class(object_name, object_definition)
+            generic_object_class_list.append(new_object_class)
+            generic_noun_class_list.append(new_noun_class)
+    noun_class_list = [
+        *builtin_noun_class_list,
+        *special_noun_class_list,
+        *generic_noun_class_list,
+    ]
+    text_class_list = [
+        *noun_class_list,
+        *other_text_class_list,
+        *prop_class_list,
+    ]
+    if bmp.base.options["metatext"]["enabled"]:
+        current_metatext_tier = bmp.base.options["metatext"]["tier"]
+        if current_metatext_tier < 1:
+            raise ValueError(current_metatext_tier)
+        metatext_class_list = [[]]
+        metatext_class_list.append([generate_metatext(n) for n in text_class_list])
+        for metatext_tier in range(2, current_metatext_tier + 1):
+            metatext_class_list.append([generate_metatext(n) for n in metatext_class_list[metatext_tier - 1]])
+    object_class_list = [
+        *builtin_object_class_list,
+        *generic_object_class_list,
+        *text_class_list,
+    ]
+    name_to_class = {t.json_name: t for t in object_class_list}
+    name_to_class["world"] = Space
+    name_to_class["text_world"] = TextSpace
+    class_to_noun = {t.ref_type: t for t in builtin_noun_class_list + generic_noun_class_list}
+    # maybe useless
+    # class_to_noun[Game] = TextGame
+
+reload_object_class_list()
+
 def same_float_prop(obj_1: Object, obj_2: Object):
     return not (obj_1.properties.has(TextFloat) ^ obj_2.properties.has(TextFloat))
 
 def get_noun_from_type(object_type: type[Object]) -> type[Noun]:
     global current_metatext_tier
-    global class_to_noun_dict, object_used, name_to_class, noun_class_list, text_class_list
-    return_value: Optional[type[Noun]] = class_to_noun_dict.get(object_type)
+    global class_to_noun, object_class_list, name_to_class, builtin_noun_class_list, text_class_list
+    return_value: Optional[type[Noun]] = class_to_noun.get(object_type)
     if return_value is not None:
         return return_value
-    for new_object_type, noun_type in class_to_noun_dict.items():
+    for new_object_type, noun_type in class_to_noun.items():
         if object_type == new_object_type:
             return noun_type
         elif object_type.__name__ == new_object_type.__name__:
@@ -1184,14 +923,12 @@ def get_noun_from_type(object_type: type[Object]) -> type[Noun]:
         elif issubclass(object_type, new_object_type) and not issubclass(noun_type, TextText):
             return_value = noun_type
     if return_value is None:
-        current_metatext_tier += 1
-        generate_metatext_at_tier(current_metatext_tier)
-        return get_noun_from_type(object_type)
+        return TextText
     return return_value
 
 def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object:
     global current_metatext_tier
-    global class_to_noun_dict, object_used, name_to_class, noun_class_list, text_class_list
+    global class_to_noun, object_class_list, name_to_class, builtin_noun_class_list, text_class_list
     space_id: Optional[bmp.ref.SpaceID] = None
     level_id: Optional[bmp.ref.LevelID] = None
     space_extra: Optional[SpaceObjectExtra] = None
@@ -1250,10 +987,6 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
         pos: bmp.loc.Coord[int] = (json_object["pos"][0], json_object["pos"][1])
         direct = bmp.loc.Orient[json_object["orient"]]
     if object_type is None:
-        if json_object["type"].startswith("text_text_"):
-            current_metatext_tier += 1
-            generate_metatext_at_tier(current_metatext_tier)
-            return json_to_object(json_object, ver)
         raise ValueError(json_object["type"])
     if issubclass(object_type, LevelObject):
         if level_id is not None:

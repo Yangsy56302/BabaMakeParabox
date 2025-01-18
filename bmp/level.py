@@ -249,7 +249,7 @@ class Level(object):
                     else:
                         space.new_obj(bmp.obj.Game(obj.pos, obj.orient, ref_type=type(obj)))
                 elif issubclass(new_object_type, bmp.obj.LevelObject):
-                    level_object_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": obj.json_name, "color": bmp.color.current_palette[obj.sprite_color]}}
+                    level_object_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": obj.json_name, "color": bmp.color.current_palette[obj.sprite_palette]}}
                     if obj.level_id is not None:
                         space.new_obj(new_object_type(obj.pos, obj.orient, level_id=obj.level_id, level_extra=level_object_extra))
                     else:
@@ -776,7 +776,7 @@ class Level(object):
                                 space.new_obj(bmp.obj.Game(obj.pos, obj.orient, ref_type=type(obj)))
                         elif issubclass(make_object_type, bmp.obj.LevelObject):
                             if len(space.get_objs_from_pos_and_type(obj.pos, make_object_type)) == 0:
-                                level_object_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": obj.json_name, "color": bmp.color.current_palette[obj.sprite_color]}}
+                                level_object_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": obj.json_name, "color": bmp.color.current_palette[obj.sprite_palette]}}
                                 if obj.level_id is not None:
                                     space.new_obj(make_object_type(obj.pos, obj.orient, level_id=obj.level_id, level_extra=level_object_extra))
                                 else:
@@ -813,7 +813,7 @@ class Level(object):
                 if issubclass(new_type, bmp.obj.Game):
                     space.new_obj(bmp.obj.Game(text_minus_obj.pos, text_minus_obj.orient, ref_type=bmp.obj.TextGame))
                 elif issubclass(new_type, bmp.obj.LevelObject):
-                    level_object_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": text_minus_obj.json_name, "color": bmp.color.current_palette[text_minus_obj.sprite_color]}}
+                    level_object_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": text_minus_obj.json_name, "color": bmp.color.current_palette[text_minus_obj.sprite_palette]}}
                     if text_minus_obj.level_id is not None:
                         space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.orient, level_id=self.level_id, level_extra=level_object_extra))
                     else:
@@ -965,9 +965,9 @@ class Level(object):
         space_surface = pygame.Surface(space_surface_size, pygame.SRCALPHA)
         object_list: list[bmp.obj.Object] = []
         obj_surface_list: list[tuple[bmp.loc.Coord[int], bmp.loc.Coord[int], pygame.Surface, bmp.obj.Object]] = []
-        object_list.extend([o for o in space.object_list if isinstance(o, bmp.render.order) and (space.space_id, o) not in object_list])
+        object_list.extend([o for o in space.object_list if bmp.render.valid(o) and (space.space_id, o) not in object_list])
         for obj in object_list:
-            if not isinstance(obj, bmp.render.order):
+            if not bmp.render.valid(obj):
                 continue
             if obj.properties.enabled(bmp.obj.TextHide):
                 continue
@@ -995,7 +995,7 @@ class Level(object):
             # NotImplemented
             # smooth interpolation has been temporarily removed
             obj_surface_list.append((obj_surface_pos, obj_surface_size, obj_surface, obj))
-        obj_surface_list.sort(key=lambda o: [isinstance(o[-1], t) for t in bmp.render.order].index(True), reverse=True)
+        obj_surface_list.sort(key=lambda o: [f(o[-1]) for f in bmp.render.order].index(True), reverse=True)
         for pos, size, surface, obj in obj_surface_list:
             space_surface.blit(pygame.transform.scale(surface, size), pos)
         if cursor is not None:

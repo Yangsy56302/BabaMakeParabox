@@ -1,0 +1,93 @@
+{
+    "baba": {
+        "sprite": { "category": "character", "palette": [0, 3] },
+        "noun": { "sprite": { "palette": [4, 1] } }
+    },
+    "keke": {
+        "sprite": { "category": "character", "palette": [2, 2] }
+    },
+    "me": {
+        "sprite": { "category": "character", "palette": [3, 1] }
+    },
+    "patrick": {
+        "sprite": { "category": "directional", "palette": [4, 1] }
+    },
+    "skull": {
+        "sprite": { "category": "directional", "palette": [2, 1] }
+    },
+    "ghost": {
+        "sprite": { "category": "directional", "palette": [4, 2] }
+    },
+    "wall": {
+        "sprite": { "category": "tiled", "palette": [1, 1] },
+        "noun": { "sprite": { "palette": [0, 1] } }
+    },
+    "hedge": {
+        "sprite": { "category": "tiled", "palette": [5, 1] }
+    },
+    "ice": {
+        "sprite": { "category": "tiled", "palette": [1, 1] },
+        "noun": { "sprite": { "palette": [1, 3] } }
+    },
+    "tile": {
+        "sprite": { "category": "static", "palette": [0, 0] },
+        "noun": { "sprite": { "palette": [0, 1] } }
+    },
+    "grass": {
+        "sprite": { "category": "tiled", "palette": [5, 0] }
+    },
+    "water": {
+        "sprite": { "category": "tiled", "palette": [1, 3] }
+    },
+    "lava": {
+        "sprite": { "name": "water", "category": "tiled", "palette": [2, 3] },
+        "noun": { "sprite": { "name": "text_lava" } }
+    },
+    "door": {
+        "sprite": { "category": "static", "palette": [2, 2] }
+    },
+    "key": {
+        "sprite": { "category": "static", "palette": [2, 4] }
+    },
+    "box": {
+        "sprite": { "category": "static", "palette": [6, 1] }
+    },
+    "rock": {
+        "sprite": { "category": "static", "palette": [6, 2] },
+        "noun": { "sprite": { "palette": [6, 1] } }
+    },
+    "fruit": {
+        "sprite": { "category": "static", "palette": [2, 2] }
+    },
+    "belt": {
+        "sprite": { "category": "animated_directional", "palette": [1, 1] },
+        "noun": { "sprite": { "palette": [1, 3] } }
+    },
+    "sun": {
+        "sprite": { "category": "static", "palette": [2, 4] }
+    },
+    "moon": {
+        "sprite": { "category": "static", "palette": [2, 4] }
+    },
+    "star": {
+        "sprite": { "category": "static", "palette": [2, 4] }
+    },
+    "what": {
+        "sprite": { "category": "static", "palette": [0, 3] }
+    },
+    "love": {
+        "sprite": { "category": "static", "palette": [4, 2] }
+    },
+    "flag": {
+        "sprite": { "category": "static", "palette": [2, 4] }
+    },
+    "line": {
+        "sprite": { "category": "tiled", "palette": [0, 3] }
+    },
+    "dot": {
+        "sprite": { "category": "static", "palette": [0, 3] }
+    },
+    "orb": {
+        "sprite": { "category": "static", "palette": [4, 1] }
+    }
+}

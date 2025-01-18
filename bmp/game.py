@@ -285,19 +285,19 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                 for rule in current_space.rule_list:
                     str_list = []
                     for object_type in rule:
-                        str_list.append(object_type.display_name)
+                        str_list.append(object_type.get_name())
                     print(" ".join(str_list))
                 bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.level.rule_list")))
                 for rule in current_level.recursion_rules(current_space)[0]:
                     str_list = []
                     for object_type in rule:
-                        str_list.append(object_type.display_name)
+                        str_list.append(object_type.get_name())
                     print(" ".join(str_list))
                 bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.levelpack.rule_list")))
                 for rule in levelpack.rule_list:
                     str_list = []
                     for object_type in rule:
-                        str_list.append(object_type.display_name)
+                        str_list.append(object_type.get_name())
                     print(" ".join(str_list))
                 bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.collectibles")))
                 if len(levelpack.collectibles) == 0:

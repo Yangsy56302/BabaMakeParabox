@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Callable, Optional
 import os
 import string
 
@@ -54,12 +54,13 @@ class Sprites(object):
     def update(self) -> None:
         self.raw_sprites.clear()
         self.sprites.clear()
-        for object_type in bmp.obj.object_used:
+        for object_type in bmp.obj.object_class_list:
             sprite_name: str = getattr(object_type, "sprite_name", "")
             if sprite_name == "":
                 continue
-            sprite_color: bmp.color.ColorHex = bmp.color.current_palette[getattr(object_type, "sprite_color", (0, 3))]
-            sprite_varients: list[int] = getattr(object_type, "sprite_varients")
+            print(f"{object_type.json_name} {object_type.sprite_palette}")
+            sprite_color: bmp.color.ColorHex = bmp.color.current_palette[object_type.sprite_palette]
+            sprite_varients: list[int] = bmp.obj.Object.sprite_varients[object_type.sprite_category]
             self.raw_sprites.setdefault(object_type.json_name, {})
             self.sprites.setdefault(object_type.json_name, {})
             for varient_number in sprite_varients:
@@ -99,7 +100,7 @@ def simple_type_to_surface(object_type: type[bmp.obj.Object], varient: int = 0, 
             obj_surface = default_surface.copy()
         else:
             obj_surface = pygame.Surface((sprite_size, sprite_size), pygame.SRCALPHA)
-            obj_surface.fill(bmp.color.current_palette[object_type.sprite_color])
+            obj_surface.fill(bmp.color.current_palette[object_type.sprite_palette])
         obj_surface = set_surface_color_light(obj_surface, object_type.light_overlay)
         obj_surface = set_surface_color_dark(obj_surface, object_type.dark_overlay)
     elif object_type.json_name in current_sprites.sprites.keys():
@@ -143,19 +144,23 @@ def simple_object_to_surface(obj: bmp.obj.Object, wiggle: int = 1, default_surfa
             obj_surface.blit(infinite_tier_surface, (0, 0))
     return obj_surface
 
-order: tuple[type[bmp.obj.Object], ...] = (
-    bmp.obj.Cursor,
-    bmp.obj.Operator,
-    bmp.obj.Noun,
-    bmp.obj.Property,
-    bmp.obj.Text,
-    bmp.obj.Character,
-    bmp.obj.LevelObject,
-    bmp.obj.Static,
-    bmp.obj.AnimatedDirectional,
-    bmp.obj.Directional,
-    bmp.obj.Animated,
-    bmp.obj.Tiled,
-    bmp.obj.SpaceObject,
-    bmp.obj.Object
-)
+def valid(__obj: bmp.obj.Object, /) -> bool:
+    return __obj.sprite_category != "none"
+
+order: list[Callable[..., bool]] = [
+    lambda o: isinstance(o, bmp.obj.Cursor),
+    lambda o: isinstance(o, bmp.obj.Operator),
+    lambda o: isinstance(o, bmp.obj.Noun),
+    lambda o: isinstance(o, bmp.obj.Property),
+    lambda o: isinstance(o, bmp.obj.Text),
+    lambda o: isinstance(o, bmp.obj.LevelObject),
+    lambda o: isinstance(o, bmp.obj.SpaceObject),
+    lambda o: isinstance(o, bmp.obj.Object) and o.sprite_category == "character",
+    lambda o: isinstance(o, bmp.obj.Object) and o.sprite_category == "animated_directional",
+    lambda o: isinstance(o, bmp.obj.Object) and o.sprite_category == "directional",
+    lambda o: isinstance(o, bmp.obj.Object) and o.sprite_category == "animated",
+    lambda o: isinstance(o, bmp.obj.Object) and o.sprite_category == "static",
+    lambda o: isinstance(o, bmp.obj.Object) and o.sprite_category == "tiled",
+    lambda o: isinstance(o, bmp.obj.Object),
+    lambda c: True
+]

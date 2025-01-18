@@ -195,7 +195,7 @@ class Space(object):
                         self.rule_info.append(new_rule_info[rule_index])
     def set_sprite_states(self, round_num: int = 0) -> None:
         for obj in self.object_list:
-            if isinstance(obj, bmp.obj.Tiled):
+            if obj.sprite_category == "tiled":
                 connected = {
                     o: len(self.get_objs_from_pos_and_type(
                         bmp.loc.front_position(obj.pos, o), type(obj)
