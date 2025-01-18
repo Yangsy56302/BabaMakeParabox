@@ -93,7 +93,7 @@ class Sprites(object):
 current_sprites = Sprites()
 
 def simple_type_to_surface(object_type: type[bmp.obj.Object], varient: int = 0, wiggle: int = 1, default_surface: Optional[pygame.Surface] = None, debug: bool = False) -> pygame.Surface:
-    obj_surface = current_sprites.get("empty", 0, wiggle, raw=True)
+    obj_surface = current_sprites.get("empty", 0, wiggle, raw=True).copy()
     if issubclass(object_type, bmp.obj.SpaceObject):
         if default_surface is not None:
             obj_surface = default_surface.copy()

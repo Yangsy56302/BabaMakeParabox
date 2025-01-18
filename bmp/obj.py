@@ -196,7 +196,10 @@ class Object(object):
         return hash(self.uuid)
     @classmethod
     def get_name(cls) -> str:
-        return bmp.lang.lang_format(f"object.name.{cls.json_name}")
+        lang_key = f"object.name.{cls.json_name}"
+        if lang_key not in bmp.lang.current_language_name:
+            return bmp.base.snake_to_camel(cls.json_name, is_big=True)
+        return bmp.lang.lang_format(lang_key)
     def get_info(self) -> str:
         string = f"object {self.json_name} at {self.pos} facing {self.orient}"
         return "<" + string + ">"
@@ -358,6 +361,12 @@ class Game(Object):
 class Text(Object):
     json_name = "text"
     sprite_category = "static"
+    @classmethod
+    def get_name(cls) -> str:
+        lang_key = f"object.name.{cls.json_name}"
+        if lang_key not in bmp.lang.current_language_name:
+            return cls.json_name[5:].upper()
+        return bmp.lang.lang_format(lang_key)
 
 class Noun(Text):
     ref_type: type["Object"]
@@ -897,6 +906,16 @@ def reload_object_class_list() -> None:
             metatext_class_list_at_tier.append([generate_metatext(n) for n in metatext_class_list_at_tier[metatext_tier - 1]])
     for metatext_class_list in metatext_class_list_at_tier:
         generic_noun_class_list.extend(metatext_class_list)
+    noun_class_list = [
+        *builtin_noun_class_list,
+        *special_noun_class_list,
+        *generic_noun_class_list,
+    ]
+    text_class_list = [
+        *noun_class_list,
+        *other_text_class_list,
+        *prop_class_list,
+    ]
     object_class_list = [
         *builtin_object_class_list,
         *generic_object_class_list,

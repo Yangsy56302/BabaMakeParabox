@@ -18,15 +18,9 @@ def absclampf(__num: float, __lim: float, /) -> float:
     return min(abs(__lim), max(__num, -abs(__lim)))
 
 def snake_to_camel(__str: str, /, *, is_big: bool) -> str:
-    big_camel = ""
-    after_underscore: bool = is_big
-    for c in __str:
-        if c == "_":
-            after_underscore = True
-        else:
-            big_camel += c if not after_underscore else c.upper()
-            after_underscore = False
-    return big_camel
+    word_list = __str.split("_")
+    camel_head = word_list[0].capitalize() if is_big else word_list[0].lower()
+    return camel_head + "".join(word.capitalize() for word in word_list[1:])
 
 import pygame
 pygame.init()

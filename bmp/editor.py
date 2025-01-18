@@ -527,7 +527,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                 space = current_level.get_space(current_space.space_id)
                 if space is not None:
                     obj_surface = bmp.render.simple_type_to_surface(object_type, wiggle=wiggle, default_surface=space_surface, debug=True)
-            obj_surface = pygame.transform.scale_by(obj_surface, bmp.render.gui_scale)
+            obj_surface = pygame.transform.scale(obj_surface, (bmp.render.sprite_size * bmp.render.gui_scale, bmp.render.sprite_size * bmp.render.gui_scale))
             obj_surface_pos = (window.get_width() + (index % 5 * bmp.render.sprite_size * bmp.render.gui_scale) - (bmp.render.sprite_size * bmp.render.gui_scale * 5),
                                window.get_height() + (index // 5 * bmp.render.sprite_size * bmp.render.gui_scale) - (bmp.render.sprite_size * bmp.render.gui_scale * 2))
             obj_surface.blit(
