@@ -767,7 +767,7 @@ builtin_object_class_list: list[type[Object]] = [
     *space_object_types,
     Cursor, Path, Game,
 ]
-builtin_noun_class_list: list[type[Noun]] = [
+builtin_noun_class_list: list[type[GeneralNoun]] = [
     TextCursor, TextText, TextSpace, TextClone, TextLevel, TextPath, TextGame
 ]
 special_noun_class_list: list[type[SpecialNoun]] = [
@@ -796,7 +796,7 @@ types_in_not_all: tuple[type[Object], ...] = (Text, )
 metatext_class_list: list[list[type[Metatext]]]
 current_metatext_tier: int
 
-generic_noun_class_list: list[type[Noun]]
+generic_noun_class_list: list[type[GeneralNoun]]
 generic_object_class_list: list[type[Object]]
 noun_class_list: list[type[Noun]]
 text_class_list: list[type[Text]]
@@ -830,7 +830,7 @@ def generate_metatext(T: type[Text]) -> type[Metatext]:
     new_type: type[Metatext] = type(new_type_name, (Metatext, ), new_type_vars)
     return new_type
 
-def create_object_class(obj_name: str, obj_def: ObjectDefinition) -> tuple[type[Object], type[Noun]]:
+def create_object_class(obj_name: str, obj_def: ObjectDefinition) -> tuple[type[Object], type[GeneralNoun]]:
     noun_def = obj_def.get("noun", {})
     obj_cls_var: dict[str, Any] = {
         "json_name": obj_name,
@@ -858,7 +858,7 @@ def create_object_class(obj_name: str, obj_def: ObjectDefinition) -> tuple[type[
         _noun_sprite_palette = _noun_sprite_def.get("palette")
         if _noun_sprite_palette is not None:
             noun_cls_var["sprite_palette"] = tuple(_noun_sprite_palette)
-    noun_cls: type[Noun] = type(bmp.base.snake_to_big_camel("text_" + obj_name), (Noun, ), noun_cls_var)
+    noun_cls: type[GeneralNoun] = type(bmp.base.snake_to_big_camel("text_" + obj_name), (GeneralNoun, ), noun_cls_var)
     return obj_cls, noun_cls
 
 def reload_object_class_list() -> None:
@@ -918,12 +918,13 @@ def get_noun_from_type(object_type: type[Object]) -> type[Noun]:
     for new_object_type, noun_type in class_to_noun.items():
         if object_type == new_object_type:
             return noun_type
-        elif object_type.__name__ == new_object_type.__name__:
+        elif object_type.json_name == new_object_type.json_name:
             return noun_type
         elif issubclass(object_type, new_object_type) and not issubclass(noun_type, TextText):
             return_value = noun_type
     if return_value is None:
         return TextText
+    print(return_value)
     return return_value
 
 def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object:

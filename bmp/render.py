@@ -58,8 +58,7 @@ class Sprites(object):
             sprite_name: str = getattr(object_type, "sprite_name", "")
             if sprite_name == "":
                 continue
-            print(f"{object_type.json_name} {object_type.sprite_palette}")
-            sprite_color: bmp.color.ColorHex = bmp.color.current_palette[object_type.sprite_palette]
+            sprite_palette: bmp.color.ColorHex = bmp.color.current_palette[object_type.sprite_palette]
             sprite_varients: list[int] = bmp.obj.Object.sprite_varients[object_type.sprite_category]
             self.raw_sprites.setdefault(object_type.json_name, {})
             self.sprites.setdefault(object_type.json_name, {})
@@ -70,7 +69,7 @@ class Sprites(object):
                     filename = "_".join([sprite_name, str(varient_number), str(wiggle)]) + ".png"
                     sprite = pygame.image.load(os.path.join("sprites", filename)).convert_alpha()
                     self.raw_sprites[object_type.json_name][int(varient_number)][int(wiggle)] = sprite.copy()
-                    self.sprites[object_type.json_name][int(varient_number)][int(wiggle)] = set_surface_color_dark(sprite, sprite_color)
+                    self.sprites[object_type.json_name][int(varient_number)][int(wiggle)] = set_surface_color_dark(sprite, sprite_palette)
         special_sprite_name: list[str] = ["text_" + c for c in string.digits]
         special_sprite_name.extend(["text_" + c for c in string.ascii_lowercase])
         for sprite_name in special_sprite_name:
@@ -80,7 +79,7 @@ class Sprites(object):
                 filename = "_".join([sprite_name, str(varient_number), str(wiggle)]) + ".png"
                 sprite = pygame.image.load(os.path.join("sprites", filename)).convert_alpha()
                 self.raw_sprites[sprite_name][0][int(wiggle)] = sprite.copy()
-                self.sprites[sprite_name][0][int(wiggle)] = set_surface_color_dark(sprite, sprite_color)
+                self.sprites[sprite_name][0][int(wiggle)] = set_surface_color_dark(sprite, sprite_palette)
         empty_sprite = pygame.Surface((sprite_size, sprite_size), pygame.SRCALPHA)
         empty_sprite.fill("#00000000")
         self.raw_sprites.setdefault("empty", {0: {}})

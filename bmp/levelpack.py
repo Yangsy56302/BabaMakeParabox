@@ -253,7 +253,7 @@ class Levelpack(object):
                             level_object_extra: bmp.obj.LevelObjectExtra = {
                                 "icon": {
                                     "name": bmp.obj.get_noun_from_type(bmp.obj.default_space_object_type).json_name,
-                                    "color": space.color if space.color is not None else bmp.color.current_palette[bmp.obj.SpaceObject.sprite_color]
+                                    "color": space.color if space.color is not None else bmp.color.current_palette[bmp.obj.SpaceObject.sprite_palette]
                                 }
                             }
                             new_obj = new_type(old_obj.pos, old_obj.orient, level_id=level_id, level_extra=level_object_extra)
@@ -353,7 +353,7 @@ class Levelpack(object):
                             new_level_id: bmp.ref.LevelID = old_obj.space_id.to_level_id()
                             new_level_icon_color: Optional[bmp.color.ColorHex] = active_level.get_exact_space(old_obj.space_id).color
                             if new_level_icon_color is None:
-                                new_level_icon_color = bmp.color.current_palette[bmp.obj.SpaceObject.sprite_color]
+                                new_level_icon_color = bmp.color.current_palette[bmp.obj.SpaceObject.sprite_palette]
                             new_level_object_extra = bmp.obj.LevelObjectExtra(icon=bmp.obj.LevelObjectIcon(
                                 name=bmp.obj.get_noun_from_type(space_object_type).json_name,
                                 color=new_level_icon_color
