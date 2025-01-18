@@ -17,9 +17,9 @@ def clampf(__min: float, __num: float, __max: float, /) -> float:
 def absclampf(__num: float, __lim: float, /) -> float:
     return min(abs(__lim), max(__num, -abs(__lim)))
 
-def snake_to_big_camel(__str: str, /) -> str:
+def snake_to_camel(__str: str, /, *, is_big: bool) -> str:
     big_camel = ""
-    after_underscore: bool = False
+    after_underscore: bool = is_big
     for c in __str:
         if c == "_":
             after_underscore = True
@@ -31,7 +31,7 @@ def snake_to_big_camel(__str: str, /) -> str:
 import pygame
 pygame.init()
 
-versions: str = "4.001"
+versions: str = "4.01"
 def compare_versions(ver_1: str, ver_2: str) -> Literal[-1, 0, 1]:
     for char_1, char_2 in zip(ver_1, ver_2):
         if ord(char_1) > ord(char_2):
@@ -91,14 +91,14 @@ default_options: Options = {
         "color": 0x000000
     },
     "object_type_shortcuts": [
-        "baba", 
-        "wall", 
-        "rock", 
-        "flag", 
+        "space", 
+        "clone", 
+        "path", 
+        "cursor", 
+        "level", 
         "text_space", 
         "text_is", 
         "text_you", 
-        "text_push", 
         "text_win", 
         "text_level"
     ],

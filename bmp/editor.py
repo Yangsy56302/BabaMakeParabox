@@ -28,7 +28,8 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
     current_space = current_level.space_list[current_space_index]
     current_object_type = bmp.obj.TextSpace
     current_direct = bmp.loc.Orient.S
-    current_cursor_pos = (0, 0)
+    current_cursor_pos: bmp.loc.Coord[int] = (0, 0)
+    cursor_pos_changed: bool
     current_clipboard = []
     window = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
     pygame.display.set_caption(f"Baba Make Parabox Editor Version {bmp.base.versions}")
@@ -135,11 +136,15 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
             (mouse_pos[1] - space_surface_pos[1]) * current_space.height // space_surface_size[1]
         )
         if not current_space.out_of_range(mouse_pos_in_space):
+            cursor_pos_changed = False
+            if current_cursor_pos != mouse_pos_in_space:
+                cursor_pos_changed = True
             current_cursor_pos = mouse_pos_in_space
         if any(mouses):
             if not current_space.out_of_range(mouse_pos_in_space):
-                if mouses[0] == 1:
-                    if keys["LALT"] or keys["RALT"]: # enter space; enter level (shift)
+                if mouses[0] != 0:
+                    if mouses[0] and (keys["LALT"] or keys["RALT"]):
+                        # enter space; enter level (shift)
                         if keys["LSHIFT"] or keys["RSHIFT"]:
                             sub_level_objs: list[bmp.obj.LevelObject] = current_space.get_levels_from_pos(mouse_pos_in_space)
                             sub_levels = [levelpack.get_level(o.level_id) for o in sub_level_objs]
@@ -158,7 +163,8 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                 if space is not None:
                                     current_space = space
                                     space_changed = True
-                    else: # place object; with detail (shift); allow overlap (ctrl)
+                    elif mouses[0] == 1 or cursor_pos_changed:
+                        # place object; with detail (shift); allow overlap (ctrl)
                         if keys["LSHIFT"] or keys["RSHIFT"] or len(current_space.get_objs_from_pos(current_cursor_pos)) == 0:
                             history.append(copy.deepcopy(levelpack))
                             if issubclass(current_object_type, bmp.obj.LevelObject):
@@ -229,8 +235,9 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                 current_space.new_obj(current_object_type(current_cursor_pos, current_direct, unlocked=unlocked, conditions=conditions))
                             else:
                                 current_space.new_obj(current_object_type(current_cursor_pos, current_direct))
-                elif mouses[2] == 1:
-                    if keys["LALT"] or keys["RALT"]: # leave space; leave level (shift)
+                elif mouses[2] != 0:
+                    if mouses[2] == 1 and (keys["LALT"] or keys["RALT"]):
+                        # leave space; leave level (shift)
                         if keys["LSHIFT"] or keys["RSHIFT"]:
                             level = levelpack.get_level(current_level.super_level_id if current_level.super_level_id is not None else levelpack.main_level_id)
                             current_level = level if level is not None else levelpack.get_exact_level(levelpack.main_level_id)
@@ -240,11 +247,16 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                             if len(super_spaces) != 0:
                                 current_space = random.choice(super_spaces)
                                 space_changed = True
-                    else: # new space; new level (alt)
+                    elif mouses[2] == 1 or cursor_pos_changed:
+                        # new space; new level (alt)
                         history.append(copy.deepcopy(levelpack))
                         current_space.del_objs_from_pos(current_cursor_pos)
                 elif mouses[1] == 1:
-                    pass
+                    # object select from cursor
+                    objects_under_cursor = current_space.get_objs_from_pos(current_cursor_pos)
+                    classes_under_cursor = [type(o) for o in objects_under_cursor if type(o) not in bmp.obj.instance_exclusive]
+                    if len(classes_under_cursor) != 0:
+                        current_object_type = random.choice(classes_under_cursor)
                 # object select from list
                 elif mouses[3]:
                     if keys["LALT"] or keys["RALT"]:
@@ -257,10 +269,10 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                             space_changed = True
                     elif keys["LSHIFT"] or keys["RSHIFT"]:
                         obj_to_noun = bmp.obj.get_noun_from_type(current_object_type)
-                        if obj_to_noun in bmp.obj.object_class_list:
+                        if obj_to_noun not in bmp.obj.instance_exclusive:
                             current_object_type = obj_to_noun
                     else:
-                        current_object_type_list = [t for t in bmp.obj.name_to_class.values() if t in bmp.obj.object_class_list]
+                        current_object_type_list = [t for t in bmp.obj.object_class_list if t not in bmp.obj.instance_exclusive]
                         current_object_type_index = current_object_type_list.index(current_object_type)
                         current_object_type = current_object_type_list[current_object_type_index - 1 if current_object_type_index >= 0 else len(current_object_type_list) - 1]
                 elif mouses[4]:
@@ -273,10 +285,10 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                             current_space_index += 1
                             space_changed = True
                     elif keys["LSHIFT"] or keys["RSHIFT"]:
-                        if issubclass(current_object_type, bmp.obj.GeneralNoun) and current_object_type.ref_type in bmp.obj.object_class_list:
+                        if issubclass(current_object_type, bmp.obj.GeneralNoun) and current_object_type.ref_type not in bmp.obj.instance_exclusive:
                             current_object_type = current_object_type.ref_type
                     else:
-                        current_object_type_list = [t for t in bmp.obj.name_to_class.values() if t in bmp.obj.object_class_list]
+                        current_object_type_list = [t for t in bmp.obj.object_class_list if t not in bmp.obj.instance_exclusive]
                         current_object_type_index = current_object_type_list.index(current_object_type)
                         current_object_type = current_object_type_list[current_object_type_index + 1 if current_object_type_index < len(current_object_type_list) - 1 else 0]
         # cursor move; object facing change (alt)

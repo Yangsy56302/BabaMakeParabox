@@ -356,6 +356,7 @@ class Game(Object):
     json_name = "game"
 
 class Text(Object):
+    json_name = "text"
     sprite_category = "static"
 
 class Noun(Text):
@@ -684,6 +685,7 @@ class TextDone(Property):
 
 class Metatext(GeneralNoun):
     ref_type: type[Text]
+    basic_ref_type: type[Text]
     meta_tier: int
 
 class SpecialNoun(Noun):
@@ -787,13 +789,13 @@ prop_class_list: list[type[Property]] = [
     TextEnter, TextLeave, TextBonus, TextHide, TextWord, TextSelect, TextTextPlus, TextTextMinus, TextEnd, TextDone
 ]
 
-class_only: list[type[Object]] = [Text, Game]
+instance_exclusive: tuple[type[Object], ...] = (Text, Game)
 nouns_not_in_all: tuple[type[Noun], ...] = (TextAll, TextText, TextLevelObject, TextSpaceObject, TextGame)
 types_not_in_all: tuple[type[Object], ...] = (Text, LevelObject, SpaceObject, Game)
 nouns_in_not_all: tuple[type[Noun], ...] = (TextText, )
 types_in_not_all: tuple[type[Object], ...] = (Text, )
 
-metatext_class_list: list[list[type[Metatext]]]
+metatext_class_list_at_tier: list[list[type[Metatext]]]
 current_metatext_tier: int
 
 generic_noun_class_list: list[type[GeneralNoun]]
@@ -820,11 +822,12 @@ class ObjectDefinition(TypedDict):
     sprite: NotRequired[SpriteDefinition]
 
 def generate_metatext(T: type[Text]) -> type[Metatext]:
-    new_type_name = bmp.base.snake_to_big_camel("text_" + T.json_name)
+    new_type_name = bmp.base.snake_to_camel("text_" + T.json_name, is_big=True)
     new_type_vars: dict[str, Any] = {
         "json_name": "text_" + T.json_name,
         "ref_type": T,
-        "meta_tier": T.meta_tier if issubclass(T, Metatext) else 1,
+        "basic_ref_type": T.basic_ref_type if issubclass(T, Metatext) else T,
+        "meta_tier": (T.meta_tier if issubclass(T, Metatext) else 0) + 1,
         "sprite_palette": tuple(T.sprite_palette)
     }
     new_type: type[Metatext] = type(new_type_name, (Metatext, ), new_type_vars)
@@ -839,7 +842,7 @@ def create_object_class(obj_name: str, obj_def: ObjectDefinition) -> tuple[type[
         "sprite_category": obj_def.get("sprite", default_sprite_definition).get("category", default_sprite_definition["category"]),
         "sprite_palette": tuple(obj_def.get("sprite", default_sprite_definition).get("palette", default_sprite_definition["palette"])),
     }
-    obj_cls: type[Object] = type(bmp.base.snake_to_big_camel(obj_name), (Object, ), obj_cls_var)
+    obj_cls: type[Object] = type(bmp.base.snake_to_camel(obj_name, is_big=True), (Object, ), obj_cls_var)
     noun_cls_var: dict[str, Any] = {
         "json_name": "text_" + obj_name,
         "ref_type": obj_cls,
@@ -858,13 +861,13 @@ def create_object_class(obj_name: str, obj_def: ObjectDefinition) -> tuple[type[
         _noun_sprite_palette = _noun_sprite_def.get("palette")
         if _noun_sprite_palette is not None:
             noun_cls_var["sprite_palette"] = tuple(_noun_sprite_palette)
-    noun_cls: type[GeneralNoun] = type(bmp.base.snake_to_big_camel("text_" + obj_name), (GeneralNoun, ), noun_cls_var)
+    noun_cls: type[GeneralNoun] = type(bmp.base.snake_to_camel("text_" + obj_name, is_big=True), (GeneralNoun, ), noun_cls_var)
     return obj_cls, noun_cls
 
 def reload_object_class_list() -> None:
     global generic_noun_class_list, generic_object_class_list, \
         noun_class_list, text_class_list, object_class_list, \
-            metatext_class_list, current_metatext_tier, \
+            metatext_class_list_at_tier, current_metatext_tier, \
                 name_to_class, class_to_noun
     generic_noun_class_list = []
     generic_object_class_list = []
@@ -888,10 +891,12 @@ def reload_object_class_list() -> None:
         current_metatext_tier = bmp.base.options["metatext"]["tier"]
         if current_metatext_tier < 1:
             raise ValueError(current_metatext_tier)
-        metatext_class_list = [[]]
-        metatext_class_list.append([generate_metatext(n) for n in text_class_list])
+        metatext_class_list_at_tier = [[]]
+        metatext_class_list_at_tier.append([generate_metatext(n) for n in text_class_list])
         for metatext_tier in range(2, current_metatext_tier + 1):
-            metatext_class_list.append([generate_metatext(n) for n in metatext_class_list[metatext_tier - 1]])
+            metatext_class_list_at_tier.append([generate_metatext(n) for n in metatext_class_list_at_tier[metatext_tier - 1]])
+    for metatext_class_list in metatext_class_list_at_tier:
+        generic_noun_class_list.extend(metatext_class_list)
     object_class_list = [
         *builtin_object_class_list,
         *generic_object_class_list,

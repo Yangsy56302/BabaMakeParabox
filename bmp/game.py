@@ -185,19 +185,26 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                     if not s.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextHide)
                 ]
                 if mouses[0] == 1:
-                    sub_space_objs: list[bmp.obj.SpaceObject] = current_space.get_spaces_from_pos(mouse_pos_in_space)
+                    sub_space_objs: list[bmp.obj.SpaceObject] = [
+                        o for o in current_space.get_spaces_from_pos(mouse_pos_in_space)
+                        if not o.properties.enabled(bmp.obj.TextHide)
+                    ]
                     sub_spaces = [current_level.get_space(o.space_id) for o in sub_space_objs]
-                    sub_spaces = [w for w in sub_spaces if w is not None]
+                    sub_spaces = [
+                        s for s in sub_spaces
+                        if s is not None
+                        and not s.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextHide)
+                    ]
                     if len(sub_spaces) != 0:
                         space = random.choice(sub_spaces)
-                        if space is not None:
-                            current_space = space
-                            space_changed = True
-                            display_refresh = True
+                        current_space = space
+                        space_changed = True
+                        display_refresh = True
                 elif mouses[2] == 1:
                     super_spaces: list[bmp.space.Space] = [
-                        t[0] for t in current_level.find_super_spaces(current_space.space_id)
-                        if not t[0].properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextHide)
+                        s for s, o in current_level.find_super_spaces(current_space.space_id)
+                        if not o.properties.enabled(bmp.obj.TextHide)
+                        and not s.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextHide)
                     ]
                     if len(super_spaces) != 0:
                         current_space = random.choice(super_spaces)
