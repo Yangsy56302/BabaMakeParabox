@@ -36,7 +36,7 @@ def snake_to_camel(__str: str, /, *, is_big: bool) -> str:
 import pygame
 pygame.init()
 
-versions: str = "4.02"
+versions: str = "4.021"
 def compare_versions(ver_1: str, ver_2: str) -> Literal[-1, 0, 1]:
     for char_1, char_2 in zip(ver_1, ver_2):
         if ord(char_1) > ord(char_2):
@@ -65,6 +65,10 @@ class MetatextOptions(TypedDict):
     enabled: bool
     tier: int
 
+class RepeatOptions(TypedDict):
+    delay: int
+    interval: int
+
 class Options(TypedDict):
     ver: str
     debug: bool
@@ -72,6 +76,7 @@ class Options(TypedDict):
     fps: int
     space_display_recursion_depth: int
     smooth_animation_multiplier: Optional[int]
+    long_press: RepeatOptions
     palette: str
     compressed_json_output: bool
     object_type_shortcuts: list[str]
@@ -88,6 +93,10 @@ default_options: Options = {
     "fps": 30,
     "space_display_recursion_depth": 1,
     "smooth_animation_multiplier": 3,
+    "long_press": {
+        "delay": 500,
+        "interval": 50,
+    },
     "palette": "default.png",
     "compressed_json_output": True,
     "default_new_space": {

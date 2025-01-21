@@ -240,6 +240,9 @@ class Object(object):
                     self.sprite_state = int(math.log2(int(self.orient.value))) * 0x8 | sprite_state_without_orient
                 else:
                     self.sprite_state = int(math.log2(int(self.orient.value))) * 0x8 | (self.sprite_state & 0x3)
+    @classmethod
+    def get_color(cls) -> bmp.color.ColorHex:
+        return bmp.color.current_palette[cls.sprite_palette]
     def to_json(self) -> ObjectJson:
         json_object: ObjectJson = {"type": self.json_name, "pos": self.pos, "orient": self.orient.name}
         if self.space_id is not None:

@@ -265,22 +265,27 @@ class Levelpack(object):
                             transform_success = True
                         elif isinstance(old_obj, bmp.obj.SpaceObject):
                             level_id: bmp.ref.LevelID = old_obj.space_id.to_level_id()
-                            self.set_level(bmp.level.Level(level_id, active_level.space_list, super_level_id=active_level.level_id,
-                                                        main_space_id=old_obj.space_id))
-                            level_object_extra: bmp.obj.LevelObjectExtra = {
+                            self.set_level(bmp.level.Level(
+                                level_id, active_level.space_list,
+                                super_level_id=active_level.level_id,
+                                main_space_id=old_obj.space_id
+                            ))
+                            level_extra: bmp.obj.LevelObjectExtra = {
                                 "icon": {
-                                    "name": bmp.obj.get_noun_from_type(bmp.obj.default_space_object_type).json_name,
-                                    "color": space.color if space.color is not None else bmp.color.current_palette[bmp.obj.SpaceObject.sprite_palette]
+                                    "name": bmp.obj.get_noun_from_type(bmp.obj.default_space_object_type).sprite_name,
+                                    "color": space.color if space.color is not None else bmp.obj.SpaceObject.get_color()
                                 }
                             }
-                            new_obj = new_type(old_obj.pos, old_obj.orient, level_id=level_id, level_extra=level_object_extra)
+                            new_obj = new_type(old_obj.pos, old_obj.orient, level_id=level_id, level_extra=level_extra)
                             space.new_obj(new_obj)
                             transform_success = True
                         elif old_obj.level_id is not None:
-                            space.new_obj(new_type(old_obj.pos, old_obj.orient, level_id=old_obj.level_id))
+                            level_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": old_obj.sprite_name, "color": old_obj.get_color()}}
+                            space.new_obj(new_type(old_obj.pos, old_obj.orient, level_id=old_obj.level_id, level_extra=level_extra))
                             transform_success = True
                         else:
-                            new_obj = new_type(old_obj.pos, old_obj.orient, level_id=active_level.level_id)
+                            level_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": old_obj.sprite_name, "color": old_obj.get_color()}}
+                            new_obj = new_type(old_obj.pos, old_obj.orient, level_id=active_level.level_id, level_extra=level_extra)
                             space.new_obj(new_obj)
                             transform_success = True
                     elif issubclass(new_type, bmp.obj.SpaceObject):
@@ -370,13 +375,17 @@ class Levelpack(object):
                             new_level_id: bmp.ref.LevelID = old_obj.space_id.to_level_id()
                             new_level_icon_color: Optional[bmp.color.ColorHex] = active_level.get_exact_space(old_obj.space_id).color
                             if new_level_icon_color is None:
-                                new_level_icon_color = bmp.color.current_palette[bmp.obj.SpaceObject.sprite_palette]
-                            new_level_object_extra = bmp.obj.LevelObjectExtra(icon=bmp.obj.LevelObjectIcon(
+                                new_level_icon_color = bmp.obj.default_space_object_type.get_color()
+                            new_level_extra = bmp.obj.LevelObjectExtra(icon=bmp.obj.LevelObjectIcon(
                                 name=bmp.obj.get_noun_from_type(space_object_type).json_name,
                                 color=new_level_icon_color
                             ))
-                            self.set_level(bmp.level.Level(new_level_id, active_level.space_list, super_level_id=active_level.level_id, main_space_id=old_obj.space_id))
-                            new_obj = new_type(old_obj.pos, old_obj.orient, level_id=new_level_id, level_extra=new_level_object_extra)
+                            self.set_level(bmp.level.Level(
+                                new_level_id, active_level.space_list,
+                                super_level_id=active_level.level_id,
+                                main_space_id=old_obj.space_id
+                            ))
+                            new_obj = new_type(old_obj.pos, old_obj.orient, level_id=new_level_id, level_extra=new_level_extra)
                         elif issubclass(new_type, bmp.obj.Game):
                             new_obj = bmp.obj.Game(old_obj.pos, old_obj.orient, ref_type=bmp.obj.get_noun_from_type(space_object_type))
                         elif issubclass(new_noun, bmp.obj.TextText):

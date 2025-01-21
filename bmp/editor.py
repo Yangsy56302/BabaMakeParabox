@@ -34,7 +34,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
     pygame.display.set_caption(f"Baba Make Parabox Editor Version {bmp.base.versions}")
     pygame.display.set_icon(pygame.image.load(os.path.join(".", "logo", "c8icon.png")))
     pygame.key.stop_text_input()
-    pygame.key.set_repeat(200, 50)
+    pygame.key.set_repeat(bmp.base.options["long_press"]["delay"], bmp.base.options["long_press"]["interval"])
     clock = pygame.time.Clock()
     keybinds = {
         pygame.K_w: "W",
@@ -180,15 +180,15 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                         try:
                                             icon_color = bmp.color.str_to_hex(icon_color) if icon_color != "" else bmp.color.current_palette[0, 3]
                                         except ValueError:
-                                            bmp.lang.lang_print("warn.value.invalid", value=icon_color, cls="color")
+                                            bmp.lang.lang_warn("warn.value.invalid", value=icon_color, cls="color")
                                         else:
                                             break
                                 else:
                                     level_id: bmp.ref.LevelID = current_level.level_id
                                     icon_name = "empty"
                                     icon_color = bmp.color.current_palette[0, 3]
-                                level_object_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": icon_name, "color": icon_color}}
-                                current_space.new_obj(current_object_type(current_cursor_pos, current_direct, level_id=level_id, level_extra=level_object_extra))
+                                level_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": icon_name, "color": icon_color}}
+                                current_space.new_obj(current_object_type(current_cursor_pos, current_direct, level_id=level_id, level_extra=level_extra))
                             elif issubclass(current_object_type, bmp.obj.SpaceObject):
                                 space_id: bmp.ref.SpaceID = current_space.space_id
                                 if keys["LCTRL"] or keys["RCTRL"]:
@@ -199,7 +199,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                         try:
                                             infinite_tier = int(infinite_tier) if infinite_tier != "" else 0
                                         except ValueError:
-                                            bmp.lang.lang_print("warn.value.invalid", value=infinite_tier, cls="int")
+                                            bmp.lang.lang_warn("warn.value.invalid", value=infinite_tier, cls="int")
                                         else:
                                             break
                                     if current_level.get_space(bmp.ref.SpaceID(name, infinite_tier)) is not None:
@@ -216,7 +216,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                         while True:
                                             collects_type = bmp.obj.name_to_class[bmp.lang.lang_input("input.string")]
                                             if collects_type is None:
-                                                bmp.lang.lang_print("warn.value.invalid", value=collects_type, cls=bmp.obj.Object.__name__)
+                                                bmp.lang.lang_warn("warn.value.invalid", value=collects_type, cls=bmp.obj.Object.__name__)
                                                 continue
                                             break
                                         while True:
@@ -224,7 +224,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                             try:
                                                 collects_count = int(collects_count)
                                             except ValueError:
-                                                bmp.lang.lang_print("warn.value.invalid", value=collects_count, cls="int")
+                                                bmp.lang.lang_warn("warn.value.invalid", value=collects_count, cls="int")
                                             else:
                                                 break
                                         conditions[collects_type] = collects_count
@@ -321,7 +321,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                         try:
                             width = int(width) if width != "" else bmp.base.options["default_new_space"]["width"]
                         except ValueError:
-                            bmp.lang.lang_print("warn.value.invalid", value=width, cls="int")
+                            bmp.lang.lang_warn("warn.value.invalid", value=width, cls="int")
                         else:
                             break
                     while True:
@@ -329,7 +329,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                         try:
                             height = int(height) if height != "" else bmp.base.options["default_new_space"]["height"]
                         except ValueError:
-                            bmp.lang.lang_print("warn.value.invalid", value=height, cls="int")
+                            bmp.lang.lang_warn("warn.value.invalid", value=height, cls="int")
                         else:
                             break
                     size = (width, height)
@@ -338,7 +338,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                         try:
                             infinite_tier = int(infinite_tier) if infinite_tier != "" else 0
                         except ValueError:
-                            bmp.lang.lang_print("warn.value.invalid", value=infinite_tier, cls="int")
+                            bmp.lang.lang_warn("warn.value.invalid", value=infinite_tier, cls="int")
                         else:
                             break
                     while True:
@@ -346,7 +346,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                         try:
                             color = bmp.color.str_to_hex(color) if color != "" else bmp.base.options["default_new_space"]["color"]
                         except ValueError:
-                            bmp.lang.lang_print("warn.value.invalid", value=color, cls="color")
+                            bmp.lang.lang_warn("warn.value.invalid", value=color, cls="color")
                         else:
                             break
                     default_space = bmp.space.Space(bmp.ref.SpaceID(name, infinite_tier), size, color)
@@ -365,7 +365,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                         try:
                             width = int(width) if width != "" else bmp.base.options["default_new_space"]["width"]
                         except ValueError:
-                            bmp.lang.lang_print("warn.value.invalid", value=width, cls="int")
+                            bmp.lang.lang_warn("warn.value.invalid", value=width, cls="int")
                         else:
                             break
                     while True:
@@ -373,7 +373,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                         try:
                             height = int(height) if height != "" else bmp.base.options["default_new_space"]["height"]
                         except ValueError:
-                            bmp.lang.lang_print("warn.value.invalid", value=height, cls="int")
+                            bmp.lang.lang_warn("warn.value.invalid", value=height, cls="int")
                         else:
                             break
                     size = (width, height)
@@ -382,7 +382,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                         try:
                             infinite_tier = int(infinite_tier) if infinite_tier != "" else 0
                         except ValueError:
-                            bmp.lang.lang_print("warn.value.invalid", value=infinite_tier, cls="int")
+                            bmp.lang.lang_warn("warn.value.invalid", value=infinite_tier, cls="int")
                         else:
                             break
                     while True:
@@ -390,7 +390,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                         try:
                             color = bmp.color.str_to_hex(color) if color != "" else bmp.base.options["default_new_space"]["color"]
                         except ValueError:
-                            bmp.lang.lang_print("warn.value.invalid", value=color, cls="color")
+                            bmp.lang.lang_warn("warn.value.invalid", value=color, cls="color")
                         else:
                             break
                     current_level.space_list.append(bmp.space.Space(bmp.ref.SpaceID(name, infinite_tier), size, color))
@@ -450,7 +450,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                     try:
                         current_space.space_id.infinite_tier = int(infinite_tier)
                     except ValueError:
-                        bmp.lang.lang_print("warn.value.invalid", value=infinite_tier, cls="int")
+                        bmp.lang.lang_warn("warn.value.invalid", value=infinite_tier, cls="int")
                     else:
                         break
         # undo

@@ -36,6 +36,9 @@ def lang_format(message_id: str, /, **formats) -> str:
 def lang_print(message_id: str, /, **formats) -> None:
     print(language_dict[current_language_name][message_id].format(**formats))
 
+def lang_warn(message_id: str, /, **formats) -> None:
+    lang_print(message_id, **formats)
+
 def lang_input(message_id: str, /, **formats) -> str:
     return input(language_dict[current_language_name][message_id].format(**formats))
 

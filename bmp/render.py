@@ -4,6 +4,7 @@ import string
 
 import bmp.base
 import bmp.color
+import bmp.lang
 import bmp.obj
 
 import pygame
@@ -54,11 +55,18 @@ class Sprites(object):
     def update(self) -> None:
         self.raw_sprites.clear()
         self.sprites.clear()
+        empty_sprite = pygame.Surface((sprite_size, sprite_size), pygame.SRCALPHA)
+        empty_sprite.fill("#00000000")
+        self.raw_sprites.setdefault("empty", {0: {}})
+        self.sprites.setdefault("empty", {0: {}})
+        for wiggle in range(1, 4):
+            self.raw_sprites["empty"][0][int(wiggle)] = empty_sprite.copy()
+            self.sprites["empty"][0][int(wiggle)] = empty_sprite.copy()
         for object_type in bmp.obj.object_class_list:
             sprite_name: str = getattr(object_type, "sprite_name", "")
             if sprite_name == "":
                 continue
-            sprite_palette: bmp.color.ColorHex = bmp.color.current_palette[object_type.sprite_palette]
+            sprite_palette: bmp.color.ColorHex = object_type.get_color()
             sprite_varients: list[int] = bmp.obj.Object.sprite_varients[object_type.sprite_category]
             self.raw_sprites.setdefault(object_type.json_name, {})
             self.sprites.setdefault(object_type.json_name, {})
@@ -67,7 +75,11 @@ class Sprites(object):
                 self.sprites[object_type.json_name].setdefault(varient_number, {})
                 for wiggle in range(1, 4):
                     filename = "_".join([sprite_name, str(varient_number), str(wiggle)]) + ".png"
-                    sprite = pygame.image.load(os.path.join("sprites", filename)).convert_alpha()
+                    if os.path.isfile(os.path.join("sprites", filename)):
+                        sprite = pygame.image.load(os.path.join("sprites", filename)).convert_alpha()
+                    else:
+                        bmp.lang.lang_warn("warn.file.not_found", file=os.path.join("sprites", filename))
+                        sprite = empty_sprite.copy()
                     self.raw_sprites[object_type.json_name][int(varient_number)][int(wiggle)] = sprite.copy()
                     self.sprites[object_type.json_name][int(varient_number)][int(wiggle)] = set_surface_color_dark(sprite, sprite_palette)
         special_sprite_name: list[str] = ["text_" + c for c in string.digits]
@@ -77,16 +89,13 @@ class Sprites(object):
             self.sprites.setdefault(sprite_name, {0: {}})
             for wiggle in range(1, 4):
                 filename = "_".join([sprite_name, str(varient_number), str(wiggle)]) + ".png"
-                sprite = pygame.image.load(os.path.join("sprites", filename)).convert_alpha()
+                if os.path.isfile(os.path.join("sprites", filename)):
+                    sprite = pygame.image.load(os.path.join("sprites", filename)).convert_alpha()
+                else:
+                    bmp.lang.lang_warn("warn.file.not_found", file=os.path.join("sprites", filename))
+                    sprite = empty_sprite.copy()
                 self.raw_sprites[sprite_name][0][int(wiggle)] = sprite.copy()
                 self.sprites[sprite_name][0][int(wiggle)] = set_surface_color_dark(sprite, sprite_palette)
-        empty_sprite = pygame.Surface((sprite_size, sprite_size), pygame.SRCALPHA)
-        empty_sprite.fill("#00000000")
-        self.raw_sprites.setdefault("empty", {0: {}})
-        self.sprites.setdefault("empty", {0: {}})
-        for wiggle in range(1, 4):
-            self.raw_sprites["empty"][0][int(wiggle)] = empty_sprite.copy()
-            self.sprites["empty"][0][int(wiggle)] = empty_sprite.copy()
     def get(self, name: str, varient: int, wiggle: int = 1, raw: bool = False) -> pygame.Surface:
         if raw: return self.raw_sprites[name][varient][wiggle]
         return self.sprites[name][varient][wiggle]
@@ -99,7 +108,7 @@ def simple_type_to_surface(object_type: type[bmp.obj.Object], varient: int = 0, 
             obj_surface = default_surface.copy()
         else:
             obj_surface = pygame.Surface((sprite_size, sprite_size), pygame.SRCALPHA)
-            obj_surface.fill(bmp.color.current_palette[object_type.sprite_palette])
+            obj_surface.fill(object_type.get_color())
         obj_surface = set_surface_color_light(obj_surface, object_type.light_overlay)
         obj_surface = set_surface_color_dark(obj_surface, object_type.dark_overlay)
         overlay_surface = current_sprites.get(bmp.obj.SpaceObject.sprite_name, 0, wiggle, raw=True).copy()
@@ -124,7 +133,6 @@ def simple_object_to_surface(obj: bmp.obj.Object, wiggle: int = 1, default_surfa
     if isinstance(obj, bmp.obj.LevelObject):
         obj_surface = set_surface_color_dark(current_sprites.get(obj.json_name, obj.sprite_state, wiggle, raw=True).copy(), obj.level_extra["icon"]["color"])
         icon_surface = current_sprites.get(obj.level_extra["icon"]["name"], 0, wiggle, raw=True).copy()
-        icon_surface = set_surface_color_light(set_surface_color_dark(icon_surface, obj.level_extra["icon"]["color"]), 0xC0C0C0)
         icon_surface_pos = ((obj_surface.get_width() - icon_surface.get_width()) // 2,
                             (obj_surface.get_height() - icon_surface.get_height()) // 2)
         obj_surface.blit(icon_surface, icon_surface_pos)

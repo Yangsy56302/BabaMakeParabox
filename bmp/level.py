@@ -256,11 +256,11 @@ class Level(object):
                     else:
                         space.new_obj(bmp.obj.Game(obj.pos, obj.orient, ref_type=type(obj)))
                 elif issubclass(new_object_type, bmp.obj.LevelObject):
-                    level_object_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": obj.json_name, "color": bmp.color.current_palette[obj.sprite_palette]}}
+                    level_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": obj.json_name, "color": obj.get_color()}}
                     if obj.level_id is not None:
-                        space.new_obj(new_object_type(obj.pos, obj.orient, level_id=obj.level_id, level_extra=level_object_extra))
+                        space.new_obj(new_object_type(obj.pos, obj.orient, level_id=obj.level_id, level_extra=level_extra))
                     else:
-                        space.new_obj(new_object_type(obj.pos, obj.orient, level_id=self.level_id, level_extra=level_object_extra))
+                        space.new_obj(new_object_type(obj.pos, obj.orient, level_id=self.level_id, level_extra=level_extra))
                 elif issubclass(new_object_type, bmp.obj.SpaceObject):
                     if obj.space_id is not None:
                         space.new_obj(new_object_type(obj.pos, obj.orient, space_id=obj.space_id))
@@ -464,20 +464,20 @@ class Level(object):
             level_list: list[bmp.ref.LevelID] = []
             for space in self.space_list:
                 select_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextSelect)]
-                for obj in select_objs:
-                    level_list.extend([o.level_id for o in space.object_list if o.level_id is not None])
+                for select_obj in select_objs:
+                    level_list.extend([o.level_id for o in space.object_list if o.level_id is not None and o != select_obj])
             if len(level_list) != 0:
                 return random.choice(level_list)
         else:
             for space in self.space_list:
                 select_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextSelect)]
-                for obj in select_objs:
-                    new_pos = bmp.loc.front_position(obj.pos, direct)
+                for select_obj in select_objs:
+                    new_pos = bmp.loc.front_position(select_obj.pos, direct)
                     if not space.out_of_range(new_pos):
                         level_objs = space.get_levels_from_pos(new_pos)
                         path_objs = space.get_objs_from_pos_and_type(new_pos, bmp.obj.Path)
                         if any(map(lambda p: p.unlocked, path_objs)) or len(level_objs) != 0:
-                            space.set_obj_pos(obj, new_pos)
+                            space.set_obj_pos(select_obj, new_pos)
             return None
     def direction(self) -> None:
         for prop in bmp.obj.direct_fix_properties:
@@ -783,11 +783,11 @@ class Level(object):
                                 space.new_obj(bmp.obj.Game(obj.pos, obj.orient, ref_type=type(obj)))
                         elif issubclass(make_object_type, bmp.obj.LevelObject):
                             if len(space.get_objs_from_pos_and_type(obj.pos, make_object_type)) == 0:
-                                level_object_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": obj.json_name, "color": bmp.color.current_palette[obj.sprite_palette]}}
+                                level_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": obj.json_name, "color": obj.get_color()}}
                                 if obj.level_id is not None:
-                                    space.new_obj(make_object_type(obj.pos, obj.orient, level_id=obj.level_id, level_extra=level_object_extra))
+                                    space.new_obj(make_object_type(obj.pos, obj.orient, level_id=obj.level_id, level_extra=level_extra))
                                 else:
-                                    space.new_obj(make_object_type(obj.pos, obj.orient, level_id=self.level_id, level_extra=level_object_extra))
+                                    space.new_obj(make_object_type(obj.pos, obj.orient, level_id=self.level_id, level_extra=level_extra))
                         elif issubclass(make_object_type, bmp.obj.SpaceObject):
                             if len(space.get_objs_from_pos_and_type(obj.pos, make_object_type)) == 0:
                                 if obj.space_id is not None:
@@ -820,11 +820,11 @@ class Level(object):
                 if issubclass(new_type, bmp.obj.Game):
                     space.new_obj(bmp.obj.Game(text_minus_obj.pos, text_minus_obj.orient, ref_type=bmp.obj.TextGame))
                 elif issubclass(new_type, bmp.obj.LevelObject):
-                    level_object_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": text_minus_obj.json_name, "color": bmp.color.current_palette[text_minus_obj.sprite_palette]}}
+                    level_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": text_minus_obj.json_name, "color": bmp.color.current_palette[text_minus_obj.sprite_palette]}}
                     if text_minus_obj.level_id is not None:
-                        space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.orient, level_id=self.level_id, level_extra=level_object_extra))
+                        space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.orient, level_id=self.level_id, level_extra=level_extra))
                     else:
-                        space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.orient, level_id=self.level_id, level_extra=level_object_extra))
+                        space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.orient, level_id=self.level_id, level_extra=level_extra))
                 elif issubclass(new_type, bmp.obj.SpaceObject):
                     if text_minus_obj.space_id is not None:
                         space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.orient, space_id=text_minus_obj.space_id))

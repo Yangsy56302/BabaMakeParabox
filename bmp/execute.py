@@ -41,7 +41,7 @@ def pre_play() -> bool:
     input_filename = bmp.lang.lang_input("input.file.name")
     input_filename += "" if bmp.base.options["debug"] or input_filename.endswith(".json") else ".json"
     if not os.path.isfile(os.path.join("levelpacks", input_filename)):
-        bmp.lang.lang_print("warn.file.not_found", file=input_filename)
+        bmp.lang.lang_warn("warn.file.not_found", file=input_filename)
         return False
     with open(os.path.join("levelpacks", input_filename), "r", encoding="utf-8") as file:
         levelpack_json = json.load(file)
@@ -72,7 +72,7 @@ def pre_edit() -> bool:
     if input_filename != "":
         input_filename += "" if bmp.base.options["debug"] or input_filename.endswith(".json") else ".json"
         if not os.path.isfile(os.path.join("levelpacks", input_filename)):
-            bmp.lang.lang_print("warn.file.not_found", file=input_filename)
+            bmp.lang.lang_warn("warn.file.not_found", file=input_filename)
             return False
         with open(os.path.join("levelpacks", input_filename), "r", encoding="utf-8") as file:
             levelpack_json = json.load(file)
@@ -102,7 +102,7 @@ def update_levelpack() -> bool:
     input_filename = bmp.lang.lang_input("input.file.name")
     input_filename += "" if bmp.base.options["debug"] or input_filename.endswith(".json") else ".json"
     if not os.path.isfile(os.path.join("levelpacks", input_filename)):
-        bmp.lang.lang_print("warn.file.not_found", file=input_filename)
+        bmp.lang.lang_warn("warn.file.not_found", file=input_filename)
         return False
     with open(os.path.join("levelpacks", input_filename), "r", encoding="utf-8") as file:
             levelpack_json = json.load(file)
@@ -129,7 +129,7 @@ def change_options() -> bool:
         try:
             performance_preset_index = int(performance_preset_index)
         except ValueError:
-            bmp.lang.lang_print("warn.value.invalid", value=performance_preset_index, cls="int")
+            bmp.lang.lang_warn("warn.value.invalid", value=performance_preset_index, cls="int")
             continue
         match int(performance_preset_index):
             case 1:
@@ -143,20 +143,48 @@ def change_options() -> bool:
             case 5:
                 bmp.base.options.update({"fps": 60, "smooth_animation_multiplier": 3}); break
             case _:
-                bmp.lang.lang_print("warn.value.out_of_range", min=1, max=5, value=performance_preset_index)
+                bmp.lang.lang_warn("warn.value.out_of_range", min=1, max=5, value=performance_preset_index); continue
     while True:
         bmp.lang.lang_print("launch.change_options.display_layer")
         display_layer = bmp.lang.lang_input("input.number")
         try:
             display_layer = int(display_layer)
         except ValueError:
-            bmp.lang.lang_print("warn.value.invalid", value=display_layer, cls="int")
+            bmp.lang.lang_warn("warn.value.invalid", value=display_layer, cls="int")
             continue
         if display_layer < 0:
-            bmp.lang.lang_print("warn.value.underflow", min=1, value=display_layer)
+            bmp.lang.lang_warn("warn.value.underflow", min=0, value=display_layer)
+            continue
+        bmp.base.options.update({"space_display_recursion_depth": display_layer})
+        break
+    while True:
+        bmp.lang.lang_print("launch.change_options.long_press")
+        bmp.lang.lang_print("launch.change_options.long_press.delay")
+        bmp.lang.lang_print("launch.change_options.long_press.delay.disable")
+        delay = bmp.lang.lang_input("input.number")
+        try:
+            delay = int(delay)
+        except ValueError:
+            bmp.lang.lang_warn("warn.value.invalid", value=delay, cls="int")
+            continue
+        if delay < 0:
+            bmp.lang.lang_warn("warn.value.underflow", min=0, value=display_layer)
+            continue
+        if delay == 0:
+            interval = 0
         else:
-            bmp.base.options.update({"space_display_recursion_depth": display_layer})
-            break
+            bmp.lang.lang_print("launch.change_options.long_press.interval")
+            interval = bmp.lang.lang_input("input.number")
+            try:
+                interval = int(interval)
+            except ValueError:
+                bmp.lang.lang_warn("warn.value.invalid", value=interval, cls="int")
+                continue
+            if interval < 0:
+                bmp.lang.lang_warn("warn.value.underflow", min=0, value=display_layer)
+                continue
+        bmp.base.options.update({"long_press": {"delay": delay, "interval": interval}})
+        break
     while True:
         bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.directory", dir="palettes")))
         show_dir("palettes", lambda s: True if bmp.base.options["debug"] else s.endswith(".png"))
@@ -167,42 +195,29 @@ def change_options() -> bool:
         palette_filename += "" if bmp.base.options["debug"] or palette_filename.endswith(".png") else ".png"
         pelette_path = os.path.join(".", "palettes", palette_filename)
         if not os.path.isfile(pelette_path):
-            bmp.lang.lang_print("warn.file.not_found", file=palette_filename)
+            bmp.lang.lang_warn("warn.file.not_found", file=palette_filename)
             continue
         try:
             bmp.color.set_palette(pelette_path)
             bmp.base.options["palette"] = palette_filename
         except Exception:
-            bmp.lang.lang_print("warn.unknown", value=traceback.format_exc())
+            bmp.lang.lang_warn("warn.unknown", value=traceback.format_exc())
         else:
             break
     if bmp.lang.lang_input("launch.change_options.json") in bmp.lang.yes:
         bmp.base.options.update({"compressed_json_output": False})
     else:
         bmp.base.options.update({"compressed_json_output": True})
-    if bmp.lang.lang_input("launch.change_options.bgm") in bmp.lang.yes:
-        bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.directory", dir="midi")))
-        show_dir("midi", lambda s: True if bmp.base.options["debug"] else s.endswith(".mid"))
-        bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.open.file")))
-        mid_filename = bmp.lang.lang_input("input.file.name")
-        mid_filename += "" if bmp.base.options["debug"] or mid_filename.endswith(".mid") else ".mid"
-        if os.path.isfile(os.path.join(".", "midi", mid_filename)):
-            bmp.base.options.update({"bgm": {"enabled": True, "name": mid_filename}})
-        else:
-            bmp.lang.lang_print("warn.file.not_found", file=mid_filename)
-            bmp.base.options.update({"bgm": {"enabled": False, "name": mid_filename}})
-    else:
-        bmp.base.options.update({"bgm": {"enabled": False, "name": "rush_baba.mid"}})
     while True:
         bmp.lang.lang_print("launch.change_options.metatext")
         metatext_tier = bmp.lang.lang_input("input.number")
         try:
             metatext_tier = int(metatext_tier)
         except ValueError:
-            bmp.lang.lang_print("warn.value.invalid", value=metatext_tier, cls="int")
+            bmp.lang.lang_warn("warn.value.invalid", value=metatext_tier, cls="int")
             continue
         if metatext_tier < 0:
-            bmp.lang.lang_print("warn.value.underflow", min=0, value=metatext_tier)
+            bmp.lang.lang_warn("warn.value.underflow", min=0, value=metatext_tier)
         elif metatext_tier == 0:
             bmp.base.options.update({"metatext": {"enabled": False, "tier": 0}})
             break
