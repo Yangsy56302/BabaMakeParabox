@@ -90,7 +90,7 @@ class Space(object):
     # @auto_refresh
     def get_objs_from_special_noun(self, object_type: type[bmp.obj.SupportsIsReferenceOf]) -> list[bmp.obj.Object]:
         return [o for o in self.object_list if object_type.isreferenceof(o)]
-    @auto_refresh
+    # @auto_refresh
     def del_obj(self, obj: bmp.obj.Object) -> None:
         self.object_list.remove(obj)
         if not self.out_of_range(obj.pos):
@@ -124,6 +124,11 @@ class Space(object):
             if not self.out_of_range(obj.pos):
                 self.pos_to_objs(pos).remove(obj)
         return deleted
+    # @auto_refresh
+    def set_obj_pos(self, obj: bmp.obj.Object, pos: bmp.loc.Coord[int]) -> None:
+        self.pos_to_objs(obj.pos).remove(obj)
+        obj.pos = pos
+        self.pos_to_objs(pos).append(obj)
     # @auto_refresh
     def get_spaces(self) -> list[bmp.obj.SpaceObject]:
         return [o for o in self.object_list if isinstance(o, bmp.obj.SpaceObject)]

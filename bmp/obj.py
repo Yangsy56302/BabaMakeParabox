@@ -701,19 +701,19 @@ class SpecialNoun(Noun):
     ref_type: type[NotRealObject] = NotRealObject
     sprite_palette = (0, 3)
     @classmethod
-    def isreferenceof(cls, other: Object, **kwds) -> bool:
+    def isreferenceof(cls, other: Object, /, **kwds) -> bool:
         raise NotImplementedError()
 
 class FixedNoun(SpecialNoun):
     @classmethod
-    def isreferenceof(cls, other: Object, **kwds) -> bool:
+    def isreferenceof(cls, other: Object, /, **kwds) -> bool:
         return False
 
 class RangedNoun(SpecialNoun):
     ref_type: tuple[type[Noun], ...]
     @classmethod
-    def isreferenceof(cls, other: Object, **kwds) -> bool:
-        return any(map(lambda n: isinstance(other, n) if not isinstance(n, SpecialNoun) else n.isreferenceof(other), cls.ref_type))
+    def isreferenceof(cls, other: Object, /, **kwds) -> bool:
+        return any(map(lambda n: isinstance(other, n) if not isinstance(n, SupportsIsReferenceOf) else n.isreferenceof(other), cls.ref_type))
 
 class TextEmpty(SpecialNoun):
     json_name = "text_empty"
@@ -722,10 +722,13 @@ class TextEmpty(SpecialNoun):
 class TextAll(RangedNoun):
     json_name = "text_all"
     sprite_name = "text_all"
+    @classmethod
+    def isreferenceof(cls, other: Object, /, all_list, **kwds) -> bool:
+        return any(map(lambda n: isinstance(other, n) if not isinstance(n, SupportsIsReferenceOf) else n.isreferenceof(other), all_list))
 
 class GroupNoun(RangedNoun):
     @classmethod
-    def isreferenceof(cls, other: Object, **kwds) -> bool:
+    def isreferenceof(cls, other: Object, /, **kwds) -> bool:
         return other.properties.enabled(cls)
 
 class TextGroup(GroupNoun):
@@ -799,7 +802,7 @@ prop_class_list: list[type[Property]] = [
 ]
 
 instance_exclusive: tuple[type[Object], ...] = (Text, Game)
-nouns_not_in_all: tuple[type[Noun], ...] = (TextAll, TextText, TextLevelObject, TextSpaceObject, TextGame)
+nouns_not_in_all: tuple[type[Noun], ...] = (SpecialNoun, TextAll, TextText, TextLevelObject, TextSpaceObject, TextGame)
 types_not_in_all: tuple[type[Object], ...] = (Text, LevelObject, SpaceObject, Game)
 nouns_in_not_all: tuple[type[Noun], ...] = (TextText, )
 types_in_not_all: tuple[type[Object], ...] = (Text, )

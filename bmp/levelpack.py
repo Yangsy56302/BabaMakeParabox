@@ -87,11 +87,16 @@ class Levelpack(object):
                         new_match_obj_list = [o for o in space.object_list if bmp.obj.TextAll.isreferenceof(o, all_list = active_level.all_list) and not isinstance(o, object_type)]
                     else:
                         new_match_obj_list = [o for o in space.get_objs_from_type(object_type)]
+                elif noun_type is bmp.obj.TextAll:
+                    if noun_negated_tier % 2 == 1:
+                        new_match_obj_list = [o for o in space.object_list if isinstance(o, bmp.obj.types_in_not_all)]
+                    else:
+                        new_match_obj_list = [o for o in space.object_list if bmp.obj.TextAll.isreferenceof(o, all_list = active_level.all_list)]
                 elif issubclass(noun_type, bmp.obj.SupportsIsReferenceOf):
                     if noun_negated_tier % 2 == 1:
-                        new_match_obj_list = [o for o in space.object_list if bmp.obj.TextAll.isreferenceof(o, all_list = active_level.all_list) and not noun_type.isreferenceof(o, all_list = active_level.all_list)]
+                        new_match_obj_list = [o for o in space.object_list if bmp.obj.TextAll.isreferenceof(o, all_list = active_level.all_list) and not noun_type.isreferenceof(o)]
                     else:
-                        new_match_obj_list = [o for o in space.object_list if noun_type.isreferenceof(o, all_list = active_level.all_list)]
+                        new_match_obj_list = [o for o in space.get_objs_from_special_noun(noun_type)]
                 for oper_info in rule_info.oper_list:
                     oper_type = oper_info.oper_type
                     for prop_info in oper_info.prop_list:
@@ -136,11 +141,16 @@ class Levelpack(object):
                         new_match_obj_list = [o for o in space.object_list if bmp.obj.TextAll.isreferenceof(o, all_list = active_level.all_list) and not isinstance(o, object_type)]
                     else:
                         new_match_obj_list = [o for o in space.get_objs_from_type(object_type)]
+                elif noun_type is bmp.obj.TextAll:
+                    if noun_negated_tier % 2 == 1:
+                        new_match_obj_list = [o for o in space.object_list if isinstance(o, bmp.obj.types_in_not_all)]
+                    else:
+                        new_match_obj_list = [o for o in space.object_list if bmp.obj.TextAll.isreferenceof(o, all_list = active_level.all_list)]
                 elif issubclass(noun_type, bmp.obj.SupportsIsReferenceOf):
                     if noun_negated_tier % 2 == 1:
-                        new_match_obj_list = [o for o in space.object_list if bmp.obj.TextAll.isreferenceof(o, all_list = active_level.all_list) and not noun_type.isreferenceof(o, all_list = active_level.all_list)]
+                        new_match_obj_list = [o for o in space.object_list if bmp.obj.TextAll.isreferenceof(o, all_list = active_level.all_list) and not noun_type.isreferenceof(o)]
                     else:
-                        new_match_obj_list = [o for o in space.object_list if noun_type.isreferenceof(o, all_list = active_level.all_list)]
+                        new_match_obj_list = [o for o in space.get_objs_from_special_noun(noun_type)]
                 for oper_info in rule_info.oper_list:
                     oper_type = oper_info.oper_type
                     for prop_info in oper_info.prop_list:
@@ -173,7 +183,7 @@ class Levelpack(object):
                         if not issubclass(noun_type, bmp.obj.RangedNoun):
                             continue
                         if issubclass(noun_type, bmp.obj.TextAll):
-                            new_noun_list.extend(active_level.all_list * prop_count)
+                            new_noun_list.extend([bmp.obj.get_noun_from_type(o) for o in active_level.all_list] * prop_count)
                         if issubclass(noun_type, bmp.obj.GroupNoun):
                             for group_prop_type, group_prop_count in active_level.group_references[noun_type].enabled_dict().items():
                                 if issubclass(group_prop_type, bmp.obj.Noun):
@@ -191,7 +201,7 @@ class Levelpack(object):
                         if not issubclass(noun_type, bmp.obj.RangedNoun):
                             continue
                         if issubclass(noun_type, bmp.obj.TextAll):
-                            not_new_noun_list.extend(active_level.all_list * prop_count)
+                            not_new_noun_list.extend([bmp.obj.get_noun_from_type(o) for o in active_level.all_list] * prop_count)
                         if issubclass(noun_type, bmp.obj.GroupNoun):
                             for group_prop_type, group_prop_count in active_level.group_references[noun_type].disabled_dict().items():
                                 if issubclass(group_prop_type, bmp.obj.Noun):
@@ -320,7 +330,7 @@ class Levelpack(object):
                         if not issubclass(noun_type, bmp.obj.RangedNoun):
                             continue
                         if issubclass(noun_type, bmp.obj.TextAll):
-                            new_noun_list[space_object_type].extend(active_level.all_list * prop_count)
+                            new_noun_list[space_object_type].extend([bmp.obj.get_noun_from_type(o) for o in active_level.all_list] * prop_count)
                         if issubclass(noun_type, bmp.obj.GroupNoun):
                             for group_prop_type, group_prop_count in active_level.group_references[noun_type].enabled_dict().items():
                                 if issubclass(group_prop_type, bmp.obj.Noun):
@@ -390,7 +400,7 @@ class Levelpack(object):
                     if not issubclass(noun_type, bmp.obj.RangedNoun):
                         continue
                     if issubclass(noun_type, bmp.obj.TextAll):
-                        new_noun_list[level_object_type].extend(active_level.all_list * prop_count)
+                        new_noun_list[level_object_type].extend([bmp.obj.get_noun_from_type(o) for o in active_level.all_list] * prop_count)
                     if issubclass(noun_type, bmp.obj.GroupNoun):
                         for group_prop_type, group_prop_count in active_level.group_references[noun_type].enabled_dict().items():
                             if issubclass(group_prop_type, bmp.obj.Noun):

@@ -5,6 +5,18 @@ import copy
 import string
 import platform
 
+def remove_same_elements[T](a_list: list[T], a_func: Optional[Callable[[T, T], bool]] = None) -> list[T]:
+    if a_func is None:
+        a_func = lambda x, y: x == y
+    e_list = list(enumerate(a_list))
+    r_list = []
+    for i, ie in e_list:
+        for j, je in e_list[i + 1:]:
+            if a_func(ie, je) and j not in r_list:
+                r_list.append(j)
+    o_list = map(lambda e: e[1], filter(lambda e: e[0] not in r_list, e_list))
+    return list(o_list)
+
 def clampi(__min: int, __num: int, __max: int, /) -> int:
     return min(__max, max(__num, __min))
 
@@ -25,7 +37,7 @@ def snake_to_camel(__str: str, /, *, is_big: bool) -> str:
 import pygame
 pygame.init()
 
-versions: str = "4.01"
+versions: str = "4.011"
 def compare_versions(ver_1: str, ver_2: str) -> Literal[-1, 0, 1]:
     for char_1, char_2 in zip(ver_1, ver_2):
         if ord(char_1) > ord(char_2):
@@ -78,7 +90,7 @@ default_options: Options = {
     "space_display_recursion_depth": 1,
     "smooth_animation_multiplier": 3,
     "palette": "default.png",
-    "compressed_json_output": False,
+    "compressed_json_output": True,
     "default_new_space": {
         "width": 15,
         "height": 15,
@@ -113,8 +125,10 @@ class _JsonDumpKwds(TypedDict):
     separators: tuple[str, str]
     
 def get_json_dump_kwds() -> _JsonDumpKwds:
-    return {"indent": None if options["compressed_json_output"] else 4,
-            "separators": (",", ":") if options["compressed_json_output"] else (", ", ": ")}
+    return {
+        "indent": None if options["compressed_json_output"] else 4,
+        "separators": (",", ":") if options["compressed_json_output"] else (", ", ": ")
+    }
 
 def save_options(new_options: Options) -> None:
     with open(options_filename, "w", encoding="utf-8") as file:
@@ -129,8 +143,8 @@ def update_options(old_options: Options) -> Options:
     return new_options
 
 current_os = platform.system()
-windows = "Windows"
-linux = "Linux"
+windows: Literal["Windows"] = "Windows"
+linux: Literal["Linux"] = "Linux"
 
 if os.path.exists(options_filename):
     with open(options_filename, "r", encoding="utf-8") as file:
@@ -140,15 +154,3 @@ else:
     with open(options_filename, "w", encoding="utf-8") as file:
         options = default_options
         json.dump(default_options, file)
-
-def remove_same_elements[T](a_list: list[T], a_func: Optional[Callable[[T, T], bool]] = None) -> list[T]:
-    if a_func is None:
-        a_func = lambda x, y: x == y
-    e_list = list(enumerate(a_list))
-    r_list = []
-    for i, ie in e_list:
-        for j, je in e_list[i + 1:]:
-            if a_func(ie, je) and j not in r_list:
-                r_list.append(j)
-    o_list = map(lambda e: e[1], filter(lambda e: e[0] not in r_list, e_list))
-    return list(o_list)

@@ -43,7 +43,7 @@ class Level(object):
         self.special_operator_properties: dict[type[bmp.obj.LevelObject], dict[type[bmp.obj.Operator], bmp.obj.Properties]] = {p: {o: bmp.obj.Properties() for o in bmp.obj.special_operators} for p in bmp.obj.level_object_types}
         self.game_properties: bmp.obj.Properties = bmp.obj.Properties()
         self.created_levels: list["Level"] = []
-        self.all_list: list[type[bmp.obj.Noun]] = []
+        self.all_list: list[type[bmp.obj.Object]] = []
         self.group_references: dict[type[bmp.obj.GroupNoun], bmp.obj.Properties] = {p: bmp.obj.Properties() for p in bmp.obj.group_noun_types}
         self.sound_events: list[str] = []
     def __eq__(self, level: "Level") -> bool:
@@ -80,12 +80,12 @@ class Level(object):
                     return_value.append((super_space, obj))
         return return_value
     def refresh_all_list(self) -> None:
+        self.all_list = []
         for space in self.space_list:
             for obj in space.object_list:
-                if all(map(lambda t: isinstance(obj, t), bmp.obj.types_not_in_all)):
-                    noun_type = bmp.obj.get_noun_from_type(type(obj))
-                    if noun_type not in self.all_list:
-                        self.all_list.append(noun_type)
+                if not issubclass(type(obj), bmp.obj.types_not_in_all):
+                    if type(obj) not in self.all_list:
+                        self.all_list.append(type(obj))
     def reset_move_numbers(self) -> None:
         for space in self.space_list:
             for obj in space.object_list:
@@ -152,22 +152,21 @@ class Level(object):
                     match_noun_list: list[type[bmp.obj.Noun]] = []
                     if match_noun == bmp.obj.TextAll:
                         if match_negated:
-                            match_noun_list = [o for o in self.all_list if issubclass(o, bmp.obj.nouns_in_not_all)]
+                            match_noun_list = list(bmp.obj.nouns_in_not_all)
                         else:
-                            match_noun_list = [o for o in self.all_list if not issubclass(o, bmp.obj.nouns_not_in_all)]
+                            match_noun_list = [bmp.obj.get_noun_from_type(o) for o in self.all_list if not issubclass(o, bmp.obj.types_not_in_all)]
                     else:
                         if match_negated:
-                            match_noun_list = [o for o in self.all_list if (not issubclass(o, bmp.obj.nouns_not_in_all)) and not issubclass(o, match_noun)]
+                            match_noun_list = [bmp.obj.get_noun_from_type(o) for o in self.all_list if (not issubclass(o, bmp.obj.types_not_in_all)) and not issubclass(o, match_noun)]
                         else:
                             match_noun_list = [match_noun]
                     for new_match_noun in match_noun_list:
-                        if issubclass(new_match_noun, bmp.obj.SupportsIsReferenceOf):
-                            for pos in find_range:
-                                match_objs.extend([o for o in space.get_objs_from_pos_and_special_noun(pos, new_match_noun) if o not in matched_objs])
-                        else:
-                            new_match_type = new_match_noun.ref_type
-                            for pos in find_range:
+                        for pos in find_range:
+                            if issubclass(new_match_noun, bmp.obj.GeneralNoun):
+                                new_match_type = new_match_noun.ref_type
                                 match_objs.extend([o for o in space.get_objs_from_pos_and_type(pos, new_match_type) if o not in matched_objs])
+                            elif issubclass(new_match_noun, bmp.obj.SupportsIsReferenceOf):
+                                match_objs.extend([o for o in space.get_objs_from_pos_and_special_noun(pos, new_match_noun) if o not in matched_objs])
                         if len(match_objs) == 0:
                             meet_infix_condition = False
                         else:
@@ -195,20 +194,20 @@ class Level(object):
                     match_noun_list: list[type[bmp.obj.Noun]] = []
                     if match_noun == bmp.obj.TextAll:
                         if match_negated:
-                            match_noun_list = [o for o in self.all_list if issubclass(o, bmp.obj.nouns_in_not_all)]
+                            match_noun_list = list(bmp.obj.nouns_in_not_all)
                         else:
-                            match_noun_list = [o for o in self.all_list if not issubclass(o, bmp.obj.nouns_not_in_all)]
+                            match_noun_list = [bmp.obj.get_noun_from_type(o) for o in self.all_list if not issubclass(o, bmp.obj.types_not_in_all)]
                     else:
                         if match_negated:
-                            match_noun_list = [o for o in self.all_list if (not issubclass(o, bmp.obj.nouns_not_in_all)) and not issubclass(o, match_noun)]
+                            match_noun_list = [bmp.obj.get_noun_from_type(o) for o in self.all_list if (not issubclass(o, bmp.obj.types_not_in_all)) and not issubclass(o, match_noun)]
                         else:
                             match_noun_list = [match_noun]
                     for new_match_noun in match_noun_list:
-                        if issubclass(new_match_noun, bmp.obj.SupportsIsReferenceOf):
-                            match_objs.extend([o for o in space.get_objs_from_special_noun(new_match_noun) if o not in matched_objs])
-                        else:
+                        if issubclass(new_match_noun, bmp.obj.GeneralNoun):
                             new_match_type = new_match_noun.ref_type
                             match_objs.extend([o for o in space.get_objs_from_type(new_match_type) if o not in matched_objs])
+                        elif issubclass(new_match_noun, bmp.obj.SupportsIsReferenceOf):
+                            match_objs.extend([o for o in space.get_objs_from_special_noun(new_match_noun) if o not in matched_objs])
                         if len(match_objs) >= match_count:
                             meet_infix_condition = False
                         else:
@@ -470,7 +469,7 @@ class Level(object):
                         level_objs = space.get_levels_from_pos(new_pos)
                         path_objs = space.get_objs_from_pos_and_type(new_pos, bmp.obj.Path)
                         if any(map(lambda p: p.unlocked, path_objs)) or len(level_objs) != 0:
-                            obj.pos = new_pos
+                            space.set_obj_pos(obj, new_pos)
             return None
     def direction(self) -> None:
         for prop in bmp.obj.direct_fix_properties:
