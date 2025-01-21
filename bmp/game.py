@@ -5,7 +5,6 @@ import os
 
 import bmp.audio
 import bmp.base
-import bmp.collect
 import bmp.color
 import bmp.lang
 import bmp.level
@@ -310,10 +309,12 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                 if len(levelpack.collectibles) == 0:
                     bmp.lang.lang_print("play.levelpack.collectibles.empty")
                 else:
-                    for collects_type in bmp.collect.collectible_dict.keys():
-                        collects_number = len({c for c in levelpack.collectibles if isinstance(c, collects_type)})
-                        if collects_number != 0:
-                            bmp.lang.lang_print("play.levelpack.collectibles", key=collects_type.json_name, value=collects_number)
+                    collectible_counts: dict[type[bmp.obj.Object], int] = {}
+                    for collectible in levelpack.collectibles:
+                        collectible_counts.setdefault(collectible.object_type, 0)
+                        collectible_counts[collectible.object_type] += 1
+                    for object_type, collect_count in collectible_counts.items():
+                        bmp.lang.lang_print("play.levelpack.collectibles", key=object_type.get_name(), value=collect_count)
         if current_level.game_properties:
             offset_used = False
             if current_level.game_properties.enabled(bmp.obj.TextStop):

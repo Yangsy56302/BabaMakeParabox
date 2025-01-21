@@ -7,7 +7,6 @@ import pygame
 
 import bmp.audio
 import bmp.base
-import bmp.collect
 import bmp.color
 import bmp.editor
 import bmp.game

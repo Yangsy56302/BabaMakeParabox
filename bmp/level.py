@@ -6,7 +6,6 @@ import os
 from tqdm import tqdm
 
 import bmp.base
-import bmp.collect
 import bmp.color
 import bmp.loc
 import bmp.obj
@@ -32,12 +31,21 @@ infinite_move_number: int = 6
 MoveInfo = tuple[bmp.obj.Object, list[tuple[bmp.ref.SpaceID, bmp.loc.Coord[int], bmp.loc.Orient]]]
 
 class Level(object):
-    def __init__(self, level_id: bmp.ref.LevelID, space_list: list[bmp.space.Space], *, super_level_id: Optional[bmp.ref.LevelID] = None, main_space_id: Optional[bmp.ref.SpaceID] = None, map_info: Optional[MapLevelExtraJson] = None, collected: Optional[dict[type[bmp.collect.Collectible], bool]] = None, ) -> None:
+    def __init__(
+        self,
+        level_id: bmp.ref.LevelID,
+        space_list: list[bmp.space.Space],
+        *,
+        super_level_id: Optional[bmp.ref.LevelID] = None,
+        main_space_id: Optional[bmp.ref.SpaceID] = None,
+        map_info: Optional[MapLevelExtraJson] = None,
+        collected: Optional[dict[type[bmp.obj.Object], bool]] = None,
+    ) -> None:
         self.level_id: bmp.ref.LevelID = level_id
         self.space_list: list[bmp.space.Space] = list(space_list)
         self.super_level_id: Optional[bmp.ref.LevelID] = super_level_id
         self.main_space_id: bmp.ref.SpaceID = main_space_id if main_space_id is not None else space_list[0].space_id
-        self.collected: dict[type[bmp.collect.Collectible], bool] = collected if collected is not None else {k: False for k in bmp.collect.collectible_dict.keys()}
+        self.collected: dict[type[bmp.obj.Object], bool] = collected if collected is not None else {}
         self.map_info: Optional[MapLevelExtraJson] = map_info
         self.properties: dict[type[bmp.obj.LevelObject], bmp.obj.Properties] = {p: bmp.obj.Properties() for p in bmp.obj.level_object_types}
         self.special_operator_properties: dict[type[bmp.obj.LevelObject], dict[type[bmp.obj.Operator], bmp.obj.Properties]] = {p: {o: bmp.obj.Properties() for o in bmp.obj.special_operators} for p in bmp.obj.level_object_types}
@@ -722,12 +730,12 @@ class Level(object):
                         if bmp.obj.same_float_prop(you_obj, bonus_obj):
                             if bonus_obj not in delete_list:
                                 delete_list.append(bonus_obj)
+                                self.collected[type(bonus_obj)] = True
             for obj in delete_list:
                 self.destroy_obj(space, obj)
             if len(delete_list) != 0:
                 success = True
         if success:
-            self.collected[bmp.collect.Bonus] = True
             self.sound_events.append("bonus")
     def open_and_shut(self) -> None:
         success = False
@@ -842,16 +850,16 @@ class Level(object):
             win_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextWin)]
             for you_obj in you_objs:
                 if you_obj in win_objs:
-                    self.collected[bmp.collect.Spore] = True
+                    self.collected[bmp.obj.Spore] = True
                     return True
                 if space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextWin) or self.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextWin):
                     if not you_obj.properties.enabled(bmp.obj.TextFloat):
-                        self.collected[bmp.collect.Spore] = True
+                        self.collected[bmp.obj.Spore] = True
                         return True
                 for win_obj in win_objs:
                     if you_obj.pos == win_obj.pos:
                         if bmp.obj.same_float_prop(you_obj, win_obj):
-                            self.collected[bmp.collect.Spore] = True
+                            self.collected[bmp.obj.Spore] = True
                             return True
         return False
     def end(self) -> bool:
@@ -972,10 +980,10 @@ class Level(object):
                 continue
             obj_surface: pygame.Surface = bmp.render.simple_object_to_surface(obj, wiggle=wiggle, debug=debug)
             if self.game_properties.enabled(bmp.obj.TextWord):
-                obj_type = type(obj)
+                object_type = type(obj)
                 for _ in range(self.game_properties.get(bmp.obj.TextWord)):
-                    obj_type = bmp.obj.get_noun_from_type(obj_type)
-                obj_surface = bmp.render.simple_type_to_surface(obj_type, wiggle=wiggle, debug=debug)
+                    object_type = bmp.obj.get_noun_from_type(object_type)
+                obj_surface = bmp.render.simple_type_to_surface(object_type, wiggle=wiggle, debug=debug)
             obj_surface_pos: bmp.loc.Coord[int] = (obj.x * scaled_sprite_size, obj.y * scaled_sprite_size)
             obj_surface_size: bmp.loc.Coord[int] = (scaled_sprite_size, scaled_sprite_size)
             if isinstance(obj, bmp.obj.SpaceObject):

@@ -3,7 +3,6 @@ import uuid
 from tqdm import tqdm
 
 import bmp.base
-import bmp.collect
 import bmp.level
 import bmp.loc
 import bmp.obj
@@ -25,17 +24,25 @@ class LevelpackJson(TypedDict):
     name: NotRequired[str]
     author: NotRequired[str]
     main_level: bmp.ref.LevelIDJson
-    collectibles: list[bmp.collect.CollectibleJson]
+    collectibles: list[bmp.obj.CollectibleJson]
     level_list: list[bmp.level.LevelJson]
     rule_list: list[list[str]]
 
 class Levelpack(object):
-    def __init__(self, level_list: list[bmp.level.Level], name: Optional[str] = None, author: Optional[str] = None, main_level_id: Optional[bmp.ref.LevelID] = None, collectibles: Optional[set[bmp.collect.Collectible]] = None, rule_list: Optional[list[bmp.rule.Rule]] = None) -> None:
+    def __init__(
+        self,
+        level_list: list[bmp.level.Level],
+        name: Optional[str] = None,
+        author: Optional[str] = None,
+        main_level_id: Optional[bmp.ref.LevelID] = None,
+        collectibles: Optional[set[bmp.obj.Collectible]] = None,
+        rule_list: Optional[list[bmp.rule.Rule]] = None,
+    ) -> None:
         self.name: Optional[str] = name
         self.author: Optional[str] = author
         self.level_list: list[bmp.level.Level] = list(level_list)
         self.main_level_id: bmp.ref.LevelID = main_level_id if main_level_id is not None else self.level_list[0].level_id
-        self.collectibles: set[bmp.collect.Collectible] = collectibles if collectibles is not None else set()
+        self.collectibles: set[bmp.obj.Collectible] = collectibles if collectibles is not None else set()
         self.rule_list: list[bmp.rule.Rule] = rule_list if (rule_list is not None and len(rule_list) != 0) else bmp.rule.default_rule_list
     def get_level(self, level_id: bmp.ref.LevelID) -> Optional[bmp.level.Level]:
         level = list(filter(lambda l: level_id == l.level_id, self.level_list))
@@ -447,11 +454,11 @@ class Levelpack(object):
     def prepare(self, active_level: bmp.level.Level) -> None:
         clear_counts: int = 0
         for sub_level in self.level_list:
-            if sub_level.super_level_id == active_level.level_id and sub_level.collected[bmp.collect.Spore]:
+            if sub_level.super_level_id == active_level.level_id and sub_level.collected[bmp.obj.Spore]:
                 clear_counts += 1
-                self.collectibles.add(bmp.collect.Spore(sub_level.level_id))
+                self.collectibles.add(bmp.obj.Collectible(bmp.obj.Spore, sub_level.level_id))
         if active_level.map_info is not None and clear_counts >= active_level.map_info["minimum_clear_for_blossom"]:
-            active_level.collected[bmp.collect.Blossom] = True
+            active_level.collected[bmp.obj.Blossom] = True
         for space in active_level.space_list:
             for obj in space.object_list:
                 obj.old_state = bmp.obj.OldObjectState(
@@ -464,7 +471,7 @@ class Levelpack(object):
                 if isinstance(obj, bmp.obj.Path):
                     unlocked = True
                     for bonus_type, bonus_counts in obj.conditions.items():
-                        if len({c for c in self.collectibles if isinstance(c, bonus_type)}) < bonus_counts:
+                        if len({c for c in self.collectibles if isinstance(c.object_type, bonus_type)}) < bonus_counts:
                             unlocked = False
                     obj.unlocked = unlocked
     def tick(self, active_level: bmp.level.Level, op: Optional[bmp.loc.Orient]) -> ReturnInfo:
@@ -506,6 +513,9 @@ class Levelpack(object):
         active_level.bonus()
         end = active_level.end()
         win = active_level.win()
+        if win:
+            for object_type in [t for t, b in active_level.collected.items() if b]:
+                self.collectibles.add(bmp.obj.Collectible(object_type, active_level.level_id))
         for space in active_level.space_list:
             for path in space.get_objs_from_type(bmp.obj.Path):
                 unlocked = True
@@ -513,8 +523,6 @@ class Levelpack(object):
                     if len({c for c in self.collectibles if isinstance(c, bonus_type)}) < bonus_counts:
                         unlocked = False
                 path.unlocked = unlocked
-        if active_level.collected[bmp.collect.Bonus] and win:
-            self.collectibles.add(bmp.collect.Bonus(active_level.level_id))
         return {
             "win": win, "end": end, "done": done, "transform": transform,
             "game_push": game_push, "selected_level": selected_level
@@ -559,8 +567,7 @@ class Levelpack(object):
 
 def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
     ver = json_object.get("ver")
-    reversed_collectible_dict = {v: k for k, v in bmp.collect.collectible_dict.items()}
-    collectibles: set[bmp.collect.Collectible] = set()
+    collectibles: set[bmp.obj.Collectible] = set()
     level_list = []
     for level in tqdm(
         json_object["level_list"],
@@ -592,7 +599,10 @@ def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
             position=0,
             **bmp.lang.default_tqdm_args
         ):
-            collectibles.add(reversed_collectible_dict[collectible["type"]](source=bmp.ref.LevelID(collectible["source"]["name"])))
+            collectibles.add(bmp.obj.Collectible(
+                bmp.obj.name_to_class[collectible["type"]],
+                source=bmp.ref.LevelID(collectible["source"]["name"])
+            ))
     return Levelpack(
         name=json_object.get("name"),
         author=json_object.get("author"),

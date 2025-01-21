@@ -3,7 +3,6 @@ import copy
 import random
 
 import bmp.base
-import bmp.collect
 import bmp.color
 import bmp.lang
 import bmp.level
@@ -208,18 +207,16 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                 current_space.new_obj(current_object_type(current_cursor_pos, current_direct, space_id=space_id))
                             elif issubclass(current_object_type, bmp.obj.Path):
                                 unlocked = False
-                                conditions: dict[type[bmp.collect.Collectible], int] = {}
+                                conditions: dict[type[bmp.obj.Object], int] = {}
                                 if keys["LCTRL"] or keys["RCTRL"]:
                                     bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.new")))
                                     unlocked = bmp.lang.lang_input("edit.path.new.unlocked") in bmp.lang.yes
                                     more_condition = bmp.lang.lang_input("edit.path.new.condition") in bmp.lang.yes
                                     while more_condition:
                                         while True:
-                                            for collects_type, collects_name in bmp.collect.collectible_dict.items():
-                                                bmp.lang.lang_print("edit.path.new.condition.type", key=collects_type, value=collects_name)
-                                            collects_type = {v: k for k, v in bmp.collect.collectible_dict.items()}.get(bmp.lang.lang_input("input.string"))
+                                            collects_type = bmp.obj.name_to_class[bmp.lang.lang_input("input.string")]
                                             if collects_type is None:
-                                                bmp.lang.lang_print("warn.value.invalid", value=collects_type, cls=bmp.collect.Collectible.__name__)
+                                                bmp.lang.lang_print("warn.value.invalid", value=collects_type, cls=bmp.obj.Object.__name__)
                                                 continue
                                             break
                                         while True:

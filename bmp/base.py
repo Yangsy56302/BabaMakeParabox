@@ -2,7 +2,6 @@ from typing import Literal, Optional, TypedDict, Callable, NotRequired
 import os
 import json
 import copy
-import string
 import platform
 
 def remove_same_elements[T](a_list: list[T], a_func: Optional[Callable[[T, T], bool]] = None) -> list[T]:
@@ -37,7 +36,7 @@ def snake_to_camel(__str: str, /, *, is_big: bool) -> str:
 import pygame
 pygame.init()
 
-versions: str = "4.011"
+versions: str = "4.02"
 def compare_versions(ver_1: str, ver_2: str) -> Literal[-1, 0, 1]:
     for char_1, char_2 in zip(ver_1, ver_2):
         if ord(char_1) > ord(char_2):

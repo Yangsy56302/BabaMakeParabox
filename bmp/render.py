@@ -102,6 +102,9 @@ def simple_type_to_surface(object_type: type[bmp.obj.Object], varient: int = 0, 
             obj_surface.fill(bmp.color.current_palette[object_type.sprite_palette])
         obj_surface = set_surface_color_light(obj_surface, object_type.light_overlay)
         obj_surface = set_surface_color_dark(obj_surface, object_type.dark_overlay)
+        overlay_surface = current_sprites.get(bmp.obj.SpaceObject.sprite_name, 0, wiggle, raw=True).copy()
+        overlay_surface = pygame.transform.scale(set_alpha(overlay_surface, 0x40), obj_surface.get_size())
+        obj_surface.blit(overlay_surface, (0, 0))
     elif object_type.json_name in current_sprites.sprites.keys():
         obj_surface = current_sprites.get(object_type.json_name, varient, wiggle).copy()
     elif issubclass(object_type, bmp.obj.Metatext):

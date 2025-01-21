@@ -5,7 +5,6 @@ from typing import Any, Final, Literal, NotRequired, Optional, TypeGuard, TypedD
 import math
 import uuid
 import bmp.base
-import bmp.collect
 import bmp.color
 import bmp.lang
 import bmp.loc
@@ -259,7 +258,21 @@ class Cursor(Object):
     sprite_category = "static"
     sprite_palette: bmp.color.PaletteIndex = (4, 2)
 
+class Spore(Object):
+    json_name = "spore"
+    sprite_name = "spore"
+    sprite_category = "static"
+    sprite_palette: bmp.color.PaletteIndex = (0, 3)
+
+class Blossom(Object):
+    json_name = "blossom"
+    sprite_name = "blossom"
+    sprite_category = "static"
+    sprite_palette: bmp.color.PaletteIndex = (0, 3)
+
 class SpaceObject(Object):
+    sprite_name = "space"
+    sprite_category = "static"
     light_overlay: bmp.color.ColorHex = 0x000000
     dark_overlay: bmp.color.ColorHex = 0xFFFFFF
     def __init__(
@@ -323,6 +336,21 @@ class Level(LevelObject):
 level_object_types: tuple[type[LevelObject], ...] = (Level, )
 default_level_object_type: type[LevelObject] = Level
 
+class CollectibleJson(TypedDict):
+    type: str
+    source: bmp.ref.LevelIDJson
+
+class Collectible(object):
+    def __init__(self, object_type: type[Object], source: bmp.ref.LevelID) -> None:
+        self.object_type: type[Object] = object_type
+        self.source: bmp.ref.LevelID = source
+    def __eq__(self, collectible: "Collectible") -> bool:
+        return type(self) == type(collectible) and self.object_type is collectible.object_type and self.source == collectible.source
+    def __hash__(self) -> int:
+        return hash((self.object_type.json_name, self.source))
+    def to_json(self) -> CollectibleJson:
+        return {"type": self.object_type.json_name, "source": self.source.to_json()}
+
 class Path(Object):
     json_name = "path"
     sprite_name = "line"
@@ -336,11 +364,11 @@ class Path(Object):
         space_id: Optional[bmp.ref.SpaceID] = None,
         level_id: Optional[bmp.ref.LevelID] = None,
         unlocked: bool = False,
-        conditions: Optional[dict[type[bmp.collect.Collectible], int]] = None
+        conditions: Optional[dict[type[Object], int]] = None
     ) -> None:
         super().__init__(pos, direct, space_id=space_id, level_id=level_id)
         self.unlocked: bool = unlocked
-        self.conditions: dict[type[bmp.collect.Collectible], int] = conditions if conditions is not None else {}
+        self.conditions: dict[type[Object], int] = conditions if conditions is not None else {}
     def to_json(self) -> ObjectJson:
         return {**super().to_json(), "path_extra": {"unlocked": self.unlocked, "conditions": {k.json_name: v for k, v in self.conditions.items()}}}
 
@@ -361,6 +389,7 @@ class Game(Object):
 class Text(Object):
     json_name = "text"
     sprite_category = "static"
+    sprite_palette: bmp.color.PaletteIndex = (0, 3)
     @classmethod
     def get_name(cls) -> str:
         lang_key = f"object.name.{cls.json_name}"
@@ -375,10 +404,10 @@ class Prefix(Text):
     pass
 
 class Infix(Text):
-    sprite_palette: bmp.color.PaletteIndex = (0, 3)
+    pass
 
 class Operator(Text):
-    sprite_palette: bmp.color.PaletteIndex = (0, 3)
+    pass
 
 class Property(Text):
     pass
@@ -391,6 +420,18 @@ class TextCursor(GeneralNoun):
     json_name = "text_cursor"
     sprite_name = "text_cursor"
     sprite_palette: bmp.color.PaletteIndex = (2, 4)
+
+class TextSpore(GeneralNoun):
+    ref_type = Spore
+    json_name = "text_spore"
+    sprite_name = "text_spore"
+    sprite_palette: bmp.color.PaletteIndex = (0, 3)
+
+class TextBlossom(GeneralNoun):
+    ref_type = Blossom
+    json_name = "text_blossom"
+    sprite_name = "text_blossom"
+    sprite_palette: bmp.color.PaletteIndex = (0, 3)
 
 class TextText(GeneralNoun):
     ref_type = Text
@@ -779,10 +820,10 @@ SupportsIsReferenceOf = FixedNoun | RangedNoun
 builtin_object_class_list: list[type[Object]] = [
     *level_object_types,
     *space_object_types,
-    Cursor, Path, Game,
+    Cursor, Spore, Blossom, Path, Game,
 ]
 builtin_noun_class_list: list[type[GeneralNoun]] = [
-    TextCursor, TextText, TextSpace, TextClone, TextLevel, TextPath, TextGame
+    TextCursor, TextSpore, TextBlossom, TextText, TextSpace, TextClone, TextLevel, TextPath, TextGame
 ]
 special_noun_class_list: list[type[SpecialNoun]] = [
     TextAll, TextInfinity, TextEpsilon, TextParabox
@@ -1040,8 +1081,7 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
         path_extra = json_object.get("path_extra")
         if path_extra is None:
             path_extra = {"unlocked": False, "conditions": {}}
-        reversed_collectible_dict = {v: k for k, v in bmp.collect.collectible_dict.items()}
-        conditions: dict[type[bmp.collect.Collectible], int] = {reversed_collectible_dict[k]: v for k, v in path_extra["conditions"].items()}
+        conditions: dict[type[Object], int] = {name_to_class[k]: v for k, v in path_extra["conditions"].items()}
         return object_type(
             pos=pos,
             direct=direct,

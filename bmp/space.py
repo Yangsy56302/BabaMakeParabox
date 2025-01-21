@@ -15,7 +15,13 @@ class SpaceJson(TypedDict):
     object_list: list[bmp.obj.ObjectJson]
 
 class Space(object):
-    def __init__(self, space_id: bmp.ref.SpaceID, size: bmp.loc.Coord[int], color: Optional[bmp.color.ColorHex] = None, object_list: Optional[list[bmp.obj.Object]] = None) -> None:
+    def __init__(
+        self,
+        space_id: bmp.ref.SpaceID,
+        size: bmp.loc.Coord[int],
+        color: Optional[bmp.color.ColorHex] = None,
+        object_list: Optional[list[bmp.obj.Object]] = None,
+    ) -> None:
         self.space_id: bmp.ref.SpaceID = space_id
         self.size: bmp.loc.Coord[int] = size
         self.color: Optional[bmp.color.ColorHex] = color
