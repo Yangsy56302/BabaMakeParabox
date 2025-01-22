@@ -377,7 +377,7 @@ class Levelpack(object):
                             if new_level_icon_color is None:
                                 new_level_icon_color = bmp.obj.default_space_object_type.get_color()
                             new_level_extra = bmp.obj.LevelObjectExtra(icon=bmp.obj.LevelObjectIcon(
-                                name=bmp.obj.get_noun_from_type(space_object_type).json_name,
+                                name=bmp.obj.get_noun_from_type(space_object_type).sprite_name,
                                 color=new_level_icon_color
                             ))
                             self.set_level(bmp.level.Level(
@@ -471,6 +471,7 @@ class Levelpack(object):
         for space in active_level.space_list:
             for obj in space.object_list:
                 obj.old_state = bmp.obj.OldObjectState(
+                    uid = obj.uid,
                     pos = obj.pos,
                     orient = obj.orient,
                     prop = obj.properties,

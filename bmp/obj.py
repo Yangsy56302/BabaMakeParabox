@@ -124,12 +124,14 @@ class OldObjectState(object):
     def __init__(
         self,
         *,
+        uid: Optional[uuid.UUID] = None,
         pos: Optional[bmp.loc.Coord[int]] = None,
         orient: Optional[bmp.loc.Orient] = None,
         prop: Optional[Properties] = None,
         space: Optional[bmp.ref.SpaceID] = None,
         level: Optional[bmp.ref.LevelID] = None
     ) -> None:
+        self.uid: Optional[uuid.UUID] = uid
         self.pos: Optional[bmp.loc.Coord[int]] = pos
         self.orient: Optional[bmp.loc.Orient] = orient
         self.prop: Optional[Properties] = prop
@@ -142,7 +144,6 @@ class Object(object):
     ref_type: type["Object"]
     json_name: str
     sprite_name: str
-    display_name: str
     sprite_palette: bmp.color.PaletteIndex
     type SpriteCategory = Literal[
         "none",
@@ -178,7 +179,7 @@ class Object(object):
         space_id: Optional[bmp.ref.SpaceID] = None,
         level_id: Optional[bmp.ref.LevelID] = None
     ) -> None:
-        self.uuid: uuid.UUID = uuid.uuid4()
+        self.uid: uuid.UUID = uuid.uuid4()
         self.pos: bmp.loc.Coord[int] = pos
         self.orient: bmp.loc.Orient = direct
         self.direct_mapping: dict[bmp.loc.Orient, bmp.loc.Orient] = {d: d for d in bmp.loc.Orient}
@@ -190,15 +191,17 @@ class Object(object):
         self.move_number: int = 0
         self.sprite_state: int = 0
     def __eq__(self, obj: "Object") -> bool:
-        return self.uuid == obj.uuid
+        return self.uid == obj.uid
     def __hash__(self) -> int:
-        return hash(self.uuid)
+        return hash(self.uid)
     @classmethod
-    def get_name(cls) -> str:
+    def get_name(cls, *, language_name: str = bmp.lang.current_language_name) -> str:
         lang_key = f"object.name.{cls.json_name}"
         if lang_key not in bmp.lang.current_language_name:
-            return bmp.base.snake_to_camel(cls.json_name, is_big=True)
-        return bmp.lang.lang_format(lang_key)
+            if lang_key not in bmp.lang.language_dict[bmp.lang.english]:
+                return bmp.base.snake_to_camel(cls.json_name, is_big=True)
+            return bmp.lang.lang_format(lang_key, language_name=bmp.lang.english)
+        return bmp.lang.lang_format(lang_key, language_name=language_name)
     def get_info(self) -> str:
         string = f"object {self.json_name} at {self.pos} facing {self.orient}"
         return "<" + string + ">"
@@ -215,7 +218,7 @@ class Object(object):
     def y(self, value: int) -> None:
         self.pos = (self.pos[0], value)
     def reset_uuid(self) -> None:
-        self.uuid = uuid.uuid4()
+        self.uid = uuid.uuid4()
     def set_direct_mapping(self, mapping: dict[bmp.loc.Orient, bmp.loc.Orient]) -> None:
         self.orient = mapping[self.direct_mapping[self.orient]]
         self.direct_mapping = mapping.copy()
@@ -394,11 +397,13 @@ class Text(Object):
     sprite_category = "static"
     sprite_palette: bmp.color.PaletteIndex = (0, 3)
     @classmethod
-    def get_name(cls) -> str:
+    def get_name(cls, *, language_name: str = bmp.lang.current_language_name) -> str:
         lang_key = f"object.name.{cls.json_name}"
         if lang_key not in bmp.lang.current_language_name:
-            return cls.json_name[5:].upper()
-        return bmp.lang.lang_format(lang_key)
+            if lang_key not in bmp.lang.language_dict[bmp.lang.english]:
+                return cls.json_name[5:].upper()
+            return bmp.lang.lang_format(lang_key, language_name=bmp.lang.english)
+        return bmp.lang.lang_format(lang_key, language_name=language_name)
 
 class Noun(Text):
     ref_type: type["Object"]
@@ -881,6 +886,7 @@ def generate_metatext(T: type[Text]) -> type[Metatext]:
     new_type_name = bmp.base.snake_to_camel("text_" + T.json_name, is_big=True)
     new_type_vars: dict[str, Any] = {
         "json_name": "text_" + T.json_name,
+        "sprite_name": "text_" + T.sprite_name,
         "ref_type": T,
         "basic_ref_type": T.basic_ref_type if issubclass(T, Metatext) else T,
         "meta_tier": (T.meta_tier if issubclass(T, Metatext) else 0) + 1,

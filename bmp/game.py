@@ -1,7 +1,8 @@
 from typing import Optional
-import random
-import copy
 import os
+import copy
+import json
+import random
 
 import bmp.audio
 import bmp.base
@@ -23,12 +24,46 @@ class GameIsDefeatError(Exception):
 class GameIsDoneError(Exception):
     pass
 
+keybinds: dict[int, str] = {
+    pygame.K_w: "W",
+    pygame.K_a: "A",
+    pygame.K_s: "S",
+    pygame.K_d: "D",
+    pygame.K_UP: "UP",
+    pygame.K_DOWN: "DOWN",
+    pygame.K_LEFT: "LEFT",
+    pygame.K_RIGHT: "RIGHT",
+    pygame.K_z: "Z",
+    pygame.K_r: "R",
+    pygame.K_o: "O",
+    pygame.K_p: "P",
+    pygame.K_RETURN: "RETURN",
+    pygame.K_TAB: "TAB",
+    pygame.K_ESCAPE: "ESCAPE",
+    pygame.K_MINUS: "-",
+    pygame.K_EQUALS: "=",
+    pygame.K_SPACE: " ",
+    pygame.K_F1: "F1",
+}
+keymods: dict[int, str] = {
+    pygame.KMOD_LSHIFT: "LSHIFT",
+    pygame.KMOD_RSHIFT: "RSHIFT",
+    pygame.KMOD_LCTRL: "LCTRL",
+    pygame.KMOD_RCTRL: "RCTRL",
+    pygame.KMOD_LALT: "LALT",
+    pygame.KMOD_RALT: "RALT",
+}
 movements: dict[str, tuple[str, Optional[bmp.loc.Orient], bmp.loc.Coord]] = {
     "W": ("S", bmp.loc.Orient.W, (0, -1)),
+    "UP": ("DOWN", bmp.loc.Orient.W, (0, -1)),
     "S": ("W", bmp.loc.Orient.S, (0, 1)),
+    "DOWN": ("UP", bmp.loc.Orient.S, (0, 1)),
     "A": ("D", bmp.loc.Orient.A, (-1, 0)),
+    "LEFT": ("RIGHT", bmp.loc.Orient.A, (-1, 0)),
     "D": ("A", bmp.loc.Orient.D, (1, 0)),
-    " ": ("None", None, (0, 0))
+    "RIGHT": ("LEFT", bmp.loc.Orient.D, (1, 0)),
+    " ": ("None", None, (0, 0)),
+    "RETURN": ("None", None, (0, 0)),
 }
 
 def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
@@ -63,30 +98,6 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
     pygame.key.stop_text_input()
     pygame.key.set_repeat(bmp.base.options["long_press"]["delay"], bmp.base.options["long_press"]["interval"])
     clock = pygame.time.Clock()
-    keybinds = {
-        pygame.K_w: "W",
-        pygame.K_a: "A",
-        pygame.K_s: "S",
-        pygame.K_d: "D",
-        pygame.K_z: "Z",
-        pygame.K_r: "R",
-        pygame.K_o: "O",
-        pygame.K_p: "P",
-        pygame.K_TAB: "TAB",
-        pygame.K_ESCAPE: "ESCAPE",
-        pygame.K_MINUS: "-",
-        pygame.K_EQUALS: "=",
-        pygame.K_SPACE: " ",
-        pygame.K_F1: "F1",
-    }
-    keymods = {
-        pygame.KMOD_LSHIFT: "LSHIFT",
-        pygame.KMOD_RSHIFT: "RSHIFT",
-        pygame.KMOD_LCTRL: "LCTRL",
-        pygame.KMOD_RCTRL: "RCTRL",
-        pygame.KMOD_LALT: "LALT",
-        pygame.KMOD_RALT: "RALT",
-    }
     keys = {v: False for v in keybinds.values()}
     keys.update({v: False for v in keymods.values()})
     mouses: tuple[int, int, int, int, int] = (0, 0, 0, 0, 0)
@@ -273,26 +284,48 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                 savepoint_name = ""
                 if keys["LCTRL"] or keys["RCTRL"]:
                     savepoint_name = bmp.lang.lang_input("input.savepoint.name")
-                savepoint_name = savepoint_name if savepoint_name != "" else default_savepoint_name
-                savepoint = savepoint_dict.get(savepoint_name)
-                if savepoint is not None:
-                    levelpack = savepoint[0]
-                    levelpack_info = bmp.levelpack.default_levelpack_info.copy()
-                    current_level = copy.deepcopy(levelpack.get_exact_level(savepoint[2]))
-                    current_space = current_level.get_exact_space(savepoint[3])
-                    bmp.lang.lang_print("play.savepoint.loaded", value=savepoint_name)
-                    level_changed = True
-                    display_refresh = True
-                    press_key_to_continue = False
+                if keys["LALT"] or keys["RALT"]:
+                    savepoint_name += "" if bmp.base.options["debug"] or savepoint_name.endswith(".json") else ".json"
+                    if not os.path.isfile(os.path.join("levelpacks", savepoint_name)):
+                        bmp.lang.lang_warn("warn.savepoint.not_found", value=savepoint_name)
+                    else:
+                        with open(os.path.join("levelpacks", savepoint_name), "r", encoding="utf-8") as file:
+                            levelpack_json = json.load(file)
+                        levelpack = bmp.levelpack.json_to_levelpack(levelpack_json)
+                        levelpack_info = bmp.levelpack.default_levelpack_info.copy()
+                        current_level = levelpack.get_exact_level(levelpack.main_level_id)
+                        current_space = current_level.get_exact_space(current_level.main_space_id) 
+                        bmp.lang.lang_print("play.savepoint.loaded", value=savepoint_name)
+                        level_changed = True
+                        display_refresh = True
+                        press_key_to_continue = False
                 else:
-                    bmp.lang.lang_warn("warn.savepoint.not_found", value=savepoint_name)
+                    savepoint_name = savepoint_name if savepoint_name != "" else default_savepoint_name
+                    savepoint = savepoint_dict.get(savepoint_name)
+                    if savepoint is not None:
+                        levelpack = savepoint[0]
+                        levelpack_info = savepoint[1]
+                        current_level = copy.deepcopy(levelpack.get_exact_level(savepoint[2]))
+                        current_space = current_level.get_exact_space(savepoint[3])
+                        bmp.lang.lang_print("play.savepoint.loaded", value=savepoint_name)
+                        level_changed = True
+                        display_refresh = True
+                        press_key_to_continue = False
+                    else:
+                        bmp.lang.lang_warn("warn.savepoint.not_found", value=savepoint_name)
             elif keys["P"]:
                 bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.savepoint")))
                 savepoint_name = ""
                 if keys["LCTRL"] or keys["RCTRL"]:
                     savepoint_name = bmp.lang.lang_input("input.savepoint.name")
-                savepoint_name = savepoint_name if savepoint_name != "" else default_savepoint_name
-                savepoint_dict[savepoint_name] = (copy.deepcopy(levelpack), levelpack_info.copy(), current_level.level_id, current_space.space_id)
+                if keys["LALT"] or keys["RALT"]:
+                    savepoint_name = savepoint_name if savepoint_name != "" else default_savepoint_name
+                    savepoint_name += "" if bmp.base.options["debug"] or savepoint_name.endswith(".json") else ".json"
+                    with open(os.path.join("levelpacks", savepoint_name), "w", encoding="utf-8") as file:
+                        json.dump(levelpack.to_json(), file, **bmp.base.get_json_dump_kwds())
+                else:
+                    savepoint_name = savepoint_name if savepoint_name != "" else default_savepoint_name
+                    savepoint_dict[savepoint_name] = (copy.deepcopy(levelpack), levelpack_info.copy(), current_level.level_id, current_space.space_id)
                 bmp.lang.lang_print("play.savepoint.saved", value=savepoint_name)
             elif keys["TAB"]:
                 bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.info")))

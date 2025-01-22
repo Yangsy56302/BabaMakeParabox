@@ -1,6 +1,7 @@
 import os
 import copy
 import random
+import string
 
 import bmp.base
 import bmp.color
@@ -26,7 +27,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
     current_space_index: int = 0
     current_space = current_level.space_list[current_space_index]
     current_object_type = bmp.obj.TextSpace
-    current_direct = bmp.loc.Orient.S
+    current_orient = bmp.loc.Orient.S
     current_cursor_pos: bmp.loc.Coord[int] = (0, 0)
     cursor_pos_changed: bool
     current_clipboard = []
@@ -41,14 +42,18 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
         pygame.K_s: "S",
         pygame.K_a: "A",
         pygame.K_d: "D",
-        pygame.K_z: "Z",
-        pygame.K_x: "X",
-        pygame.K_c: "C",
-        pygame.K_v: "V",
+        pygame.K_UP: "UP",
+        pygame.K_DOWN: "DOWN",
+        pygame.K_LEFT: "LEFT",
+        pygame.K_RIGHT: "RIGHT",
         pygame.K_n: "N",
         pygame.K_m: "M",
         pygame.K_r: "R",
         pygame.K_t: "T",
+        pygame.K_z: "Z",
+        pygame.K_x: "X",
+        pygame.K_c: "C",
+        pygame.K_v: "V",
         pygame.K_1: "1",
         pygame.K_2: "2",
         pygame.K_3: "3",
@@ -59,10 +64,6 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
         pygame.K_8: "8",
         pygame.K_9: "9",
         pygame.K_0: "0",
-        pygame.K_UP: "UP",
-        pygame.K_DOWN: "DOWN",
-        pygame.K_LEFT: "LEFT",
-        pygame.K_RIGHT: "RIGHT",
         pygame.K_MINUS: "-",
         pygame.K_EQUALS: "=",
         pygame.K_RETURN: "RETURN",
@@ -177,18 +178,27 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                     icon_name = icon_name if icon_name != "" else "empty"
                                     while True:
                                         icon_color = bmp.lang.lang_input("edit.level.new.icon.color")
-                                        try:
-                                            icon_color = bmp.color.str_to_hex(icon_color) if icon_color != "" else bmp.color.current_palette[0, 3]
-                                        except ValueError:
-                                            bmp.lang.lang_warn("warn.value.invalid", value=icon_color, cls="color")
+                                        if color == "":
+                                            color = bmp.color.current_palette[0, 3]
                                         else:
-                                            break
+                                            try:
+                                                icon_color = bmp.color.str_to_hex(icon_color)
+                                            except ValueError:
+                                                try:
+                                                    icon_palette_str = icon_color.lstrip("([").rstrip("])").split(",")
+                                                    icon_color = bmp.color.current_palette[int(icon_palette_str[0].strip()), int(icon_palette_str[1].strip())]
+                                                except ValueError:
+                                                    bmp.lang.lang_warn("warn.value.invalid", value=icon_color, cls="color")
+                                                else:
+                                                    break
+                                            else:
+                                                break
                                 else:
                                     level_id: bmp.ref.LevelID = current_level.level_id
                                     icon_name = "empty"
                                     icon_color = bmp.color.current_palette[0, 3]
                                 level_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": icon_name, "color": icon_color}}
-                                current_space.new_obj(current_object_type(current_cursor_pos, current_direct, level_id=level_id, level_extra=level_extra))
+                                current_space.new_obj(current_object_type(current_cursor_pos, current_orient, level_id=level_id, level_extra=level_extra))
                             elif issubclass(current_object_type, bmp.obj.SpaceObject):
                                 space_id: bmp.ref.SpaceID = current_space.space_id
                                 if keys["LCTRL"] or keys["RCTRL"]:
@@ -204,7 +214,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                             break
                                     if current_level.get_space(bmp.ref.SpaceID(name, infinite_tier)) is not None:
                                         space_id = bmp.ref.SpaceID(name, infinite_tier)
-                                current_space.new_obj(current_object_type(current_cursor_pos, current_direct, space_id=space_id))
+                                current_space.new_obj(current_object_type(current_cursor_pos, current_orient, space_id=space_id))
                             elif issubclass(current_object_type, bmp.obj.Path):
                                 unlocked = False
                                 conditions: dict[type[bmp.obj.Object], int] = {}
@@ -229,9 +239,9 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                                 break
                                         conditions[collects_type] = collects_count
                                         more_condition = bmp.lang.lang_input("edit.path.new.condition") in bmp.lang.yes
-                                current_space.new_obj(current_object_type(current_cursor_pos, current_direct, unlocked=unlocked, conditions=conditions))
+                                current_space.new_obj(current_object_type(current_cursor_pos, current_orient, unlocked=unlocked, conditions=conditions))
                             else:
-                                current_space.new_obj(current_object_type(current_cursor_pos, current_direct))
+                                current_space.new_obj(current_object_type(current_cursor_pos, current_orient))
                 elif mouses[2] != 0:
                     if mouses[2] == 1 and (keys["LALT"] or keys["RALT"]):
                         # leave space; leave level (shift)
@@ -290,13 +300,13 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                         current_object_type = current_object_type_list[current_object_type_index + 1 if current_object_type_index < len(current_object_type_list) - 1 else 0]
         # cursor move; object facing change (alt)
         if keys["W"] or keys["UP"]:
-            current_direct = bmp.loc.Orient.W
+            current_orient = bmp.loc.Orient.W
         elif keys["S"] or keys["DOWN"]:
-            current_direct = bmp.loc.Orient.S
+            current_orient = bmp.loc.Orient.S
         elif keys["A"] or keys["LEFT"]:
-            current_direct = bmp.loc.Orient.A
+            current_orient = bmp.loc.Orient.A
         elif keys["D"] or keys["RIGHT"]:
-            current_direct = bmp.loc.Orient.D
+            current_orient = bmp.loc.Orient.D
         # object select from palette / save to palette (shift)
         elif any(map(lambda i: keys[str(i)], range(10))):
             for i in range(10):
@@ -343,12 +353,21 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                             break
                     while True:
                         color = bmp.lang.lang_input("edit.space.new.color")
-                        try:
-                            color = bmp.color.str_to_hex(color) if color != "" else bmp.base.options["default_new_space"]["color"]
-                        except ValueError:
-                            bmp.lang.lang_warn("warn.value.invalid", value=color, cls="color")
+                        if color == "":
+                            color = bmp.color.current_palette[0, 3]
                         else:
-                            break
+                            try:
+                                color = bmp.color.str_to_hex(color)
+                            except ValueError:
+                                try:
+                                    palette_str = color.lstrip("([").rstrip("])").split(",")
+                                    color = bmp.color.current_palette[int(palette_str[0].strip()), int(palette_str[1].strip())]
+                                except ValueError:
+                                    bmp.lang.lang_warn("warn.value.invalid", value=color, cls="color")
+                                else:
+                                    break
+                            else:
+                                break
                     default_space = bmp.space.Space(bmp.ref.SpaceID(name, infinite_tier), size, color)
                     if bmp.lang.lang_input("edit.level.new.is_map") in bmp.lang.yes:
                         pass
@@ -387,12 +406,21 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                             break
                     while True:
                         color = bmp.lang.lang_input("edit.space.new.color")
-                        try:
-                            color = bmp.color.str_to_hex(color) if color != "" else bmp.base.options["default_new_space"]["color"]
-                        except ValueError:
-                            bmp.lang.lang_warn("warn.value.invalid", value=color, cls="color")
+                        if color == "":
+                            color = bmp.color.current_palette[0, 3]
                         else:
-                            break
+                            try:
+                                color = bmp.color.str_to_hex(color)
+                            except ValueError:
+                                try:
+                                    palette_str = color.lstrip("([").rstrip("])").split(",")
+                                    color = bmp.color.current_palette[int(palette_str[0].strip()), int(palette_str[1].strip())]
+                                except ValueError:
+                                    bmp.lang.lang_warn("warn.value.invalid", value=color, cls="color")
+                                else:
+                                    break
+                            else:
+                                break
                     current_level.space_list.append(bmp.space.Space(bmp.ref.SpaceID(name, infinite_tier), size, color))
                     current_space_index = len(current_level.space_list) - 1
                     space_changed = True
@@ -465,18 +493,16 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
             history.append(copy.deepcopy(levelpack))
             current_clipboard = current_space.get_objs_from_pos(current_cursor_pos)
             current_clipboard = copy.deepcopy(current_clipboard)
-            list(map(bmp.obj.Object.reset_uuid, current_clipboard))
             current_space.del_objs_from_pos(current_cursor_pos)
         elif keys["C"] and (keys["LCTRL"] or keys["RCTRL"]):
             history.append(copy.deepcopy(levelpack))
             current_clipboard = current_space.get_objs_from_pos(current_cursor_pos)
             current_clipboard = copy.deepcopy(current_clipboard)
-            list(map(bmp.obj.Object.reset_uuid, current_clipboard))
         elif keys["V"] and (keys["LCTRL"] or keys["RCTRL"]):
             history.append(copy.deepcopy(levelpack))
             current_clipboard = copy.deepcopy(current_clipboard)
-            list(map(bmp.obj.Object.reset_uuid, current_clipboard))
             for obj in current_clipboard:
+                obj.reset_uuid()
                 obj.pos = current_cursor_pos
                 current_space.new_obj(obj)
                 if isinstance(obj, bmp.obj.SpaceObject):
@@ -485,23 +511,29 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                         if space is not None:
                             for new_space in level.space_list:
                                 current_level.set_space(new_space)
+        elif keys["TAB"]:
+            bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.level")))
+            bmp.lang.lang_print("edit.level.current.name", value=current_level.level_id.name)
+            bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.space")))
+            bmp.lang.lang_print("edit.space.current.name", value=current_space.space_id.name)
+            bmp.lang.lang_print("edit.space.current.infinite_tier", value=current_space.space_id.infinite_tier)
         if level_changed:
             space_changed = True
-            bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.level")))
             current_level_index = current_level_index % len(levelpack.level_list) if current_level_index >= 0 else len(levelpack.level_list) - 1
             current_level = levelpack.level_list[current_level_index]
-            bmp.lang.lang_print("edit.level.current.name", value=current_level.level_id.name)
+            # bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.level")))
+            # bmp.lang.lang_print("edit.level.current.name", value=current_level.level_id.name)
             level_changed = False
         if space_changed:
-            bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.space")))
             if current_cursor_pos[0] > current_space.width:
                 current_cursor_pos = (current_space.width, current_cursor_pos[1])
             if current_cursor_pos[1] > current_space.height:
                 current_cursor_pos = (current_cursor_pos[0], current_space.height)
             current_space_index = current_space_index % len(current_level.space_list) if current_space_index >= 0 else len(current_level.space_list) - 1
             current_space = current_level.space_list[current_space_index]
-            bmp.lang.lang_print("edit.space.current.name", value=current_space.space_id.name)
-            bmp.lang.lang_print("edit.space.current.infinite_tier", value=current_space.space_id.infinite_tier)
+            # bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.space")))
+            # bmp.lang.lang_print("edit.space.current.name", value=current_space.space_id.name)
+            # bmp.lang.lang_print("edit.space.current.infinite_tier", value=current_space.space_id.infinite_tier)
             space_changed = False
         # display
         for space in current_level.space_list:
@@ -511,27 +543,61 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
         space_surface_pos = (0, 0)
         space_surface = current_level.space_to_surface(current_space, wiggle, space_surface_size, cursor=current_cursor_pos, debug=True)
         window.blit(pygame.transform.scale(space_surface, space_surface_size), space_surface_pos)
+        gui_scaled_sprite_size = (bmp.render.sprite_size * bmp.render.gui_scale, bmp.render.sprite_size * bmp.render.gui_scale)
+        half_gui_scaled_sprite_size = (bmp.render.sprite_size * bmp.render.half_gui_scale, bmp.render.sprite_size * bmp.render.half_gui_scale)
+        # current object type
         obj_surface = bmp.render.simple_type_to_surface(current_object_type, wiggle=wiggle, debug=True)
         if issubclass(current_object_type, bmp.obj.SpaceObject):
             space = current_level.get_space(current_space.space_id)
             if space is not None:
                 obj_surface = bmp.render.simple_type_to_surface(current_object_type, wiggle=wiggle, default_surface=space_surface, debug=True)
-        obj_surface = pygame.transform.scale(obj_surface, (bmp.render.sprite_size * bmp.render.gui_scale, bmp.render.sprite_size * bmp.render.gui_scale))
+        obj_surface = pygame.transform.scale(obj_surface, gui_scaled_sprite_size)
         window.blit(obj_surface, (window.get_width() - bmp.render.sprite_size * bmp.render.gui_scale, 0))
+        # display name
+        line_list: list[str] = [
+            current_object_type.get_name(language_name=bmp.lang.english).lower(),
+            "text" if issubclass(current_object_type, bmp.obj.Text) else "object",
+            bmp.lang.lang_format("orient.name." + current_orient.name.lower(), language_name=bmp.lang.english).lower(),
+        ]
+        if bmp.base.options["debug"]:
+            line_list.append(current_object_type.json_name.lower())
+        for line_index, line in enumerate(line_list):
+            for char_index, char in enumerate(line):
+                if char in string.ascii_lowercase:
+                    obj_surface = bmp.render.current_sprites.get("text_" + char, 0, wiggle, raw=True)
+                elif char == "_":
+                    obj_surface = bmp.render.current_sprites.get("text_underline", 0, wiggle, raw=True)
+                else:
+                    continue
+                obj_surface = pygame.transform.scale(obj_surface, half_gui_scaled_sprite_size)
+                obj_surface_pos = (
+                    window.get_width() + (char_index - len(line)) * bmp.render.sprite_size * bmp.render.half_gui_scale,
+                    (bmp.render.sprite_size * bmp.render.gui_scale) + (line_index * bmp.render.sprite_size * bmp.render.half_gui_scale)
+                )
+                window.blit(obj_surface, obj_surface_pos)
+        # shortcuts
         for index, object_type in object_type_shortcuts.items():
             obj_surface = bmp.render.simple_type_to_surface(object_type, wiggle=wiggle, debug=True)
             if issubclass(object_type, bmp.obj.SpaceObject):
                 space = current_level.get_space(current_space.space_id)
                 if space is not None:
                     obj_surface = bmp.render.simple_type_to_surface(object_type, wiggle=wiggle, default_surface=space_surface, debug=True)
-            obj_surface = pygame.transform.scale(obj_surface, (bmp.render.sprite_size * bmp.render.gui_scale, bmp.render.sprite_size * bmp.render.gui_scale))
-            obj_surface_pos = (window.get_width() + (index % 5 * bmp.render.sprite_size * bmp.render.gui_scale) - (bmp.render.sprite_size * bmp.render.gui_scale * 5),
-                               window.get_height() + (index // 5 * bmp.render.sprite_size * bmp.render.gui_scale) - (bmp.render.sprite_size * bmp.render.gui_scale * 2))
+            obj_surface = pygame.transform.scale(obj_surface, gui_scaled_sprite_size)
+            obj_surface_pos = (
+                window.get_width() + (index % 5 * bmp.render.sprite_size * bmp.render.gui_scale) - (bmp.render.sprite_size * bmp.render.gui_scale * 5),
+                window.get_height() + (index // 5 * bmp.render.sprite_size * bmp.render.gui_scale) - (bmp.render.sprite_size * bmp.render.gui_scale * 2)
+            )
+            # slot number
             obj_surface.blit(
-                bmp.render.set_alpha(bmp.render.current_sprites.get("text_" + str((index + 1) % 10), 0, wiggle), 0x80),
-                (bmp.render.sprite_size * (bmp.render.gui_scale - 1), bmp.render.sprite_size * (bmp.render.gui_scale - 1))
+                pygame.transform.scale(
+                    bmp.render.set_alpha(
+                        bmp.render.current_sprites.get("text_" + str((index + 1) % 10), 0, wiggle, raw=True), 0x80
+                    ), half_gui_scaled_sprite_size
+                ),
+                (bmp.render.sprite_size * (bmp.render.gui_scale - bmp.render.half_gui_scale), bmp.render.sprite_size * (bmp.render.gui_scale - bmp.render.half_gui_scale))
             )
             window.blit(obj_surface, obj_surface_pos)
+        # fps
         real_fps = min(1000 / milliseconds, (real_fps * (bmp.base.options["fps"] - 1) + 1000 / milliseconds) / bmp.base.options["fps"])
         if keys["F1"]:
             show_fps = not show_fps

@@ -30,17 +30,17 @@ def set_current_language(name: str) -> None:
 yes: set[str] = {"y", "Y", "yes", "Yes", "YES", "t", "T", "true", "True", "TRUE", "1", "是", "是的"}
 no: set[str] = {"n", "N", "no", "No", "NO", "f", "F", "false", "False", "FALSE", "0", "否", "不是"}
 
-def lang_format(message_id: str, /, **formats) -> str:
-    return language_dict[current_language_name][message_id].format(**formats)
+def lang_format(message_id: str, /, *, language_name: str = current_language_name, **formats) -> str:
+    return language_dict[language_name][message_id].format(**formats)
 
-def lang_print(message_id: str, /, **formats) -> None:
-    print(language_dict[current_language_name][message_id].format(**formats))
+def lang_print(message_id: str, /, *, language_name: str = current_language_name, **formats) -> None:
+    print(language_dict[language_name][message_id].format(**formats))
 
-def lang_warn(message_id: str, /, **formats) -> None:
-    lang_print(message_id, **formats)
+def lang_warn(message_id: str, /, *, language_name: str = current_language_name, **formats) -> None:
+    lang_print(message_id, language_name=language_name, **formats)
 
-def lang_input(message_id: str, /, **formats) -> str:
-    return input(language_dict[current_language_name][message_id].format(**formats))
+def lang_input(message_id: str, /, *, language_name: str = current_language_name, **formats) -> str:
+    return input(language_dict[language_name][message_id].format(**formats))
 
 def seperator_line(title: Optional[str] = None) -> str:
     if title is None:

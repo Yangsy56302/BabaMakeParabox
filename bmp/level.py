@@ -256,7 +256,7 @@ class Level(object):
                     else:
                         space.new_obj(bmp.obj.Game(obj.pos, obj.orient, ref_type=type(obj)))
                 elif issubclass(new_object_type, bmp.obj.LevelObject):
-                    level_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": obj.json_name, "color": obj.get_color()}}
+                    level_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": obj.sprite_name, "color": obj.get_color()}}
                     if obj.level_id is not None:
                         space.new_obj(new_object_type(obj.pos, obj.orient, level_id=obj.level_id, level_extra=level_extra))
                     else:
@@ -783,7 +783,7 @@ class Level(object):
                                 space.new_obj(bmp.obj.Game(obj.pos, obj.orient, ref_type=type(obj)))
                         elif issubclass(make_object_type, bmp.obj.LevelObject):
                             if len(space.get_objs_from_pos_and_type(obj.pos, make_object_type)) == 0:
-                                level_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": obj.json_name, "color": obj.get_color()}}
+                                level_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": obj.sprite_name, "color": obj.get_color()}}
                                 if obj.level_id is not None:
                                     space.new_obj(make_object_type(obj.pos, obj.orient, level_id=obj.level_id, level_extra=level_extra))
                                 else:
@@ -820,7 +820,7 @@ class Level(object):
                 if issubclass(new_type, bmp.obj.Game):
                     space.new_obj(bmp.obj.Game(text_minus_obj.pos, text_minus_obj.orient, ref_type=bmp.obj.TextGame))
                 elif issubclass(new_type, bmp.obj.LevelObject):
-                    level_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": text_minus_obj.json_name, "color": bmp.color.current_palette[text_minus_obj.sprite_palette]}}
+                    level_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": text_minus_obj.sprite_name, "color": bmp.color.current_palette[text_minus_obj.sprite_palette]}}
                     if text_minus_obj.level_id is not None:
                         space.new_obj(new_type(text_minus_obj.pos, text_minus_obj.orient, level_id=self.level_id, level_extra=level_extra))
                     else:
