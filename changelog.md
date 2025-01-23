@@ -1384,4 +1384,32 @@
     + 修复了含有`SELECT`属性的物体可以选中自身的漏洞。
 
 #### 4.03
-_待补。_
+该版本更新于 2025.01.23，更新了与游戏流程相关的机制，并修复了一些漏洞。
++ **游戏**
+    + 关卡包现在会记录玩家所处的关卡或正在查看的空间，以及关卡的初始状态了。
+    + 关卡现在会在玩家通过该关卡，转换该关卡，以及进入其他关卡时复位。
++ **技术性**
+    + **`levelpack.Levelpack.main_level_id`**
+        + 重命名为`current_level_id`。
+        + 新增属性方法`current_level`，以便使用。
+    + **`level.Level.main_space_id`**
+        + 重命名为`current_space_id`。
+        + 属性方法`main_space`被重命名为`current_space`，且现在支持被赋值，以便使用。
+    + **`game.play`**
+        + 历史记录现在不再记录所处的关卡或正在查看的空间，上述两个属性接到了这个工作。
+        + `current_level`和`current_space`也不再被独立的变量引用。
+            + ~~这导致该函数的代码突然变得“密集“了。~~
+        + 状态变量`display_refresh`在该版本再次有用。
+    + **`level.MapLevelExtraJson.minimum_clear_for_blossom`**
+        + 重命名为`spore_for_blossom`。
+        + 现在是可选项了。
+    + **`levelpack.Levelpack.level_init_state_list`**
+        + 添加。
+        + 记录关卡的初始状态，用于在通关后重置。
+        + 同时添加了相关方法：`levelpack.Levelpack.reset_level`和`levelpack.Levelpack.set_level_init_state`。
+    + **用于将`JSON`格式转为类实例的函数**
+        + 参数`ver`不再可以为`None`，而是在缺失时赋值为`0.0`。
++ **漏洞**
+    + 修复了设置关卡图标颜色时读取了错误的变量而导致崩溃的严重漏洞。
+    + 修复了含有`SELECT`属性的物体可以选中处于任何位置的关卡的严重漏洞。
+    + 修复了在游戏过程中按`R`重新开始时出现的各种漏洞。
