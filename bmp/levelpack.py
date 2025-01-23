@@ -1,5 +1,5 @@
 from typing import Optional, TypedDict, NotRequired
-import uuid
+import copy
 from tqdm import tqdm
 
 import bmp.base
@@ -23,39 +23,57 @@ class LevelpackJson(TypedDict):
     ver: str
     name: NotRequired[str]
     author: NotRequired[str]
-    main_level: bmp.ref.LevelIDJson
+    current_level: bmp.ref.LevelIDJson
     collectibles: list[bmp.obj.CollectibleJson]
     level_list: list[bmp.level.LevelJson]
+    level_init_state_list: list[bmp.level.LevelJson]
     rule_list: list[list[str]]
 
 class Levelpack(object):
     def __init__(
         self,
         level_list: list[bmp.level.Level],
+        level_init_state_list: Optional[list[bmp.level.Level]] = None,
         name: Optional[str] = None,
         author: Optional[str] = None,
-        main_level_id: Optional[bmp.ref.LevelID] = None,
+        current_level_id: Optional[bmp.ref.LevelID] = None,
         collectibles: Optional[set[bmp.obj.Collectible]] = None,
         rule_list: Optional[list[bmp.rule.Rule]] = None,
     ) -> None:
         self.name: Optional[str] = name
         self.author: Optional[str] = author
         self.level_list: list[bmp.level.Level] = list(level_list)
-        self.main_level_id: bmp.ref.LevelID = main_level_id if main_level_id is not None else self.level_list[0].level_id
+        self.level_init_state_list: list[bmp.level.Level] = list(level_init_state_list) if level_init_state_list is not None else copy.deepcopy(list(level_list))
+        self.current_level_id: bmp.ref.LevelID = current_level_id if current_level_id is not None else self.level_list[0].level_id
         self.collectibles: set[bmp.obj.Collectible] = collectibles if collectibles is not None else set()
         self.rule_list: list[bmp.rule.Rule] = rule_list if (rule_list is not None and len(rule_list) != 0) else bmp.rule.default_rule_list
-    def get_level(self, level_id: bmp.ref.LevelID) -> Optional[bmp.level.Level]:
-        level = list(filter(lambda l: level_id == l.level_id, self.level_list))
-        return level[0] if len(level) != 0 else None
     def get_exact_level(self, level_id: bmp.ref.LevelID) -> bmp.level.Level:
-        level = list(filter(lambda l: level_id == l.level_id, self.level_list))
-        return level[0]
+        return next(filter(lambda l: level_id == l.level_id, self.level_list))
+    def get_level(self, level_id: bmp.ref.LevelID) -> Optional[bmp.level.Level]:
+        try:
+            return self.get_exact_level(level_id)
+        except StopIteration:
+            return None
+    @property
+    def current_level(self) -> bmp.level.Level:
+        return self.get_exact_level(self.current_level_id)
+    @current_level.setter
+    def current_level(self, level: bmp.level.Level) -> None:
+        self.current_level_id = level.level_id
     def set_level(self, level: bmp.level.Level) -> None:
-        for i in range(len(self.level_list)):
-            if level == self.level_list[i]:
-                self.level_list[i] = level
+        for index, old_level in enumerate(self.level_list):
+            if old_level == level:
+                self.level_list[index] = level
                 return
         self.level_list.append(level)
+    def reset_level(self, level_id: bmp.ref.LevelID) -> None:
+        self.set_level(copy.deepcopy(next(filter(lambda l: level_id == l.level_id, self.level_init_state_list))))
+    def set_level_init_state(self, level_id: bmp.ref.LevelID, level: bmp.level.Level) -> None:
+        for index, old_level in enumerate(self.level_init_state_list):
+            if old_level.level_id == level_id:
+                self.level_init_state_list[index] = level
+                return
+        self.level_init_state_list.append(level)
     def update_rules(self, active_level: bmp.level.Level) -> None:
         active_level.game_properties = bmp.obj.Properties()
         active_level_objs: list[bmp.obj.LevelObject] = []
@@ -268,7 +286,7 @@ class Levelpack(object):
                             self.set_level(bmp.level.Level(
                                 level_id, active_level.space_list,
                                 super_level_id=active_level.level_id,
-                                main_space_id=old_obj.space_id
+                                current_space_id=old_obj.space_id
                             ))
                             level_extra: bmp.obj.LevelObjectExtra = {
                                 "icon": {
@@ -299,7 +317,7 @@ class Levelpack(object):
                             if new_level is not None:
                                 for temp_space in new_level.space_list:
                                     active_level.set_space(temp_space)
-                                space.new_obj(new_type(old_obj.pos, old_obj.orient, space_id=new_level.main_space_id))
+                                space.new_obj(new_type(old_obj.pos, old_obj.orient, space_id=new_level.current_space_id))
                             else:
                                 space.new_obj(new_type(old_obj.pos, old_obj.orient, space_id=old_obj.level_id.to_space_id()))
                             transform_success = True
@@ -383,7 +401,7 @@ class Levelpack(object):
                             self.set_level(bmp.level.Level(
                                 new_level_id, active_level.space_list,
                                 super_level_id=active_level.level_id,
-                                main_space_id=old_obj.space_id
+                                current_space_id=old_obj.space_id
                             ))
                             new_obj = new_type(old_obj.pos, old_obj.orient, level_id=new_level_id, level_extra=new_level_extra)
                         elif issubclass(new_type, bmp.obj.Game):
@@ -448,7 +466,7 @@ class Levelpack(object):
                         for new_space in active_level.space_list:
                             if old_level.get_space(new_space.space_id) is None:
                                 old_level.set_space(new_space)
-                        new_obj = new_type(old_obj.pos, old_obj.orient, space_id=active_level.main_space_id)
+                        new_obj = new_type(old_obj.pos, old_obj.orient, space_id=active_level.current_space_id)
                     elif issubclass(new_type, bmp.obj.Game):
                         new_obj = bmp.obj.Game(old_obj.pos, old_obj.orient, ref_type=bmp.obj.get_noun_from_type(level_object_type))
                     elif issubclass(new_noun, bmp.obj.TextText):
@@ -463,27 +481,27 @@ class Levelpack(object):
     def prepare(self, active_level: bmp.level.Level) -> None:
         clear_counts: int = 0
         for sub_level in self.level_list:
-            if sub_level.super_level_id == active_level.level_id and sub_level.collected[bmp.obj.Spore]:
+            for space in sub_level.space_list:
+                for obj in space.object_list:
+                    obj.old_state = bmp.obj.OldObjectState(
+                        uid = obj.uid,
+                        pos = obj.pos,
+                        orient = obj.orient,
+                        prop = obj.properties,
+                        level = obj.level_id,
+                        space = obj.space_id,
+                    )
+                    if isinstance(obj, bmp.obj.Path):
+                        unlocked = True
+                        for bonus_type, bonus_counts in obj.conditions.items():
+                            if len({c for c in self.collectibles if isinstance(c.object_type, bonus_type)}) < bonus_counts:
+                                unlocked = False
+                        obj.unlocked = unlocked
+            if sub_level.super_level_id == active_level.level_id and sub_level.collected.get(bmp.obj.Spore):
                 clear_counts += 1
                 self.collectibles.add(bmp.obj.Collectible(bmp.obj.Spore, sub_level.level_id))
-        if active_level.map_info is not None and clear_counts >= active_level.map_info["minimum_clear_for_blossom"]:
-            active_level.collected[bmp.obj.Blossom] = True
-        for space in active_level.space_list:
-            for obj in space.object_list:
-                obj.old_state = bmp.obj.OldObjectState(
-                    uid = obj.uid,
-                    pos = obj.pos,
-                    orient = obj.orient,
-                    prop = obj.properties,
-                    level = obj.level_id,
-                    space = obj.space_id,
-                )
-                if isinstance(obj, bmp.obj.Path):
-                    unlocked = True
-                    for bonus_type, bonus_counts in obj.conditions.items():
-                        if len({c for c in self.collectibles if isinstance(c.object_type, bonus_type)}) < bonus_counts:
-                            unlocked = False
-                    obj.unlocked = unlocked
+            if sub_level.map_info is not None and clear_counts >= sub_level.map_info["minimum_clear_for_blossom"]:
+                sub_level.collected[bmp.obj.Blossom] = True
     def tick(self, active_level: bmp.level.Level, op: Optional[bmp.loc.Orient]) -> ReturnInfo:
         self.prepare(active_level)
         active_level.sound_events = []
@@ -540,8 +558,9 @@ class Levelpack(object):
     def to_json(self) -> LevelpackJson:
         json_object: LevelpackJson = {
             "ver": bmp.base.versions,
-            "main_level": self.main_level_id.to_json(),
+            "current_level": self.current_level_id.to_json(),
             "level_list": [],
+            "level_init_state_list": [],
             "collectibles": [],
             "rule_list": []
         }
@@ -555,6 +574,14 @@ class Levelpack(object):
             **bmp.lang.default_tqdm_args
         ):
             json_object["level_list"].append(level.to_json())
+        for level in tqdm(
+            self.level_init_state_list,
+            desc=bmp.lang.lang_format("saving.levelpack.level_list"),
+            unit=bmp.lang.lang_format("level.name"),
+            position=0,
+            **bmp.lang.default_tqdm_args
+        ):
+            json_object["level_init_state_list"].append(level.to_json())
         for collectible in tqdm(
             self.collectibles,
             desc=bmp.lang.lang_format("saving.levelpack.collect_list"),
@@ -587,6 +614,18 @@ def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
         **bmp.lang.default_tqdm_args
     ):
         level_list.append(bmp.level.json_to_level(level, ver))
+    if "level_init_state_list" in json_object.keys():
+        level_init_state_list = []
+        for level in tqdm(
+            json_object["level_init_state_list"],
+            desc=bmp.lang.lang_format("loading.levelpack.level_init_state_list"),
+            unit=bmp.lang.lang_format("level.name"),
+            position=0,
+            **bmp.lang.default_tqdm_args
+        ):
+            level_init_state_list.append(bmp.level.json_to_level(level, ver))
+    else:
+        level_init_state_list = copy.deepcopy(level_list)
     rule_list: list[bmp.rule.Rule] = []
     for rule in tqdm(
         json_object["rule_list"],
@@ -599,9 +638,11 @@ def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
         for object_type in rule:
             rule_list[-1].append(bmp.obj.name_to_class[object_type]) # type: ignore
     if bmp.base.compare_versions(ver if ver is not None else "0.0", "3.8") == -1:
-        main_level_id: bmp.ref.LevelID = bmp.ref.LevelID(json_object["main_level"]) # type: ignore
+        current_level_id: bmp.ref.LevelID = bmp.ref.LevelID(json_object["main_level"]) # type: ignore
+    elif bmp.base.compare_versions(ver if ver is not None else "0.0", "4.03") == -1:
+        current_level_id: bmp.ref.LevelID = bmp.ref.LevelID(**json_object["main_level"]) # type: ignore
     else:
-        main_level_id: bmp.ref.LevelID = bmp.ref.LevelID(**json_object["main_level"])
+        current_level_id: bmp.ref.LevelID = bmp.ref.LevelID(**json_object["current_level"])
         for collectible in tqdm(
             json_object["collectibles"],
             desc=bmp.lang.lang_format("loading.levelpack.collect_list"),
@@ -614,10 +655,11 @@ def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
                 source=bmp.ref.LevelID(collectible["source"]["name"])
             ))
     return Levelpack(
+        level_list=level_list,
+        level_init_state_list=level_init_state_list,
         name=json_object.get("name"),
         author=json_object.get("author"),
-        main_level_id=main_level_id,
-        level_list=level_list,
+        current_level_id=current_level_id,
         collectibles=collectibles,
         rule_list=rule_list
     )

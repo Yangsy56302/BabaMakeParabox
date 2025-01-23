@@ -1,7 +1,7 @@
 {
-    "ver": "4.021", 
-    "main_level": {
-        "name": "main_level"
+    "ver": "4.03", 
+    "current_level": {
+        "name": "map"
     }, 
     "level_list": [
         {
@@ -75,7 +75,7 @@
                             ], 
                             "orient": "S", 
                             "path_extra": {
-                                "unlocked": false, 
+                                "unlocked": true, 
                                 "conditions": {}
                             }
                         }, 
@@ -87,7 +87,7 @@
                             ], 
                             "orient": "S", 
                             "path_extra": {
-                                "unlocked": false, 
+                                "unlocked": true, 
                                 "conditions": {}
                             }
                         }, 
@@ -99,7 +99,7 @@
                             ], 
                             "orient": "S", 
                             "path_extra": {
-                                "unlocked": false, 
+                                "unlocked": true, 
                                 "conditions": {}
                             }
                         }, 
@@ -111,7 +111,7 @@
                             ], 
                             "orient": "S", 
                             "path_extra": {
-                                "unlocked": false, 
+                                "unlocked": true, 
                                 "conditions": {}
                             }
                         }, 
@@ -123,7 +123,7 @@
                             ], 
                             "orient": "S", 
                             "path_extra": {
-                                "unlocked": false, 
+                                "unlocked": true, 
                                 "conditions": {}
                             }
                         }, 
@@ -143,7 +143,7 @@
                             ], 
                             "orient": "S", 
                             "path_extra": {
-                                "unlocked": false, 
+                                "unlocked": true, 
                                 "conditions": {}
                             }
                         }, 
@@ -155,7 +155,7 @@
                             ], 
                             "orient": "S", 
                             "path_extra": {
-                                "unlocked": false, 
+                                "unlocked": true, 
                                 "conditions": {}
                             }
                         }, 
@@ -167,20 +167,70 @@
                             ], 
                             "orient": "S", 
                             "path_extra": {
-                                "unlocked": false, 
+                                "unlocked": true, 
                                 "conditions": {}
                             }
+                        }, 
+                        {
+                            "type": "level", 
+                            "pos": [
+                                6, 
+                                6
+                            ], 
+                            "orient": "S", 
+                            "level_id": {
+                                "name": "baba"
+                            }, 
+                            "level_extra": {
+                                "icon": {
+                                    "name": "baba", 
+                                    "color": 14964678
+                                }
+                            }
+                        }, 
+                        {
+                            "type": "level", 
+                            "pos": [
+                                8, 
+                                8
+                            ], 
+                            "orient": "S", 
+                            "level_id": {
+                                "name": "map"
+                            }, 
+                            "level_extra": {
+                                "icon": {
+                                    "name": "text_level", 
+                                    "color": 14964678
+                                }
+                            }
+                        }, 
+                        {
+                            "type": "text_level", 
+                            "pos": [
+                                11, 
+                                9
+                            ], 
+                            "orient": "S"
+                        }, 
+                        {
+                            "type": "text_patrick", 
+                            "pos": [
+                                13, 
+                                9
+                            ], 
+                            "orient": "S"
                         }
                     ], 
                     "color": 3153984
                 }
             ], 
-            "main_space": {
+            "current_space": {
                 "name": "map_0", 
                 "infinite_tier": 0
             }, 
             "super_level": {
-                "name": "main_level"
+                "name": null
             }
         }, 
         {
@@ -231,10 +281,316 @@
                             "orient": "S"
                         }, 
                         {
-                            "type": "text_is", 
+                            "type": "baba", 
+                            "pos": [
+                                4, 
+                                4
+                            ], 
+                            "orient": "S"
+                        }, 
+                        {
+                            "type": "text_win", 
                             "pos": [
                                 5, 
                                 5
+                            ], 
+                            "orient": "S"
+                        }, 
+                        {
+                            "type": "text_is", 
+                            "pos": [
+                                4, 
+                                5
+                            ], 
+                            "orient": "S"
+                        }
+                    ], 
+                    "color": 1052688
+                }
+            ], 
+            "current_space": {
+                "name": "baba_0", 
+                "infinite_tier": 0
+            }, 
+            "super_level": {
+                "name": "map"
+            }
+        }
+    ], 
+    "level_init_state_list": [
+        {
+            "id": {
+                "name": "map"
+            }, 
+            "space_list": [
+                {
+                    "id": {
+                        "name": "map_0", 
+                        "infinite_tier": 0
+                    }, 
+                    "size": [
+                        15, 
+                        15
+                    ], 
+                    "object_list": [
+                        {
+                            "type": "text_you", 
+                            "pos": [
+                                13, 
+                                11
+                            ], 
+                            "orient": "S"
+                        }, 
+                        {
+                            "type": "text_is", 
+                            "pos": [
+                                12, 
+                                11
+                            ], 
+                            "orient": "S"
+                        }, 
+                        {
+                            "type": "text_is", 
+                            "pos": [
+                                12, 
+                                13
+                            ], 
+                            "orient": "S"
+                        }, 
+                        {
+                            "type": "text_win", 
+                            "pos": [
+                                13, 
+                                13
+                            ], 
+                            "orient": "S"
+                        }, 
+                        {
+                            "type": "text_baba", 
+                            "pos": [
+                                11, 
+                                11
+                            ], 
+                            "orient": "S"
+                        }, 
+                        {
+                            "type": "text_flag", 
+                            "pos": [
+                                11, 
+                                13
+                            ], 
+                            "orient": "S"
+                        }, 
+                        {
+                            "type": "path", 
+                            "pos": [
+                                7, 
+                                6
+                            ], 
+                            "orient": "S", 
+                            "path_extra": {
+                                "unlocked": true, 
+                                "conditions": {}
+                            }
+                        }, 
+                        {
+                            "type": "path", 
+                            "pos": [
+                                7, 
+                                8
+                            ], 
+                            "orient": "S", 
+                            "path_extra": {
+                                "unlocked": true, 
+                                "conditions": {}
+                            }
+                        }, 
+                        {
+                            "type": "path", 
+                            "pos": [
+                                8, 
+                                7
+                            ], 
+                            "orient": "S", 
+                            "path_extra": {
+                                "unlocked": true, 
+                                "conditions": {}
+                            }
+                        }, 
+                        {
+                            "type": "path", 
+                            "pos": [
+                                7, 
+                                9
+                            ], 
+                            "orient": "S", 
+                            "path_extra": {
+                                "unlocked": true, 
+                                "conditions": {}
+                            }
+                        }, 
+                        {
+                            "type": "path", 
+                            "pos": [
+                                7, 
+                                10
+                            ], 
+                            "orient": "S", 
+                            "path_extra": {
+                                "unlocked": true, 
+                                "conditions": {}
+                            }
+                        }, 
+                        {
+                            "type": "cursor", 
+                            "pos": [
+                                7, 
+                                10
+                            ], 
+                            "orient": "S"
+                        }, 
+                        {
+                            "type": "path", 
+                            "pos": [
+                                6, 
+                                7
+                            ], 
+                            "orient": "S", 
+                            "path_extra": {
+                                "unlocked": true, 
+                                "conditions": {}
+                            }
+                        }, 
+                        {
+                            "type": "path", 
+                            "pos": [
+                                6, 
+                                8
+                            ], 
+                            "orient": "S", 
+                            "path_extra": {
+                                "unlocked": true, 
+                                "conditions": {}
+                            }
+                        }, 
+                        {
+                            "type": "path", 
+                            "pos": [
+                                8, 
+                                6
+                            ], 
+                            "orient": "S", 
+                            "path_extra": {
+                                "unlocked": true, 
+                                "conditions": {}
+                            }
+                        }, 
+                        {
+                            "type": "level", 
+                            "pos": [
+                                6, 
+                                6
+                            ], 
+                            "orient": "S", 
+                            "level_id": {
+                                "name": "baba"
+                            }, 
+                            "level_extra": {
+                                "icon": {
+                                    "name": "baba", 
+                                    "color": 14964678
+                                }
+                            }
+                        }, 
+                        {
+                            "type": "level", 
+                            "pos": [
+                                8, 
+                                8
+                            ], 
+                            "orient": "S", 
+                            "level_id": {
+                                "name": "map"
+                            }, 
+                            "level_extra": {
+                                "icon": {
+                                    "name": "text_level", 
+                                    "color": 14964678
+                                }
+                            }
+                        }, 
+                        {
+                            "type": "text_level", 
+                            "pos": [
+                                11, 
+                                9
+                            ], 
+                            "orient": "S"
+                        }, 
+                        {
+                            "type": "text_patrick", 
+                            "pos": [
+                                13, 
+                                9
+                            ], 
+                            "orient": "S"
+                        }
+                    ], 
+                    "color": 3153984
+                }
+            ], 
+            "current_space": {
+                "name": "map_0", 
+                "infinite_tier": 0
+            }, 
+            "super_level": {
+                "name": null
+            }
+        }, 
+        {
+            "id": {
+                "name": "baba"
+            }, 
+            "space_list": [
+                {
+                    "id": {
+                        "name": "baba_0", 
+                        "infinite_tier": 0
+                    }, 
+                    "size": [
+                        9, 
+                        9
+                    ], 
+                    "object_list": [
+                        {
+                            "type": "text_you", 
+                            "pos": [
+                                5, 
+                                3
+                            ], 
+                            "orient": "S"
+                        }, 
+                        {
+                            "type": "text_is", 
+                            "pos": [
+                                4, 
+                                3
+                            ], 
+                            "orient": "S"
+                        }, 
+                        {
+                            "type": "text_level", 
+                            "pos": [
+                                3, 
+                                5
+                            ], 
+                            "orient": "S"
+                        }, 
+                        {
+                            "type": "text_baba", 
+                            "pos": [
+                                3, 
+                                3
                             ], 
                             "orient": "S"
                         }, 
@@ -245,12 +601,28 @@
                                 4
                             ], 
                             "orient": "S"
+                        }, 
+                        {
+                            "type": "text_win", 
+                            "pos": [
+                                5, 
+                                5
+                            ], 
+                            "orient": "S"
+                        }, 
+                        {
+                            "type": "text_is", 
+                            "pos": [
+                                4, 
+                                5
+                            ], 
+                            "orient": "S"
                         }
                     ], 
                     "color": 1052688
                 }
             ], 
-            "main_space": {
+            "current_space": {
                 "name": "baba_0", 
                 "infinite_tier": 0
             }, 

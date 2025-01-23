@@ -67,26 +67,21 @@ movements: dict[str, tuple[str, Optional[bmp.loc.Orient], bmp.loc.Coord]] = {
 }
 
 def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
+    levelpack.prepare(levelpack.current_level)
     for level in levelpack.level_list:
         for space in level.space_list:
             space.set_sprite_states(0)
-    levelpack.prepare(levelpack.get_exact_level(levelpack.main_level_id))
-    levelpack_backup = copy.deepcopy(levelpack)
-    current_level: bmp.level.Level = levelpack.get_exact_level(levelpack.main_level_id)
-    current_space: bmp.space.Space = current_level.get_exact_space(current_level.main_space_id)
+        levelpack.set_level_init_state(level.level_id, copy.deepcopy(level))
+    levelpack_unchanged = copy.deepcopy(levelpack)
     levelpack_info: bmp.levelpack.ReturnInfo = bmp.levelpack.default_levelpack_info.copy()
     history: list[tuple[
         bmp.levelpack.Levelpack,
-        bmp.levelpack.ReturnInfo,
-        bmp.ref.LevelID,
-        bmp.ref.SpaceID
+        bmp.levelpack.ReturnInfo
     ]] = [(
         copy.deepcopy(levelpack),
-        levelpack_info.copy(),
-        current_level.level_id,
-        current_space.space_id
+        levelpack_info.copy()
     )]
-    savepoint_dict: dict[str, tuple[bmp.levelpack.Levelpack, bmp.levelpack.ReturnInfo, bmp.ref.LevelID, bmp.ref.SpaceID]] = {}
+    savepoint_dict: dict[str, tuple[bmp.levelpack.Levelpack, bmp.levelpack.ReturnInfo]] = {}
     default_savepoint_name = "_"
     window = pygame.display.set_mode((720, 720), pygame.RESIZABLE)
     game_offset = [0.0, 0.0]
@@ -94,10 +89,10 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
     pygame.display.set_caption(f"Baba Make Parabox Version {bmp.base.versions}")
     pygame.display.set_icon(pygame.image.load(os.path.join(".", "logo", "a8icon.png")))
     window.fill("#000000")
-    monochrome: Optional[bmp.color.ColorHex] = None
     pygame.key.stop_text_input()
     pygame.key.set_repeat(bmp.base.options["long_press"]["delay"], bmp.base.options["long_press"]["interval"])
     clock = pygame.time.Clock()
+    monochrome: Optional[bmp.color.ColorHex] = None
     keys = {v: False for v in keybinds.values()}
     keys.update({v: False for v in keymods.values()})
     mouses: tuple[int, int, int, int, int] = (0, 0, 0, 0, 0)
@@ -160,31 +155,24 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
         del new_mouses
         mouse_pos = pygame.mouse.get_pos()
         mouse_pos_in_space = (
-            (mouse_pos[0] - space_surface_pos[0]) * current_space.width // space_surface_size[0],
-            (mouse_pos[1] - space_surface_pos[1]) * current_space.height // space_surface_size[1]
+            (mouse_pos[0] - space_surface_pos[0]) * levelpack.current_level.current_space.width // space_surface_size[0],
+            (mouse_pos[1] - space_surface_pos[1]) * levelpack.current_level.current_space.height // space_surface_size[1]
         )
         if not press_key_to_continue:
             for key, (negative_key, op, (dx, dy)) in movements.items():
                 if keys[key] and not keys.get(negative_key, False):
-                    new_history: tuple[bmp.levelpack.Levelpack, bmp.levelpack.ReturnInfo, bmp.ref.LevelID, bmp.ref.SpaceID] = (
+                    new_history: tuple[bmp.levelpack.Levelpack, bmp.levelpack.ReturnInfo] = (
                         copy.deepcopy(levelpack),
-                        levelpack.tick(current_level, op),
-                        current_level.level_id,
-                        current_space.space_id
+                        levelpack.tick(levelpack.current_level, op)
                     )
                     history.append(new_history)
-                    levelpack_info, current_level_id, current_space_id = new_history[1:]
-                    current_level = levelpack.get_exact_level(current_level_id)
-                    current_space = current_level.get_exact_space(current_space_id)
-                    if current_level.game_properties.enabled(bmp.obj.TextYou):
-                        game_offset[0] += dx * window.get_width() / current_space.width
-                        game_offset[1] += dy * window.get_height() / current_space.height
-                    if current_level.game_properties.enabled(bmp.obj.TextPush) and levelpack_info["game_push"]:
-                        game_offset[0] += dx * window.get_width() / current_space.width
-                        game_offset[1] += dy * window.get_height() / current_space.height
-                    for level in levelpack.level_list:
-                        for space in current_level.space_list:
-                            space.set_sprite_states(len(history))
+                    levelpack_info = new_history[1]
+                    if levelpack.current_level.game_properties.enabled(bmp.obj.TextYou):
+                        game_offset[0] += dx * window.get_width() / levelpack.current_level.current_space.width
+                        game_offset[1] += dy * window.get_height() / levelpack.current_level.current_space.height
+                    if levelpack.current_level.game_properties.enabled(bmp.obj.TextPush) and levelpack_info["game_push"]:
+                        game_offset[0] += dx * window.get_width() / levelpack.current_level.current_space.width
+                        game_offset[1] += dy * window.get_height() / levelpack.current_level.current_space.height
                     display_refresh = True
                     levelpack_refresh = True
                     break
@@ -195,90 +183,82 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                     levelpack_refresh = True
                     break
         if not levelpack_refresh:
-            if any(mouses) and not current_space.out_of_range(mouse_pos_in_space):
+            if any(mouses) and not levelpack.current_level.current_space.out_of_range(mouse_pos_in_space):
                 visible_space_list: list[bmp.space.Space] = [
-                    s for s in current_level.space_list
+                    s for s in levelpack.current_level.space_list
                     if not s.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextHide)
                 ]
                 if mouses[0] == 1:
                     sub_space_objs: list[bmp.obj.SpaceObject] = [
-                        o for o in current_space.get_spaces_from_pos(mouse_pos_in_space)
+                        o for o in levelpack.current_level.current_space.get_spaces_from_pos(mouse_pos_in_space)
                         if not o.properties.enabled(bmp.obj.TextHide)
                     ]
-                    sub_spaces = [current_level.get_space(o.space_id) for o in sub_space_objs]
+                    sub_spaces = [levelpack.current_level.get_space(o.space_id) for o in sub_space_objs]
                     sub_spaces = [
                         s for s in sub_spaces
                         if s is not None
                         and not s.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextHide)
                     ]
                     if len(sub_spaces) != 0:
-                        space = random.choice(sub_spaces)
-                        current_space = space
+                        levelpack.current_level.current_space = random.choice(sub_spaces)
                         space_changed = True
                         display_refresh = True
                 elif mouses[2] == 1:
                     super_spaces: list[bmp.space.Space] = [
-                        s for s, o in current_level.find_super_spaces(current_space.space_id)
+                        s for s, o in levelpack.current_level.find_super_spaces(levelpack.current_level.current_space.space_id)
                         if not o.properties.enabled(bmp.obj.TextHide)
                         and not s.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextHide)
                     ]
                     if len(super_spaces) != 0:
-                        current_space = random.choice(super_spaces)
+                        levelpack.current_level.current_space = random.choice(super_spaces)
                         space_changed = True
+                        display_refresh = True
                 elif mouses[1] == 1:
                     pass # maybe print informations of objects on cursor?
                 elif bool(mouses[3]) ^ bool(mouses[4]):
-                    current_space_index = visible_space_list.index(current_space) if current_space in visible_space_list else 0
+                    current_space_index = visible_space_list.index(levelpack.current_level.current_space) if levelpack.current_level.current_space in visible_space_list else 0
                     current_space_index += 1 if mouses[3] else -1
                     current_space_index = current_space_index % len(visible_space_list) if current_space_index >= 0 else len(visible_space_list) - 1
-                    current_space = visible_space_list[current_space_index]
+                    levelpack.current_level.current_space = visible_space_list[current_space_index]
                     space_changed = True
                     display_refresh = True
             elif keys["Z"]:
                 if len(history) >= 1:
                     levelpack = copy.deepcopy(history[-1][0])
-                    levelpack_info = bmp.levelpack.default_levelpack_info.copy()
-                    current_level = levelpack.get_exact_level(history[-1][2])
-                    current_space = current_level.get_exact_space(history[-1][3])
+                    levelpack_info = copy.deepcopy(history[-1][1])
                     if len(history) != 1:
                         history.pop()
                     level_changed = True
                     display_refresh = True
                     press_key_to_continue = False
             elif keys["R"]:
-                reset = True
+                restart_failed = True
                 if not (keys["LCTRL"] or keys["RCTRL"]):
-                    bmp.lang.lang_print("play.level.restart")
-                    bmp.audio.play("restart")
-                    for index, (old_levelpack, old_levelpack_info, old_level_id, old_space_id) in reversed(list(enumerate(history))):
-                        if old_levelpack_info["selected_level"] is not None:
+                    for index, (old_levelpack, old_levelpack_info) in reversed(list(enumerate(history))):
+                        if index == 0 or history[index - 1][1]["selected_level"] is not None:
+                            bmp.lang.lang_print("play.level.restart")
+                            bmp.audio.play("restart")
                             levelpack = copy.deepcopy(old_levelpack)
-                            levelpack_info = bmp.levelpack.default_levelpack_info.copy()
-                            current_level = levelpack.get_exact_level(old_level_id)
-                            current_space = current_level.get_exact_space(old_space_id)
-                            history = history[:index]
+                            levelpack_info = old_levelpack_info.copy()
+                            history = history[:index + 1]
                             level_changed = True
                             display_refresh = True
                             press_key_to_continue = False
-                            reset = False
+                            restart_failed = False
                             break
-                if reset or keys["LCTRL"] or keys["RCTRL"]:
-                    bmp.lang.lang_print("play.levelpack.restart")
+                else:
+                    bmp.lang.lang_print("play.level.restart" if restart_failed else "play.levelpack.restart")
                     bmp.audio.play("restart")
-                    levelpack = copy.deepcopy(levelpack_backup)
+                    levelpack = copy.deepcopy(levelpack_unchanged)
                     levelpack_info = bmp.levelpack.default_levelpack_info.copy()
-                    current_level = copy.deepcopy(levelpack.get_exact_level(levelpack.main_level_id))
-                    current_space = current_level.get_exact_space(current_level.main_space_id)
                     history = [(
                         copy.deepcopy(levelpack),
-                        levelpack_info.copy(),
-                        current_level.level_id,
-                        current_space.space_id
+                        levelpack_info.copy()
                     )]
                     level_changed = True
                     display_refresh = True
                     press_key_to_continue = False
-                del reset
+                del restart_failed
             elif keys["O"]:
                 bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.savepoint")))
                 savepoint_name = ""
@@ -293,8 +273,6 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                             levelpack_json = json.load(file)
                         levelpack = bmp.levelpack.json_to_levelpack(levelpack_json)
                         levelpack_info = bmp.levelpack.default_levelpack_info.copy()
-                        current_level = levelpack.get_exact_level(levelpack.main_level_id)
-                        current_space = current_level.get_exact_space(current_level.main_space_id) 
                         bmp.lang.lang_print("play.savepoint.loaded", value=savepoint_name)
                         level_changed = True
                         display_refresh = True
@@ -305,8 +283,6 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                     if savepoint is not None:
                         levelpack = savepoint[0]
                         levelpack_info = savepoint[1]
-                        current_level = copy.deepcopy(levelpack.get_exact_level(savepoint[2]))
-                        current_space = current_level.get_exact_space(savepoint[3])
                         bmp.lang.lang_print("play.savepoint.loaded", value=savepoint_name)
                         level_changed = True
                         display_refresh = True
@@ -325,22 +301,22 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                         json.dump(levelpack.to_json(), file, **bmp.base.get_json_dump_kwds())
                 else:
                     savepoint_name = savepoint_name if savepoint_name != "" else default_savepoint_name
-                    savepoint_dict[savepoint_name] = (copy.deepcopy(levelpack), levelpack_info.copy(), current_level.level_id, current_space.space_id)
+                    savepoint_dict[savepoint_name] = (copy.deepcopy(levelpack), levelpack_info.copy())
                 bmp.lang.lang_print("play.savepoint.saved", value=savepoint_name)
             elif keys["TAB"]:
                 bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.info")))
-                bmp.lang.lang_print("play.level.current.name", value=current_level.level_id.name)
-                bmp.lang.lang_print("play.space.current.name", value=current_space.space_id.name)
-                bmp.lang.lang_print("play.space.current.infinite_tier", value=current_space.space_id.infinite_tier)
-                if len(current_space.rule_list):
+                bmp.lang.lang_print("play.level.current.name", value=levelpack.current_level.level_id.name)
+                bmp.lang.lang_print("play.space.current.name", value=levelpack.current_level.current_space.space_id.name)
+                bmp.lang.lang_print("play.space.current.infinite_tier", value=levelpack.current_level.current_space.space_id.infinite_tier)
+                if len(levelpack.current_level.current_space.rule_list):
                     bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.space.rule_list")))
-                    for rule in current_space.rule_list:
+                    for rule in levelpack.current_level.current_space.rule_list:
                         str_list = []
                         for object_type in rule:
                             str_list.append(object_type.get_name())
                         print(" ".join(str_list))
                     bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.level.rule_list")))
-                recursion_rule_list: list[bmp.rule.Rule] = current_level.recursion_rules(current_space)[0]
+                recursion_rule_list: list[bmp.rule.Rule] = levelpack.current_level.recursion_rules(levelpack.current_level.current_space)[0]
                 if len(recursion_rule_list):
                     for rule in recursion_rule_list:
                         str_list = []
@@ -362,18 +338,18 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                         collectible_counts[collectible.object_type] += 1
                     for object_type, collect_count in collectible_counts.items():
                         bmp.lang.lang_print("play.levelpack.collectibles", key=object_type.get_name(), value=collect_count)
-        if current_level.game_properties:
+        if levelpack.current_level.game_properties:
             offset_used = False
-            if current_level.game_properties.enabled(bmp.obj.TextStop):
+            if levelpack.current_level.game_properties.enabled(bmp.obj.TextStop):
                 wiggle = 1
-            if current_level.game_properties.enabled(bmp.obj.TextShift):
+            if levelpack.current_level.game_properties.enabled(bmp.obj.TextShift):
                 game_offset[0] += window.get_width() / bmp.base.options["fps"]
-            if current_level.game_properties.enabled(bmp.obj.TextMove):
+            if levelpack.current_level.game_properties.enabled(bmp.obj.TextMove):
                 game_offset[1] += window.get_height() / (4 * bmp.base.options["fps"])
-            if current_level.game_properties.enabled(bmp.obj.TextSink):
+            if levelpack.current_level.game_properties.enabled(bmp.obj.TextSink):
                 game_offset_speed[1] += window.get_height() / (16 * bmp.base.options["fps"])
                 offset_used = True
-            if current_level.game_properties.enabled(bmp.obj.TextFloat):
+            if levelpack.current_level.game_properties.enabled(bmp.obj.TextFloat):
                 game_offset_speed[1] -= window.get_height() / (64 * bmp.base.options["fps"])
                 offset_used = True
             if not offset_used:
@@ -381,33 +357,35 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                 game_offset_speed[1] = game_offset_speed[1] / 2
             del offset_used
         if display_refresh:
-            # NotImplemented
+            for level in levelpack.level_list:
+                for space in levelpack.current_level.space_list:
+                    space.set_sprite_states(len(history))
             display_refresh = False
         if levelpack_refresh:
-            if current_level.game_properties.enabled(bmp.obj.TextWin):
+            if levelpack.current_level.game_properties.enabled(bmp.obj.TextWin):
                 bmp.lang.lang_print("play.win")
                 bmp.audio.play("win")
                 game_running = False
-            if current_level.game_properties.enabled(bmp.obj.TextDefeat):
+            if levelpack.current_level.game_properties.enabled(bmp.obj.TextDefeat):
                 bmp.audio.play("defeat")
                 game_running = False
                 raise GameIsDefeatError()
-            if current_level.game_properties.enabled(bmp.obj.TextBonus):
+            if levelpack.current_level.game_properties.enabled(bmp.obj.TextBonus):
                 bmp.audio.play("bonus")
                 print("VVd4WmVGTnRXVEJOYWtaVFRqQmtWZz09")
-            if current_level.game_properties.enabled(bmp.obj.TextEnd):
+            if levelpack.current_level.game_properties.enabled(bmp.obj.TextEnd):
                 bmp.lang.lang_print("play.end")
                 bmp.audio.play("end")
                 bmp.base.options["game_is_end"] = True
                 bmp.base.save_options(bmp.base.options)
                 game_running = False
-            if current_level.game_properties.enabled(bmp.obj.TextDone):
+            if levelpack.current_level.game_properties.enabled(bmp.obj.TextDone):
                 bmp.audio.play("done")
                 bmp.base.options["game_is_done"] = True
                 bmp.base.save_options(bmp.base.options)
                 game_running = False
                 raise GameIsDoneError()
-            if current_level.game_properties.enabled(bmp.obj.TextOpen):
+            if levelpack.current_level.game_properties.enabled(bmp.obj.TextOpen):
                 if bmp.base.current_os == bmp.base.windows:
                     if os.path.exists("bmp.exe"):
                             os.system("start bmp.exe")
@@ -415,18 +393,20 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                         os.system("start python bmp.py")
                 elif bmp.base.current_os == bmp.base.linux:
                     os.system("python ./bmp.py &")
-            if current_level.game_properties.enabled(bmp.obj.TextShut):
+            if levelpack.current_level.game_properties.enabled(bmp.obj.TextShut):
                 game_running = False
-            if current_level.game_properties.enabled(bmp.obj.TextTele):
+            if levelpack.current_level.game_properties.enabled(bmp.obj.TextTele):
                 bmp.audio.play("tele")
                 game_offset = [float(random.randrange(window.get_width())), float(random.randrange(window.get_height()))]
-            if current_level.game_properties.enabled(bmp.obj.TextHot) and current_level.game_properties.enabled(bmp.obj.TextMelt):
+            if levelpack.current_level.game_properties.enabled(bmp.obj.TextHot) \
+                and levelpack.current_level.game_properties.enabled(bmp.obj.TextMelt):
                 bmp.audio.play("melt")
                 game_running = False
-            if current_level.game_properties.enabled(bmp.obj.TextYou) and current_level.game_properties.enabled(bmp.obj.TextDefeat):
+            if levelpack.current_level.game_properties.enabled(bmp.obj.TextYou) \
+                and levelpack.current_level.game_properties.enabled(bmp.obj.TextDefeat):
                 bmp.audio.play("defeat")
                 game_running = False
-            for space in current_level.space_list:
+            for space in levelpack.current_level.space_list:
                 for game_obj in space.get_objs_from_type(bmp.obj.Game):
                     if bmp.base.current_os == bmp.base.windows:
                         if os.path.exists("bmp.exe"):
@@ -437,7 +417,7 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                         os.system(f"python ./submp.py {game_obj.ref_type.json_name} &")
             if not press_key_to_continue:
                 frame_since_last_move = 0
-                for event in current_level.sound_events:
+                for event in levelpack.current_level.sound_events:
                     bmp.audio.play(event)
                 if levelpack_info["win"]:
                     bmp.audio.play("win")
@@ -473,24 +453,24 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                 press_key_to_continue = False
                 level_changed = True
                 if levelpack_info["win"]:
-                    level = copy.deepcopy(levelpack_backup.get_level(current_level.level_id))
-                    if level is not None:
-                        levelpack.set_level(level)
-                    super_level = levelpack.get_level(current_level.super_level_id) if current_level.super_level_id is not None else levelpack.get_exact_level(levelpack.main_level_id)
-                    current_level = super_level if super_level is not None else levelpack.get_exact_level(levelpack.main_level_id)
-                    current_space = current_level.main_space
+                    levelpack.reset_level(levelpack.current_level.level_id)
+                    if levelpack.current_level.super_level_id is not None:
+                        levelpack.current_level = levelpack.get_exact_level(levelpack.current_level.super_level_id)
+                    history.append((copy.deepcopy(levelpack), levelpack_info.copy()))
                 elif levelpack_info["end"]:
                     game_running = False
                 elif levelpack_info["done"]:
                     game_running = False
                 elif levelpack_info["transform"]:
-                    super_level = levelpack.get_level(current_level.super_level_id) if current_level.super_level_id is not None else levelpack.get_exact_level(levelpack.main_level_id)
-                    current_level = super_level if super_level is not None else levelpack.get_exact_level(levelpack.main_level_id)
-                    current_space = current_level.main_space
+                    levelpack.reset_level(levelpack.current_level.level_id)
+                    if levelpack.current_level.super_level_id is not None:
+                        levelpack.current_level = levelpack.get_exact_level(levelpack.current_level.super_level_id)
+                    history.append((copy.deepcopy(levelpack), levelpack_info.copy()))
                 elif levelpack_info["selected_level"] is not None:
-                    current_level = levelpack.get_exact_level(levelpack_info["selected_level"])
-                    current_space = current_level.main_space
-                levelpack.prepare(current_level)
+                    levelpack.reset_level(levelpack.current_level.level_id)
+                    levelpack.current_level = levelpack.get_exact_level(levelpack_info["selected_level"])
+                    history.append((copy.deepcopy(levelpack), levelpack_info.copy()))
+                levelpack.prepare(levelpack.current_level)
             levelpack_refresh = False
         if not press_key_to_continue:
             monochrome = None
@@ -504,32 +484,34 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
             # bmp.lang.lang_print("play.space.current.name", value=current_space.space_id.name)
             # bmp.lang.lang_print("play.space.current.infinite_tier", value=current_space.space_id.infinite_tier)
             space_changed = False
-        pygame.mixer.music.set_volume(1.0 if current_level.have_you() else 0.5)
+        pygame.mixer.music.set_volume(1.0 if levelpack.current_level.have_you() else 0.5)
         # display
         window.fill(bmp.color.current_palette[0, 4])
         space_surface_size = window.get_size()
         space_surface_pos = (0, 0)
-        match current_space.static_transform["direct"]:
+        match levelpack.current_level.current_space.static_transform["direct"]:
             case "W" | "S":
-                if window.get_width() // current_space.width > window.get_height() // current_space.height:
-                    space_surface_size = (window.get_height() * current_space.width // current_space.height, window.get_height())
+                if window.get_width() // levelpack.current_level.current_space.width > window.get_height() // levelpack.current_level.current_space.height:
+                    space_surface_size = (window.get_height() * levelpack.current_level.current_space.width // levelpack.current_level.current_space.height, window.get_height())
                     space_surface_pos = ((window.get_width() - space_surface_size[0]) // 2, 0)
-                elif window.get_width() // current_space.width < window.get_height() // current_space.height:
-                    space_surface_size = (window.get_width(), window.get_width() * current_space.height // current_space.width)
+                elif window.get_width() // levelpack.current_level.current_space.width < window.get_height() // levelpack.current_level.current_space.height:
+                    space_surface_size = (window.get_width(), window.get_width() * levelpack.current_level.current_space.height // levelpack.current_level.current_space.width)
                     space_surface_pos = (0, (window.get_height() - space_surface_size[1]) // 2)
             case "A" | "D":
-                if window.get_width() // current_space.height > window.get_height() // current_space.width:
-                    space_surface_size = (window.get_height() * current_space.height // current_space.width, window.get_height())
+                if window.get_width() // levelpack.current_level.current_space.height > window.get_height() // levelpack.current_level.current_space.width:
+                    space_surface_size = (window.get_height() * levelpack.current_level.current_space.height // levelpack.current_level.current_space.width, window.get_height())
                     space_surface_pos = ((window.get_width() - space_surface_size[0]) // 2, 0)
-                elif window.get_width() // current_space.height < window.get_height() // current_space.width:
-                    space_surface_size = (window.get_width(), window.get_width() * current_space.width // current_space.height)
+                elif window.get_width() // levelpack.current_level.current_space.height < window.get_height() // levelpack.current_level.current_space.width:
+                    space_surface_size = (window.get_width(), window.get_width() * levelpack.current_level.current_space.width // levelpack.current_level.current_space.height)
                     space_surface_pos = (0, (window.get_height() - space_surface_size[1]) // 2)
-        if not current_level.game_properties.enabled(bmp.obj.TextHide):
-            if not current_level.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextHide):
+        if not levelpack.current_level.game_properties.enabled(bmp.obj.TextHide):
+            if not levelpack.current_level.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextHide):
                 smooth_value = bmp.render.calc_smooth(frame_since_last_move)
-                if current_level.game_properties.enabled(bmp.obj.TextStop):
+                if levelpack.current_level.game_properties.enabled(bmp.obj.TextStop):
                     smooth_value = None
-                space_surface = current_level.space_to_surface(current_space, wiggle, space_surface_size, smooth=smooth_value, debug=bmp.base.options["debug"])
+                space_surface = levelpack.current_level.space_to_surface(
+                    levelpack.current_level.current_space, wiggle, space_surface_size, smooth=smooth_value, debug=bmp.base.options["debug"]
+                )
                 # monochrome when paused
                 if monochrome is not None:
                     monochrome_rgb = bmp.color.hex_to_rgb(monochrome)
@@ -543,14 +525,14 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                 window.blit(pygame.transform.scale(space_surface, space_surface_size), space_surface_pos)
                 del smooth_value
             # game transform
-            game_transform_to = [t for t, n in current_level.game_properties.enabled_dict().items() if issubclass(t, bmp.obj.Noun) and not n]
+            game_transform_to = [t for t, n in levelpack.current_level.game_properties.enabled_dict().items() if issubclass(t, bmp.obj.Noun) and not n]
             if len(game_transform_to) != 0:
                 window.fill("#00000080", (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
             game_transform_to = [o.ref_type for o in game_transform_to if o is not None]
             for object_type in game_transform_to:
                 window.blit(pygame.transform.scale(bmp.render.current_sprites.get(object_type.sprite_name, 0, wiggle), window.get_size()), (0, 0))
             del game_transform_to
-            if current_level.game_properties.enabled(bmp.obj.TextSelect):
+            if levelpack.current_level.game_properties.enabled(bmp.obj.TextSelect):
                 select_surface = bmp.render.current_sprites.get(bmp.obj.Cursor.sprite_name, 0, wiggle, raw=True)
                 select_surface = bmp.render.set_surface_color_dark(select_surface, bmp.color.float_to_hue((frame / bmp.base.options["fps"] / 6) % 1.0))
                 window.blit(pygame.transform.scale(select_surface, window.get_size()), (0, 0), special_flags=pygame.BLEND_RGBA_ADD)

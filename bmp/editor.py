@@ -178,8 +178,8 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                     icon_name = icon_name if icon_name != "" else "empty"
                                     while True:
                                         icon_color = bmp.lang.lang_input("edit.level.new.icon.color")
-                                        if color == "":
-                                            color = bmp.color.current_palette[0, 3]
+                                        if icon_color == "":
+                                            icon_color = bmp.color.current_palette[0, 3]
                                         else:
                                             try:
                                                 icon_color = bmp.color.str_to_hex(icon_color)
@@ -246,8 +246,8 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                     if mouses[2] == 1 and (keys["LALT"] or keys["RALT"]):
                         # leave space; leave level (shift)
                         if keys["LSHIFT"] or keys["RSHIFT"]:
-                            level = levelpack.get_level(current_level.super_level_id if current_level.super_level_id is not None else levelpack.main_level_id)
-                            current_level = level if level is not None else levelpack.get_exact_level(levelpack.main_level_id)
+                            level = levelpack.get_level(current_level.super_level_id if current_level.super_level_id is not None else levelpack.current_level_id)
+                            current_level = level if level is not None else levelpack.current_level
                             level_changed = True
                         else:
                             super_spaces = [t[0] for t in current_level.find_super_spaces(current_space.space_id)]
@@ -371,7 +371,12 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                     default_space = bmp.space.Space(bmp.ref.SpaceID(name, infinite_tier), size, color)
                     if bmp.lang.lang_input("edit.level.new.is_map") in bmp.lang.yes:
                         pass
-                    levelpack.level_list.append(bmp.level.Level(level_id, [default_space], super_level_id=super_level_id, main_space_id=bmp.ref.SpaceID(name, infinite_tier), map_info=None))
+                    levelpack.level_list.append(bmp.level.Level(
+                        level_id, [default_space],
+                        super_level_id=super_level_id,
+                        current_space_id=bmp.ref.SpaceID(name, infinite_tier),
+                        map_info=None
+                    ))
                     current_level_index = len(levelpack.level_list) - 1
                     current_space_index = 0
                     level_changed = True
@@ -536,8 +541,9 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
             # bmp.lang.lang_print("edit.space.current.infinite_tier", value=current_space.space_id.infinite_tier)
             space_changed = False
         # display
-        for space in current_level.space_list:
-            space.set_sprite_states(0)
+        for level in levelpack.level_list:
+            for space in levelpack.current_level.space_list:
+                space.set_sprite_states(0)
         window.fill(bmp.color.current_palette[0, 4])
         space_surface_size = (window.get_height() * current_space.width // current_space.height, window.get_height())
         space_surface_pos = (0, 0)
