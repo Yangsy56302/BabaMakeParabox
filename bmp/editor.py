@@ -1,3 +1,4 @@
+from typing import Optional
 import os
 import copy
 import random
@@ -369,13 +370,24 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                             else:
                                 break
                     default_space = bmp.space.Space(bmp.ref.SpaceID(name, infinite_tier), size, color)
+                    map_info: Optional[bmp.level.MapLevelExtraJson] = None
                     if bmp.lang.lang_input("edit.level.new.is_map") in bmp.lang.yes:
-                        pass
+                        map_info = {}
+                        while True:
+                            spore_for_blossom = bmp.lang.lang_input("edit.level.new.spore_for_blossom")
+                            try:
+                                spore_for_blossom = int(spore_for_blossom) if spore_for_blossom != "" else None
+                            except ValueError:
+                                bmp.lang.lang_warn("warn.value.invalid", value=infinite_tier, cls="int")
+                            else:
+                                break
+                        if spore_for_blossom is not None:
+                            map_info["spore_for_blossom"] = spore_for_blossom
                     levelpack.level_list.append(bmp.level.Level(
                         level_id, [default_space],
-                        super_level_id=super_level_id,
-                        current_space_id=bmp.ref.SpaceID(name, infinite_tier),
-                        map_info=None
+                        super_level_id = super_level_id,
+                        current_space_id = bmp.ref.SpaceID(name, infinite_tier),
+                        map_info = map_info,
                     ))
                     current_level_index = len(levelpack.level_list) - 1
                     current_space_index = 0

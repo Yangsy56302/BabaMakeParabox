@@ -1004,7 +1004,7 @@ def get_noun_from_type(object_type: type[Object]) -> type[Noun]:
     print(return_value)
     return return_value
 
-def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object:
+def json_to_object(json_object: ObjectJson, ver: str) -> Object:
     global current_metatext_tier
     global class_to_noun, object_class_list, name_to_class, builtin_noun_class_list, text_class_list
     space_id: Optional[bmp.ref.SpaceID] = None
@@ -1013,7 +1013,7 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
     level_extra: Optional[LevelObjectExtra] = None
     org_space_extra: SpaceObjectExtra = default_space_extra
     org_level_extra: LevelObjectExtra = default_level_extra
-    if bmp.base.compare_versions(ver if ver is not None else "0.0", "3.8") == -1:
+    if bmp.base.compare_versions(ver, "3.8") == -1:
         old_space_id = json_object.get("world")
         if old_space_id is not None:
             space_id = bmp.ref.SpaceID(old_space_id.get("name", ""), old_space_id.get("infinite_tier", 0))
@@ -1021,7 +1021,7 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
         if old_level_id is not None:
             level_id = bmp.ref.LevelID(old_level_id.get("name", ""))
             org_level_extra = {"icon": old_level_id.get("icon", default_level_extra["icon"])}
-    elif bmp.base.compare_versions(ver if ver is not None else "0.0", "3.91") == -1:
+    elif bmp.base.compare_versions(ver, "3.91") == -1:
         space_id_json = json_object.get("world_id")
         if space_id_json is not None:
             space_id = bmp.ref.SpaceID(**space_id_json)
@@ -1030,7 +1030,7 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
             level_id = bmp.ref.LevelID(**level_id_json)
         org_space_extra = json_object.get("world_extra", default_space_extra)
         org_level_extra = json_object.get("level_extra", default_level_extra)
-    elif bmp.base.compare_versions(ver if ver is not None else "0.0", "4.001") == -1:
+    elif bmp.base.compare_versions(ver, "4.001") == -1:
         space_id_json = json_object.get("space_id")
         if space_id_json is not None:
             space_id = bmp.ref.SpaceID(**space_id_json)
@@ -1055,9 +1055,9 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
     if org_level_extra is not None:
         level_extra.update(org_level_extra)
     object_type = name_to_class.get(json_object["type"])
-    if bmp.base.compare_versions(ver if ver is not None else "0.0", "4.001") == -1:
+    if bmp.base.compare_versions(ver, "4.001") == -1:
         pos: bmp.loc.Coord[int] = (json_object["position"][0], json_object["position"][1]) # type: ignore
-        if bmp.base.compare_versions(ver if ver is not None else "0.0", "3.91") == -1:
+        if bmp.base.compare_versions(ver, "3.91") == -1:
             direct = bmp.loc.Orient[json_object["orientation"]] # type: ignore
         else:
             direct = bmp.loc.Orient[json_object["direction"]] # type: ignore
@@ -1069,21 +1069,21 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
     if issubclass(object_type, LevelObject):
         if level_id is not None:
             return object_type(
-                pos=pos,
-                direct=direct,
-                space_id=space_id,
-                level_id=level_id,
-                level_extra=level_extra
+                pos = pos,
+                direct = direct,
+                space_id = space_id,
+                level_id = level_id,
+                level_extra = level_extra,
             )
         raise ValueError(level_id)
     if issubclass(object_type, SpaceObject):
         if space_id is not None:
             return object_type(
-                pos=pos,
-                direct=direct,
-                space_id=space_id,
-                level_id=level_id,
-                space_extra=space_extra
+                pos = pos,
+                direct = direct,
+                space_id = space_id,
+                level_id = level_id,
+                space_extra = space_extra,
             )
         raise ValueError(space_id)
     if issubclass(object_type, Path):
@@ -1092,16 +1092,16 @@ def json_to_object(json_object: ObjectJson, ver: Optional[str] = None) -> Object
             path_extra = {"unlocked": False, "conditions": {}}
         conditions: dict[type[Object], int] = {name_to_class[k]: v for k, v in path_extra["conditions"].items()}
         return object_type(
-            pos=pos,
-            direct=direct,
-            space_id=space_id,
-            level_id=level_id,
-            unlocked=path_extra["unlocked"],
-            conditions=conditions
+            pos = pos,
+            direct = direct,
+            space_id = space_id,
+            level_id = level_id,
+            unlocked = path_extra["unlocked"],
+            conditions = conditions,
         )
     return object_type(
-        pos=pos,
-        direct=direct,
-        space_id=space_id,
-        level_id=level_id
+        pos = pos,
+        direct = direct,
+        space_id = space_id,
+        level_id = level_id,
     )

@@ -17,7 +17,7 @@ import bmp.space
 import pygame
 
 class MapLevelExtraJson(TypedDict):
-    minimum_clear_for_blossom: int
+    spore_for_blossom: NotRequired[int]
 
 class LevelJson(TypedDict):
     id: bmp.ref.LevelIDJson
@@ -1032,64 +1032,61 @@ class Level(object):
             json_object["map_info"] = self.map_info
         for space in tqdm(
             self.space_list,
-            desc=bmp.lang.lang_format("saving.level.space_list"),
-            unit=bmp.lang.lang_format("space.name"),
-            position=1,
-            **bmp.lang.default_tqdm_args
+            desc = bmp.lang.lang_format("saving.level.space_list"),
+            unit = bmp.lang.lang_format("space.name"),
+            position = 1,
+            **bmp.lang.default_tqdm_args,
         ):
             json_object["space_list"].append(space.to_json())
         return json_object
 
-def json_to_level(json_object: LevelJson, ver: Optional[str] = None) -> Level:
-    space_list = []
+def json_to_level(json_object: LevelJson, ver: str) -> Level:
+    space_list: list[bmp.space.Space] = []
+    space_json_list: list[bmp.space.SpaceJson]
     super_level_id: Optional[bmp.ref.LevelID] = None
-    if bmp.base.compare_versions(ver if ver is not None else "0.0", "3.8") == -1:
+    if bmp.base.compare_versions(ver, "3.8") == -1:
         level_id: bmp.ref.LevelID = bmp.ref.LevelID(json_object["name"]) # type: ignore
         super_level_id = bmp.ref.LevelID(json_object["super_level"]) # type: ignore
         current_space_id: bmp.ref.SpaceID = bmp.ref.SpaceID(json_object["main_world"]) # type: ignore
-        for space in tqdm(
-            json_object["world_list"], # type: ignore
-            desc=bmp.lang.lang_format("loading.level.space_list"),
-            unit=bmp.lang.lang_format("space.name"),
-            position=1,
-            **bmp.lang.default_tqdm_args
-        ):
-            space_list.append(bmp.space.json_to_space(space, ver))
-    elif bmp.base.compare_versions(ver if ver is not None else "0.0", "3.91") == -1:
+        space_json_list = json_object["world_list"] # type: ignore
+    elif bmp.base.compare_versions(ver, "3.91") == -1:
         level_id: bmp.ref.LevelID = bmp.ref.LevelID(**json_object["id"])
         super_level_json = json_object.get("super_level")
         if super_level_json is not None:
             super_level_id = bmp.ref.LevelID(**super_level_json)
         current_space_id: bmp.ref.SpaceID = bmp.ref.SpaceID(**json_object["main_world"]) # type: ignore
-        for space in tqdm(
-            json_object["world_list"], # type: ignore
-            desc=bmp.lang.lang_format("loading.level.space_list"),
-            unit=bmp.lang.lang_format("space.name"),
-            position=1,
-            **bmp.lang.default_tqdm_args
-        ):
-            space_list.append(bmp.space.json_to_space(space, ver))
+        space_json_list = json_object["world_list"] # type: ignore
     else:
         level_id: bmp.ref.LevelID = bmp.ref.LevelID(**json_object["id"])
         super_level_json = json_object.get("super_level")
         if super_level_json is not None:
             super_level_id = bmp.ref.LevelID(**super_level_json)
-        if bmp.base.compare_versions(ver if ver is not None else "0.0", "4.03") == -1:
+        if bmp.base.compare_versions(ver, "4.03") == -1:
             current_space_id: bmp.ref.SpaceID = bmp.ref.SpaceID(**json_object["main_space"]) # type: ignore
         else:
             current_space_id: bmp.ref.SpaceID = bmp.ref.SpaceID(**json_object["current_space"])
-        for space in tqdm(
-            json_object["space_list"],
-            desc=bmp.lang.lang_format("loading.level.space_list"),
-            unit=bmp.lang.lang_format("space.name"),
-            position=1,
-            **bmp.lang.default_tqdm_args
-        ):
-            space_list.append(bmp.space.json_to_space(space, ver))
+        space_json_list = json_object["space_list"]
+    for space in tqdm(
+        space_json_list,
+        desc = bmp.lang.lang_format("loading.level.space_list"),
+        unit = bmp.lang.lang_format("space.name"),
+        position = 1,
+        **bmp.lang.default_tqdm_args,
+    ):
+        space_list.append(bmp.space.json_to_space(space, ver))
+    if bmp.base.compare_versions(ver, "3.8") == -1:
+        map_info: Optional[MapLevelExtraJson] = {} if json_object.get("is_map") else None # type: ignore
+    elif bmp.base.compare_versions(ver, "4.03") == -1:
+        map_info: Optional[MapLevelExtraJson] = {}
+        spore_for_blossom: Optional[int] = json_object.get("map_info").get("minimum_clear_for_blossom") # type: ignore
+        if spore_for_blossom is not None:
+            map_info["spore_for_blossom"] = spore_for_blossom
+    else:
+        map_info: Optional[MapLevelExtraJson] = json_object.get("map_info")
     return Level(
-        level_id=level_id,
-        space_list=space_list,
-        super_level_id=super_level_id,
-        current_space_id=current_space_id,
-        map_info=json_object.get("map_info")
+        level_id = level_id,
+        space_list = space_list,
+        super_level_id = super_level_id,
+        current_space_id = current_space_id,
+        map_info = map_info,
     )
