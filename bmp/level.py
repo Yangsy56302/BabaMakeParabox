@@ -1036,6 +1036,9 @@ class Level(object):
             json_object["map_info"] = self.map_info
         return json_object
 
+def update_json_format(json_object: LevelJson, ver: str) -> LevelJson:
+    return json_object # old levelpacks aren't able to update in 4.1
+
 def json_to_level(json_object: LevelJson, ver: str) -> Level:
     level_id: bmp.ref.LevelID = bmp.ref.LevelID(**json_object["id"])
     space_id_list: list[bmp.ref.SpaceID] = [bmp.ref.SpaceID(**s) for s in json_object["spaces"]]

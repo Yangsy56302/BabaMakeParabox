@@ -637,6 +637,9 @@ class Levelpack(object):
                 json_object["rules"][-1].append(obj.json_name)
         return json_object
 
+def update_json_format(json_object: LevelpackJson) -> LevelpackJson:
+    return json_object # old levelpacks aren't able to update in 4.1
+
 def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
     ver: str = json_object.get("ver", "0.0")
     collectibles: set[bmp.obj.Collectible] = set()

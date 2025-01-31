@@ -32,16 +32,6 @@ class PathExtra(TypedDict):
 
 default_level_extra: LevelObjectExtra = {"icon": {"name": "empty", "color": 0xFFFFFF}}
 
-class ObjectJson(TypedDict):
-    type: str
-    pos: bmp.loc.Coord[int]
-    orient: bmp.loc.OrientStr
-    space_id: NotRequired[bmp.ref.SpaceIDJson]
-    space_extra: NotRequired[SpaceObjectExtra]
-    level_id: NotRequired[bmp.ref.LevelIDJson]
-    level_extra: NotRequired[LevelObjectExtra]
-    path_extra: NotRequired[PathExtra]
-
 # dict[type[property], dict[negated_number, negated_count]]
 PropertiesDict = dict[type["Text"], dict[int, int]]
 
@@ -139,6 +129,16 @@ class OldObjectState(object):
         self.level: Optional[bmp.ref.LevelID] = level
 
 special_operators: tuple[type["Operator"], ...]
+
+class ObjectJson(TypedDict):
+    type: str
+    pos: bmp.loc.Coord[int]
+    orient: bmp.loc.OrientStr
+    space_id: NotRequired[bmp.ref.SpaceIDJson]
+    space_extra: NotRequired[SpaceObjectExtra]
+    level_id: NotRequired[bmp.ref.LevelIDJson]
+    level_extra: NotRequired[LevelObjectExtra]
+    path_extra: NotRequired[PathExtra]
 
 class Object(object):
     ref_type: type["Object"]
@@ -1003,66 +1003,31 @@ def get_noun_from_type(object_type: type[Object]) -> type[Noun]:
         return TextText
     return return_value
 
+def update_json_format(json_object: ObjectJson, ver: str) -> ObjectJson:
+    return json_object # old levelpacks aren't able to update in 4.1
+
 def json_to_object(json_object: ObjectJson, ver: str) -> Object:
     global current_metatext_tier
     global class_to_noun, object_class_list, name_to_class, builtin_noun_class_list, text_class_list
+    object_type = name_to_class.get(json_object["type"])
     space_id: Optional[bmp.ref.SpaceID] = None
     level_id: Optional[bmp.ref.LevelID] = None
-    space_extra: Optional[SpaceObjectExtra] = None
-    level_extra: Optional[LevelObjectExtra] = None
-    org_space_extra: SpaceObjectExtra = default_space_extra
-    org_level_extra: LevelObjectExtra = default_level_extra
-    if bmp.base.compare_versions(ver, "3.8") == -1:
-        old_space_id = json_object.get("world")
-        if old_space_id is not None:
-            space_id = bmp.ref.SpaceID(old_space_id.get("name", ""), old_space_id.get("infinite_tier", 0))
-        old_level_id = json_object.get("level")
-        if old_level_id is not None:
-            level_id = bmp.ref.LevelID(old_level_id.get("name", ""))
-            org_level_extra = {"icon": old_level_id.get("icon", default_level_extra["icon"])}
-    elif bmp.base.compare_versions(ver, "3.91") == -1:
-        space_id_json = json_object.get("world_id")
-        if space_id_json is not None:
-            space_id = bmp.ref.SpaceID(**space_id_json)
-        level_id_json = json_object.get("level_id")
-        if level_id_json is not None:
-            level_id = bmp.ref.LevelID(**level_id_json)
-        org_space_extra = json_object.get("world_extra", default_space_extra)
-        org_level_extra = json_object.get("level_extra", default_level_extra)
-    elif bmp.base.compare_versions(ver, "4.001") == -1:
-        space_id_json = json_object.get("space_id")
-        if space_id_json is not None:
-            space_id = bmp.ref.SpaceID(**space_id_json)
-        level_id_json = json_object.get("level_id")
-        if level_id_json is not None:
-            level_id = bmp.ref.LevelID(**level_id_json)
-        org_space_extra = json_object.get("space_extra", default_space_extra)
-        org_level_extra = json_object.get("level_extra", default_level_extra)
-    else:
-        space_id_json = json_object.get("space_id")
-        if space_id_json is not None:
-            space_id = bmp.ref.SpaceID(**space_id_json)
-        level_id_json = json_object.get("level_id")
-        if level_id_json is not None:
-            level_id = bmp.ref.LevelID(**level_id_json)
-        org_space_extra = json_object.get("space_extra", default_space_extra)
-        org_level_extra = json_object.get("level_extra", default_level_extra)
-    space_extra = default_space_extra.copy()
+    space_id_json = json_object.get("space_id")
+    if space_id_json is not None:
+        space_id = bmp.ref.SpaceID(**space_id_json)
+    level_id_json = json_object.get("level_id")
+    if level_id_json is not None:
+        level_id = bmp.ref.LevelID(**level_id_json)
+    org_space_extra: SpaceObjectExtra = json_object.get("space_extra", default_space_extra)
+    org_level_extra: LevelObjectExtra = json_object.get("level_extra", default_level_extra)
+    space_extra: SpaceObjectExtra = default_space_extra.copy()
     if org_space_extra is not None:
         space_extra.update(org_space_extra)
-    level_extra = default_level_extra.copy()
+    level_extra: LevelObjectExtra = default_level_extra.copy()
     if org_level_extra is not None:
         level_extra.update(org_level_extra)
-    object_type = name_to_class.get(json_object["type"])
-    if bmp.base.compare_versions(ver, "4.001") == -1:
-        pos: bmp.loc.Coord[int] = (json_object["position"][0], json_object["position"][1]) # type: ignore
-        if bmp.base.compare_versions(ver, "3.91") == -1:
-            direct = bmp.loc.Orient[json_object["orientation"]] # type: ignore
-        else:
-            direct = bmp.loc.Orient[json_object["direction"]] # type: ignore
-    else:
-        pos: bmp.loc.Coord[int] = (json_object["pos"][0], json_object["pos"][1])
-        direct = bmp.loc.Orient[json_object["orient"]]
+    pos: bmp.loc.Coord[int] = (json_object["pos"][0], json_object["pos"][1])
+    direct = bmp.loc.Orient[json_object["orient"]]
     if object_type is None:
         raise ValueError(json_object["type"])
     if issubclass(object_type, LevelObject):

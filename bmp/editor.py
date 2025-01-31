@@ -172,11 +172,11 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                     if levelpack.get_level(level_id) is None:
                                         level_id = levelpack.current_level_id
                                     icon_name = bmp.lang.lang_input("edit.level.new.icon.name")
-                                    icon_name = icon_name if icon_name != "" else "empty"
+                                    icon_name = icon_name if icon_name != "" else "text_level"
                                     while True:
                                         icon_color = bmp.lang.lang_input("edit.level.new.icon.color")
                                         if icon_color == "":
-                                            icon_color = bmp.color.current_palette[0, 3]
+                                            icon_color = bmp.color.current_palette[bmp.obj.default_level_object_type.sprite_palette]
                                         else:
                                             try:
                                                 icon_color = bmp.color.str_to_hex(icon_color)
@@ -192,8 +192,8 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                                 break
                                 else:
                                     level_id: bmp.ref.LevelID = levelpack.current_level_id
-                                    icon_name = "empty"
-                                    icon_color = bmp.color.current_palette[0, 3]
+                                    icon_name = "text_level"
+                                    icon_color = bmp.color.current_palette[bmp.obj.default_level_object_type.sprite_palette]
                                 level_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": icon_name, "color": icon_color}}
                                 levelpack.current_level.current_space.new_obj(current_object_type(current_cursor_pos, current_orient, level_id=level_id, level_extra=level_extra))
                             elif issubclass(current_object_type, bmp.obj.SpaceObject):

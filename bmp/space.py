@@ -286,6 +286,9 @@ class Space(object):
             json_object["object_list"].append(obj.to_json())
         return json_object
 
+def update_json_format(json_object: SpaceJson, ver: str) -> SpaceJson:
+    return json_object # old levelpacks aren't able to update in 4.1
+
 def json_to_space(json_object: SpaceJson, ver: str) -> Space:
     if bmp.base.compare_versions(ver, "3.8") == -1:
         space_id: bmp.ref.SpaceID = bmp.ref.SpaceID(json_object["name"], json_object["infinite_tier"]) # type: ignore

@@ -4,13 +4,13 @@
 
 **Baba Make Parabox**（简称 **BMP**）是**Yangsy56302**以推箱子游戏[**Baba Is You**（by Arvi Hempuli）](https://hempuli.com/baba/)的机制为基础进行二次创作，缝合了另一个推箱子游戏[**Patrick's Parabox**（by Patrick Traynor）](https://www.patricksparabox.com/)的主要机制而做出的推箱子游戏，目前处于开发阶段。
 
-**本游戏的源代码使用[MIT许可证](https://opensource.org/license/MIT/)。**
-_……大概吧。_
+**本游戏的源代码使用[GNU 通用公共许可证第三版](https://www.gnu.org/licenses/gpl-3.0.html)作为开源协议。**
 
-**游戏使用[Pygame](https://www.pygame.org/news/)作为游戏引擎，而Pygame使用[GNU宽通用公共许可证 2.1版](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html)。**
-因此，本人不提供Pygame的源代码，而是提供使用未经修改的Pygame版本经[PyInstaller](https://pyinstaller.org/en/stable/index.html)打包后形成的游戏程序。
-
-**PyInstaller使用[GNU通用公共许可证 第2版](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)。**
+**本游戏使用[Pygame](https://www.pygame.org/news/)作为游戏引擎；**
+**Pygame使用[GNU宽通用公共许可证 2.1版](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html)作为开源协议。**
+本人不提供Pygame的源代码，而是提供使用未经修改的Pygame版本
+经[PyInstaller](https://pyinstaller.org/en/stable/index.html)打包后形成的游戏程序；
+**PyInstaller使用[GNU通用公共许可证 第2版](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)作为开源协议。**
 
 **本人并未拥有游戏纹理的所有权。**
 如果您有关于游戏纹理的使用权等权利的更多信息，[请尽快联系我](#联系作者)。
