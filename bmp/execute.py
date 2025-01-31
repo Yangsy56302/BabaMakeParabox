@@ -1,4 +1,4 @@
-from typing import Optional, Callable
+from typing import Final, Optional, Callable
 import os
 import json
 import traceback
@@ -79,9 +79,9 @@ def pre_edit() -> bool:
             bmp.lang.lang_print("launch.open.levelpack.done", file=input_filename)
             levelpack = bmp.levelpack.json_to_levelpack(levelpack_json)
     else:
-        space = bmp.space.Space(bmp.ref.SpaceID("main_space"), size, color=color)
-        level = bmp.level.Level(bmp.ref.LevelID("main_level"), [space])
-        levelpack = bmp.levelpack.Levelpack([level])
+        space = bmp.space.Space(bmp.ref.SpaceID("0space"), size, color=color)
+        level = bmp.level.Level(bmp.ref.LevelID("0level"), [space.space_id], space.space_id)
+        levelpack = bmp.levelpack.Levelpack({level.level_id: level}, {space.space_id: space}, level.level_id)
     levelpack = bmp.editor.levelpack_editor(levelpack)
     bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.save.file")))
     bmp.lang.lang_print("launch.save.levelpack")
@@ -105,9 +105,9 @@ def update_levelpack() -> bool:
         bmp.lang.lang_warn("warn.file.not_found", file=input_filename)
         return False
     with open(os.path.join("levelpacks", input_filename), "r", encoding="utf-8") as file:
-            levelpack_json = json.load(file)
-            bmp.lang.lang_print("launch.open.levelpack.done", file=input_filename)
-            levelpack = bmp.levelpack.json_to_levelpack(levelpack_json)
+        levelpack_json = json.load(file)
+        bmp.lang.lang_print("launch.open.levelpack.done", file=input_filename)
+        levelpack_json = bmp.levelpack.update_json_format(levelpack_json)
     bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.save.file")))
     bmp.lang.lang_print("launch.save.levelpack")
     bmp.lang.lang_print("launch.save.levelpack.empty.update")
@@ -116,7 +116,7 @@ def update_levelpack() -> bool:
     if output_filename == "":
         output_filename = input_filename
     with open(os.path.join("levelpacks", output_filename), "w", encoding="utf-8") as file:
-        json.dump(levelpack.to_json(), file, **bmp.base.get_json_dump_kwds())
+        json.dump(levelpack_json, file, **bmp.base.get_json_dump_kwds())
         bmp.lang.lang_print("launch.save.levelpack.done", file=output_filename)
     return True
 
@@ -246,6 +246,27 @@ def pre_main() -> None:
         bmp.lang.set_current_language(bmp.base.options["lang"])
 
 def main() -> int:
+    gpl_output: str = "\n".join([
+        "    Baba Make Parabox  Copyright (C) 2025  Yangsy56302",
+        "    This program comes with ABSOLUTELY NO WARRANTY; for details type `w'.",
+        "    This is free software, and you are welcome to redistribute it",
+        "    under certain conditions; type `c' for details.",
+    ])
+    print(gpl_output)
+    gpl_choice: dict[str, str] = {
+        "w": "\n".join([
+            "    This program is distributed in the hope that it will be useful,",
+            "    but WITHOUT ANY WARRANTY; without even the implied warranty of",
+            "    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the",
+            "    GNU General Public License for more details.",
+        ]),
+        "c": "\n".join([
+            "    This program is free software: you can redistribute it and/or modify",
+            "    it under the terms of the GNU General Public License as published by",
+            "    the Free Software Foundation, either version 3 of the License, or",
+            "    (at your option) any later version.",
+        ]),
+    }
     if not pre_main_check():
         return 0
     pre_main()
@@ -259,24 +280,24 @@ def main() -> int:
                 bmp.lang.lang_print(f"launch.game_mode.{n}")
             bmp.lang.lang_print(f"launch.game_mode.0")
             game_mode = bmp.lang.lang_input("input.number")
-            try:
-                game_mode = int(game_mode)
-            except ValueError:
-                break
-            if game_mode == 1:
-                if pre_play():
+            match game_mode:
+                case "1":
+                    if pre_play():
+                        continue
+                case "2":
+                    if pre_edit():
+                        continue
+                case "3":
+                    if change_options():
+                        continue
+                case "4":
+                    if update_levelpack():
+                        continue
+                case k if k in gpl_choice.keys():
+                    print(gpl_choice[k])
                     continue
-            elif game_mode == 2:
-                if pre_edit():
-                    continue
-            elif game_mode == 3:
-                if change_options():
-                    continue
-            elif game_mode == 4:
-                if update_levelpack():
-                    continue
-            else:
-                break
+                case _:
+                    break
     except KeyboardInterrupt:
         print()
         bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.warning")))
