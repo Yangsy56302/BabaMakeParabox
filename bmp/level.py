@@ -21,10 +21,10 @@ class MapLevelExtraJson(TypedDict):
 
 class LevelJson(TypedDict):
     id: bmp.ref.LevelIDJson
+    spaces: list[bmp.ref.SpaceIDJson]
+    current_space: bmp.ref.SpaceIDJson
     super_level: NotRequired[bmp.ref.LevelIDJson]
     map_info: NotRequired[MapLevelExtraJson]
-    current_space: bmp.ref.SpaceIDJson
-    space_list: list[bmp.space.SpaceJson]
 
 max_move_count: int = 120
 infinite_move_number: int = 6
@@ -34,19 +34,19 @@ class Level(object):
     def __init__(
         self,
         level_id: bmp.ref.LevelID,
-        space_list: list[bmp.space.Space],
+        space_id_list: list[bmp.ref.SpaceID],
+        current_space_id: bmp.ref.SpaceID,
         *,
         super_level_id: Optional[bmp.ref.LevelID] = None,
-        current_space_id: Optional[bmp.ref.SpaceID] = None,
         map_info: Optional[MapLevelExtraJson] = None,
-        collected: Optional[dict[type[bmp.obj.Object], bool]] = None,
     ) -> None:
         self.level_id: bmp.ref.LevelID = level_id
-        self.space_list: list[bmp.space.Space] = list(space_list)
+        self.space_id_list: list[bmp.ref.SpaceID] = space_id_list
+        self.current_space_id: bmp.ref.SpaceID = current_space_id
         self.super_level_id: Optional[bmp.ref.LevelID] = super_level_id
-        self.current_space_id: bmp.ref.SpaceID = current_space_id if current_space_id is not None else space_list[0].space_id
-        self.collected: dict[type[bmp.obj.Object], bool] = collected if collected is not None else {}
         self.map_info: Optional[MapLevelExtraJson] = map_info
+        # runtime properties
+        self.space_dict: dict[bmp.ref.SpaceID, bmp.space.Space]
         self.properties: dict[type[bmp.obj.LevelObject], bmp.obj.Properties] = {p: bmp.obj.Properties() for p in bmp.obj.level_object_types}
         self.special_operator_properties: dict[type[bmp.obj.LevelObject], dict[type[bmp.obj.Operator], bmp.obj.Properties]] = {p: {o: bmp.obj.Properties() for o in bmp.obj.special_operators} for p in bmp.obj.level_object_types}
         self.game_properties: bmp.obj.Properties = bmp.obj.Properties()
@@ -57,24 +57,28 @@ class Level(object):
     def __eq__(self, level: "Level") -> bool:
         return self.level_id == level.level_id
     def get_space(self, space_id: bmp.ref.SpaceID) -> Optional[bmp.space.Space]:
-        return next(filter(lambda s: space_id == s.space_id, self.space_list), None)
+        return self.space_dict.get(space_id)
     def get_exact_space(self, space_id: bmp.ref.SpaceID) -> bmp.space.Space:
-        return next(filter(lambda s: space_id == s.space_id, self.space_list))
+        return self.space_dict[space_id]
     @property
     def current_space(self) -> bmp.space.Space:
-        return self.get_exact_space(self.current_space_id)
+        return self.space_dict[self.current_space_id]
     @current_space.setter
     def current_space(self, space: bmp.space.Space) -> None:
         self.current_space_id = space.space_id
-    def set_space(self, space: bmp.space.Space) -> None:
-        for i in range(len(self.space_list)):
-            if space.space_id == self.space_list[i].space_id:
-                self.space_list[i] = space
-                return
-        self.space_list.append(space)
+    def set_space(self, space: bmp.space.Space, space_id: Optional[bmp.ref.SpaceID] = None) -> None:
+        _space_id: bmp.ref.SpaceID = space_id if space_id is not None else space.space_id
+        self.space_dict[_space_id] = space
+    @property
+    def space_list(self) -> list[bmp.space.Space]:
+        return list(self.space_dict.values())
+    @space_list.setter
+    def space_list(self, __space_list: list[bmp.space.Space]) -> None:
+        self.space_dict.clear()
+        self.space_dict.update({s.space_id: s for s in __space_list})
     def find_super_spaces(self, space_object_id: bmp.ref.SpaceID) -> list[tuple[bmp.space.Space, bmp.obj.SpaceObject]]:
         return_value: list[tuple[bmp.space.Space, bmp.obj.SpaceObject]] = []
-        for super_space in self.space_list:
+        for super_space_id, super_space in self.space_dict.items():
             for obj in super_space.get_spaces():
                 if space_object_id == obj.space_id:
                     return_value.append((super_space, obj))
@@ -703,8 +707,8 @@ class Level(object):
                 success = True
         if success:
             self.sound_events.append("defeat")
-    def bonus(self) -> None:
-        success = False
+    def bonus(self) -> dict[type[bmp.obj.Object], bool]:
+        collected: dict[type[bmp.obj.Object], bool] = {}
         for space in self.space_list:
             delete_list = []
             bonus_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextBonus)]
@@ -722,13 +726,12 @@ class Level(object):
                         if bmp.obj.same_float_prop(you_obj, bonus_obj):
                             if bonus_obj not in delete_list:
                                 delete_list.append(bonus_obj)
-                                self.collected[type(bonus_obj)] = True
+                                collected[type(bonus_obj)] = True
             for obj in delete_list:
                 self.destroy_obj(space, obj)
-            if len(delete_list) != 0:
-                success = True
-        if success:
+        if len(collected):
             self.sound_events.append("bonus")
+        return collected
     def open_and_shut(self) -> None:
         success = False
         for space in self.space_list:
@@ -842,16 +845,13 @@ class Level(object):
             win_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextWin)]
             for you_obj in you_objs:
                 if you_obj in win_objs:
-                    self.collected[bmp.obj.Spore] = True
                     return True
                 if space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextWin) or self.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextWin):
                     if not you_obj.properties.enabled(bmp.obj.TextFloat):
-                        self.collected[bmp.obj.Spore] = True
                         return True
                 for win_obj in win_objs:
                     if you_obj.pos == win_obj.pos:
                         if bmp.obj.same_float_prop(you_obj, win_obj):
-                            self.collected[bmp.obj.Spore] = True
                             return True
         return False
     def end(self) -> bool:
@@ -1025,68 +1025,30 @@ class Level(object):
             case "D": space_surface = pygame.transform.rotate(space_surface, 90)
         return space_surface
     def to_json(self) -> LevelJson:
-        json_object: LevelJson = {"id": self.level_id.to_json(), "space_list": [], "current_space": self.current_space_id.to_json()}
+        json_object: LevelJson = {
+            "id": self.level_id.to_json(),
+            "spaces": [s.to_json() for s in self.space_id_list],
+            "current_space": self.current_space_id.to_json(),
+        }
         if self.super_level_id is not None:
             json_object["super_level"] = self.super_level_id.to_json()
         if self.map_info is not None:
             json_object["map_info"] = self.map_info
-        for space in tqdm(
-            self.space_list,
-            desc = bmp.lang.lang_format("saving.level.space_list"),
-            unit = bmp.lang.lang_format("space.name"),
-            position = 1,
-            **bmp.lang.default_tqdm_args,
-        ):
-            json_object["space_list"].append(space.to_json())
         return json_object
 
 def json_to_level(json_object: LevelJson, ver: str) -> Level:
-    space_list: list[bmp.space.Space] = []
-    space_json_list: list[bmp.space.SpaceJson]
+    level_id: bmp.ref.LevelID = bmp.ref.LevelID(**json_object["id"])
+    space_id_list: list[bmp.ref.SpaceID] = [bmp.ref.SpaceID(**s) for s in json_object["spaces"]]
+    current_space_id: bmp.ref.SpaceID = bmp.ref.SpaceID(**json_object["current_space"])
     super_level_id: Optional[bmp.ref.LevelID] = None
-    if bmp.base.compare_versions(ver, "3.8") == -1:
-        level_id: bmp.ref.LevelID = bmp.ref.LevelID(json_object["name"]) # type: ignore
-        super_level_id = bmp.ref.LevelID(json_object["super_level"]) # type: ignore
-        current_space_id: bmp.ref.SpaceID = bmp.ref.SpaceID(json_object["main_world"]) # type: ignore
-        space_json_list = json_object["world_list"] # type: ignore
-    elif bmp.base.compare_versions(ver, "3.91") == -1:
-        level_id: bmp.ref.LevelID = bmp.ref.LevelID(**json_object["id"])
-        super_level_json = json_object.get("super_level")
-        if super_level_json is not None:
-            super_level_id = bmp.ref.LevelID(**super_level_json)
-        current_space_id: bmp.ref.SpaceID = bmp.ref.SpaceID(**json_object["main_world"]) # type: ignore
-        space_json_list = json_object["world_list"] # type: ignore
-    else:
-        level_id: bmp.ref.LevelID = bmp.ref.LevelID(**json_object["id"])
-        super_level_json = json_object.get("super_level")
-        if super_level_json is not None:
-            super_level_id = bmp.ref.LevelID(**super_level_json)
-        if bmp.base.compare_versions(ver, "4.03") == -1:
-            current_space_id: bmp.ref.SpaceID = bmp.ref.SpaceID(**json_object["main_space"]) # type: ignore
-        else:
-            current_space_id: bmp.ref.SpaceID = bmp.ref.SpaceID(**json_object["current_space"])
-        space_json_list = json_object["space_list"]
-    for space in tqdm(
-        space_json_list,
-        desc = bmp.lang.lang_format("loading.level.space_list"),
-        unit = bmp.lang.lang_format("space.name"),
-        position = 1,
-        **bmp.lang.default_tqdm_args,
-    ):
-        space_list.append(bmp.space.json_to_space(space, ver))
-    if bmp.base.compare_versions(ver, "3.8") == -1:
-        map_info: Optional[MapLevelExtraJson] = {} if json_object.get("is_map") else None # type: ignore
-    elif bmp.base.compare_versions(ver, "4.03") == -1:
-        map_info: Optional[MapLevelExtraJson] = {}
-        spore_for_blossom: Optional[int] = json_object.get("map_info").get("minimum_clear_for_blossom") # type: ignore
-        if spore_for_blossom is not None:
-            map_info["spore_for_blossom"] = spore_for_blossom
-    else:
-        map_info: Optional[MapLevelExtraJson] = json_object.get("map_info")
+    super_level_json = json_object.get("super_level")
+    if super_level_json is not None:
+        super_level_id = bmp.ref.LevelID(**super_level_json)
+    map_info: Optional[MapLevelExtraJson] = json_object.get("map_info")
     return Level(
         level_id = level_id,
-        space_list = space_list,
-        super_level_id = super_level_id,
+        space_id_list = space_id_list,
         current_space_id = current_space_id,
+        super_level_id = super_level_id,
         map_info = map_info,
     )

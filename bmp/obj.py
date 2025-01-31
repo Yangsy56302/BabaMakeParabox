@@ -1001,7 +1001,6 @@ def get_noun_from_type(object_type: type[Object]) -> type[Noun]:
             return_value = noun_type
     if return_value is None:
         return TextText
-    print(return_value)
     return return_value
 
 def json_to_object(json_object: ObjectJson, ver: str) -> Object:

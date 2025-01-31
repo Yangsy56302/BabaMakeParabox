@@ -25,56 +25,67 @@ class LevelpackJson(TypedDict):
     author: NotRequired[str]
     current_level: bmp.ref.LevelIDJson
     collectibles: list[bmp.obj.CollectibleJson]
-    level_list: list[bmp.level.LevelJson]
-    level_init_state_list: list[bmp.level.LevelJson]
-    rule_list: list[list[str]]
+    levels: list[bmp.level.LevelJson]
+    spaces: list[bmp.space.SpaceJson]
+    level_init_states: NotRequired[list[bmp.level.LevelJson]]
+    space_init_states: NotRequired[list[bmp.space.SpaceJson]]
+    rules: list[list[str]]
 
 class Levelpack(object):
     def __init__(
         self,
-        level_list: list[bmp.level.Level],
-        level_init_state_list: Optional[list[bmp.level.Level]] = None,
+        level_dict: dict[bmp.ref.LevelID, bmp.level.Level],
+        space_dict: dict[bmp.ref.SpaceID, bmp.space.Space],
+        current_level_id: bmp.ref.LevelID,
         name: Optional[str] = None,
         author: Optional[str] = None,
-        current_level_id: Optional[bmp.ref.LevelID] = None,
+        level_init_state_dict: Optional[dict[bmp.ref.LevelID, bmp.level.Level]] = None,
+        space_init_state_dict: Optional[dict[bmp.ref.SpaceID, bmp.space.Space]] = None,
         collectibles: Optional[set[bmp.obj.Collectible]] = None,
         rule_list: Optional[list[bmp.rule.Rule]] = None,
     ) -> None:
         self.name: Optional[str] = name
         self.author: Optional[str] = author
-        self.level_list: list[bmp.level.Level] = list(level_list)
-        self.level_init_state_list: list[bmp.level.Level] = list(level_init_state_list) if level_init_state_list is not None else copy.deepcopy(list(level_list))
-        self.current_level_id: bmp.ref.LevelID = current_level_id if current_level_id is not None else self.level_list[0].level_id
+        self.level_dict: dict[bmp.ref.LevelID, bmp.level.Level] = level_dict
+        self.space_dict: dict[bmp.ref.SpaceID, bmp.space.Space] = space_dict
+        self.level_init_state_dict: dict[bmp.ref.LevelID, bmp.level.Level] = level_init_state_dict if level_init_state_dict is not None else copy.deepcopy(self.level_dict)
+        self.space_init_state_dict: dict[bmp.ref.SpaceID, bmp.space.Space] = space_init_state_dict if space_init_state_dict is not None else copy.deepcopy(self.space_dict)
+        for level in self.level_dict.values():
+            level.space_dict = space_dict
+        self.current_level_id: bmp.ref.LevelID = current_level_id
         self.collectibles: set[bmp.obj.Collectible] = collectibles if collectibles is not None else set()
         self.rule_list: list[bmp.rule.Rule] = rule_list if (rule_list is not None and len(rule_list) != 0) else bmp.rule.default_rule_list
     def get_exact_level(self, level_id: bmp.ref.LevelID) -> bmp.level.Level:
-        return next(filter(lambda l: level_id == l.level_id, self.level_list))
+        return self.level_dict[level_id]
     def get_level(self, level_id: bmp.ref.LevelID) -> Optional[bmp.level.Level]:
-        try:
-            return self.get_exact_level(level_id)
-        except StopIteration:
-            return None
+        return self.level_dict.get(level_id)
+    def set_level(self, level: bmp.level.Level, level_id: Optional[bmp.ref.LevelID] = None) -> None:
+        _level_id: bmp.ref.LevelID = level_id if level_id is not None else level.level_id
+        level.space_dict = self.space_dict
+        self.level_dict[_level_id] = level
+    def set_level_init_state(self, level_id: bmp.ref.LevelID, level: bmp.level.Level) -> None:
+        self.level_init_state_dict[level_id] = level
+    def reset_level(self, level_id: bmp.ref.LevelID) -> None:
+        old_level = self.level_dict.get(level_id)
+        if old_level is not None and old_level.map_info is None:
+            level = copy.deepcopy(self.level_init_state_dict[level_id])
+            level.space_dict = self.space_dict
+            self.level_dict[level_id] = level
+    @property
+    def level_list(self) -> list[bmp.level.Level]:
+        return list(self.level_dict.values())
+    @level_list.setter
+    def level_list(self, __level_list: list[bmp.level.Level]) -> None:
+        self.level_dict.clear()
+        self.level_dict.update({l.level_id: l for l in __level_list})
+        for level in self.level_dict.values():
+            level.space_dict = self.space_dict
     @property
     def current_level(self) -> bmp.level.Level:
-        return self.get_exact_level(self.current_level_id)
+        return self.level_dict[self.current_level_id]
     @current_level.setter
     def current_level(self, level: bmp.level.Level) -> None:
         self.current_level_id = level.level_id
-    def set_level(self, level: bmp.level.Level) -> None:
-        for index, old_level in enumerate(self.level_list):
-            if old_level == level:
-                self.level_list[index] = level
-                return
-        self.level_list.append(level)
-    def reset_level(self, level_id: bmp.ref.LevelID) -> None:
-        if self.get_exact_level(level_id).map_info is None:
-            self.set_level(copy.deepcopy(next(filter(lambda l: level_id == l.level_id, self.level_init_state_list))))
-    def set_level_init_state(self, level_id: bmp.ref.LevelID, level: bmp.level.Level) -> None:
-        for index, old_level in enumerate(self.level_init_state_list):
-            if old_level.level_id == level_id:
-                self.level_init_state_list[index] = level
-                return
-        self.level_init_state_list.append(level)
     def update_rules(self, active_level: bmp.level.Level) -> None:
         active_level.game_properties = bmp.obj.Properties()
         active_level_objs: list[bmp.obj.LevelObject] = []
@@ -285,9 +296,8 @@ class Levelpack(object):
                         elif isinstance(old_obj, bmp.obj.SpaceObject):
                             level_id: bmp.ref.LevelID = old_obj.space_id.to_level_id()
                             self.set_level(bmp.level.Level(
-                                level_id, active_level.space_list,
+                                level_id, active_level.space_id_list, old_obj.space_id,
                                 super_level_id = active_level.level_id,
-                                current_space_id = old_obj.space_id,
                             ))
                             level_extra: bmp.obj.LevelObjectExtra = {
                                 "icon": {
@@ -400,9 +410,8 @@ class Levelpack(object):
                                 color = new_level_icon_color,
                             ))
                             self.set_level(bmp.level.Level(
-                                new_level_id, active_level.space_list,
+                                new_level_id, active_level.space_id_list, old_obj.space_id,
                                 super_level_id = active_level.level_id,
-                                current_space_id = old_obj.space_id,
                             ))
                             new_obj = new_type(old_obj.pos, old_obj.orient, level_id=new_level_id, level_extra=new_level_extra)
                         elif issubclass(new_type, bmp.obj.Game):
@@ -498,12 +507,12 @@ class Levelpack(object):
                             if len({c for c in self.collectibles if isinstance(c.object_type, bonus_type)}) < bonus_counts:
                                 unlocked = False
                         obj.unlocked = unlocked
-            if sub_level.super_level_id == active_level.level_id and sub_level.collected.get(bmp.obj.Spore):
+            if sub_level.super_level_id == active_level.level_id and bmp.obj.Collectible(bmp.obj.Spore, sub_level.level_id) in self.collectibles:
                 clear_counts += 1
                 self.collectibles.add(bmp.obj.Collectible(bmp.obj.Spore, sub_level.level_id))
             if sub_level.map_info is not None:
                 if clear_counts >= sub_level.map_info.get("spore_for_blossom", float("inf")):
-                    sub_level.collected[bmp.obj.Blossom] = True
+                    self.collectibles.add(bmp.obj.Collectible(bmp.obj.Blossom, sub_level.level_id))
     def tick(self, active_level: bmp.level.Level, op: Optional[bmp.loc.Orient]) -> ReturnInfo:
         self.prepare(active_level)
         active_level.sound_events = []
@@ -540,12 +549,11 @@ class Levelpack(object):
         for new_level in active_level.created_levels:
             self.set_level(new_level)
         active_level.refresh_all_list()
-        active_level.bonus()
+        bonus = active_level.bonus()
         end = active_level.end()
         win = active_level.win()
-        if win:
-            for object_type in [t for t, b in active_level.collected.items() if b]:
-                self.collectibles.add(bmp.obj.Collectible(object_type, active_level.level_id))
+        for object_type in [t for t, b in bonus.items() if b]:
+            self.collectibles.add(bmp.obj.Collectible(object_type, active_level.level_id))
         for space in active_level.space_list:
             for path in space.get_objs_from_type(bmp.obj.Path):
                 unlocked = True
@@ -561,29 +569,47 @@ class Levelpack(object):
         json_object: LevelpackJson = {
             "ver": bmp.base.versions,
             "current_level": self.current_level_id.to_json(),
-            "level_list": [],
-            "level_init_state_list": [],
+            "levels": [],
+            "spaces": [],
+            "level_init_states": [],
+            "space_init_states": [],
             "collectibles": [],
-            "rule_list": []
+            "rules": []
         }
         if self.name is not None: json_object["name"] = self.name
         if self.author is not None: json_object["author"] = self.author
         for level in tqdm(
-            self.level_list,
+            self.level_dict.values(),
             desc = bmp.lang.lang_format("saving.levelpack.level_list"),
             unit = bmp.lang.lang_format("level.name"),
             position = 0,
             **bmp.lang.default_tqdm_args,
         ):
-            json_object["level_list"].append(level.to_json())
+            json_object["levels"].append(level.to_json())
+        for space in tqdm(
+            self.space_dict.values(),
+            desc = bmp.lang.lang_format("saving.level.space_list"),
+            unit = bmp.lang.lang_format("level.name"),
+            position = 0,
+            **bmp.lang.default_tqdm_args,
+        ):
+            json_object["spaces"].append(space.to_json())
         for level in tqdm(
-            self.level_init_state_list,
+            self.level_init_state_dict.values(),
             desc = bmp.lang.lang_format("saving.levelpack.level_list"),
             unit = bmp.lang.lang_format("level.name"),
             position = 0,
             **bmp.lang.default_tqdm_args,
         ):
-            json_object["level_init_state_list"].append(level.to_json())
+            json_object["level_init_states"].append(level.to_json())
+        for space in tqdm(
+            self.space_init_state_dict.values(),
+            desc = bmp.lang.lang_format("saving.level.space_list"),
+            unit = bmp.lang.lang_format("level.name"),
+            position = 0,
+            **bmp.lang.default_tqdm_args,
+        ):
+            json_object["space_init_states"].append(space.to_json())
         for collectible in tqdm(
             self.collectibles,
             desc = bmp.lang.lang_format("saving.levelpack.collect_list"),
@@ -599,38 +625,67 @@ class Levelpack(object):
             position = 0,
             **bmp.lang.default_tqdm_args,
         ):
-            json_object["rule_list"].append([])
+            json_object["rules"].append([])
             for obj in rule:
-                json_object["rule_list"][-1].append(obj.json_name)
+                json_object["rules"][-1].append(obj.json_name)
         return json_object
 
 def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
     ver: str = json_object.get("ver", "0.0")
     collectibles: set[bmp.obj.Collectible] = set()
-    level_list = []
-    for level in tqdm(
-        json_object["level_list"],
+    space_dict: dict[bmp.ref.SpaceID, bmp.space.Space] = {}
+    for space_json in tqdm(
+        json_object["spaces"],
+        desc = bmp.lang.lang_format("loading.level.space_list"),
+        unit = bmp.lang.lang_format("space.name"),
+        position = 0,
+        **bmp.lang.default_tqdm_args,
+    ):
+        space = bmp.space.json_to_space(space_json, ver)
+        space_dict[space.space_id] = space
+    level_dict: dict[bmp.ref.LevelID, bmp.level.Level] = {}
+    for level_json in tqdm(
+        json_object["levels"],
         desc = bmp.lang.lang_format("loading.levelpack.level_list"),
         unit = bmp.lang.lang_format("level.name"),
         position = 0,
         **bmp.lang.default_tqdm_args,
     ):
-        level_list.append(bmp.level.json_to_level(level, ver))
-    if "level_init_state_list" in json_object.keys():
-        level_init_state_list = []
-        for level in tqdm(
-            json_object["level_init_state_list"],
-            desc = bmp.lang.lang_format("loading.levelpack.level_init_state_list"),
+        level = bmp.level.json_to_level(level_json, ver)
+        level_dict[level.level_id] = level
+    space_init_state_dict_json = json_object.get("space_init_states")
+    space_init_state_dict: dict[bmp.ref.SpaceID, bmp.space.Space]
+    if space_init_state_dict_json is not None:
+        space_init_state_dict = {}
+        for space_json in tqdm(
+            space_init_state_dict_json,
+            desc = bmp.lang.lang_format("loading.level.space_list"),
             unit = bmp.lang.lang_format("level.name"),
             position = 0,
             **bmp.lang.default_tqdm_args,
         ):
-            level_init_state_list.append(bmp.level.json_to_level(level, ver))
+            space = bmp.space.json_to_space(space_json, ver)
+            space_init_state_dict[space.space_id] = space
     else:
-        level_init_state_list = copy.deepcopy(level_list)
+        space_init_state_dict = copy.deepcopy(space_dict)
+    level_init_state_dict_json = json_object.get("level_init_states")
+    level_init_state_dict: dict[bmp.ref.LevelID, bmp.level.Level]
+    if level_init_state_dict_json is not None:
+        level_init_state_dict = {}
+        for level_json in tqdm(
+            level_init_state_dict_json,
+            desc = bmp.lang.lang_format("loading.levelpack.level_list"),
+            unit = bmp.lang.lang_format("level.name"),
+            position = 0,
+            **bmp.lang.default_tqdm_args,
+        ):
+            level = bmp.level.json_to_level(level_json, ver)
+            level_init_state_dict[level.level_id] = level
+    else:
+        level_init_state_dict = copy.deepcopy(level_dict)
     rule_list: list[bmp.rule.Rule] = []
     for rule in tqdm(
-        json_object["rule_list"],
+        json_object["rules"],
         desc = bmp.lang.lang_format("loading.levelpack.rule_list"),
         unit = bmp.lang.lang_format("rule.name"),
         position = 0,
@@ -639,26 +694,23 @@ def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
         rule_list.append([])
         for object_type in rule:
             rule_list[-1].append(bmp.obj.name_to_class[object_type]) # type: ignore
-    if bmp.base.compare_versions(ver, "3.8") == -1:
-        current_level_id: bmp.ref.LevelID = bmp.ref.LevelID(json_object["main_level"]) # type: ignore
-    elif bmp.base.compare_versions(ver, "4.03") == -1:
-        current_level_id: bmp.ref.LevelID = bmp.ref.LevelID(**json_object["main_level"]) # type: ignore
-    else:
-        current_level_id: bmp.ref.LevelID = bmp.ref.LevelID(**json_object["current_level"])
-        for collectible in tqdm(
-            json_object["collectibles"],
-            desc = bmp.lang.lang_format("loading.levelpack.collect_list"),
-            unit = bmp.lang.lang_format("collectible.name"),
-            position = 0,
-            **bmp.lang.default_tqdm_args,
-        ):
-            collectibles.add(bmp.obj.Collectible(
-                bmp.obj.name_to_class[collectible["type"]],
-                source=bmp.ref.LevelID(collectible["source"]["name"])
-            ))
+    current_level_id: bmp.ref.LevelID = bmp.ref.LevelID(**json_object["current_level"])
+    for collectible in tqdm(
+        json_object["collectibles"],
+        desc = bmp.lang.lang_format("loading.levelpack.collect_list"),
+        unit = bmp.lang.lang_format("collectible.name"),
+        position = 0,
+        **bmp.lang.default_tqdm_args,
+    ):
+        collectibles.add(bmp.obj.Collectible(
+            bmp.obj.name_to_class[collectible["type"]],
+            source=bmp.ref.LevelID(collectible["source"]["name"])
+        ))
     return Levelpack(
-        level_list = level_list,
-        level_init_state_list = level_init_state_list,
+        level_dict = level_dict,
+        space_dict = space_dict,
+        level_init_state_dict = level_init_state_dict,
+        space_init_state_dict = space_init_state_dict,
         name = json_object.get("name"),
         author = json_object.get("author"),
         current_level_id = current_level_id,
