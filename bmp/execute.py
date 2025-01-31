@@ -79,8 +79,8 @@ def pre_edit() -> bool:
             bmp.lang.lang_print("launch.open.levelpack.done", file=input_filename)
             levelpack = bmp.levelpack.json_to_levelpack(levelpack_json)
     else:
-        space = bmp.space.Space(bmp.ref.SpaceID("main_space"), size, color=color)
-        level = bmp.level.Level(bmp.ref.LevelID("main_level"), [space.space_id], space.space_id)
+        space = bmp.space.Space(bmp.ref.SpaceID("0space"), size, color=color)
+        level = bmp.level.Level(bmp.ref.LevelID("0level"), [space.space_id], space.space_id)
         levelpack = bmp.levelpack.Levelpack({level.level_id: level}, {space.space_id: space}, level.level_id)
     levelpack = bmp.editor.levelpack_editor(levelpack)
     bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.save.file")))

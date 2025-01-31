@@ -34,14 +34,14 @@ class Level(object):
     def __init__(
         self,
         level_id: bmp.ref.LevelID,
-        space_id_list: list[bmp.ref.SpaceID],
+        space_included: list[bmp.ref.SpaceID],
         current_space_id: bmp.ref.SpaceID,
         *,
         super_level_id: Optional[bmp.ref.LevelID] = None,
         map_info: Optional[MapLevelExtraJson] = None,
     ) -> None:
         self.level_id: bmp.ref.LevelID = level_id
-        self.space_id_list: list[bmp.ref.SpaceID] = space_id_list
+        self.space_included: list[bmp.ref.SpaceID] = space_included
         self.current_space_id: bmp.ref.SpaceID = current_space_id
         self.super_level_id: Optional[bmp.ref.LevelID] = super_level_id
         self.map_info: Optional[MapLevelExtraJson] = map_info
@@ -71,7 +71,7 @@ class Level(object):
         self.space_dict[_space_id] = space
     @property
     def space_list(self) -> list[bmp.space.Space]:
-        return list(self.space_dict.values())
+        return [s for s in self.space_dict.values() if s.space_id in self.space_included]
     @space_list.setter
     def space_list(self, __space_list: list[bmp.space.Space]) -> None:
         self.space_dict.clear()
@@ -1027,7 +1027,7 @@ class Level(object):
     def to_json(self) -> LevelJson:
         json_object: LevelJson = {
             "id": self.level_id.to_json(),
-            "spaces": [s.to_json() for s in self.space_id_list],
+            "spaces": [s.to_json() for s in self.space_included],
             "current_space": self.current_space_id.to_json(),
         }
         if self.super_level_id is not None:
@@ -1047,7 +1047,7 @@ def json_to_level(json_object: LevelJson, ver: str) -> Level:
     map_info: Optional[MapLevelExtraJson] = json_object.get("map_info")
     return Level(
         level_id = level_id,
-        space_id_list = space_id_list,
+        space_included = space_id_list,
         current_space_id = current_space_id,
         super_level_id = super_level_id,
         map_info = map_info,

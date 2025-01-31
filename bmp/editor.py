@@ -170,7 +170,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                     name = bmp.lang.lang_input("edit.level.new.name")
                                     level_id: bmp.ref.LevelID = bmp.ref.LevelID(name)
                                     if levelpack.get_level(level_id) is None:
-                                        level_id = levelpack.current_level.level_id
+                                        level_id = levelpack.current_level_id
                                     icon_name = bmp.lang.lang_input("edit.level.new.icon.name")
                                     icon_name = icon_name if icon_name != "" else "empty"
                                     while True:
@@ -191,13 +191,13 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                             else:
                                                 break
                                 else:
-                                    level_id: bmp.ref.LevelID = levelpack.current_level.level_id
+                                    level_id: bmp.ref.LevelID = levelpack.current_level_id
                                     icon_name = "empty"
                                     icon_color = bmp.color.current_palette[0, 3]
                                 level_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": icon_name, "color": icon_color}}
                                 levelpack.current_level.current_space.new_obj(current_object_type(current_cursor_pos, current_orient, level_id=level_id, level_extra=level_extra))
                             elif issubclass(current_object_type, bmp.obj.SpaceObject):
-                                space_id: bmp.ref.SpaceID = levelpack.current_level.current_space.space_id
+                                space_id: bmp.ref.SpaceID = levelpack.current_level.current_space_id
                                 if keys["LCTRL"] or keys["RCTRL"]:
                                     bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.new")))
                                     name = bmp.lang.lang_input("edit.space.new.name")
@@ -244,10 +244,10 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                         # leave space; leave level (shift)
                         if keys["LSHIFT"] or keys["RSHIFT"]:
                             level = levelpack.get_level(levelpack.current_level.super_level_id if levelpack.current_level.super_level_id is not None else levelpack.current_level_id)
-                            levelpack.current_level_id = level.level_id if level is not None else levelpack.current_level.level_id
+                            levelpack.current_level_id = level.level_id if level is not None else levelpack.current_level_id
                             level_changed = True
                         else:
-                            super_spaces = [t[0] for t in levelpack.current_level.find_super_spaces(levelpack.current_level.current_space.space_id)]
+                            super_spaces = [t[0] for t in levelpack.current_level.find_super_spaces(levelpack.current_level.current_space_id)]
                             if len(super_spaces) != 0:
                                 levelpack.current_level.current_space_id = random.choice(super_spaces).space_id
                                 space_changed = True
@@ -265,12 +265,17 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                 elif mouses[3]:
                     if keys["LALT"] or keys["RALT"]:
                         if keys["LSHIFT"] or keys["RSHIFT"]:
-                            current_level_index -= 1
-                            current_space_index = 0
+                            current_level_index = levelpack.level_list.index(levelpack.current_level) - 1
+                            levelpack.current_level_id = levelpack.level_list[current_level_index % len(levelpack.level_list)].level_id
+                            print("level_changed")
                             level_changed = True
+                            del current_level_index
                         else:
-                            current_space_index -= 1
+                            current_space_index = levelpack.current_level.space_list.index(levelpack.current_level.current_space) - 1
+                            levelpack.current_level.current_space_id = levelpack.current_level.space_list[current_space_index % len(levelpack.current_level.space_list)].space_id
+                            print("space_changed")
                             space_changed = True
+                            del current_space_index
                     elif keys["LSHIFT"] or keys["RSHIFT"]:
                         obj_to_noun = bmp.obj.get_noun_from_type(current_object_type)
                         if obj_to_noun not in bmp.obj.instance_exclusive:
@@ -282,12 +287,17 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                 elif mouses[4]:
                     if keys["LALT"] or keys["RALT"]:
                         if keys["LSHIFT"] or keys["RSHIFT"]:
-                            current_level_index += 1
-                            current_space_index = 0
+                            current_level_index = levelpack.level_list.index(levelpack.current_level) + 1
+                            levelpack.current_level_id = levelpack.level_list[current_level_index % len(levelpack.level_list)].level_id
+                            print("level_changed")
                             level_changed = True
+                            del current_level_index
                         else:
-                            current_space_index += 1
+                            current_space_index = levelpack.current_level.space_list.index(levelpack.current_level.current_space) + 1
+                            levelpack.current_level.current_space_id = levelpack.current_level.space_list[current_space_index % len(levelpack.current_level.space_list)].space_id
+                            print("space_changed")
                             space_changed = True
+                            del current_space_index
                     elif keys["LSHIFT"] or keys["RSHIFT"]:
                         if issubclass(current_object_type, bmp.obj.GeneralNoun) and current_object_type.ref_type not in bmp.obj.instance_exclusive:
                             current_object_type = current_object_type.ref_type
@@ -321,7 +331,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                     level_name = bmp.lang.lang_input("edit.level.new.name")
                     level_id: bmp.ref.LevelID = bmp.ref.LevelID(level_name)
                     super_level_name = bmp.lang.lang_input("edit.level.new.super_level.name")
-                    super_level_id: bmp.ref.LevelID = bmp.ref.LevelID(super_level_name) if super_level_name != "" else levelpack.current_level.level_id
+                    super_level_id: bmp.ref.LevelID = bmp.ref.LevelID(super_level_name) if super_level_name != "" else levelpack.current_level_id
                     name = bmp.lang.lang_input("edit.space.new.name")
                     while True:
                         width = bmp.lang.lang_input("edit.space.new.width")
@@ -365,7 +375,8 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                     break
                             else:
                                 break
-                    default_space = bmp.space.Space(bmp.ref.SpaceID(name, infinite_tier), size, color)
+                    space_id = bmp.ref.SpaceID(name, infinite_tier)
+                    levelpack.space_dict[space_id] = bmp.space.Space(space_id, size, color)
                     map_info: Optional[bmp.level.MapLevelExtraJson] = None
                     if bmp.lang.lang_input("edit.level.new.is_map") in bmp.lang.yes:
                         map_info = {}
@@ -379,14 +390,15 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                 break
                         if spore_for_blossom is not None:
                             map_info["spore_for_blossom"] = spore_for_blossom
-                    levelpack.level_list.append(bmp.level.Level(
-                        level_id, [default_space.space_id], bmp.ref.SpaceID(name, infinite_tier),
+                    levelpack.level_dict[level_id] = bmp.level.Level(
+                        level_id, [space_id], space_id,
                         super_level_id = super_level_id,
                         map_info = map_info,
-                    ))
-                    current_level_index = len(levelpack.level_list) - 1
-                    current_space_index = 0
+                    )
+                    levelpack.level_dict[level_id].space_dict = levelpack.space_dict
+                    levelpack.current_level_id = level_id
                     level_changed = True
+                    del level_id, space_id
             else:
                 if bmp.lang.lang_input("edit.space.new") not in bmp.lang.no:
                     history.append(copy.deepcopy(levelpack))
@@ -433,22 +445,28 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                     break
                             else:
                                 break
-                    levelpack.current_level.space_list.append(bmp.space.Space(bmp.ref.SpaceID(name, infinite_tier), size, color))
-                    current_space_index = len(levelpack.current_level.space_list) - 1
+                    space_id = bmp.ref.SpaceID(name, infinite_tier)
+                    levelpack.current_level.space_dict[space_id] = bmp.space.Space(space_id, size, color)
+                    levelpack.current_level.current_space_id = space_id
                     space_changed = True
+                    del space_id
         # delete current space / level (alt)
         elif keys["M"]:
             bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.delete")))
             if keys["LALT"] or keys["RALT"]:
                 if bmp.lang.lang_input("edit.level.delete") in bmp.lang.yes:
-                    levelpack.level_list.pop(current_level_index)
-                    current_level_index -= 1
-                    current_space_index = 0
+                    levelpack.del_level(levelpack.current_level_id)
+                    levelpack.current_level_id = random.choice(list(levelpack.level_dict.keys()))
                     level_changed = True
             else:
                 if bmp.lang.lang_input("edit.space.delete") in bmp.lang.yes:
-                    levelpack.current_level.space_list.pop(current_space_index)
-                    current_space_index -= 1
+                    levelpack.current_level.space_included.remove(levelpack.current_level.current_space_id)
+                    if all(map(
+                        lambda l: levelpack.current_level.current_space_id not in l.space_included,
+                        levelpack.level_dict.values()
+                    )):
+                        levelpack.space_dict.pop(levelpack.current_level.current_space_id)
+                    levelpack.current_level.current_space_id = random.choice(levelpack.current_level.space_included)
                     space_changed = True
         # add global rule; remove global rule (shift)
         elif keys["R"]:
@@ -482,13 +500,13 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
         elif keys["T"]:
             bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.rename")))
             if keys["LALT"] or keys["RALT"]:
-                levelpack.current_level.level_id.name = bmp.lang.lang_input("edit.level.rename")
+                levelpack.current_level_id.name = bmp.lang.lang_input("edit.level.rename")
             else:
-                levelpack.current_level.current_space.space_id.name = bmp.lang.lang_input("edit.space.rename")
+                levelpack.current_level.current_space_id.name = bmp.lang.lang_input("edit.space.rename")
                 while True:
                     infinite_tier = bmp.lang.lang_input("edit.space.new.infinite_tier")
                     try:
-                        levelpack.current_level.current_space.space_id.infinite_tier = int(infinite_tier)
+                        levelpack.current_level.current_space_id.infinite_tier = int(infinite_tier)
                     except ValueError:
                         bmp.lang.lang_warn("warn.value.invalid", value=infinite_tier, cls="int")
                     else:
@@ -525,10 +543,10 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                 levelpack.current_level.set_space(new_space)
         elif keys["TAB"]:
             bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.level")))
-            bmp.lang.lang_print("edit.level.current.name", value=levelpack.current_level.level_id.name)
+            bmp.lang.lang_print("edit.level.current.name", value=levelpack.current_level_id.name)
             bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.space")))
-            bmp.lang.lang_print("edit.space.current.name", value=levelpack.current_level.current_space.space_id.name)
-            bmp.lang.lang_print("edit.space.current.infinite_tier", value=levelpack.current_level.current_space.space_id.infinite_tier)
+            bmp.lang.lang_print("edit.space.current.name", value=levelpack.current_level.current_space_id.name)
+            bmp.lang.lang_print("edit.space.current.infinite_tier", value=levelpack.current_level.current_space_id.infinite_tier)
         if level_changed:
             space_changed = True
             # bmp.lang.lang_print(bmp.lang.seperator_line(bmp.lang.lang_format("title.level")))
@@ -557,7 +575,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
         # current object type
         obj_surface = bmp.render.simple_type_to_surface(current_object_type, wiggle=wiggle, debug=True)
         if issubclass(current_object_type, bmp.obj.SpaceObject):
-            space = levelpack.current_level.get_space(levelpack.current_level.current_space.space_id)
+            space = levelpack.current_level.get_space(levelpack.current_level.current_space_id)
             if space is not None:
                 obj_surface = bmp.render.simple_type_to_surface(current_object_type, wiggle=wiggle, default_surface=space_surface, debug=True)
         obj_surface = pygame.transform.scale(obj_surface, gui_scaled_sprite_size)
@@ -588,7 +606,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
         for index, object_type in object_type_shortcuts.items():
             obj_surface = bmp.render.simple_type_to_surface(object_type, wiggle=wiggle, debug=True)
             if issubclass(object_type, bmp.obj.SpaceObject):
-                space = levelpack.current_level.get_space(levelpack.current_level.current_space.space_id)
+                space = levelpack.current_level.get_space(levelpack.current_level.current_space_id)
                 if space is not None:
                     obj_surface = bmp.render.simple_type_to_surface(object_type, wiggle=wiggle, default_surface=space_surface, debug=True)
             obj_surface = pygame.transform.scale(obj_surface, gui_scaled_sprite_size)
