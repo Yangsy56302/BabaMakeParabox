@@ -10,9 +10,9 @@ import bmp.obj
 import pygame
 
 def calc_smooth(frame: int) -> Optional[float]:
-    multiplier = bmp.base.options["smooth_animation_multiplier"]
+    multiplier = bmp.opt.options["render"]["smooth"]
     if multiplier is not None:
-        smooth_value = frame / bmp.base.options["fps"] * multiplier
+        smooth_value = frame / bmp.opt.options["render"]["fps"] * multiplier
         if smooth_value >= 0 and smooth_value <= 1:
             return (1 - smooth_value) ** 4
 
@@ -81,7 +81,7 @@ class Sprites(object):
                     if os.path.isfile(os.path.join("sprites", filename)):
                         sprite = pygame.image.load(os.path.join("sprites", filename)).convert_alpha()
                     else:
-                        bmp.lang.lang_warn("warn.file.not_found", file=os.path.join("sprites", filename))
+                        bmp.lang.fwarn("warn.file.not_found", file=os.path.join("sprites", filename))
                         sprite = empty_sprite.copy()
                     self.raw_sprites[object_type.sprite_name][int(varient_number)][int(wiggle)] = sprite.copy()
                     self.sprites[object_type.sprite_name][int(varient_number)][int(wiggle)] = set_surface_color_dark(sprite, sprite_palette)
@@ -98,7 +98,7 @@ class Sprites(object):
                 if os.path.isfile(os.path.join("sprites", filename)):
                     sprite = pygame.image.load(os.path.join("sprites", filename)).convert_alpha()
                 else:
-                    bmp.lang.lang_warn("warn.file.not_found", file=os.path.join("sprites", filename))
+                    bmp.lang.fwarn("warn.file.not_found", file=os.path.join("sprites", filename))
                     sprite = empty_sprite.copy()
                 self.raw_sprites[sprite_name][0][int(wiggle)] = sprite.copy()
                 self.sprites[sprite_name][0][int(wiggle)] = set_surface_color_dark(sprite, sprite_palette)

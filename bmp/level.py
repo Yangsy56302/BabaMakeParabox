@@ -955,7 +955,7 @@ class Level(object):
     def space_to_surface(self, space: bmp.space.Space, wiggle: int, size: bmp.loc.Coord[int], depth: int = 0, smooth: Optional[float] = None, cursor: Optional[bmp.loc.Coord[int]] = None, debug: bool = False) -> pygame.Surface:
         pixel_size = math.ceil(max(size[0] / space.width, size[1] / space.height) / bmp.render.sprite_size)
         scaled_sprite_size = pixel_size * bmp.render.sprite_size
-        if depth > bmp.base.options["space_display_recursion_depth"] or space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextHide):
+        if depth > bmp.opt.options["render"]["space_depth"] or space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextHide):
             space_surface = pygame.Surface((scaled_sprite_size, scaled_sprite_size), pygame.SRCALPHA)
             space_surface.fill(space.color if space.color is not None else bmp.color.current_palette[0, 4])
             space_surface = bmp.render.simple_object_to_surface(bmp.obj.SpaceObject((0, 0), space_id=space.space_id), default_surface=space_surface)

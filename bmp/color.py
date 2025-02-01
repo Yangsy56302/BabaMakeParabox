@@ -8,9 +8,10 @@ ColorRGB = tuple[int, int, int]
 
 PaletteIndex = tuple[int, int]
 Palette = dict[PaletteIndex, ColorHex]
-def get_palette(path: str) -> Palette:
+
+def get_palette(_path: str, /) -> Palette:
     palette: Palette = {}
-    image = PIL.Image.open(path)
+    image = PIL.Image.open(_path)
     image.convert("RGB")
     for x in range(image.width):
         for y in range(image.height):
@@ -20,40 +21,58 @@ def get_palette(path: str) -> Palette:
     return palette
 
 current_palette: Palette = {}
-def set_palette(path: str) -> None:
+def set_palette(_path: str, /) -> None:
     global current_palette
-    current_palette.update(get_palette(path))
+    current_palette.update(get_palette(_path))
 
 def rgb_to_hex(r: int, g: int, b: int) -> ColorHex:
     return r * 0x10000 + g * 0x100 + b
 
-def hex_to_rgb(color: ColorHex) -> ColorRGB:
-    r = color // 0x10000 % 0x100
-    g = color // 0x100 % 0x100
-    b = color // 0x1 % 0x100
+def hex_to_rgb(_color: ColorHex, /) -> ColorRGB:
+    r = _color // 0x10000 % 0x100
+    g = _color // 0x100 % 0x100
+    b = _color // 0x1 % 0x100
     return r, g, b
 
-def str_to_hex(string: str) -> ColorHex:
+def str_to_hex(_str: str, /) -> ColorHex:
     try:
-        if "," in string:
-            x, y = string.split(sep=",")
+        if "," in _str:
+            x, y = _str.split(sep=",")
             x = int(x.strip())
             y = int(y.strip())
             color = current_palette[x, y]
         else:
-            if string.startswith("0x"):
-                new_string = string[2:]
-            elif string.startswith("#"):
-                new_string = string[1:]
+            if _str.startswith("0x"):
+                new_string = _str[2:]
+            elif _str.startswith("#"):
+                new_string = _str[1:]
             else:
-                new_string = string[:]
+                new_string = _str[:]
             r = int(new_string[:2], base=16)
             g = int(new_string[2:4], base=16)
             b = int(new_string[4:], base=16)
             color = rgb_to_hex(r, g, b)
         return color
-    except Exception:
-        raise ValueError(string)
+    except ValueError:
+        raise ValueError(_str)
+
+def pallete_to_hex(_str: str, /) -> ColorHex:
+    try:
+        palette_str = _str.lstrip("([").rstrip("])").split(",")
+        return current_palette[int(palette_str[0].strip()), int(palette_str[1].strip())]
+    except ValueError:
+        raise ValueError(_str)
+    except IndexError:
+        raise ValueError(_str)
+
+def str_or_palette_to_hex(_str: str, /) -> ColorHex:
+    try:
+        return str_to_hex(_str)
+    except ValueError:
+        try:
+            return pallete_to_hex(_str)
+        except ValueError:
+            raise ValueError(_str)
 
 def float_to_hue(f: float) -> ColorHex:
     if f <= 1 / 6:

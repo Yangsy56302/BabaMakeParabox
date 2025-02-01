@@ -278,8 +278,8 @@ class Space(object):
             json_object["color"] = self.color
         for obj in tqdm(
             self.object_list,
-            desc = bmp.lang.lang_format("saving.space.object_list"),
-            unit = bmp.lang.lang_format("object.name"),
+            desc = bmp.lang.fformat("saving.space.object_list"),
+            unit = bmp.lang.fformat("object.name"),
             position = 2,
             **bmp.lang.default_tqdm_args,
         ):
@@ -301,8 +301,8 @@ def json_to_space(json_object: SpaceJson, ver: str) -> Space:
     )
     for obj in tqdm(
         json_object["object_list"],
-        desc = bmp.lang.lang_format("loading.space.object_list"),
-        unit = bmp.lang.lang_format("object.name"),
+        desc = bmp.lang.fformat("loading.space.object_list"),
+        unit = bmp.lang.fformat("object.name"),
         position = 2,
         **bmp.lang.default_tqdm_args,
     ):

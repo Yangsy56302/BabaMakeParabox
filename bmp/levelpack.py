@@ -587,48 +587,48 @@ class Levelpack(object):
         if self.author is not None: json_object["author"] = self.author
         for level in tqdm(
             self.level_dict.values(),
-            desc = bmp.lang.lang_format("saving.levelpack.level_list"),
-            unit = bmp.lang.lang_format("level.name"),
+            desc = bmp.lang.fformat("saving.levelpack.level_list"),
+            unit = bmp.lang.fformat("level.name"),
             position = 0,
             **bmp.lang.default_tqdm_args,
         ):
             json_object["levels"].append(level.to_json())
         for space in tqdm(
             self.space_dict.values(),
-            desc = bmp.lang.lang_format("saving.level.space_list"),
-            unit = bmp.lang.lang_format("level.name"),
+            desc = bmp.lang.fformat("saving.level.space_list"),
+            unit = bmp.lang.fformat("level.name"),
             position = 0,
             **bmp.lang.default_tqdm_args,
         ):
             json_object["spaces"].append(space.to_json())
         for level in tqdm(
             self.level_init_state_dict.values(),
-            desc = bmp.lang.lang_format("saving.levelpack.level_list"),
-            unit = bmp.lang.lang_format("level.name"),
+            desc = bmp.lang.fformat("saving.levelpack.level_list"),
+            unit = bmp.lang.fformat("level.name"),
             position = 0,
             **bmp.lang.default_tqdm_args,
         ):
             json_object["level_init_states"].append(level.to_json())
         for space in tqdm(
             self.space_init_state_dict.values(),
-            desc = bmp.lang.lang_format("saving.level.space_list"),
-            unit = bmp.lang.lang_format("level.name"),
+            desc = bmp.lang.fformat("saving.level.space_list"),
+            unit = bmp.lang.fformat("level.name"),
             position = 0,
             **bmp.lang.default_tqdm_args,
         ):
             json_object["space_init_states"].append(space.to_json())
         for collectible in tqdm(
             self.collectibles,
-            desc = bmp.lang.lang_format("saving.levelpack.collect_list"),
-            unit = bmp.lang.lang_format("collectible.name"),
+            desc = bmp.lang.fformat("saving.levelpack.collect_list"),
+            unit = bmp.lang.fformat("collectible.name"),
             position = 0,
             **bmp.lang.default_tqdm_args,
         ):
             json_object["collectibles"].append(collectible.to_json())
         for rule in tqdm(
             self.rule_list,
-            desc = bmp.lang.lang_format("saving.levelpack.rule_list"),
-            unit = bmp.lang.lang_format("rule.name"),
+            desc = bmp.lang.fformat("saving.levelpack.rule_list"),
+            unit = bmp.lang.fformat("rule.name"),
             position = 0,
             **bmp.lang.default_tqdm_args,
         ):
@@ -646,8 +646,8 @@ def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
     space_dict: dict[bmp.ref.SpaceID, bmp.space.Space] = {}
     for space_json in tqdm(
         json_object["spaces"],
-        desc = bmp.lang.lang_format("loading.level.space_list"),
-        unit = bmp.lang.lang_format("space.name"),
+        desc = bmp.lang.fformat("loading.level.space_list"),
+        unit = bmp.lang.fformat("space.name"),
         position = 0,
         **bmp.lang.default_tqdm_args,
     ):
@@ -656,8 +656,8 @@ def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
     level_dict: dict[bmp.ref.LevelID, bmp.level.Level] = {}
     for level_json in tqdm(
         json_object["levels"],
-        desc = bmp.lang.lang_format("loading.levelpack.level_list"),
-        unit = bmp.lang.lang_format("level.name"),
+        desc = bmp.lang.fformat("loading.levelpack.level_list"),
+        unit = bmp.lang.fformat("level.name"),
         position = 0,
         **bmp.lang.default_tqdm_args,
     ):
@@ -669,8 +669,8 @@ def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
         space_init_state_dict = {}
         for space_json in tqdm(
             space_init_state_dict_json,
-            desc = bmp.lang.lang_format("loading.level.space_list"),
-            unit = bmp.lang.lang_format("level.name"),
+            desc = bmp.lang.fformat("loading.level.space_list"),
+            unit = bmp.lang.fformat("level.name"),
             position = 0,
             **bmp.lang.default_tqdm_args,
         ):
@@ -684,8 +684,8 @@ def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
         level_init_state_dict = {}
         for level_json in tqdm(
             level_init_state_dict_json,
-            desc = bmp.lang.lang_format("loading.levelpack.level_list"),
-            unit = bmp.lang.lang_format("level.name"),
+            desc = bmp.lang.fformat("loading.levelpack.level_list"),
+            unit = bmp.lang.fformat("level.name"),
             position = 0,
             **bmp.lang.default_tqdm_args,
         ):
@@ -696,8 +696,8 @@ def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
     rule_list: list[bmp.rule.Rule] = []
     for rule in tqdm(
         json_object["rules"],
-        desc = bmp.lang.lang_format("loading.levelpack.rule_list"),
-        unit = bmp.lang.lang_format("rule.name"),
+        desc = bmp.lang.fformat("loading.levelpack.rule_list"),
+        unit = bmp.lang.fformat("rule.name"),
         position = 0,
         **bmp.lang.default_tqdm_args,
     ):
@@ -707,8 +707,8 @@ def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
     current_level_id: bmp.ref.LevelID = bmp.ref.LevelID(**json_object["current_level"])
     for collectible in tqdm(
         json_object["collectibles"],
-        desc = bmp.lang.lang_format("loading.levelpack.collect_list"),
-        unit = bmp.lang.lang_format("collectible.name"),
+        desc = bmp.lang.fformat("loading.levelpack.collect_list"),
+        unit = bmp.lang.fformat("collectible.name"),
         position = 0,
         **bmp.lang.default_tqdm_args,
     ):

@@ -1,8 +1,8 @@
 from typing import Literal, Optional, TypedDict, Callable, NotRequired
-import os
-import json
-import copy
 import platform
+
+import pygame
+pygame.init()
 
 def remove_same_elements[T](a_list: list[T], a_func: Optional[Callable[[T, T], bool]] = None) -> list[T]:
     if a_func is None:
@@ -33,10 +33,7 @@ def snake_to_camel(__str: str, /, *, is_big: bool) -> str:
     camel_head = word_list[0].capitalize() if is_big else word_list[0].lower()
     return camel_head + "".join(word.capitalize() for word in word_list[1:])
 
-import pygame
-pygame.init()
-
-versions: str = "4.1"
+versions: str = "4.101"
 def compare_versions(ver_1: str, ver_2: str) -> Literal[-1, 0, 1]:
     for char_1, char_2 in zip(ver_1, ver_2):
         if ord(char_1) > ord(char_2):
@@ -50,115 +47,11 @@ def compare_versions(ver_1: str, ver_2: str) -> Literal[-1, 0, 1]:
     else:
         return -1
 
+class DowngradeError(Exception):
+    pass
+
 pyinst_env = "PYINST"
-
-class DefaultNewSpaceOptions(TypedDict):
-    width: int
-    height: int
-    color: int
-
-class BgmOptions(TypedDict):
-    enabled: bool
-    name: str
-
-class MetatextOptions(TypedDict):
-    enabled: bool
-    tier: int
-
-class RepeatOptions(TypedDict):
-    delay: int
-    interval: int
-
-class Options(TypedDict):
-    ver: str
-    debug: bool
-    lang: str
-    fps: int
-    space_display_recursion_depth: int
-    smooth_animation_multiplier: Optional[int]
-    long_press: RepeatOptions
-    palette: str
-    compressed_json_output: bool
-    object_type_shortcuts: list[str]
-    default_new_space: DefaultNewSpaceOptions
-    metatext: MetatextOptions
-    bgm: BgmOptions
-    game_is_end: NotRequired[bool]
-    game_is_done: NotRequired[bool]
-
-default_options: Options = {
-    "ver": versions,
-    "debug": False,
-    "lang": "",
-    "fps": 30,
-    "space_display_recursion_depth": 1,
-    "smooth_animation_multiplier": 3,
-    "long_press": {
-        "delay": 500,
-        "interval": 50,
-    },
-    "palette": "default.png",
-    "compressed_json_output": True,
-    "default_new_space": {
-        "width": 15,
-        "height": 15,
-        "color": 0x000000
-    },
-    "object_type_shortcuts": [
-        "space", 
-        "clone", 
-        "path", 
-        "cursor", 
-        "level", 
-        "text_space", 
-        "text_is", 
-        "text_you", 
-        "text_win", 
-        "text_level"
-    ],
-    "metatext": {
-        "enabled": True,
-        "tier": 5
-    },
-    "bgm": {
-        "enabled": False,
-        "name": "rush_baba.mid"
-    }
-}
-options_filename = "options.json"
-options: Options = Options(copy.deepcopy(default_options))
-
-class _JsonDumpKwds(TypedDict):
-    indent: Optional[int]
-    separators: tuple[str, str]
-    
-def get_json_dump_kwds() -> _JsonDumpKwds:
-    return {
-        "indent": None if options["compressed_json_output"] else 4,
-        "separators": (",", ":") if options["compressed_json_output"] else (", ", ": ")
-    }
-
-def save_options(new_options: Options) -> None:
-    with open(options_filename, "w", encoding="utf-8") as file:
-        json.dump(new_options, file, **get_json_dump_kwds())
-
-def update_options(old_options: Options) -> Options:
-    new_options = old_options.copy()
-    temp_options = default_options.copy()
-    temp_options.update(new_options)
-    new_options = temp_options.copy()
-    new_options["ver"] = versions
-    return new_options
 
 current_os = platform.system()
 windows: Literal["Windows"] = "Windows"
 linux: Literal["Linux"] = "Linux"
-
-if os.path.exists(options_filename):
-    with open(options_filename, "r", encoding="utf-8") as file:
-        options = json.load(file)
-        options = update_options(options)
-else:
-    with open(options_filename, "w", encoding="utf-8") as file:
-        options = default_options
-        json.dump(default_options, file)

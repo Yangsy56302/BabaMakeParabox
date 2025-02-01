@@ -200,8 +200,8 @@ class Object(object):
         if lang_key not in bmp.lang.current_language_name:
             if lang_key not in bmp.lang.language_dict[bmp.lang.english]:
                 return bmp.base.snake_to_camel(cls.json_name, is_big=True)
-            return bmp.lang.lang_format(lang_key, language_name=bmp.lang.english)
-        return bmp.lang.lang_format(lang_key, language_name=language_name)
+            return bmp.lang.fformat(lang_key, language_name=bmp.lang.english)
+        return bmp.lang.fformat(lang_key, language_name=language_name)
     def get_info(self) -> str:
         string = f"object {self.json_name} at {self.pos} facing {self.orient}"
         return "<" + string + ">"
@@ -402,8 +402,8 @@ class Text(Object):
         if lang_key not in bmp.lang.current_language_name:
             if lang_key not in bmp.lang.language_dict[bmp.lang.english]:
                 return cls.json_name[5:].upper()
-            return bmp.lang.lang_format(lang_key, language_name=bmp.lang.english)
-        return bmp.lang.lang_format(lang_key, language_name=language_name)
+            return bmp.lang.fformat(lang_key, language_name=bmp.lang.english)
+        return bmp.lang.fformat(lang_key, language_name=language_name)
 
 class Noun(Text):
     ref_type: type["Object"]
@@ -949,8 +949,8 @@ def reload_object_class_list() -> None:
         *other_text_class_list,
         *prop_class_list,
     ]
-    if bmp.base.options["metatext"]["enabled"]:
-        current_metatext_tier = bmp.base.options["metatext"]["tier"]
+    if bmp.opt.options["gameplay"]["metatext"]["enabled"]:
+        current_metatext_tier = bmp.opt.options["gameplay"]["metatext"]["tier"]
         if current_metatext_tier < 1:
             raise ValueError(current_metatext_tier)
         metatext_class_list_at_tier = [[]]

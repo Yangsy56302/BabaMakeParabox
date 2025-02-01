@@ -28,6 +28,7 @@ import bmp.level as level
 import bmp.levelpack as levelpack
 import bmp.loc as loc
 import bmp.obj as obj
+import bmp.opt as opt
 import bmp.ref as ref
 import bmp.render as render
 import bmp.rule as rule
@@ -37,5 +38,5 @@ import bmp.sub as sub
 __all__ = [
     "audio", "base", "color", "editor",
     "execute", "game", "lang", "level", "levelpack",
-    "loc", "obj", "ref", "render", "rule", "space", "sub",
+    "loc", "obj", "opt", "ref", "render", "rule", "space", "sub",
 ]
