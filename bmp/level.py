@@ -457,15 +457,14 @@ class Level(object):
                         pushing_game = True
             self.move_objs_from_move_list(move_list)
         return pushing_game
-    def select(self, direct: Optional[bmp.loc.Orient]) -> Optional[bmp.ref.LevelID]:
+    def select(self, direct: Optional[bmp.loc.Orient]) -> Optional[list[bmp.ref.LevelID]]:
         if direct is None:
             level_list: list[bmp.ref.LevelID] = []
             for space in self.space_list:
                 select_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextSelect)]
                 for select_obj in select_objs:
                     level_list.extend([o.level_id for o in space.object_list if o.pos == select_obj.pos and o.level_id is not None and o != select_obj])
-            if len(level_list) != 0:
-                return random.choice(level_list)
+            return level_list
         else:
             for space in self.space_list:
                 select_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextSelect)]

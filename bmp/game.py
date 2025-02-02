@@ -235,7 +235,7 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                 restart_failed = True
                 if not (keys["LCTRL"] or keys["RCTRL"]):
                     for index, (old_levelpack, old_levelpack_info) in reversed(list(enumerate(history))):
-                        if index == 0 or history[index - 1][1]["selected_level"] is not None:
+                        if index == 0 or history[index - 1][1]["select"] is not None:
                             bmp.lang.fprint("play.level.restart")
                             bmp.audio.play("restart")
                             levelpack = copy.deepcopy(old_levelpack)
@@ -432,7 +432,7 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                     bmp.audio.play("restart")
                     bmp.lang.fprint("play.level.transform")
                     monochrome = bmp.obj.TextLevel.get_color()
-                elif levelpack_info["selected_level"] is not None:
+                elif levelpack_info["select"] is not None:
                     bmp.audio.play("level")
                     bmp.lang.fprint("play.level.enter")
                     monochrome = bmp.obj.TextSelect.get_color()
@@ -443,25 +443,24 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
             else:
                 press_key_to_continue = False
                 level_changed = True
-                selected_level = levelpack_info["selected_level"]
+                select = levelpack_info["select"]
                 if levelpack_info["win"]:
-                    levelpack.reset_level(levelpack.current_level_id)
-                    if levelpack.current_level.super_level_id is not None:
-                        levelpack.current_level = levelpack.get_exact_level(levelpack.current_level.super_level_id)
-                    # history.append((copy.deepcopy(levelpack), levelpack_info.copy()))
+                    if levelpack.current_level.super_level_id is not None and levelpack.current_level.super_level_id in levelpack.level_dict.keys():
+                        levelpack.reset_level(levelpack.current_level_id)
+                        levelpack.current_level_id = levelpack.current_level.super_level_id
                 elif levelpack_info["end"]:
                     game_running = False
                 elif levelpack_info["done"]:
                     game_running = False
                 elif levelpack_info["transform"]:
-                    levelpack.reset_level(levelpack.current_level_id)
-                    if levelpack.current_level.super_level_id is not None:
-                        levelpack.current_level = levelpack.get_exact_level(levelpack.current_level.super_level_id)
-                    # history.append((copy.deepcopy(levelpack), levelpack_info.copy()))
-                elif selected_level is not None and levelpack.current_level_id != selected_level:
-                    levelpack.reset_level(levelpack.current_level_id)
-                    levelpack.current_level_id = selected_level
-                    # history.append((copy.deepcopy(levelpack), levelpack_info.copy()))
+                    if levelpack.current_level.super_level_id is not None and levelpack.current_level.super_level_id in levelpack.level_dict.keys():
+                        levelpack.reset_level(levelpack.current_level_id)
+                        levelpack.current_level_id = levelpack.current_level.super_level_id
+                elif select is not None:
+                    selected_level_id: bmp.ref.LevelID = random.choice(select)
+                    if selected_level_id != levelpack.current_level_id and selected_level_id in levelpack.level_dict.keys():
+                        levelpack.current_level_id = selected_level_id
+                    del selected_level_id
                 levelpack.prepare()
             levelpack_refresh = False
         if display_refresh:

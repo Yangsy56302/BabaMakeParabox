@@ -16,8 +16,16 @@ class ReturnInfo(TypedDict):
     done: bool
     transform: bool
     game_push: bool
-    selected_level: Optional[bmp.ref.LevelID]
-default_levelpack_info: ReturnInfo = {"win": False, "end": False, "done": False, "transform": False, "game_push": False, "selected_level": None}
+    select: Optional[list[bmp.ref.LevelID]]
+
+default_levelpack_info: ReturnInfo = {
+    "win": False,
+    "end": False,
+    "done": False,
+    "transform": False,
+    "game_push": False,
+    "select": None
+}
 
 class LevelpackJson41(TypedDict):
     ver: str
@@ -82,7 +90,7 @@ class Levelpack(object):
         self.level_init_state_dict[level_id] = level
     def reset_level(self, level_id: bmp.ref.LevelID) -> None:
         old_level = self.level_dict.get(level_id)
-        if old_level is not None and old_level.map_info is None:
+        if old_level is not None:
             for space_id in old_level.space_included:
                 self.space_dict[space_id] = copy.deepcopy(self.space_init_state_dict[space_id])
             level = copy.deepcopy(self.level_init_state_dict[level_id])
@@ -557,7 +565,11 @@ class Levelpack(object):
         self.current_level.text_plus_and_text_minus()
         self.update_rules()
         self.current_level.tele()
-        selected_level = self.current_level.select(op)
+        select = self.current_level.select(op)
+        if select is not None:
+            select = [l for l in select if l in self.level_dict.keys()]
+            if len(select) == 0:
+                select = None
         self.update_rules()
         self.current_level.direction()
         self.current_level.flip()
@@ -587,8 +599,12 @@ class Levelpack(object):
                         unlocked = False
                 path.unlocked = unlocked
         return {
-            "win": win, "end": end, "done": done, "transform": transform,
-            "game_push": game_push, "selected_level": selected_level
+            "win": win,
+            "end": end,
+            "done": done,
+            "transform": transform,
+            "game_push": game_push,
+            "select": select,
         }
     def to_json(self) -> LevelpackJson:
         json_object: LevelpackJson = {
