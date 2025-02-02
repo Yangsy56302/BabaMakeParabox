@@ -237,13 +237,11 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                         if keys["LSHIFT"] or keys["RSHIFT"]:
                             current_level_index = levelpack.level_list.index(levelpack.current_level) - 1
                             levelpack.current_level_id = levelpack.level_list[current_level_index % len(levelpack.level_list)].level_id
-                            print("level_changed")
                             level_changed = True
                             del current_level_index
                         else:
                             current_space_index = levelpack.current_level.space_list.index(levelpack.current_level.current_space) - 1
                             levelpack.current_level.current_space_id = levelpack.current_level.space_list[current_space_index % len(levelpack.current_level.space_list)].space_id
-                            print("space_changed")
                             space_changed = True
                             del current_space_index
                     elif keys["LSHIFT"] or keys["RSHIFT"]:
@@ -259,13 +257,11 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                         if keys["LSHIFT"] or keys["RSHIFT"]:
                             current_level_index = levelpack.level_list.index(levelpack.current_level) + 1
                             levelpack.current_level_id = levelpack.level_list[current_level_index % len(levelpack.level_list)].level_id
-                            print("level_changed")
                             level_changed = True
                             del current_level_index
                         else:
                             current_space_index = levelpack.current_level.space_list.index(levelpack.current_level.current_space) + 1
                             levelpack.current_level.current_space_id = levelpack.current_level.space_list[current_space_index % len(levelpack.current_level.space_list)].space_id
-                            print("space_changed")
                             space_changed = True
                             del current_space_index
                     elif keys["LSHIFT"] or keys["RSHIFT"]:
@@ -371,7 +367,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                 object_type = bmp.obj.name_to_class.get(text)
                 if object_type is not None:
                     if issubclass(object_type, bmp.obj.Text):
-                        type_rule.append(object_type)
+                        type_rule.append(object_type((-1, -1)))
                     else:
                         valid_input = False
                         break
@@ -388,7 +384,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                 str_list: list[str] = []
                 for object_type in rule:
                     str_list.append(object_type.get_name())
-                print(" ".join(str_list))
+                bmp.lang.print(" ".join(str_list))
         # edit id for current space / level (alt)
         elif keys["T"]:
             bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.rename")))

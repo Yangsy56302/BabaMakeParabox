@@ -161,15 +161,15 @@ class Space(object):
         new_rule_list: list[bmp.rule.Rule] = []
         new_info_list: list[bmp.rule.RuleInfo] = []
         for match_type, unmatch_type, next_stage, func in bmp.rule.how_to_match_rule[stage]:
-            text_type_list: list[type[bmp.obj.Text]] = [type(o) for o in self.get_objs_from_pos_and_type(pos, bmp.obj.Text)]
-            text_type_list += [
-                bmp.obj.get_noun_from_type(type(o))
+            text_list: list[bmp.obj.Text] = self.get_objs_from_pos_and_type(pos, bmp.obj.Text)
+            text_list += [
+                o.transform(bmp.obj.get_noun_from_type(type(o)))
                 for o in self.get_objs_from_pos(pos)
                 if o.old_state.prop is not None and o.old_state.prop.enabled(bmp.obj.TextWord)
-            ]
-            matched_list = [o for o in text_type_list if issubclass(o, tuple(match_type))]
+            ] # type: ignore
+            matched_list = [o for o in text_list if isinstance(o, tuple(match_type))]
             if len(unmatch_type) != 0:
-                matched_list = [o for o in matched_list if not issubclass(o, tuple(unmatch_type))]
+                matched_list = [o for o in matched_list if not isinstance(o, tuple(unmatch_type))]
             if len(matched_list) != 0:
                 rule_list, info_list = self.get_rule_from_pos_and_direct(bmp.loc.front_position(pos, direct), direct, next_stage)
                 for matched_text in matched_list:
@@ -177,7 +177,7 @@ class Space(object):
                     new_info_list.extend(func(i, matched_text) for i in info_list)
             if stage == "after property":
                 new_rule_list.append([])
-                new_info_list.append(bmp.rule.RuleInfo([], 0, bmp.obj.Noun, [], [bmp.rule.OperInfo(bmp.obj.Operator, [])]))
+                new_info_list.append(bmp.rule.RuleInfo([], 0, bmp.obj.Noun((-1, -1)), [], [bmp.rule.OperInfo(bmp.obj.Operator((-1, -1)), [])]))
         return new_rule_list, new_info_list
     def set_rule(self) -> None:
         self.rule_list = []

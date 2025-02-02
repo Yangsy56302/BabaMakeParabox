@@ -115,3 +115,6 @@ default_tqdm_args: dict[str, Any] = {
     "maxinterval": 1,
     "leave": False
 }
+
+print = print
+input = input

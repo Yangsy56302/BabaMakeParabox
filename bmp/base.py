@@ -33,7 +33,7 @@ def snake_to_camel(__str: str, /, *, is_big: bool) -> str:
     camel_head = word_list[0].capitalize() if is_big else word_list[0].lower()
     return camel_head + "".join(word.capitalize() for word in word_list[1:])
 
-versions: str = "4.102"
+versions: str = "4.103"
 def compare_versions(ver_1: str, ver_2: str) -> Literal[-1, 0, 1]:
     for char_1, char_2 in zip(ver_1, ver_2):
         if ord(char_1) > ord(char_2):

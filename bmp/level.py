@@ -130,31 +130,31 @@ class Level(object):
         return_value = True
         for prefix_info in prefix_info_list:
             meet_prefix_condition = True
-            if prefix_info.prefix_type == bmp.obj.TextMeta:
+            if type(prefix_info.prefix) == bmp.obj.TextMeta:
                 meet_prefix_condition = is_meta
-            elif prefix_info.prefix_type == bmp.obj.TextOften:
+            elif type(prefix_info.prefix) == bmp.obj.TextOften:
                 meet_prefix_condition = random.choice((True, True, True, False))
-            elif prefix_info.prefix_type == bmp.obj.TextSeldom:
+            elif type(prefix_info.prefix) == bmp.obj.TextSeldom:
                 meet_prefix_condition = random.choice((True, False, False, False, False, False))
             return_value = return_value and (meet_prefix_condition if not prefix_info.negated else not meet_prefix_condition)
         return return_value
     def meet_infix_conditions(self, space: bmp.space.Space, obj: bmp.obj.Object, infix_info_list: list[bmp.rule.InfixInfo]) -> bool:
         for infix_info in infix_info_list:
             meet_infix_condition = True
-            if infix_info.infix_type in (bmp.obj.TextOn, bmp.obj.TextNear, bmp.obj.TextNextto):
+            if isinstance(infix_info.infix, bmp.obj.RangeInfix):
                 matched_objs: list[bmp.obj.Object] = [obj]
-                find_range: list[bmp.loc.Coord[int]] = []
-                if infix_info.infix_type == bmp.obj.TextOn:
-                    find_range = [(obj.x, obj.y)]
-                elif infix_info.infix_type == bmp.obj.TextNear:
-                    find_range = [(obj.x - 1, obj.y - 1), (obj.x, obj.y - 1), (obj.x + 1, obj.y - 1),
-                                  (obj.x - 1, obj.y), (obj.x, obj.y), (obj.x + 1, obj.y),
-                                  (obj.x - 1, obj.y + 1), (obj.x, obj.y + 1), (obj.x + 1, obj.y + 1)]
-                elif infix_info.infix_type == bmp.obj.TextNextto:
-                    find_range = [(obj.x, obj.y - 1), (obj.x - 1, obj.y), (obj.x + 1, obj.y), (obj.x, obj.y + 1)]
-                for match_negated, match_noun in infix_info[2]: # type: ignore
+                find_range: list[bmp.loc.Coord[int]] = [
+                    p for p in map(
+                        lambda t: (obj.x + t[0], obj.y + t[1]), 
+                        infix_info.infix.find_range
+                    ) if not space.out_of_range(p)
+                ]
+                for infix_noun_info in infix_info.infix_noun_info_list:
                     match_objs: list[bmp.obj.Object] = []
-                    match_noun: type[bmp.obj.Noun]
+                    match_negated: bool = infix_noun_info.negated
+                    match_noun: type[bmp.obj.Noun | bmp.obj.Property] = type(infix_noun_info.infix_noun)
+                    if issubclass(match_noun, bmp.obj.Property):
+                        continue # how did we get here?
                     match_noun_list: list[type[bmp.obj.Noun]] = []
                     if match_noun == bmp.obj.TextAll:
                         if match_negated:
@@ -179,24 +179,26 @@ class Level(object):
                             matched_objs.append(match_objs[0])
                     if not meet_infix_condition:
                         break
-            elif infix_info.infix_type == bmp.obj.TextFeeling:
+            elif infix_info.infix == bmp.obj.TextFeeling:
                 if obj.old_state.prop is None:
                     meet_infix_condition = False
                 else:
                     for infix_noun_info in infix_info.infix_noun_info_list:
-                        if obj.old_state.prop.enabled(infix_noun_info.infix_noun_type) == infix_noun_info.negated:
+                        if obj.old_state.prop.enabled(type(infix_noun_info.infix_noun)) == infix_noun_info.negated:
                             meet_infix_condition = False
-            elif infix_info.infix_type == bmp.obj.TextWithout:
+            elif infix_info.infix == bmp.obj.TextWithout:
                 meet_infix_condition = True
                 matched_objs: list[bmp.obj.Object] = [obj]
                 match_type_count: dict[tuple[bool, type[bmp.obj.Noun]], int] = {}
                 for match_negated, match_noun in infix_info[2]: # type: ignore
-                    match_noun: type[bmp.obj.Noun]
+                    match_noun: type[bmp.obj.Noun | bmp.obj.Property]
+                    if issubclass(match_noun, bmp.obj.Property):
+                        continue # how did we get here?
                     match_type_count.setdefault((match_negated, match_noun), 0)
                     match_type_count[(match_negated, match_noun)] += 1
                 for (match_negated, match_noun), match_count in match_type_count.items():
                     match_objs: list[bmp.obj.Object] = []
-                    match_noun: type[bmp.obj.Noun]
+                    match_noun: type[bmp.obj.Noun | bmp.obj.Property]
                     match_noun_list: list[type[bmp.obj.Noun]] = []
                     if match_noun == bmp.obj.TextAll:
                         if match_negated:
@@ -883,9 +885,10 @@ class Level(object):
             if len(delete_list) != 0 and "done" not in self.sound_events:
                 self.sound_events.append("done")
         for space in self.space_list:
-            if [bmp.obj.TextAll, bmp.obj.TextIs, bmp.obj.TextDone] in space.rule_list:
-                return True
-        return False
+            for obj in [o for o in space.object_list if bmp.obj.TextAll.isreferenceof(o, all_list = self.all_list)]:
+                if not obj.properties.enabled(bmp.obj.TextDone):
+                    return False
+        return len(delete_list) > 0
     def have_you(self) -> bool:
         for space in self.space_list:
             for obj in space.object_list:

@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from enum import Enum
 from tqdm import tqdm, trange
 import json
@@ -34,7 +35,13 @@ class PathExtra(TypedDict):
 default_level_extra: LevelObjectExtra = {"icon": {"name": "empty", "color": 0xFFFFFF}}
 
 # dict[type[property], dict[negated_number, negated_count]]
-PropertiesDict = dict[type["Text"], dict[int, int]]
+
+@dataclass(init=True, repr=True)
+class PropertyInfo[T: "Text"]():
+    obj: T
+    not_tier: int
+
+type PropertiesDict = dict[type["Text"], list[PropertyInfo]]
 
 class Properties(object):
     def __init__(self, prop: Optional[PropertiesDict] = None) -> None:
@@ -45,55 +52,41 @@ class Properties(object):
         string = f"properties {self.__dict}"
         return "<" + string + ">"
     @staticmethod
-    def calc_count(negnum_dict: dict[int, int], negated_number: int = 0) -> int:
-        if len(negnum_dict) == 0:
+    def calc_count(info_list: list[PropertyInfo], not_tier: int = 0) -> int:
+        if len(info_list) == 0:
             return 0
-        if len(negnum_dict) == 1:
-            return int(list(negnum_dict.keys())[0] == negated_number)
-        negnum_list = []
-        for neg, num in negnum_dict.items():
-            negnum_list.extend([neg] * num)
-        negnum_list.sort(reverse=True)
-        current_negnum = negnum_list[0]
+        if len(info_list) == 1:
+            return int(info_list[0].not_tier == not_tier)
+        not_tier_list = []
+        for info in info_list:
+            not_tier_list.append(info.not_tier)
+        not_tier_list.sort(reverse=True)
+        current_tier = not_tier_list[0]
         current_count = 0
-        for n in negnum_list:
-            if n < negated_number:
+        for n in not_tier_list:
+            if n < not_tier:
                 break
-            elif n == current_negnum:
+            elif n == current_tier:
                 current_count += 1
-            elif current_negnum - n == 1:
+            elif current_tier - n == 1:
                 current_count = min(0, -current_count) + 1
-                current_negnum = n
+                current_tier = n
             else:
                 current_count = 1
-                current_negnum = n
-        return max(0, current_count) if current_negnum == negated_number else 0
-    def overwrite(self, prop: type["Text"], negated: bool) -> None:
-        self.__dict[prop] = {int(negated): 1}
-    def update(self, prop: type["Text"], negated_level: int) -> None:
-        self.__dict.setdefault(prop, {})
-        self.__dict[prop].setdefault(negated_level, 0)
-        self.__dict[prop][negated_level] += 1
-    def remove(self, prop: type["Text"], *, negated_level: int) -> None:
-        self.__dict.setdefault(prop, {})
-        self.__dict[prop].setdefault(negated_level, 0)
-        self.__dict[prop][negated_level] -= 1
+                current_tier = n
+        return max(0, current_count) if current_tier == not_tier else 0
+    def update(self, prop: "Text", not_tier: int) -> None:
+        self.__dict.setdefault(type(prop), [])
+        self.__dict[type(prop)].append(PropertyInfo(
+            obj = prop,
+            not_tier = not_tier,
+        ))
     def exist(self, prop: type["Text"]) -> bool:
-        return len(self.__dict.get(prop, {}).items()) != 0
-    def get_raw(self, prop: type["Text"], *, negated_number: int = 0) -> int:
-        if len(self.__dict.get(prop, {}).items()) == 0:
+        return len(self.__dict.get(prop, [])) != 0
+    def get(self, prop: type["Text"], *, not_tier: int = 0) -> int:
+        if len(self.__dict.get(prop, [])) == 0:
             return 0
-        return self.__dict[prop].get(negated_number, 0)
-    def get(self, prop: type["Text"], *, negated_number: int = 0) -> int:
-        if len(self.__dict.get(prop, {}).items()) == 0:
-            return 0
-        return self.calc_count(self.__dict[prop], negated_number)
-    def has(self, prop: type["Text"], *, negated_number: int = 0) -> bool:
-        if len(self.__dict.get(prop, {}).items()) == 0:
-            return False
-        if self.calc_count(self.__dict[prop], negated_number) > 0:
-            return True
-        return False
+        return self.calc_count(self.__dict[prop], not_tier)
     def clear(self) -> None:
         self.__dict.clear()
     def enabled(self, prop: type["Text"]) -> bool:
@@ -105,9 +98,9 @@ class Properties(object):
             return False
         return self.calc_count(self.__dict[prop], 1) > 0
     def enabled_dict(self) -> dict[type["Text"], int]:
-        return {k: v for k, v in {k: self.calc_count(v, 0) for k, v in self.__dict.items()}.items() if v != 0}
+        return {_k: _v for _k, _v in {k: self.calc_count(v, 0) for k, v in self.__dict.items()}.items() if _v != 0}
     def disabled_dict(self) -> dict[type["Text"], int]:
-        return {k: v for k, v in {k: self.calc_count(v, 1) for k, v in self.__dict.items()}.items() if v != 0}
+        return {_k: _v for _k, _v in {k: self.calc_count(v, 1) for k, v in self.__dict.items()}.items() if _v != 0}
     def copy(self) -> "Properties":
         return Properties(self.__dict.copy())
 
@@ -249,6 +242,7 @@ class Object(object):
     @classmethod
     def get_color(cls) -> bmp.color.ColorHex:
         return bmp.color.current_palette[cls.sprite_palette]
+    def transform(self: "Object", /, _type: type["Object"]) -> "Object": ...
     def to_json(self) -> ObjectJson:
         json_object: ObjectJson = {"type": self.json_name, "pos": self.pos, "orient": self.orient.name}
         if self.space_id is not None:
@@ -299,6 +293,7 @@ class SpaceObject(Object):
         string = super().get_info()[1:-1]
         string += f" stand for space {self.space_id!r}"
         return "<" + string + ">"
+    def transform(self: "SpaceObject", /, _type: type["Object"]) -> "Object": ...
     def to_json(self) -> ObjectJson:
         return {**super().to_json(), "space_extra": self.space_extra}
 
@@ -332,6 +327,7 @@ class LevelObject(Object):
         string = super().get_info()[1:-1]
         string += f" stand for level {self.level_id!r}"
         return "<" + string + ">"
+    def transform(self: "LevelObject", /, _type: type["Object"]) -> "Object": ...
     def to_json(self) -> ObjectJson:
         return {**super().to_json(), "level_extra": self.level_extra}
 
@@ -504,17 +500,26 @@ class TextText_(Text):
     sprite_name = "text_text_underline"
     sprite_palette: bmp.color.PaletteIndex = (4, 0)
 
-class TextOn(Infix):
+class RangeInfix(Infix):
+    find_range: list[bmp.loc.Coord[int]]
+
+class TextOn(RangeInfix):
     json_name = "text_on"
     sprite_name = "text_on"
+    find_range = [(0, 0)]
 
-class TextNear(Infix):
+class TextNear(RangeInfix):
     json_name = "text_near"
     sprite_name = "text_near"
+    find_range = [(x, y) for x in range(-1, 2) for y in range(-1, 2)]
 
-class TextNextto(Infix):
+class TextNextto(RangeInfix):
     json_name = "text_nextto"
     sprite_name = "text_nextto"
+    find_range = [
+        (-1, 0), (+1, 0),
+        (0, -1), (0, +1),
+    ]
 
 class TextWithout(Infix):
     json_name = "text_without"
@@ -828,6 +833,145 @@ class TextParabox(RangedNoun):
 SupportsReferenceType = GeneralNoun | RangedNoun
 SupportsIsReferenceOf = FixedNoun | RangedNoun
 
+def object_transform(self: Object, /, _type: type[Object]) -> Object:
+    if isinstance(self, _type):
+        return self
+    elif _type == Text:
+        return get_noun_from_type(type(self))(
+            self.pos,
+            self.orient,
+            level_id = self.level_id,
+            space_id = self.space_id,
+        )
+    elif issubclass(_type, SpaceObject):
+        return _type(
+            self.pos,
+            self.orient,
+            level_id = self.level_id,
+            space_id = self.space_id,
+            space_extra = default_space_extra,
+        )
+    elif issubclass(_type, LevelObject):
+        return _type(
+            self.pos,
+            self.orient,
+            level_id = self.level_id,
+            space_id = self.space_id,
+            level_extra = {
+                "icon": {
+                    "name": self.sprite_name,
+                    "color": self.get_color(),
+                }
+            },
+        )
+    elif issubclass(_type, Game):
+        return _type(
+            self.pos,
+            self.orient,
+            level_id = self.level_id,
+            space_id = self.space_id,
+            ref_type = type(self),
+        )
+    else:
+        return _type(
+            self.pos,
+            self.orient,
+            level_id = self.level_id,
+            space_id = self.space_id,
+        )
+Object.transform = object_transform
+
+def space_object_transform(self: SpaceObject, /, _type: type[Object]) -> Object:
+    if isinstance(self, _type):
+        return self
+    elif _type == Text:
+        return get_noun_from_type(type(self))(
+            self.pos,
+            self.orient,
+            level_id = self.level_id,
+            space_id = self.space_id,
+        )
+    elif issubclass(_type, SpaceObject):
+        return _type(
+            self.pos,
+            self.orient,
+            level_id = self.level_id,
+            space_id = self.space_id,
+            space_extra = self.space_extra,
+        )
+    elif issubclass(_type, LevelObject):
+        return _type(
+            self.pos,
+            self.orient,
+            level_id = self.space_id.to_level_id() if self.space_id is not None else self.level_id,
+            space_id = self.space_id,
+            level_extra = {
+                "icon": {
+                    "name": self.sprite_name,
+                    "color": self.get_color(),
+                }
+            },
+        )
+    elif issubclass(_type, Game):
+        return _type(
+            self.pos,
+            self.orient,
+            level_id = self.level_id,
+            space_id = self.space_id,
+            ref_type = type(self),
+        )
+    else:
+        return _type(
+            self.pos,
+            self.orient,
+            level_id = self.level_id,
+            space_id = self.space_id,
+        )
+SpaceObject.transform = space_object_transform
+
+def level_object_transform(self: LevelObject, /, _type: type[Object]) -> Object:
+    if isinstance(self, _type):
+        return self
+    elif _type == Text:
+        return get_noun_from_type(type(self))(
+            self.pos,
+            self.orient,
+            level_id = self.level_id,
+            space_id = self.space_id,
+        )
+    elif issubclass(_type, SpaceObject):
+        return _type(
+            self.pos,
+            self.orient,
+            level_id = self.level_id,
+            space_id = None, # not final state
+            space_extra = default_space_extra,
+        )
+    elif issubclass(_type, LevelObject):
+        return _type(
+            self.pos,
+            self.orient,
+            level_id = self.level_id,
+            space_id = self.space_id,
+            level_extra = self.level_extra,
+        )
+    elif issubclass(_type, Game):
+        return _type(
+            self.pos,
+            self.orient,
+            level_id = self.level_id,
+            space_id = self.space_id,
+            ref_type = type(self),
+        )
+    else:
+        return _type(
+            self.pos,
+            self.orient,
+            level_id = self.level_id,
+            space_id = self.space_id,
+        )
+LevelObject.transform = level_object_transform
+
 builtin_object_class_list: list[type[Object]] = [
     *level_object_types,
     *space_object_types,
@@ -999,7 +1143,7 @@ def reload_object_class_list() -> None:
 reload_object_class_list()
 
 def same_float_prop(obj_1: Object, obj_2: Object):
-    return not (obj_1.properties.has(TextFloat) ^ obj_2.properties.has(TextFloat))
+    return not (obj_1.properties.enabled(TextFloat) ^ obj_2.properties.enabled(TextFloat))
 
 def get_noun_from_type(object_type: type[Object]) -> type[Noun]:
     global current_metatext_tier

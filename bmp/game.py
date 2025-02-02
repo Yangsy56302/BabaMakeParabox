@@ -324,7 +324,7 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                         str_list = []
                         for object_type in rule:
                             str_list.append(object_type.get_name())
-                        print(" ".join(str_list))
+                        bmp.lang.print(" ".join(str_list))
                     bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.level.rule_list")))
                 recursion_rule_list: list[bmp.rule.Rule] = levelpack.current_level.recursion_rules(levelpack.current_level.current_space)[0]
                 if len(recursion_rule_list):
@@ -332,14 +332,14 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                         str_list = []
                         for object_type in rule:
                             str_list.append(object_type.get_name())
-                        print(" ".join(str_list))
+                        bmp.lang.print(" ".join(str_list))
                 if len(levelpack.rule_list):
                     bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.levelpack.rule_list")))
                     for rule in levelpack.rule_list:
                         str_list = []
                         for object_type in rule:
                             str_list.append(object_type.get_name())
-                        print(" ".join(str_list))
+                        bmp.lang.print(" ".join(str_list))
                 if len(levelpack.collectibles) != 0:
                     bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.collectibles")))
                     collectible_counts: dict[type[bmp.obj.Object], int] = {}
@@ -378,7 +378,7 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                 raise GameIsDefeatError()
             if levelpack.current_level.game_properties.enabled(bmp.obj.TextBonus):
                 bmp.audio.play("bonus")
-                print("VVd4WmVGTnRXVEJOYWtaVFRqQmtWZz09")
+                bmp.lang.print("VVd4WmVGTnRXVEJOYWtaVFRqQmtWZz09")
             if levelpack.current_level.game_properties.enabled(bmp.obj.TextEnd):
                 bmp.lang.fprint("play.end")
                 bmp.audio.play("end")

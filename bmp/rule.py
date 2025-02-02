@@ -3,107 +3,107 @@ from typing import Any, Callable, Optional
 
 import bmp.obj
 
-Rule = list[type[bmp.obj.Text]]
+Rule = list[bmp.obj.Text]
 
 @dataclass(init=True, repr=True)
 class PrefixInfo():
     negated: bool
-    prefix_type: type[bmp.obj.Prefix]
+    prefix: bmp.obj.Prefix
 
 @dataclass(init=True, repr=True)
 class InfixNounInfo():
     negated: bool
-    infix_noun_type: type[bmp.obj.Noun | bmp.obj.Property]
+    infix_noun: bmp.obj.Noun | bmp.obj.Property
 
 @dataclass(init=True, repr=True)
 class InfixInfo():
     negated: bool
-    infix_type: type[bmp.obj.Infix]
+    infix: bmp.obj.Infix
     infix_noun_info_list: list[InfixNounInfo]
 
 @dataclass(init=True, repr=True)
 class PropInfo():
     prop_negated_tier: int
-    prop_type: type[bmp.obj.Noun | bmp.obj.Property]
+    prop: bmp.obj.Noun | bmp.obj.Property
 
 @dataclass(init=True, repr=True)
 class OperInfo():
-    oper_type: type[bmp.obj.Operator]
+    oper: bmp.obj.Operator
     prop_list: list[PropInfo]
 
 @dataclass(init=True, repr=True)
 class RuleInfo():
     prefix_info_list: list[PrefixInfo]
     noun_negated_tier: int
-    noun_type: type[bmp.obj.Noun]
+    noun: bmp.obj.Noun
     infix_info_list: list[InfixInfo]
     oper_list: list[OperInfo]
 
-def do_nothing(info: RuleInfo, placeholder: type[bmp.obj.Text]) -> RuleInfo:
+def do_nothing(info: RuleInfo, placeholder: bmp.obj.Text) -> RuleInfo:
     return info
 
-def set_prefix(info: RuleInfo, prefix_type: type[bmp.obj.Prefix]) -> RuleInfo:
+def set_prefix(info: RuleInfo, prefix_type: bmp.obj.Prefix) -> RuleInfo:
     info.prefix_info_list.insert(0, PrefixInfo(False, prefix_type))
     return info
 
-def set_infix(info: RuleInfo, infix_type: type[bmp.obj.Infix]) -> RuleInfo:
-    info.infix_info_list[0].infix_type = infix_type
+def set_infix(info: RuleInfo, infix_type: bmp.obj.Infix) -> RuleInfo:
+    info.infix_info_list[0].infix = infix_type
     return info
 
-def set_infix_noun(info: RuleInfo, infix_noun_type: type[bmp.obj.Noun | bmp.obj.Property]) -> RuleInfo:
+def set_infix_noun(info: RuleInfo, infix_noun_type: bmp.obj.Noun | bmp.obj.Property) -> RuleInfo:
     if len(info.infix_info_list) == 0:
-        info.infix_info_list.insert(0, InfixInfo(False, bmp.obj.Infix, []))
-    elif info.infix_info_list[0].infix_type != bmp.obj.Infix:
-        info.infix_info_list.insert(0, InfixInfo(False, bmp.obj.Infix, []))
+        info.infix_info_list.insert(0, InfixInfo(False, bmp.obj.Infix((-1, -1)), []))
+    elif info.infix_info_list[0].infix != bmp.obj.Infix:
+        info.infix_info_list.insert(0, InfixInfo(False, bmp.obj.Infix((-1, -1)), []))
     info.infix_info_list[0].infix_noun_info_list.insert(0, InfixNounInfo(False, infix_noun_type))
     return info
 
-def set_noun(info: RuleInfo, noun_type: type[bmp.obj.Noun]) -> RuleInfo:
-    info.noun_type = noun_type
+def set_noun(info: RuleInfo, noun_type: bmp.obj.Noun) -> RuleInfo:
+    info.noun = noun_type
     return info
 
-def set_oper(info: RuleInfo, oper_type: type[bmp.obj.Operator]) -> RuleInfo:
-    info.oper_list[0].oper_type = oper_type
-    info.oper_list.insert(0, OperInfo(bmp.obj.Operator, []))
+def set_oper(info: RuleInfo, oper_type: bmp.obj.Operator) -> RuleInfo:
+    info.oper_list[0].oper = oper_type
+    info.oper_list.insert(0, OperInfo(bmp.obj.Operator((-1, -1)), []))
     return info
 
-def set_prop(info: RuleInfo, prop_type: type[bmp.obj.Noun | bmp.obj.Property]) -> RuleInfo:
+def set_prop(info: RuleInfo, prop_type: bmp.obj.Noun | bmp.obj.Property) -> RuleInfo:
     info.oper_list[0].prop_list.insert(0, PropInfo(0, prop_type))
     return info
 
-def negate_prefix(info: RuleInfo, placeholder: type[bmp.obj.Text]) -> RuleInfo:
+def negate_prefix(info: RuleInfo, placeholder: bmp.obj.Text) -> RuleInfo:
     if len(info.prefix_info_list) != 0:
         info.prefix_info_list[0].negated = not info.prefix_info_list[0].negated
     else:
         info.noun_negated_tier += 1
     return info
 
-def negate_infix(info: RuleInfo, placeholder: type[bmp.obj.Text]) -> RuleInfo:
+def negate_infix(info: RuleInfo, placeholder: bmp.obj.Text) -> RuleInfo:
     info.infix_info_list[0].negated = not info.infix_info_list[0].negated
     return info
 
-def negate_infix_noun(info: RuleInfo, placeholder: type[bmp.obj.Text]) -> RuleInfo:
+def negate_infix_noun(info: RuleInfo, placeholder: bmp.obj.Text) -> RuleInfo:
     info.infix_info_list[0].infix_noun_info_list[0].negated = not info.infix_info_list[0].infix_noun_info_list[0].negated
     return info
 
-def negate_noun(info: RuleInfo, placeholder: type[bmp.obj.Text]) -> RuleInfo:
+def negate_noun(info: RuleInfo, placeholder: bmp.obj.Text) -> RuleInfo:
     info.noun_negated_tier += 1
     return info
 
-def negate_prop(info: RuleInfo, placeholder: type[bmp.obj.Text]) -> RuleInfo:
+def negate_prop(info: RuleInfo, placeholder: bmp.obj.Text) -> RuleInfo:
     info.oper_list[0].prop_list[0].prop_negated_tier += 1
     return info
 
-def text_text_noun(info: RuleInfo, placeholder: type[bmp.obj.Text]) -> RuleInfo:
-    info.noun_type = bmp.obj.get_noun_from_type(info.noun_type)
+def text_text_noun(info: RuleInfo, placeholder: bmp.obj.Text) -> RuleInfo:
+    info.noun = bmp.obj.get_noun_from_type(type(info.noun))((-1, -1))
     return info
 
-def text_text_infix_noun(info: RuleInfo, placeholder: type[bmp.obj.Text]) -> RuleInfo:
-    info.infix_info_list[0].infix_noun_info_list[0].infix_noun_type = bmp.obj.get_noun_from_type(info.infix_info_list[0].infix_noun_info_list[0].infix_noun_type)
+def text_text_infix_noun(info: RuleInfo, placeholder: bmp.obj.Text) -> RuleInfo:
+    info.infix_info_list[0].infix_noun_info_list[0].infix_noun = bmp.obj.get_noun_from_type(type(info.infix_info_list[0].infix_noun_info_list[0].infix_noun))((-1, -1))
     return info
 
-def text_text_prop(info: RuleInfo, placeholder: type[bmp.obj.Text]) -> RuleInfo:
-    info.oper_list[0].prop_list[0].prop_type = bmp.obj.get_noun_from_type(info.oper_list[0].prop_list[0].prop_type)
+def text_text_prop(info: RuleInfo, placeholder: bmp.obj.Text) -> RuleInfo:
+    info.oper_list[0].prop_list[0].prop = bmp.obj.get_noun_from_type(type(info.oper_list[0].prop_list[0].prop))((-1, -1))
     return info
 
 how_to_match_rule: dict[str, list[tuple[
@@ -173,10 +173,10 @@ how_to_match_rule: dict[str, list[tuple[
 }
 
 def get_info_from_rule(rule: Rule, stage: str = "before prefix") -> Optional[RuleInfo]:
-    for match_type, unmatch_type, next_stage, func in how_to_match_rule[stage]:
+    for match_obj, unmatch_obj, next_stage, func in how_to_match_rule[stage]:
         if len(rule) == 0 and next_stage == "new property":
-            return RuleInfo([], 0, bmp.obj.Noun, [], [OperInfo(bmp.obj.Operator, [])])
-        if issubclass(rule[0], tuple(match_type)) and not issubclass(rule[0], tuple(unmatch_type)):
+            return RuleInfo([], 0, bmp.obj.Noun((-1, -1)), [], [OperInfo(bmp.obj.Operator((-1, -1)), [])])
+        if isinstance(rule[0], tuple(match_obj)) and not isinstance(rule[0], tuple(unmatch_obj)):
             new_info = get_info_from_rule(rule[1:], next_stage)
             if new_info is not None:
                 info_list = func(new_info, rule[0])
@@ -186,25 +186,58 @@ def get_info_from_rule(rule: Rule, stage: str = "before prefix") -> Optional[Rul
 def handle_text_text_(rule: Rule) -> Rule:
     metanumber = 0
     new_rule = []
-    for text_type in rule:
-        if text_type == bmp.obj.TextText_:
+    for text_obj in rule:
+        if type(text_obj) == bmp.obj.TextText_:
             metanumber += 1
         elif metanumber != 0:
-            new_text_type = text_type
+            new_text_obj = text_obj
             for _ in range(metanumber):
-                new_text_type = bmp.obj.get_noun_from_type(new_text_type)
-            new_rule.append(new_text_type)
+                new_text_obj = bmp.obj.get_noun_from_type(type(new_text_obj))(text_obj.pos, text_obj.orient)
+            new_rule.append(new_text_obj)
             metanumber = 0
         else:
-            new_rule.append(text_type)
+            new_rule.append(text_obj)
     return new_rule
 
-default_rule_list: list[Rule] = []
-default_rule_list.append([bmp.obj.TextText, bmp.obj.TextIs, bmp.obj.TextPush])
-default_rule_list.append([bmp.obj.TextCursor, bmp.obj.TextIs, bmp.obj.TextSelect])
-default_rule_list.append([bmp.obj.TextNot, bmp.obj.TextMeta, bmp.obj.TextLevel, bmp.obj.TextIs, bmp.obj.TextStop])
-default_rule_list.append([bmp.obj.TextNot, bmp.obj.TextMeta, bmp.obj.TextSpace, bmp.obj.TextIs, bmp.obj.TextPush])
-default_rule_list.append([bmp.obj.TextNot, bmp.obj.TextMeta, bmp.obj.TextClone, bmp.obj.TextIs, bmp.obj.TextPush])
-default_rule_list.append([bmp.obj.TextMeta, bmp.obj.TextClone, bmp.obj.TextIs, bmp.obj.TextNot, bmp.obj.TextLeave])
+default_rule_list: list[Rule] = [
+    [
+        bmp.obj.TextText((-1, -1)),
+        bmp.obj.TextIs((-1, -1)),
+        bmp.obj.TextPush((-1, -1)),
+    ],
+    [
+        bmp.obj.TextCursor((-1, -1)),
+        bmp.obj.TextIs((-1, -1)),
+        bmp.obj.TextSelect((-1, -1)),
+    ],
+    [
+        bmp.obj.TextNot((-1, -1)),
+        bmp.obj.TextMeta((-1, -1)),
+        bmp.obj.TextLevel((-1, -1)),
+        bmp.obj.TextIs((-1, -1)),
+        bmp.obj.TextStop((-1, -1)),
+    ],
+    [
+        bmp.obj.TextNot((-1, -1)),
+        bmp.obj.TextMeta((-1, -1)),
+        bmp.obj.TextSpace((-1, -1)),
+        bmp.obj.TextIs((-1, -1)),
+        bmp.obj.TextPush((-1, -1)),
+    ],
+    [
+        bmp.obj.TextNot((-1, -1)),
+        bmp.obj.TextMeta((-1, -1)),
+        bmp.obj.TextClone((-1, -1)),
+        bmp.obj.TextIs((-1, -1)),
+        bmp.obj.TextPush((-1, -1)),
+    ],
+    [
+        bmp.obj.TextMeta((-1, -1)),
+        bmp.obj.TextClone((-1, -1)),
+        bmp.obj.TextIs((-1, -1)),
+        bmp.obj.TextNot((-1, -1)),
+        bmp.obj.TextLeave((-1, -1)),
+    ],
+]
 
 PropertyList = list[tuple[type[bmp.obj.Object], int]]

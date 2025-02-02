@@ -135,7 +135,7 @@ class Levelpack(object):
                 obj.special_operator_properties = {o: bmp.obj.Properties() for o in bmp.obj.special_operators}
         for space in self.current_level.space_list:
             space.set_rule()
-        new_prop_list: list[tuple[bmp.obj.Object, tuple[type[bmp.obj.Text], int]]] = []
+        new_prop_list: list[tuple[bmp.obj.Object, tuple[bmp.obj.Text, int]]] = []
         global_rule_info_list = [bmp.rule.get_info_from_rule(r) for r in self.rule_list]
         global_rule_info_list = [r for r in global_rule_info_list if r is not None]
         for space in self.current_level.space_list:
@@ -143,96 +143,95 @@ class Levelpack(object):
             for rule_info in space.rule_info + global_rule_info_list:
                 prefix_info_list = rule_info.prefix_info_list
                 noun_negated_tier = rule_info.noun_negated_tier
-                noun_type = rule_info.noun_type
+                noun_obj = rule_info.noun
                 infix_info_list = rule_info.infix_info_list
                 new_match_obj_list: list[bmp.obj.Object] = []
-                if issubclass(noun_type, bmp.obj.GeneralNoun):
-                    object_type = noun_type.ref_type
+                if isinstance(noun_obj, bmp.obj.GeneralNoun):
+                    object_type = noun_obj.ref_type
                     if noun_negated_tier % 2 == 1:
                         new_match_obj_list = [o for o in space.object_list if bmp.obj.TextAll.isreferenceof(o, all_list = self.current_level.all_list) and not isinstance(o, object_type)]
                     else:
                         new_match_obj_list = [o for o in space.get_objs_from_type(object_type)]
-                elif noun_type is bmp.obj.TextAll:
+                elif type(noun_obj) == bmp.obj.TextAll:
                     if noun_negated_tier % 2 == 1:
                         new_match_obj_list = [o for o in space.object_list if isinstance(o, bmp.obj.types_in_not_all)]
                     else:
                         new_match_obj_list = [o for o in space.object_list if bmp.obj.TextAll.isreferenceof(o, all_list = self.current_level.all_list)]
-                elif issubclass(noun_type, bmp.obj.SupportsIsReferenceOf):
+                elif isinstance(noun_obj, bmp.obj.SupportsIsReferenceOf):
                     if noun_negated_tier % 2 == 1:
-                        new_match_obj_list = [o for o in space.object_list if bmp.obj.TextAll.isreferenceof(o, all_list = self.current_level.all_list) and not noun_type.isreferenceof(o)]
+                        new_match_obj_list = [o for o in space.object_list if bmp.obj.TextAll.isreferenceof(o, all_list = self.current_level.all_list) and not noun_obj.isreferenceof(o)]
                     else:
-                        new_match_obj_list = [o for o in space.get_objs_from_special_noun(noun_type)]
+                        new_match_obj_list = [o for o in space.get_objs_from_special_noun(type(noun_obj))]
                 for oper_info in rule_info.oper_list:
-                    oper_type = oper_info.oper_type
+                    oper_obj = oper_info.oper
                     for prop_info in oper_info.prop_list:
-                        prop_type = prop_info.prop_type
+                        prop_obj = prop_info.prop
                         prop_negated_tier = prop_info.prop_negated_tier
-                        if issubclass(object_type, bmp.obj.Game) and issubclass(oper_type, bmp.obj.TextIs):
+                        if issubclass(object_type, bmp.obj.Game) and isinstance(oper_obj, bmp.obj.TextIs):
                             if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and len(prefix_info_list) == 0:
-                                self.current_level.game_properties.update(prop_type, prop_negated_tier)
+                                self.current_level.game_properties.update(prop_obj, prop_negated_tier)
                         elif issubclass(object_type, bmp.obj.LevelObject) and noun_negated_tier % 2 == 0:
                             meet_prefix_conditions = any(self.current_level.meet_prefix_conditions(space, o, prefix_info_list, True) for o in self.current_level_objs)
                             meet_infix_conditions = any(self.current_level.meet_infix_conditions(space, o, infix_info_list) for o in self.current_level_objs)
                             if (meet_prefix_conditions and meet_infix_conditions) or (len(prefix_info_list) == 0 and len(infix_info_list) == 0 and len(self.current_level_objs) == 0):
-                                if oper_type == bmp.obj.TextIs:
-                                    self.current_level.properties[object_type].update(prop_type, prop_negated_tier)
+                                if type(oper_obj) == bmp.obj.TextIs:
+                                    self.current_level.properties[object_type].update(prop_obj, prop_negated_tier)
                                 else:
-                                    self.current_level.special_operator_properties[object_type][oper_type].update(prop_type, prop_negated_tier)
+                                    self.current_level.special_operator_properties[object_type][type(oper_obj)].update(prop_obj, prop_negated_tier)
                         elif issubclass(object_type, bmp.obj.SpaceObject) and noun_negated_tier % 2 == 0:
                             meet_prefix_conditions = any(self.current_level.meet_prefix_conditions(space, o, prefix_info_list, True) for o in active_space_objs)
                             meet_infix_conditions = any(self.current_level.meet_infix_conditions(space, o, infix_info_list) for o in active_space_objs)
                             if (meet_prefix_conditions and meet_infix_conditions) or (len(prefix_info_list) == 0 and len(infix_info_list) == 0 and len(active_space_objs) == 0):
-                                if oper_type == bmp.obj.TextIs:
-                                    space.properties[object_type].update(prop_type, prop_negated_tier)
+                                if type(oper_obj) == bmp.obj.TextIs:
+                                    space.properties[object_type].update(prop_obj, prop_negated_tier)
                                 else:
-                                    space.special_operator_properties[object_type][oper_type].update(prop_type, prop_negated_tier)
+                                    space.special_operator_properties[object_type][type(oper_obj)].update(prop_obj, prop_negated_tier)
                         for obj in new_match_obj_list:
                             if self.current_level.meet_infix_conditions(space, obj, infix_info_list) and self.current_level.meet_prefix_conditions(space, obj, prefix_info_list):
-                                if oper_type == bmp.obj.TextIs:
-                                    new_prop_list.append((obj, (prop_type, prop_negated_tier)))
+                                if type(oper_obj) == bmp.obj.TextIs:
+                                    new_prop_list.append((obj, (prop_obj, prop_negated_tier)))
                                 else:
-                                    obj.special_operator_properties[oper_type].update(prop_type, prop_negated_tier)
+                                    obj.special_operator_properties[type(oper_obj)].update(prop_obj, prop_negated_tier)
             # outer space
             outer_space_rule_info = self.current_level.recursion_rules(space)[1]
             for rule_info in outer_space_rule_info:
                 prefix_info_list = rule_info.prefix_info_list
                 noun_negated_tier = rule_info.noun_negated_tier
-                noun_type = rule_info.noun_type
+                noun_obj = rule_info.noun
                 infix_info_list = rule_info.infix_info_list
                 new_match_obj_list: list[bmp.obj.Object] = []
-                if issubclass(noun_type, bmp.obj.GeneralNoun):
-                    object_type = noun_type.ref_type
+                if isinstance(noun_obj, bmp.obj.GeneralNoun):
+                    object_type = noun_obj.ref_type
                     if noun_negated_tier % 2 == 1:
                         new_match_obj_list = [o for o in space.object_list if bmp.obj.TextAll.isreferenceof(o, all_list = self.current_level.all_list) and not isinstance(o, object_type)]
                     else:
                         new_match_obj_list = [o for o in space.get_objs_from_type(object_type)]
-                elif noun_type is bmp.obj.TextAll:
+                elif type(noun_obj) is bmp.obj.TextAll:
                     if noun_negated_tier % 2 == 1:
                         new_match_obj_list = [o for o in space.object_list if isinstance(o, bmp.obj.types_in_not_all)]
                     else:
                         new_match_obj_list = [o for o in space.object_list if bmp.obj.TextAll.isreferenceof(o, all_list = self.current_level.all_list)]
-                elif issubclass(noun_type, bmp.obj.SupportsIsReferenceOf):
+                elif isinstance(noun_obj, bmp.obj.SupportsIsReferenceOf):
                     if noun_negated_tier % 2 == 1:
-                        new_match_obj_list = [o for o in space.object_list if bmp.obj.TextAll.isreferenceof(o, all_list = self.current_level.all_list) and not noun_type.isreferenceof(o)]
+                        new_match_obj_list = [o for o in space.object_list if bmp.obj.TextAll.isreferenceof(o, all_list = self.current_level.all_list) and not noun_obj.isreferenceof(o)]
                     else:
-                        new_match_obj_list = [o for o in space.get_objs_from_special_noun(noun_type)]
+                        new_match_obj_list = [o for o in space.get_objs_from_special_noun(type(noun_obj))]
                 for oper_info in rule_info.oper_list:
-                    oper_type = oper_info.oper_type
+                    oper_obj = oper_info.oper
                     for prop_info in oper_info.prop_list:
-                        prop_type = prop_info.prop_type
+                        prop_obj = prop_info.prop
                         prop_negated_tier = prop_info.prop_negated_tier
-                        if issubclass(object_type, bmp.obj.Game) and issubclass(oper_type, bmp.obj.TextIs):
+                        if issubclass(object_type, bmp.obj.Game) and isinstance(oper_obj, bmp.obj.TextIs):
                             if noun_negated_tier % 2 == 0 and len(infix_info_list) == 0 and self.current_level.meet_prefix_conditions(space, bmp.obj.Object((0, 0)), prefix_info_list, True):
-                                self.current_level.game_properties.update(prop_type, prop_negated_tier)
+                                self.current_level.game_properties.update(prop_obj, prop_negated_tier)
                         for obj in new_match_obj_list:
                             if self.current_level.meet_infix_conditions(space, obj, infix_info_list) and self.current_level.meet_prefix_conditions(space, obj, prefix_info_list):
-                                if oper_type == bmp.obj.TextIs:
-                                    new_prop_list.append((obj, (prop_type, prop_negated_tier)))
+                                if type(oper_obj) == bmp.obj.TextIs:
+                                    new_prop_list.append((obj, (prop_obj, prop_negated_tier)))
                                 else:
-                                    obj.special_operator_properties[oper_type].update(prop_type, prop_negated_tier)
-        for obj, prop in new_prop_list:
-            prop_type, prop_negated_count = prop
-            obj.properties.update(prop_type, prop_negated_count)
+                                    obj.special_operator_properties[type(oper_obj)].update(prop_obj, prop_negated_tier)
+        for obj, (prop_obj, prop_negated_count) in new_prop_list:
+            obj.properties.update(prop_obj, prop_negated_count)
     def transform(self) -> None:
         for space in self.current_level.space_list:
             delete_object_list = []
@@ -767,7 +766,7 @@ def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
     ):
         rule_list.append([])
         for object_type in rule:
-            rule_list[-1].append(bmp.obj.name_to_class[object_type]) # type: ignore
+            rule_list[-1].append(bmp.obj.name_to_class[object_type]((-1, -1))) # type: ignore
     current_level_id: bmp.ref.LevelID = bmp.ref.LevelID(**json_object["current_level"])
     for collectible in tqdm(
         json_object["collectibles"],

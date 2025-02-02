@@ -242,7 +242,7 @@ def pre_main() -> None:
     if bmp.opt.options["lang"] not in bmp.lang.language_dict.keys():
         for lang in bmp.lang.language_dict.keys():
             print(bmp.lang.language_dict[lang]["language.select"])
-        lang = input(">>> ")
+        lang = bmp.lang.input(">>> ")
         bmp.lang.set_current_language(lang)
         bmp.opt.options["lang"] = lang
     else:
