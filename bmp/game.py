@@ -231,6 +231,16 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                     level_changed = True
                     display_refresh = True
                     press_key_to_continue = False
+            elif keys["ESCAPE"]:
+                if levelpack.current_level.super_level_id is not None and levelpack.current_level.super_level_id in levelpack.level_dict.keys():
+                    levelpack.current_level_id = levelpack.current_level.super_level_id
+                    new_history: tuple[bmp.levelpack.Levelpack, bmp.levelpack.ReturnInfo] = (
+                        copy.deepcopy(levelpack),
+                        bmp.levelpack.default_levelpack_info.copy()
+                    )
+                    history.append(new_history)
+                    level_changed = True
+                    display_refresh = True
             elif keys["R"]:
                 restart_failed = True
                 if not (keys["LCTRL"] or keys["RCTRL"]):
@@ -445,20 +455,20 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                 level_changed = True
                 select = levelpack_info["select"]
                 if levelpack_info["win"]:
+                    levelpack.reset_level(levelpack.current_level_id)
                     if levelpack.current_level.super_level_id is not None and levelpack.current_level.super_level_id in levelpack.level_dict.keys():
-                        levelpack.reset_level(levelpack.current_level_id)
                         levelpack.current_level_id = levelpack.current_level.super_level_id
                 elif levelpack_info["end"]:
                     game_running = False
                 elif levelpack_info["done"]:
                     game_running = False
                 elif levelpack_info["transform"]:
+                    levelpack.reset_level(levelpack.current_level_id)
                     if levelpack.current_level.super_level_id is not None and levelpack.current_level.super_level_id in levelpack.level_dict.keys():
-                        levelpack.reset_level(levelpack.current_level_id)
                         levelpack.current_level_id = levelpack.current_level.super_level_id
                 elif select is not None:
                     selected_level_id: bmp.ref.LevelID = random.choice(select)
-                    if selected_level_id != levelpack.current_level_id and selected_level_id in levelpack.level_dict.keys():
+                    if selected_level_id in levelpack.level_dict.keys():
                         levelpack.current_level_id = selected_level_id
                     del selected_level_id
                 levelpack.prepare()
