@@ -29,7 +29,11 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
     cursor_pos_changed: bool
     current_clipboard = []
     window = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
-    pygame.display.set_caption(f"Baba Make Parabox Editor Version {bmp.base.versions}")
+    pygame.display.set_caption(bmp.lang.fformat(
+        "title.window.edit",
+        ver=bmp.base.version,
+        debug=bmp.lang.fformat("debug.name") if bmp.opt.options["debug"] else "",
+    ))
     pygame.display.set_icon(pygame.image.load(os.path.join(".", "logo", "c8icon.png")))
     pygame.key.stop_text_input()
     pygame.key.set_repeat(bmp.opt.options["gameplay"]["repeat"]["delay"], bmp.opt.options["gameplay"]["repeat"]["interval"])

@@ -86,7 +86,11 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
     window = pygame.display.set_mode((720, 720), pygame.RESIZABLE)
     game_offset = [0.0, 0.0]
     game_offset_speed = [0.0, 0.0]
-    pygame.display.set_caption(f"Baba Make Parabox Version {bmp.base.versions}")
+    pygame.display.set_caption(bmp.lang.fformat(
+        "title.window.play",
+        ver=bmp.base.version,
+        debug=bmp.lang.fformat("debug.name") if bmp.opt.options["debug"] else "",
+    ))
     pygame.display.set_icon(pygame.image.load(os.path.join(".", "logo", "a8icon.png")))
     window.fill("#000000")
     pygame.key.stop_text_input()

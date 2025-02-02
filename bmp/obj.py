@@ -1168,10 +1168,10 @@ def formatted_after_41(json_object: AnyObjectJson, ver: str) -> TypeGuard[Object
     return bmp.base.compare_versions(ver, "4.1") >= 0
 
 def formatted_currently(json_object: AnyObjectJson, ver: str) -> TypeGuard[ObjectJson]:
-    return bmp.base.compare_versions(ver, bmp.base.versions) == 0
+    return bmp.base.compare_versions(ver, bmp.base.version) == 0
 
 def formatted_from_future(json_object: AnyObjectJson, ver: str) -> TypeGuard[AnyObjectJson]:
-    return bmp.base.compare_versions(ver, bmp.base.versions) > 0
+    return bmp.base.compare_versions(ver, bmp.base.version) > 0
 
 def update_json_format(json_object: AnyObjectJson, ver: str) -> ObjectJson:
     return json_object # old levelpacks aren't able to update in 4.1

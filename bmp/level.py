@@ -1047,10 +1047,10 @@ class Level(object):
 type AnyLevelJson = LevelJson41 | LevelJson
 
 def formatted_currently(json_object: AnyLevelJson, ver: str) -> TypeGuard[LevelJson]:
-    return bmp.base.compare_versions(ver, bmp.base.versions) == 0
+    return bmp.base.compare_versions(ver, bmp.base.version) == 0
 
 def formatted_from_future(json_object: AnyLevelJson, ver: str) -> TypeGuard[AnyLevelJson]:
-    return bmp.base.compare_versions(ver, bmp.base.versions) > 0
+    return bmp.base.compare_versions(ver, bmp.base.version) > 0
 
 def update_json_format(json_object: AnyLevelJson, ver: str) -> LevelJson:
     return json_object # old levelpacks aren't able to update in 4.1

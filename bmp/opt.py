@@ -80,7 +80,7 @@ class Options4101(TypedDict):
 type Options = Options4101
 
 default_options: Options = {
-    "ver": bmp.base.versions,
+    "ver": bmp.base.version,
     "debug": False,
     "lang": "",
     "gameplay": {
@@ -147,10 +147,10 @@ def formatted_after_4101(json_object: AnyOptions, ver: str) -> TypeGuard[Options
     return bmp.base.compare_versions(ver, "4.101") >= 0
 
 def formatted_currently(json_object: AnyOptions, ver: str) -> TypeGuard[Options]:
-    return bmp.base.compare_versions(ver, bmp.base.versions) == 0
+    return bmp.base.compare_versions(ver, bmp.base.version) == 0
 
 def formatted_from_future(json_object: AnyOptions, ver: str) -> TypeGuard[AnyOptions]:
-    return bmp.base.compare_versions(ver, bmp.base.versions) > 0
+    return bmp.base.compare_versions(ver, bmp.base.version) > 0
 
 def update_json_format(json_object: AnyOptions) -> Options:
     if not isinstance(json_object, dict):
@@ -164,7 +164,7 @@ def update_json_format(json_object: AnyOptions) -> Options:
         return json_object
     elif formatted_before_4101(json_object, ver):
         return {
-            "ver": bmp.base.versions,
+            "ver": bmp.base.version,
             "lang": json_object["lang"],
             "debug": json_object["debug"],
             "gameplay": {
@@ -200,7 +200,7 @@ def load(filename: str = options_filename) -> None:
             new_options = default_options.copy()
             new_options.update(old_options)
             options = new_options.copy()
-            options["ver"] = bmp.base.versions
+            options["ver"] = bmp.base.version
     else:
         options = default_options
 

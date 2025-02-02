@@ -596,7 +596,7 @@ class Levelpack(object):
         }
     def to_json(self) -> LevelpackJson:
         json_object: LevelpackJson = {
-            "ver": bmp.base.versions,
+            "ver": bmp.base.version,
             "current_level": self.current_level_id.to_json(),
             "levels": [],
             "spaces": [],
@@ -668,10 +668,10 @@ def formatted_after_4102(json_object: AnyLevelpackJson, ver: str) -> TypeGuard[L
     return bmp.base.compare_versions(ver, "4.102") >= 0
 
 def formatted_currently(json_object: AnyLevelpackJson, ver: str) -> TypeGuard[LevelpackJson]:
-    return bmp.base.compare_versions(ver, bmp.base.versions) == 0
+    return bmp.base.compare_versions(ver, bmp.base.version) == 0
 
 def formatted_from_future(json_object: AnyLevelpackJson, ver: str) -> TypeGuard[AnyLevelpackJson]:
-    return bmp.base.compare_versions(ver, bmp.base.versions) > 0
+    return bmp.base.compare_versions(ver, bmp.base.version) > 0
 
 def update_json_format(json_object: AnyLevelpackJson, ver: str) -> LevelpackJson:
     # old levelpacks aren't able to update in 4.1
@@ -685,7 +685,7 @@ def update_json_format(json_object: AnyLevelpackJson, ver: str) -> LevelpackJson
         return json_object
     elif formatted_after_41(json_object, ver):
         new_json_object: LevelpackJson = {
-            "ver": bmp.base.versions,
+            "ver": bmp.base.version,
             "collectibles": json_object["collectibles"],
             "current_level": json_object["current_level"],
             "levels": [bmp.level.update_json_format(l, ver) for l in json_object["levels"]],

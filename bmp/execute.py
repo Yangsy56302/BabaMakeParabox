@@ -153,7 +153,7 @@ def set_levelpack_to_initial() -> bool:
 def change_options() -> bool:
     bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.change_options")))
     while True:
-        bmp.opt.options["debug"] = bmp.lang.input_yes(bmp.lang.fformat("launch.change_options.debug"))
+        bmp.opt.options["debug"] = bmp.lang.input_no(bmp.lang.fformat("launch.change_options.debug"))
         bmp.lang.fprint(f"launch.change_options.performance")
         performance_preset_index = bmp.lang.input_int(bmp.lang.fformat("input.number"))
         match int(performance_preset_index):
