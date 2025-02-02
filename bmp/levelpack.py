@@ -310,10 +310,7 @@ class Levelpack(object):
                         continue
                     new_type = new_noun.ref_type
                     if issubclass(new_type, bmp.obj.Game):
-                        if isinstance(old_obj, (bmp.obj.LevelObject, bmp.obj.SpaceObject)):
-                            space.new_obj(bmp.obj.Game(old_obj.pos, old_obj.orient, ref_type=bmp.obj.get_noun_from_type(old_type)))
-                        else:
-                            space.new_obj(bmp.obj.Game(old_obj.pos, old_obj.orient, ref_type=old_type))
+                        space.new_obj(bmp.obj.Game(old_obj.pos, old_obj.orient, ref_type=old_type))
                         transform_success = True
                     elif issubclass(new_type, bmp.obj.LevelObject):
                         if isinstance(old_obj, new_type):
@@ -340,14 +337,9 @@ class Levelpack(object):
                             new_obj = new_type(old_obj.pos, old_obj.orient, level_id=new_level_id, level_extra=level_extra)
                             space.new_obj(new_obj)
                             transform_success = True
-                        elif old_obj.level_id is not None:
-                            level_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": old_obj.sprite_name, "color": old_obj.get_color()}}
-                            space.new_obj(new_type(old_obj.pos, old_obj.orient, level_id=old_obj.level_id, level_extra=level_extra))
-                            transform_success = True
                         else:
                             level_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": old_obj.sprite_name, "color": old_obj.get_color()}}
-                            new_obj = new_type(old_obj.pos, old_obj.orient, level_id=self.current_level.level_id, level_extra=level_extra)
-                            space.new_obj(new_obj)
+                            space.new_obj(new_type(old_obj.pos, old_obj.orient, level_id=old_obj.level_id, level_extra=level_extra))
                             transform_success = True
                     elif issubclass(new_type, bmp.obj.SpaceObject):
                         if isinstance(old_obj, new_type):
@@ -362,11 +354,8 @@ class Levelpack(object):
                                     for new_space in old_level.space_list:
                                         space.new_obj(new_type(old_obj.pos, old_obj.orient, space_id=new_space.space_id))
                             transform_success = True
-                        elif old_obj.space_id is not None:
-                            space.new_obj(new_type(old_obj.pos, old_obj.orient, space_id=old_obj.space_id))
-                            transform_success = True
                         else:
-                            space.new_obj(new_type(old_obj.pos, old_obj.orient, space_id=space.space_id))
+                            space.new_obj(new_type(old_obj.pos, old_obj.orient, space_id=old_obj.space_id))
                             transform_success = True
                     elif issubclass(new_noun, bmp.obj.TextText):
                         if not isinstance(old_obj, bmp.obj.Text):
@@ -448,7 +437,7 @@ class Levelpack(object):
                             }
                             new_obj = new_type(old_obj.pos, old_obj.orient, level_id=new_level_id, level_extra=level_extra)
                         elif issubclass(new_type, bmp.obj.Game):
-                            new_obj = bmp.obj.Game(old_obj.pos, old_obj.orient, ref_type=bmp.obj.get_noun_from_type(space_object_type))
+                            new_obj = bmp.obj.Game(old_obj.pos, old_obj.orient, ref_type=space_object_type)
                         elif issubclass(new_noun, bmp.obj.TextText):
                             new_obj = bmp.obj.get_noun_from_type(space_object_type)(old_obj.pos, old_obj.orient, space_id=old_obj.space_id)
                         else:
@@ -511,7 +500,7 @@ class Levelpack(object):
                                 old_level.set_space(new_space)
                         new_obj = new_type(old_obj.pos, old_obj.orient, space_id=self.current_level.current_space_id)
                     elif issubclass(new_type, bmp.obj.Game):
-                        new_obj = bmp.obj.Game(old_obj.pos, old_obj.orient, ref_type=bmp.obj.get_noun_from_type(level_object_type))
+                        new_obj = bmp.obj.Game(old_obj.pos, old_obj.orient, ref_type=level_object_type)
                     elif issubclass(new_noun, bmp.obj.TextText):
                         new_obj = bmp.obj.get_noun_from_type(level_object_type)(old_obj.pos, old_obj.orient, level_id=self.current_level.level_id)
                     else:
