@@ -1,4 +1,4 @@
-from typing import NotRequired, Optional, TypedDict
+from typing import NotRequired, Optional, TypeGuard, TypedDict
 import random
 import copy
 import math
@@ -19,12 +19,14 @@ import pygame
 class MapLevelExtraJson(TypedDict):
     spore_for_blossom: NotRequired[int]
 
-class LevelJson(TypedDict):
+class LevelJson41(TypedDict):
     id: bmp.ref.LevelIDJson
     spaces: list[bmp.ref.SpaceIDJson]
     current_space: bmp.ref.SpaceIDJson
     super_level: NotRequired[bmp.ref.LevelIDJson]
     map_info: NotRequired[MapLevelExtraJson]
+
+type LevelJson = LevelJson41
 
 max_move_count: int = 120
 infinite_move_number: int = 6
@@ -56,8 +58,8 @@ class Level(object):
         self.sound_events: list[str] = []
     def __eq__(self, level: "Level") -> bool:
         return self.level_id == level.level_id
-    def get_space(self, space_id: bmp.ref.SpaceID) -> Optional[bmp.space.Space]:
-        return self.space_dict.get(space_id)
+    def get_space(self, space_id: Optional[bmp.ref.SpaceID]) -> Optional[bmp.space.Space]:
+        return None if space_id is None else self.space_dict.get(space_id)
     def get_exact_space(self, space_id: bmp.ref.SpaceID) -> bmp.space.Space:
         return self.space_dict[space_id]
     @property
@@ -933,6 +935,8 @@ class Level(object):
             return return_list
         new_passed.append(copy.deepcopy(current_space_id))
         for space_obj in current_space.get_spaces():
+            if space_obj.space_id is None:
+                continue
             if space_obj.space_id in passed:
                 continue
             sub_space = self.get_space(space_obj.space_id)
@@ -982,7 +986,9 @@ class Level(object):
                 sub_space = self.get_space(obj.space_id)
                 if sub_space is not None:
                     default_surface = self.space_to_surface(sub_space, wiggle, (scaled_sprite_size, scaled_sprite_size), depth + 1, smooth)
-                    obj_surface = bmp.render.simple_object_to_surface(obj, wiggle=wiggle, default_surface=default_surface, debug=debug)
+                else:
+                    default_surface = None
+                obj_surface = bmp.render.simple_object_to_surface(obj, wiggle=wiggle, default_surface=default_surface, debug=debug)
                 transform = bmp.loc.get_stacked_transform(obj.space_extra["static_transform"], obj.space_extra["dynamic_transform"])
                 if transform["flip"]:
                     obj_surface = pygame.transform.flip(obj_surface, flip_x=True, flip_y=False)
@@ -1036,10 +1042,18 @@ class Level(object):
             json_object["map_info"] = self.map_info
         return json_object
 
-def update_json_format(json_object: LevelJson, ver: str) -> LevelJson:
+type AnyLevelJson = LevelJson41 | LevelJson
+
+def formatted_currently(json_object: AnyLevelJson, ver: str) -> TypeGuard[LevelJson]:
+    return bmp.base.compare_versions(ver, bmp.base.versions) == 0
+
+def formatted_from_future(json_object: AnyLevelJson, ver: str) -> TypeGuard[AnyLevelJson]:
+    return bmp.base.compare_versions(ver, bmp.base.versions) > 0
+
+def update_json_format(json_object: AnyLevelJson, ver: str) -> LevelJson:
     return json_object # old levelpacks aren't able to update in 4.1
 
-def json_to_level(json_object: LevelJson, ver: str) -> Level:
+def json_to_level(json_object: LevelJson) -> Level:
     level_id: bmp.ref.LevelID = bmp.ref.LevelID(**json_object["id"])
     space_id_list: list[bmp.ref.SpaceID] = [bmp.ref.SpaceID(**s) for s in json_object["spaces"]]
     current_space_id: bmp.ref.SpaceID = bmp.ref.SpaceID(**json_object["current_space"])

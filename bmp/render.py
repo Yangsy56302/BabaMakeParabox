@@ -1,4 +1,5 @@
 from typing import Any, Callable, Optional
+from tqdm import tqdm
 import os
 import string
 
@@ -21,6 +22,8 @@ gui_scale = 4
 half_gui_scale = 1
 
 def set_alpha(surface: pygame.Surface, alpha: int) -> pygame.Surface:
+    if alpha == 0xFF:
+        return surface.copy()
     new_surface = surface.copy()
     new_surface.fill(pygame.Color(255, 255, 255, alpha), special_flags=pygame.BLEND_RGBA_MULT)
     return new_surface
@@ -38,15 +41,13 @@ def set_surface_color_light(surface: pygame.Surface, color: bmp.color.ColorHex) 
     if color == 0x000000:
         return surface.copy()
     r, g, b = bmp.color.hex_to_rgb(color)
-    clr_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
-    clr_surface.fill(pygame.Color(255 - r, 255 - g, 255 - b, 255))
     neg_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
     neg_surface.fill("#FFFFFFFF")
     neg_surface.blit(surface, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
-    clr_surface.blit(neg_surface, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+    neg_surface.fill(pygame.Color(255 - r, 255 - g, 255 - b, 255), special_flags=pygame.BLEND_RGBA_MULT)
     new_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
     new_surface.fill("#FFFFFFFF")
-    new_surface.blit(clr_surface, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
+    new_surface.blit(neg_surface, (0, 0), special_flags=pygame.BLEND_RGBA_SUB)
     return new_surface
 
 class Sprites(object):
@@ -63,7 +64,13 @@ class Sprites(object):
         for wiggle in range(1, 4):
             self.raw_sprites["empty"][0][int(wiggle)] = empty_sprite.copy()
             self.sprites["empty"][0][int(wiggle)] = empty_sprite.copy()
-        for object_type in bmp.obj.object_class_list:
+        for object_type in tqdm(
+            bmp.obj.object_class_list,
+            desc = bmp.lang.fformat("loading.game.sprites"),
+            unit = bmp.lang.fformat("object.name"),
+            position = 0,
+            **bmp.lang.default_tqdm_args,
+        ):
             if issubclass(object_type, bmp.obj.Metatext):
                 continue
             sprite_name: str = getattr(object_type, "sprite_name", "")
@@ -114,7 +121,7 @@ def simple_type_to_surface(object_type: type[bmp.obj.Object], varient: int = 0, 
             obj_surface = default_surface.copy()
         else:
             obj_surface = pygame.Surface((sprite_size, sprite_size), pygame.SRCALPHA)
-            obj_surface.fill(object_type.get_color())
+            obj_surface.fill("#00000080")
         obj_surface = set_surface_color_light(obj_surface, object_type.light_overlay)
         obj_surface = set_surface_color_dark(obj_surface, object_type.dark_overlay)
         overlay_surface = current_sprites.get(bmp.obj.SpaceObject.sprite_name, 0, wiggle, raw=True).copy()
@@ -122,14 +129,16 @@ def simple_type_to_surface(object_type: type[bmp.obj.Object], varient: int = 0, 
         obj_surface.blit(overlay_surface, (0, 0))
     elif issubclass(object_type, bmp.obj.Metatext):
         obj_surface = current_sprites.get(object_type.basic_ref_type.sprite_name, varient, wiggle).copy()
-        obj_surface = pygame.transform.scale(obj_surface, (sprite_size * len(str(object_type.meta_tier)), sprite_size * len(str(object_type.meta_tier))))
-        tier_surface = pygame.Surface((sprite_size * len(str(object_type.meta_tier)), sprite_size), pygame.SRCALPHA)
+        tier_surface = pygame.Surface((obj_surface.get_width() * len(str(object_type.meta_tier)), obj_surface.get_height()), pygame.SRCALPHA)
         tier_surface.fill("#00000000")
         for digit, char in enumerate(str(object_type.meta_tier)):
             tier_surface.blit(current_sprites.get("text_" + char, varient, wiggle), (sprite_size * digit, 0))
         tier_surface = set_alpha(tier_surface, 0x80)
-        tier_surface_pos = ((obj_surface.get_width() - tier_surface.get_width()) // 2,
-                            (obj_surface.get_height() - tier_surface.get_height()) // 2)
+        obj_surface = pygame.transform.scale_by(obj_surface, len(str(object_type.meta_tier)))
+        tier_surface_pos = (
+            (obj_surface.get_width() - tier_surface.get_width()) // 2,
+            (obj_surface.get_height() - tier_surface.get_height()) // 2,
+        )
         obj_surface.blit(tier_surface, tier_surface_pos)
     elif object_type.sprite_name in current_sprites.sprites.keys():
         obj_surface = current_sprites.get(object_type.sprite_name, varient, wiggle).copy()
@@ -139,8 +148,10 @@ def simple_object_to_surface(obj: bmp.obj.Object, wiggle: int = 1, default_surfa
     if isinstance(obj, bmp.obj.LevelObject):
         obj_surface = set_surface_color_dark(current_sprites.get(obj.sprite_name, obj.sprite_state, wiggle, raw=True).copy(), obj.level_extra["icon"]["color"])
         icon_surface = current_sprites.get(obj.level_extra["icon"]["name"], 0, wiggle, raw=True).copy()
-        icon_surface_pos = ((obj_surface.get_width() - icon_surface.get_width()) // 2,
-                            (obj_surface.get_height() - icon_surface.get_height()) // 2)
+        icon_surface_pos = (
+            (obj_surface.get_width() - icon_surface.get_width()) // 2,
+            (obj_surface.get_height() - icon_surface.get_height()) // 2,
+        )
         obj_surface.blit(icon_surface, icon_surface_pos)
     else:
         obj_surface = simple_type_to_surface(type(obj), obj.sprite_state, wiggle, default_surface, debug)
@@ -150,15 +161,23 @@ def simple_object_to_surface(obj: bmp.obj.Object, wiggle: int = 1, default_surfa
                     obj_surface = set_alpha(obj_surface, 0x80)
                 else:
                     obj_surface.fill("#00000000")
-        if isinstance(obj, bmp.obj.SpaceObject) and obj.space_id.infinite_tier != 0:
-            infinite_text_surface = current_sprites.get("text_infinity" if obj.space_id.infinite_tier > 0 else "text_epsilon", 0, wiggle, raw=True)
-            infinite_tier_surface = pygame.Surface((sprite_size, sprite_size * abs(obj.space_id.infinite_tier)), pygame.SRCALPHA)
+        if isinstance(obj, bmp.obj.SpaceObject) and obj.space_id is not None and obj.space_id.infinite_tier != 0:
+            infinite_text_surface = current_sprites.get("text_infinity" if obj.space_id.infinite_tier > 0 else "text_epsilon", 0, wiggle, raw=True).copy()
+            infinite_text_surface = pygame.transform.scale(infinite_text_surface, obj_surface.get_size())
+            infinite_tier_surface = pygame.Surface(
+                (obj_surface.get_width(), obj_surface.get_height() * abs(obj.space_id.infinite_tier)),
+                pygame.SRCALPHA
+            )
             infinite_tier_surface.fill("#00000000")
             for i in range(abs(obj.space_id.infinite_tier)):
-                infinite_tier_surface.blit(infinite_text_surface, (0, i * sprite_size))
+                infinite_tier_surface.blit(infinite_text_surface, (0, i * obj_surface.get_height()))
             infinite_tier_surface = set_alpha(infinite_tier_surface, 0x80)
-            infinite_tier_surface = pygame.transform.scale(infinite_tier_surface, obj_surface.get_size())
-            obj_surface.blit(infinite_tier_surface, (0, 0))
+            obj_surface = pygame.transform.scale_by(obj_surface, abs(obj.space_id.infinite_tier))
+            infinite_tier_surface_pos = (
+                (obj_surface.get_width() - infinite_tier_surface.get_width()) // 2,
+                (obj_surface.get_height() - infinite_tier_surface.get_height()) // 2,
+            )
+            obj_surface.blit(infinite_tier_surface, infinite_tier_surface_pos)
     return obj_surface
 
 def valid(__obj: bmp.obj.Object, /) -> bool:

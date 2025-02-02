@@ -108,9 +108,36 @@ def update_levelpack() -> bool:
         bmp.lang.fwarn("warn.file.not_found", file=input_filename)
         return False
     with open(os.path.join("levelpacks", input_filename), "r", encoding="utf-8") as file:
-        levelpack_json = json.load(file)
+        levelpack_json: bmp.levelpack.AnyLevelpackJson = json.load(file)
         bmp.lang.fprint("launch.open.levelpack.done", file=input_filename)
-        levelpack_json = bmp.levelpack.update_json_format(levelpack_json)
+        levelpack_json = bmp.levelpack.update_json_format(levelpack_json, levelpack_json["ver"])
+    bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.save.file")))
+    bmp.lang.fprint("launch.save.levelpack")
+    bmp.lang.fprint("launch.save.levelpack.empty.update")
+    output_filename = bmp.lang.input_str(bmp.lang.fformat("input.file.name"))
+    output_filename += "" if bmp.opt.options["debug"] or output_filename.endswith(".json") else ".json"
+    if output_filename == "":
+        output_filename = input_filename
+    with open(os.path.join("levelpacks", output_filename), "w", encoding="utf-8") as file:
+        json.dump(levelpack_json, file, **bmp.opt.get_json_dump_kwds())
+        bmp.lang.fprint("launch.save.levelpack.done", file=output_filename)
+    return True
+
+def set_levelpack_to_initial() -> bool:
+    bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.directory", dir="levelpacks")))
+    show_dir("levelpacks", lambda s: True if bmp.opt.options["debug"] else s.endswith(".json"))
+    bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.open.file")))
+    bmp.lang.fprint("launch.open.levelpack")
+    input_filename = bmp.lang.input_str(bmp.lang.fformat("input.file.name"))
+    input_filename += "" if bmp.opt.options["debug"] or input_filename.endswith(".json") else ".json"
+    if not os.path.isfile(os.path.join("levelpacks", input_filename)):
+        bmp.lang.fwarn("warn.file.not_found", file=input_filename)
+        return False
+    with open(os.path.join("levelpacks", input_filename), "r", encoding="utf-8") as file:
+        levelpack_json: bmp.levelpack.LevelpackJson = json.load(file)
+        bmp.lang.fprint("launch.open.levelpack.done", file=input_filename)
+        levelpack_json.pop("level_init_states")
+        levelpack_json.pop("space_init_states")
     bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.save.file")))
     bmp.lang.fprint("launch.save.levelpack")
     bmp.lang.fprint("launch.save.levelpack.empty.update")
@@ -248,6 +275,7 @@ def main() -> int:
         "2": editor,
         "3": change_options,
         "4": update_levelpack,
+        "5": set_levelpack_to_initial,
     }
     if not pre_main_check():
         return 0

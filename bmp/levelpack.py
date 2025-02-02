@@ -1,4 +1,4 @@
-from typing import Optional, TypedDict, NotRequired
+from typing import Optional, TypeGuard, TypedDict, NotRequired
 import copy
 from tqdm import tqdm
 
@@ -19,17 +19,31 @@ class ReturnInfo(TypedDict):
     selected_level: Optional[bmp.ref.LevelID]
 default_levelpack_info: ReturnInfo = {"win": False, "end": False, "done": False, "transform": False, "game_push": False, "selected_level": None}
 
-class LevelpackJson(TypedDict):
+class LevelpackJson41(TypedDict):
     ver: str
     name: NotRequired[str]
     author: NotRequired[str]
     current_level: bmp.ref.LevelIDJson
     collectibles: list[bmp.obj.CollectibleJson]
-    levels: list[bmp.level.LevelJson]
-    spaces: list[bmp.space.SpaceJson]
-    level_init_states: NotRequired[list[bmp.level.LevelJson]]
-    space_init_states: NotRequired[list[bmp.space.SpaceJson]]
+    levels: list[bmp.level.LevelJson41]
+    spaces: list[bmp.space.SpaceJson41]
+    level_init_states: NotRequired[list[bmp.level.LevelJson41]]
+    space_init_states: NotRequired[list[bmp.space.SpaceJson41]]
     rules: list[list[str]]
+
+class LevelpackJson4102(TypedDict):
+    ver: str
+    name: NotRequired[str]
+    author: NotRequired[str]
+    current_level: bmp.ref.LevelIDJson
+    collectibles: list[bmp.obj.CollectibleJson]
+    levels: list[bmp.level.LevelJson41]
+    spaces: list[bmp.space.SpaceJson4102]
+    level_init_states: NotRequired[list[bmp.level.LevelJson41]]
+    space_init_states: NotRequired[list[bmp.space.SpaceJson4102]]
+    rules: list[list[str]]
+
+type LevelpackJson = LevelpackJson4102
 
 class Levelpack(object):
     def __init__(
@@ -59,12 +73,11 @@ class Levelpack(object):
         self.rule_list: list[bmp.rule.Rule] = rule_list if (rule_list is not None and len(rule_list) != 0) else bmp.rule.default_rule_list
     def get_exact_level(self, level_id: bmp.ref.LevelID) -> bmp.level.Level:
         return self.level_dict[level_id]
-    def get_level(self, level_id: bmp.ref.LevelID) -> Optional[bmp.level.Level]:
-        return self.level_dict.get(level_id)
-    def set_level(self, level: bmp.level.Level, level_id: Optional[bmp.ref.LevelID] = None) -> None:
-        _level_id: bmp.ref.LevelID = level_id if level_id is not None else level.level_id
+    def get_level(self, level_id: Optional[bmp.ref.LevelID]) -> Optional[bmp.level.Level]:
+        return None if level_id is None else self.level_dict.get(level_id)
+    def set_level(self, level_id: bmp.ref.LevelID, level: bmp.level.Level) -> None:
         level.space_dict = self.space_dict
-        self.level_dict[_level_id] = level
+        self.level_dict[level_id] = level
     def set_level_init_state(self, level_id: bmp.ref.LevelID, level: bmp.level.Level) -> None:
         self.level_init_state_dict[level_id] = level
     def reset_level(self, level_id: bmp.ref.LevelID) -> None:
@@ -284,7 +297,7 @@ class Levelpack(object):
                         if issubclass(new_noun, bmp.obj.TextEmpty):
                             transform_success = True
                         if issubclass(new_noun, bmp.obj.SpecificSpaceNoun):
-                            if new_noun.isreferenceof(old_obj):
+                            if new_noun.isreferenceof(old_obj) and old_obj.space_id is not None:
                                 old_obj.space_id += new_noun.delta_infinite_tier
                         continue
                     new_type = new_noun.ref_type
@@ -301,18 +314,22 @@ class Levelpack(object):
                             space.new_obj(new_type(old_obj.pos, old_obj.orient, level_id=old_obj.level_id, level_extra=old_obj.level_extra))
                             transform_success = True
                         elif isinstance(old_obj, bmp.obj.SpaceObject):
-                            level_id: bmp.ref.LevelID = old_obj.space_id.to_level_id()
-                            self.set_level(bmp.level.Level(
-                                level_id, self.current_level.space_included, old_obj.space_id,
-                                super_level_id = self.current_level.level_id,
-                            ))
+                            new_level_id: Optional[bmp.ref.LevelID] = None
+                            if old_obj.space_id is not None:
+                                new_level_id = old_obj.space_id.to_level_id()
+                                new_level = bmp.level.Level(
+                                    new_level_id, [old_obj.space_id], old_obj.space_id,
+                                    super_level_id = self.current_level.level_id,
+                                )
+                                self.set_level(new_level_id, new_level)
+                                self.set_level_init_state(new_level_id, new_level)
                             level_extra: bmp.obj.LevelObjectExtra = {
                                 "icon": {
                                     "name": bmp.obj.get_noun_from_type(bmp.obj.default_space_object_type).sprite_name,
                                     "color": space.color if space.color is not None else bmp.obj.SpaceObject.get_color()
                                 }
                             }
-                            new_obj = new_type(old_obj.pos, old_obj.orient, level_id=level_id, level_extra=level_extra)
+                            new_obj = new_type(old_obj.pos, old_obj.orient, level_id=new_level_id, level_extra=level_extra)
                             space.new_obj(new_obj)
                             transform_success = True
                         elif old_obj.level_id is not None:
@@ -331,13 +348,11 @@ class Levelpack(object):
                             space.new_obj(new_type(old_obj.pos, old_obj.orient, space_id=old_obj.space_id, space_extra=old_obj.space_extra))
                             transform_success = True
                         elif isinstance(old_obj, bmp.obj.LevelObject):
-                            new_level = self.get_level(old_obj.level_id)
-                            if new_level is not None:
-                                for temp_space in new_level.space_list:
-                                    self.current_level.set_space(temp_space)
-                                space.new_obj(new_type(old_obj.pos, old_obj.orient, space_id=new_level.current_space_id))
-                            else:
-                                space.new_obj(new_type(old_obj.pos, old_obj.orient, space_id=old_obj.level_id.to_space_id()))
+                            if old_obj.level_id is not None:
+                                old_level = self.get_level(old_obj.level_id)
+                                if old_level is not None:
+                                    for new_space in old_level.space_list:
+                                        space.new_obj(new_type(old_obj.pos, old_obj.orient, space_id=new_space.space_id))
                             transform_success = True
                         elif old_obj.space_id is not None:
                             space.new_obj(new_type(old_obj.pos, old_obj.orient, space_id=old_obj.space_id))
@@ -398,7 +413,7 @@ class Levelpack(object):
                             if issubclass(new_noun, bmp.obj.TextEmpty):
                                 continue
                             if issubclass(new_noun, bmp.obj.SpecificSpaceNoun):
-                                if new_noun.isreferenceof(old_obj):
+                                if new_noun.isreferenceof(old_obj) and old_obj.space_id is not None:
                                     old_obj.space_id += new_noun.delta_infinite_tier
                             continue
                         new_type = new_noun.ref_type
@@ -408,19 +423,22 @@ class Levelpack(object):
                         elif issubclass(new_type, bmp.obj.SpaceObject):
                             new_obj = new_type(old_obj.pos, old_obj.orient, space_id=old_obj.space_id, space_extra=old_obj.space_extra)
                         elif issubclass(new_type, bmp.obj.LevelObject):
-                            new_level_id: bmp.ref.LevelID = old_obj.space_id.to_level_id()
-                            new_level_icon_color: Optional[bmp.color.ColorHex] = self.current_level.get_exact_space(old_obj.space_id).color
-                            if new_level_icon_color is None:
-                                new_level_icon_color = bmp.obj.default_space_object_type.get_color()
-                            new_level_extra = bmp.obj.LevelObjectExtra(icon=bmp.obj.LevelObjectIcon(
-                                name = bmp.obj.get_noun_from_type(space_object_type).sprite_name,
-                                color = new_level_icon_color,
-                            ))
-                            self.set_level(bmp.level.Level(
-                                new_level_id, self.current_level.space_included, old_obj.space_id,
-                                super_level_id = self.current_level.level_id,
-                            ))
-                            new_obj = new_type(old_obj.pos, old_obj.orient, level_id=new_level_id, level_extra=new_level_extra)
+                            new_level_id: Optional[bmp.ref.LevelID] = None
+                            if old_obj.space_id is not None:
+                                new_level_id = old_obj.space_id.to_level_id()
+                                new_level = bmp.level.Level(
+                                    new_level_id, [old_obj.space_id], old_obj.space_id,
+                                    super_level_id = self.current_level.level_id,
+                                )
+                                self.set_level(new_level_id, new_level)
+                                self.set_level_init_state(new_level_id, new_level)
+                            level_extra: bmp.obj.LevelObjectExtra = {
+                                "icon": {
+                                    "name": bmp.obj.get_noun_from_type(bmp.obj.default_space_object_type).sprite_name,
+                                    "color": old_space.color if old_space.color is not None else bmp.obj.SpaceObject.get_color()
+                                }
+                            }
+                            new_obj = new_type(old_obj.pos, old_obj.orient, level_id=new_level_id, level_extra=level_extra)
                         elif issubclass(new_type, bmp.obj.Game):
                             new_obj = bmp.obj.Game(old_obj.pos, old_obj.orient, ref_type=bmp.obj.get_noun_from_type(space_object_type))
                         elif issubclass(new_noun, bmp.obj.TextText):
@@ -554,7 +572,7 @@ class Levelpack(object):
         self.current_level.make()
         self.update_rules()
         for new_level in self.current_level.created_levels:
-            self.set_level(new_level)
+            self.set_level(new_level.level_id, new_level)
         self.current_level.refresh_all_list()
         bonus = self.current_level.bonus()
         end = self.current_level.end()
@@ -587,7 +605,7 @@ class Levelpack(object):
         if self.author is not None: json_object["author"] = self.author
         for level in tqdm(
             self.level_dict.values(),
-            desc = bmp.lang.fformat("saving.levelpack.level_list"),
+            desc = bmp.lang.fformat("saving.levelpack.levels"),
             unit = bmp.lang.fformat("level.name"),
             position = 0,
             **bmp.lang.default_tqdm_args,
@@ -595,7 +613,7 @@ class Levelpack(object):
             json_object["levels"].append(level.to_json())
         for space in tqdm(
             self.space_dict.values(),
-            desc = bmp.lang.fformat("saving.level.space_list"),
+            desc = bmp.lang.fformat("saving.level.spaces"),
             unit = bmp.lang.fformat("level.name"),
             position = 0,
             **bmp.lang.default_tqdm_args,
@@ -603,7 +621,7 @@ class Levelpack(object):
             json_object["spaces"].append(space.to_json())
         for level in tqdm(
             self.level_init_state_dict.values(),
-            desc = bmp.lang.fformat("saving.levelpack.level_list"),
+            desc = bmp.lang.fformat("saving.levelpack.levels"),
             unit = bmp.lang.fformat("level.name"),
             position = 0,
             **bmp.lang.default_tqdm_args,
@@ -611,7 +629,7 @@ class Levelpack(object):
             json_object["level_init_states"].append(level.to_json())
         for space in tqdm(
             self.space_init_state_dict.values(),
-            desc = bmp.lang.fformat("saving.level.space_list"),
+            desc = bmp.lang.fformat("saving.level.spaces"),
             unit = bmp.lang.fformat("level.name"),
             position = 0,
             **bmp.lang.default_tqdm_args,
@@ -619,7 +637,7 @@ class Levelpack(object):
             json_object["space_init_states"].append(space.to_json())
         for collectible in tqdm(
             self.collectibles,
-            desc = bmp.lang.fformat("saving.levelpack.collect_list"),
+            desc = bmp.lang.fformat("saving.levelpack.collectibles"),
             unit = bmp.lang.fformat("collectible.name"),
             position = 0,
             **bmp.lang.default_tqdm_args,
@@ -627,7 +645,7 @@ class Levelpack(object):
             json_object["collectibles"].append(collectible.to_json())
         for rule in tqdm(
             self.rule_list,
-            desc = bmp.lang.fformat("saving.levelpack.rule_list"),
+            desc = bmp.lang.fformat("saving.levelpack.rules"),
             unit = bmp.lang.fformat("rule.name"),
             position = 0,
             **bmp.lang.default_tqdm_args,
@@ -637,31 +655,72 @@ class Levelpack(object):
                 json_object["rules"][-1].append(obj.json_name)
         return json_object
 
-def update_json_format(json_object: LevelpackJson) -> LevelpackJson:
-    return json_object # old levelpacks aren't able to update in 4.1
+type AnyLevelpackJson = LevelpackJson41 | LevelpackJson4102 | LevelpackJson
+
+def formatted_after_41(json_object: AnyLevelpackJson, ver: str) -> TypeGuard[LevelpackJson41]:
+    return bmp.base.compare_versions(ver, "4.1") >= 0
+
+def formatted_after_4102(json_object: AnyLevelpackJson, ver: str) -> TypeGuard[LevelpackJson4102]:
+    return bmp.base.compare_versions(ver, "4.102") >= 0
+
+def formatted_currently(json_object: AnyLevelpackJson, ver: str) -> TypeGuard[LevelpackJson]:
+    return bmp.base.compare_versions(ver, bmp.base.versions) == 0
+
+def formatted_from_future(json_object: AnyLevelpackJson, ver: str) -> TypeGuard[AnyLevelpackJson]:
+    return bmp.base.compare_versions(ver, bmp.base.versions) > 0
+
+def update_json_format(json_object: AnyLevelpackJson, ver: str) -> LevelpackJson:
+    # old levelpacks aren't able to update in 4.1
+    if not isinstance(json_object, dict):
+        raise TypeError(type(json_object))
+    elif formatted_from_future(json_object, ver):
+        raise bmp.base.DowngradeError(ver)
+    elif formatted_currently(json_object, ver):
+        return json_object
+    elif formatted_after_4102(json_object, ver):
+        return json_object
+    elif formatted_after_41(json_object, ver):
+        new_json_object: LevelpackJson = {
+            "ver": bmp.base.versions,
+            "collectibles": json_object["collectibles"],
+            "current_level": json_object["current_level"],
+            "levels": [bmp.level.update_json_format(l, ver) for l in json_object["levels"]],
+            "spaces": [bmp.space.update_json_format(s, ver) for s in json_object["spaces"]],
+            "rules": json_object["rules"],
+        }
+        if "name" in json_object:
+            new_json_object["name"] = json_object["name"]
+        if "author" in json_object:
+            new_json_object["author"] = json_object["author"]
+        if "level_init_states" in json_object:
+            new_json_object["level_init_states"] = [bmp.level.update_json_format(l, ver) for l in json_object["level_init_states"]]
+        if "space_init_states" in json_object:
+            new_json_object["space_init_states"] = [bmp.space.update_json_format(s, ver) for s in json_object["space_init_states"]]
+        return new_json_object
+    else:
+        raise bmp.base.UpgradeError(json_object)
 
 def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
-    ver: str = json_object.get("ver", "0.0")
     collectibles: set[bmp.obj.Collectible] = set()
     space_dict: dict[bmp.ref.SpaceID, bmp.space.Space] = {}
     for space_json in tqdm(
         json_object["spaces"],
-        desc = bmp.lang.fformat("loading.level.space_list"),
+        desc = bmp.lang.fformat("loading.level.spaces"),
         unit = bmp.lang.fformat("space.name"),
         position = 0,
         **bmp.lang.default_tqdm_args,
     ):
-        space = bmp.space.json_to_space(space_json, ver)
+        space = bmp.space.json_to_space(space_json)
         space_dict[space.space_id] = space
     level_dict: dict[bmp.ref.LevelID, bmp.level.Level] = {}
     for level_json in tqdm(
         json_object["levels"],
-        desc = bmp.lang.fformat("loading.levelpack.level_list"),
+        desc = bmp.lang.fformat("loading.levelpack.levels"),
         unit = bmp.lang.fformat("level.name"),
         position = 0,
         **bmp.lang.default_tqdm_args,
     ):
-        level = bmp.level.json_to_level(level_json, ver)
+        level = bmp.level.json_to_level(level_json)
         level_dict[level.level_id] = level
     space_init_state_dict_json = json_object.get("space_init_states")
     space_init_state_dict: dict[bmp.ref.SpaceID, bmp.space.Space]
@@ -669,12 +728,12 @@ def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
         space_init_state_dict = {}
         for space_json in tqdm(
             space_init_state_dict_json,
-            desc = bmp.lang.fformat("loading.level.space_list"),
+            desc = bmp.lang.fformat("loading.level.spaces"),
             unit = bmp.lang.fformat("level.name"),
             position = 0,
             **bmp.lang.default_tqdm_args,
         ):
-            space = bmp.space.json_to_space(space_json, ver)
+            space = bmp.space.json_to_space(space_json)
             space_init_state_dict[space.space_id] = space
     else:
         space_init_state_dict = copy.deepcopy(space_dict)
@@ -684,19 +743,19 @@ def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
         level_init_state_dict = {}
         for level_json in tqdm(
             level_init_state_dict_json,
-            desc = bmp.lang.fformat("loading.levelpack.level_list"),
+            desc = bmp.lang.fformat("loading.levelpack.levels"),
             unit = bmp.lang.fformat("level.name"),
             position = 0,
             **bmp.lang.default_tqdm_args,
         ):
-            level = bmp.level.json_to_level(level_json, ver)
+            level = bmp.level.json_to_level(level_json)
             level_init_state_dict[level.level_id] = level
     else:
         level_init_state_dict = copy.deepcopy(level_dict)
     rule_list: list[bmp.rule.Rule] = []
     for rule in tqdm(
         json_object["rules"],
-        desc = bmp.lang.fformat("loading.levelpack.rule_list"),
+        desc = bmp.lang.fformat("loading.levelpack.rules"),
         unit = bmp.lang.fformat("rule.name"),
         position = 0,
         **bmp.lang.default_tqdm_args,
@@ -707,7 +766,7 @@ def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
     current_level_id: bmp.ref.LevelID = bmp.ref.LevelID(**json_object["current_level"])
     for collectible in tqdm(
         json_object["collectibles"],
-        desc = bmp.lang.fformat("loading.levelpack.collect_list"),
+        desc = bmp.lang.fformat("loading.levelpack.collectibles"),
         unit = bmp.lang.fformat("collectible.name"),
         position = 0,
         **bmp.lang.default_tqdm_args,

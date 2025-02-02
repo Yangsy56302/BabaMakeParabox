@@ -69,7 +69,7 @@ class Options41(TypedDict):
     game_is_end: NotRequired[bool]
     game_is_done: NotRequired[bool]
 
-class Options(TypedDict):
+class Options4101(TypedDict):
     ver: str
     debug: bool
     lang: str
@@ -77,20 +77,7 @@ class Options(TypedDict):
     render: RenderOptions
     editor: EditorOptions
 
-class BaseOptions(TypedDict):
-    ver: str
-    debug: bool
-
-type AnyOptions = Options | Options41 | BaseOptions
-
-def formatted_before_4101(opt: AnyOptions) -> TypeGuard[Options41]:
-    return bmp.base.compare_versions(opt["ver"], "4.101") < 0
-
-def formatted_currently(opt: AnyOptions) -> TypeGuard[Options]:
-    return bmp.base.compare_versions(opt["ver"], bmp.base.versions) == 0
-
-def formatted_from_future(opt: AnyOptions) -> TypeGuard[BaseOptions]:
-    return bmp.base.compare_versions(opt["ver"], bmp.base.versions) > 0
+type Options = Options4101
 
 default_options: Options = {
     "ver": bmp.base.versions,
@@ -151,42 +138,59 @@ def get_json_dump_kwds() -> _JsonDumpKwds:
         "separators": (",", ":") if options["editor"]["minimal_json"] else (", ", ": ")
     }
 
-def update_json_format(opt: AnyOptions, ver: str = "0.0") -> Options:
-    if not isinstance(opt, dict):
-        raise TypeError(type(opt))
-    elif formatted_currently(opt):
-        return opt
-    elif formatted_before_4101(opt):
+type AnyOptions = Options | Options41 | Options4101
+
+def formatted_before_4101(json_object: AnyOptions, ver: str) -> TypeGuard[Options41]:
+    return bmp.base.compare_versions(ver, "4.101") < 0
+
+def formatted_after_4101(json_object: AnyOptions, ver: str) -> TypeGuard[Options4101]:
+    return bmp.base.compare_versions(ver, "4.101") >= 0
+
+def formatted_currently(json_object: AnyOptions, ver: str) -> TypeGuard[Options]:
+    return bmp.base.compare_versions(ver, bmp.base.versions) == 0
+
+def formatted_from_future(json_object: AnyOptions, ver: str) -> TypeGuard[AnyOptions]:
+    return bmp.base.compare_versions(ver, bmp.base.versions) > 0
+
+def update_json_format(json_object: AnyOptions) -> Options:
+    if not isinstance(json_object, dict):
+        raise TypeError(type(json_object))
+    ver = json_object["ver"]
+    if formatted_from_future(json_object, ver):
+        raise bmp.base.DowngradeError(ver)
+    elif formatted_currently(json_object, ver):
+        return json_object
+    elif formatted_after_4101(json_object, ver):
+        return json_object
+    elif formatted_before_4101(json_object, ver):
         return {
             "ver": bmp.base.versions,
-            "lang": opt["lang"],
-            "debug": opt["debug"],
+            "lang": json_object["lang"],
+            "debug": json_object["debug"],
             "gameplay": {
-                "bgm": opt["bgm"],
-                "repeat": opt["long_press"],
-                "metatext": opt["metatext"],
+                "bgm": json_object["bgm"],
+                "repeat": json_object["long_press"],
+                "metatext": json_object["metatext"],
             },
             "render": {
-                "fps": opt["fps"],
-                "space_depth": opt["space_display_recursion_depth"],
-                "palette": opt["palette"],
-                "smooth": opt["smooth_animation_multiplier"],
+                "fps": json_object["fps"],
+                "space_depth": json_object["space_display_recursion_depth"],
+                "palette": json_object["palette"],
+                "smooth": json_object["smooth_animation_multiplier"],
             },
             "editor": {
-                "shortcuts": opt["object_type_shortcuts"],
+                "shortcuts": json_object["object_type_shortcuts"],
                 "default_space": {
                     "inf": 0,
-                    "width": opt["default_new_space"]["width"],
-                    "height": opt["default_new_space"]["height"],
-                    "color": opt["default_new_space"]["color"],
+                    "width": json_object["default_new_space"]["width"],
+                    "height": json_object["default_new_space"]["height"],
+                    "color": json_object["default_new_space"]["color"],
                 },
-                "minimal_json": opt["compressed_json_output"],
+                "minimal_json": json_object["compressed_json_output"],
             },
         }
-    elif formatted_from_future(opt):
-        raise bmp.base.DowngradeError(opt["ver"])
     else:
-        raise ValueError(opt)
+        raise bmp.base.UpgradeError(json_object)
 
 def load(filename: str = options_filename) -> None:
     global options

@@ -1,4 +1,5 @@
 from enum import Enum
+from tqdm import tqdm, trange
 import json
 import os
 from typing import Any, Final, Literal, NotRequired, Optional, TypeGuard, TypedDict, Self
@@ -130,7 +131,7 @@ class OldObjectState(object):
 
 special_operators: tuple[type["Operator"], ...]
 
-class ObjectJson(TypedDict):
+class ObjectJson41(TypedDict):
     type: str
     pos: bmp.loc.Coord[int]
     orient: bmp.loc.OrientStr
@@ -139,6 +140,8 @@ class ObjectJson(TypedDict):
     level_id: NotRequired[bmp.ref.LevelIDJson]
     level_extra: NotRequired[LevelObjectExtra]
     path_extra: NotRequired[PathExtra]
+
+type ObjectJson = ObjectJson41
 
 class Object(object):
     ref_type: type["Object"]
@@ -286,11 +289,10 @@ class SpaceObject(Object):
         pos: bmp.loc.Coord[int],
         direct: bmp.loc.Orient = bmp.loc.Orient.S,
         *,
-        space_id: bmp.ref.SpaceID,
+        space_id: Optional[bmp.ref.SpaceID] = None,
         level_id: Optional[bmp.ref.LevelID] = None,
         space_extra: SpaceObjectExtra = default_space_extra
     ) -> None:
-        self.space_id: bmp.ref.SpaceID
         super().__init__(pos, direct, space_id=space_id, level_id=level_id)
         self.space_extra: SpaceObjectExtra = space_extra.copy()
     def get_info(self) -> str:
@@ -321,10 +323,9 @@ class LevelObject(Object):
         direct: bmp.loc.Orient = bmp.loc.Orient.S,
         *,
         space_id: Optional[bmp.ref.SpaceID] = None,
-        level_id: bmp.ref.LevelID,
+        level_id: Optional[bmp.ref.LevelID],
         level_extra: LevelObjectExtra = default_level_extra
     ) -> None:
-        self.level_id: bmp.ref.LevelID
         super().__init__(pos, direct, space_id=space_id, level_id=level_id)
         self.level_extra: LevelObjectExtra = level_extra
     def get_info(self) -> str:
@@ -802,8 +803,9 @@ class TextInfinity(SpecificSpaceNoun):
     @classmethod
     def isreferenceof(cls, other: SpaceObject, **kwds) -> bool:
         if super().isreferenceof(other):
-            if other.space_id.infinite_tier > 0:
-                return True
+            if other.space_id is not None:
+                if other.space_id.infinite_tier > 0:
+                    return True
         return False
 
 class TextEpsilon(SpecificSpaceNoun):
@@ -813,8 +815,9 @@ class TextEpsilon(SpecificSpaceNoun):
     @classmethod
     def isreferenceof(cls, other: SpaceObject, **kwds) -> bool:
         if super().isreferenceof(other):
-            if other.space_id.infinite_tier < 0:
-                return True
+            if other.space_id is not None:
+                if other.space_id.infinite_tier < 0:
+                    return True
         return False
 
 class TextParabox(RangedNoun):
@@ -935,7 +938,13 @@ def reload_object_class_list() -> None:
     generic_object_class_list = []
     with open(os.path.join(".", "data", "def", "object.json"), mode="r", encoding="utf-8") as file:
         object_definition_dict: dict[str, ObjectDefinition] = json.load(file)
-        for object_name, object_definition in object_definition_dict.items():
+        for object_name, object_definition in tqdm(
+            object_definition_dict.items(),
+            desc = bmp.lang.fformat("generating.game.objects"),
+            unit = bmp.lang.fformat("object.name"),
+            position = 0,
+            **bmp.lang.default_tqdm_args,
+        ):
             new_object_class, new_noun_class = create_object_class(object_name, object_definition)
             generic_object_class_list.append(new_object_class)
             generic_noun_class_list.append(new_noun_class)
@@ -955,7 +964,13 @@ def reload_object_class_list() -> None:
             raise ValueError(current_metatext_tier)
         metatext_class_list_at_tier = [[]]
         metatext_class_list_at_tier.append([generate_metatext(n) for n in text_class_list])
-        for metatext_tier in range(2, current_metatext_tier + 1):
+        for metatext_tier in trange(
+            2, current_metatext_tier + 1,
+            desc = bmp.lang.fformat("generating.objects"),
+            unit = bmp.lang.fformat("metatext.name"),
+            position = 0,
+            **bmp.lang.default_tqdm_args,
+        ):
             metatext_class_list_at_tier.append([generate_metatext(n) for n in metatext_class_list_at_tier[metatext_tier - 1]])
     for metatext_class_list in metatext_class_list_at_tier:
         generic_noun_class_list.extend(metatext_class_list)
@@ -1003,10 +1018,21 @@ def get_noun_from_type(object_type: type[Object]) -> type[Noun]:
         return TextText
     return return_value
 
-def update_json_format(json_object: ObjectJson, ver: str) -> ObjectJson:
+type AnyObjectJson = ObjectJson41 | ObjectJson
+
+def formatted_after_41(json_object: AnyObjectJson, ver: str) -> TypeGuard[ObjectJson41]:
+    return bmp.base.compare_versions(ver, "4.1") >= 0
+
+def formatted_currently(json_object: AnyObjectJson, ver: str) -> TypeGuard[ObjectJson]:
+    return bmp.base.compare_versions(ver, bmp.base.versions) == 0
+
+def formatted_from_future(json_object: AnyObjectJson, ver: str) -> TypeGuard[AnyObjectJson]:
+    return bmp.base.compare_versions(ver, bmp.base.versions) > 0
+
+def update_json_format(json_object: AnyObjectJson, ver: str) -> ObjectJson:
     return json_object # old levelpacks aren't able to update in 4.1
 
-def json_to_object(json_object: ObjectJson, ver: str) -> Object:
+def json_to_object(json_object: ObjectJson) -> Object:
     global current_metatext_tier
     global class_to_noun, object_class_list, name_to_class, builtin_noun_class_list, text_class_list
     object_type = name_to_class.get(json_object["type"])

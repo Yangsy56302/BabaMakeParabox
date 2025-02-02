@@ -1,4 +1,4 @@
-from typing import NotRequired, Optional, TypedDict
+from typing import Never, NotRequired, Optional, TypeGuard, TypedDict
 from tqdm import tqdm
 
 import bmp.base
@@ -8,11 +8,17 @@ import bmp.obj
 import bmp.ref
 import bmp.rule
 
-class SpaceJson(TypedDict):
+class SpaceJson4102(TypedDict):
     id: bmp.ref.SpaceIDJson
     size: bmp.loc.Coord[int]
     color: NotRequired[bmp.color.ColorHex]
-    object_list: list[bmp.obj.ObjectJson]
+    objects: list[bmp.obj.ObjectJson41]
+
+class SpaceJson41(SpaceJson4102):
+    objects: Never
+    object_list: list[bmp.obj.ObjectJson41]
+
+type SpaceJson = SpaceJson4102
 
 class Space(object):
     def __init__(
@@ -273,39 +279,71 @@ class Space(object):
             case bmp.loc.Orient.D:
                 return (self.width, int((new_transnum * self.height)))
     def to_json(self) -> SpaceJson:
-        json_object: SpaceJson = {"id": self.space_id.to_json(), "size": (self.width, self.height), "object_list": []}
+        json_object: SpaceJson = {
+            "id": self.space_id.to_json(),
+            "size": (self.width, self.height),
+            "objects": []
+        }
         if self.color is not None:
             json_object["color"] = self.color
         for obj in tqdm(
             self.object_list,
-            desc = bmp.lang.fformat("saving.space.object_list"),
+            desc = bmp.lang.fformat("saving.space.objects"),
             unit = bmp.lang.fformat("object.name"),
             position = 2,
             **bmp.lang.default_tqdm_args,
         ):
-            json_object["object_list"].append(obj.to_json())
+            json_object["objects"].append(obj.to_json())
         return json_object
 
-def update_json_format(json_object: SpaceJson, ver: str) -> SpaceJson:
-    return json_object # old levelpacks aren't able to update in 4.1
+type AnySpaceJson = SpaceJson41 | SpaceJson4102 | SpaceJson
 
-def json_to_space(json_object: SpaceJson, ver: str) -> Space:
-    if bmp.base.compare_versions(ver, "3.8") == -1:
-        space_id: bmp.ref.SpaceID = bmp.ref.SpaceID(json_object["name"], json_object["infinite_tier"]) # type: ignore
+def formatted_after_41(json_object: AnySpaceJson, ver: str) -> TypeGuard[SpaceJson41]:
+    return bmp.base.compare_versions(ver, "4.1") >= 0
+
+def formatted_after_4102(json_object: AnySpaceJson, ver: str) -> TypeGuard[SpaceJson4102]:
+    return bmp.base.compare_versions(ver, "4.102") >= 0
+
+def formatted_currently(json_object: AnySpaceJson, ver: str) -> TypeGuard[SpaceJson]:
+    return bmp.base.compare_versions(ver, bmp.base.versions) == 0
+
+def formatted_from_future(json_object: AnySpaceJson, ver: str) -> TypeGuard[AnySpaceJson]:
+    return bmp.base.compare_versions(ver, bmp.base.versions) > 0
+
+def update_json_format(json_object: AnySpaceJson, ver: str) -> SpaceJson:
+    # old levelpacks aren't able to update in 4.1
+    if not isinstance(json_object, dict):
+        raise TypeError(type(json_object))
+    elif formatted_from_future(json_object, ver):
+        raise bmp.base.DowngradeError(ver)
+    elif formatted_currently(json_object, ver):
+        return json_object
+    elif formatted_after_4102(json_object, ver):
+        return json_object
+    elif formatted_after_41(json_object, ver):
+        return {
+            "objects": json_object["object_list"],
+            "color": json_object.get("color", 0x000000),
+            "id": json_object["id"],
+            "size": json_object["size"],
+        }
     else:
-        space_id: bmp.ref.SpaceID = bmp.ref.SpaceID(**json_object["id"])
+        raise bmp.base.UpgradeError(json_object)
+
+def json_to_space(json_object: SpaceJson) -> Space:
+    space_id: bmp.ref.SpaceID = bmp.ref.SpaceID(**json_object["id"])
     new_space = Space(
         space_id = space_id,
         size = (json_object["size"][0], json_object["size"][1]),
         color=json_object.get("color")
     )
     for obj in tqdm(
-        json_object["object_list"],
-        desc = bmp.lang.fformat("loading.space.object_list"),
+        json_object["objects"],
+        desc = bmp.lang.fformat("loading.space.objects"),
         unit = bmp.lang.fformat("object.name"),
         position = 2,
         **bmp.lang.default_tqdm_args,
     ):
-        new_space.object_list.append(bmp.obj.json_to_object(obj, ver))
+        new_space.object_list.append(bmp.obj.json_to_object(obj))
     new_space.refresh_index()
     return new_space

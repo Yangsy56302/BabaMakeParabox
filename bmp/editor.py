@@ -169,8 +169,6 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                     bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.new")))
                                     name = bmp.lang.input_str(bmp.lang.fformat("edit.level.new.name"))
                                     level_id: bmp.ref.LevelID = bmp.ref.LevelID(name)
-                                    if levelpack.get_level(level_id) is None:
-                                        level_id = levelpack.current_level_id
                                     icon_name = bmp.lang.input_str(bmp.lang.fformat("edit.level.new.icon.name"))
                                     icon_name = icon_name if icon_name != "" else "text_level"
                                     icon_color: bmp.color.ColorHex = bmp.lang.input_color(
@@ -189,8 +187,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                     bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.new")))
                                     name = bmp.lang.input_str(bmp.lang.fformat("edit.space.new.name"))
                                     infinite_tier = bmp.lang.input_int(bmp.lang.fformat("edit.space.new.infinite_tier"))
-                                    if levelpack.current_level.get_space(bmp.ref.SpaceID(name, infinite_tier)) is not None:
-                                        space_id = bmp.ref.SpaceID(name, infinite_tier)
+                                    space_id = bmp.ref.SpaceID(name, infinite_tier)
                                 levelpack.current_level.current_space.new_obj(current_object_type(current_cursor_pos, current_orient, space_id=space_id))
                             elif issubclass(current_object_type, bmp.obj.Path):
                                 unlocked = False
