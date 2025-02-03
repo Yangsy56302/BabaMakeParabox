@@ -467,7 +467,6 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                 elif levelpack_info["done"]:
                     game_running = False
                 elif levelpack_info["transform"]:
-                    levelpack.reset_level(levelpack.current_level_id)
                     if levelpack.current_level.super_level_id is not None and levelpack.current_level.super_level_id in levelpack.level_dict.keys():
                         levelpack.current_level_id = levelpack.current_level.super_level_id
                 elif select is not None:

@@ -119,33 +119,32 @@ class Levelpack(object):
     def current_level(self, level: bmp.level.Level) -> None:
         self.current_level_id = level.level_id
     def update_rules(self) -> None:
-        self.current_level.game_properties = bmp.obj.Properties()
+        self.current_level.game_properties.clear()
         for level_object_type in bmp.obj.level_object_types:
-            self.current_level.properties[level_object_type] = bmp.obj.Properties()
+            self.current_level.properties[level_object_type].clear()
             self.current_level.special_operator_properties[level_object_type] = {o: bmp.obj.Properties() for o in bmp.obj.special_operators}
         active_space_objs: list[bmp.obj.SpaceObject] = []
         for space in self.current_level.space_list:
             for object_type in bmp.obj.space_object_types:
-                space.properties[object_type] = bmp.obj.Properties()
+                space.properties[object_type].clear()
                 space.special_operator_properties[object_type] = {o: bmp.obj.Properties() for o in bmp.obj.special_operators}
             for obj in space.object_list:
-                obj.properties = bmp.obj.Properties()
+                obj.properties.clear()
                 obj.special_operator_properties = {o: bmp.obj.Properties() for o in bmp.obj.special_operators}
             if space != self.current_level.current_space:
                 active_space_objs.extend(o for o in space.get_spaces())
         for space_obj in active_space_objs:
-            space_obj.properties = bmp.obj.Properties()
+            space_obj.properties.clear()
         current_level_objs: list[bmp.obj.LevelObject] = []
         for level in self.level_list:
-            if level == self.current_level:
-                continue
             for space in level.space_list:
-                current_level_objs.extend([
-                    o for o in space.get_levels()
-                    if o.level_id == self.current_level.level_id
-                ])
+                if level != self.current_level:
+                    current_level_objs.extend([
+                        o for o in space.get_levels()
+                        if o.level_id == self.current_level.level_id
+                    ])
         for level_obj in current_level_objs:
-            level_obj.properties = bmp.obj.Properties()
+            level_obj.properties.clear()
         for space in self.current_level.space_list:
             space.set_rule()
         new_prop_list: list[tuple[bmp.obj.Object, tuple[bmp.obj.Text, bool]]] = []
@@ -358,6 +357,7 @@ class Levelpack(object):
                         new_obj_copy = copy.deepcopy(new_obj)
                         new_obj_copy.reset_uuid()
                         new_obj_copy.space_id = old_obj_space.space_id
+                        level.space_included.append(old_obj_space.space_id)
                         space.new_obj(new_obj_copy)
                 transform_success = True
             else:
@@ -371,7 +371,7 @@ class Levelpack(object):
         for space in self.current_level.space_list:
             for old_obj in space.object_list:
                 self.transform_object(old_obj, space, self.current_level)
-        for outer_level_id, outer_level in self.level_dict.items():
+        for outer_level in self.level_dict.values():
             for space in outer_level.space_list:
                 for old_level_obj in [l for l in space.get_levels() if l.level_id == self.current_level_id]:
                     level_transform_success |= self.transform_object(old_level_obj, space, outer_level)
