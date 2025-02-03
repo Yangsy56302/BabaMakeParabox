@@ -177,7 +177,7 @@ class Space(object):
                     new_info_list.extend(func(i, matched_text) for i in info_list)
             if stage == "after property":
                 new_rule_list.append([])
-                new_info_list.append(bmp.rule.RuleInfo([], 0, bmp.obj.Noun((-1, -1)), [], [bmp.rule.OperInfo(bmp.obj.Operator((-1, -1)), [])]))
+                new_info_list.append(bmp.rule.RuleInfo([], 0, bmp.obj.Noun(), [], [bmp.rule.OperInfo(bmp.obj.Operator(), [])]))
         return new_rule_list, new_info_list
     def set_rule(self) -> None:
         self.rule_list = []

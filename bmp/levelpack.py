@@ -237,7 +237,7 @@ class Levelpack(object):
             delete_object_list = []
             for old_obj in space.object_list:
                 old_type = type(old_obj)
-                new_noun_list: list[type["bmp.obj.Noun"]] = []
+                new_noun_list: list[type[bmp.obj.Noun]] = []
                 for noun_type, prop_count in old_obj.properties.enabled_dict().items():
                     if issubclass(noun_type, bmp.obj.Noun):
                         new_noun_list.extend([noun_type] * prop_count)
@@ -255,7 +255,7 @@ class Levelpack(object):
                         delete_noun_list.append(noun_type)
                     for delete_noun in delete_noun_list:
                         new_noun_list.remove(delete_noun)
-                not_new_noun_list: list[type["bmp.obj.Noun"]] = []
+                not_new_noun_list: list[type[bmp.obj.Noun]] = []
                 for noun_type, prop_count in old_obj.properties.disabled_dict().items():
                     if issubclass(noun_type, bmp.obj.Noun):
                         not_new_noun_list.extend([noun_type] * prop_count)
@@ -273,9 +273,9 @@ class Levelpack(object):
                         delete_noun_list.append(noun_type)
                     for delete_noun in delete_noun_list:
                         not_new_noun_list.remove(delete_noun)
-                transform_success = False
-                noun_is_noun = False
-                noun_is_not_noun = False
+                transform_success: bool = False
+                noun_is_noun: bool = False
+                noun_is_not_noun: bool = False
                 for new_noun in new_noun_list:
                     if issubclass(new_noun, bmp.obj.SupportsReferenceType):
                         if isinstance(old_obj, new_noun.ref_type):
@@ -766,7 +766,7 @@ def json_to_levelpack(json_object: LevelpackJson) -> Levelpack:
     ):
         rule_list.append([])
         for object_type in rule:
-            rule_list[-1].append(bmp.obj.name_to_class[object_type]((-1, -1))) # type: ignore
+            rule_list[-1].append(bmp.obj.name_to_class[object_type]()) # type: ignore
     current_level_id: bmp.ref.LevelID = bmp.ref.LevelID(**json_object["current_level"])
     for collectible in tqdm(
         json_object["collectibles"],

@@ -371,7 +371,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                 object_type = bmp.obj.name_to_class.get(text)
                 if object_type is not None:
                     if issubclass(object_type, bmp.obj.Text):
-                        type_rule.append(object_type((-1, -1)))
+                        type_rule.append(object_type())
                     else:
                         valid_input = False
                         break

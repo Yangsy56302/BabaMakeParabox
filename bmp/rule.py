@@ -52,9 +52,9 @@ def set_infix(info: RuleInfo, infix_type: bmp.obj.Infix) -> RuleInfo:
 
 def set_infix_noun(info: RuleInfo, infix_noun_type: bmp.obj.Noun | bmp.obj.Property) -> RuleInfo:
     if len(info.infix_info_list) == 0:
-        info.infix_info_list.insert(0, InfixInfo(False, bmp.obj.Infix((-1, -1)), []))
+        info.infix_info_list.insert(0, InfixInfo(False, bmp.obj.Infix(), []))
     elif info.infix_info_list[0].infix != bmp.obj.Infix:
-        info.infix_info_list.insert(0, InfixInfo(False, bmp.obj.Infix((-1, -1)), []))
+        info.infix_info_list.insert(0, InfixInfo(False, bmp.obj.Infix(), []))
     info.infix_info_list[0].infix_noun_info_list.insert(0, InfixNounInfo(False, infix_noun_type))
     return info
 
@@ -64,7 +64,7 @@ def set_noun(info: RuleInfo, noun_type: bmp.obj.Noun) -> RuleInfo:
 
 def set_oper(info: RuleInfo, oper_type: bmp.obj.Operator) -> RuleInfo:
     info.oper_list[0].oper = oper_type
-    info.oper_list.insert(0, OperInfo(bmp.obj.Operator((-1, -1)), []))
+    info.oper_list.insert(0, OperInfo(bmp.obj.Operator(), []))
     return info
 
 def set_prop(info: RuleInfo, prop_type: bmp.obj.Noun | bmp.obj.Property) -> RuleInfo:
@@ -95,15 +95,15 @@ def negate_prop(info: RuleInfo, placeholder: bmp.obj.Text) -> RuleInfo:
     return info
 
 def text_text_noun(info: RuleInfo, placeholder: bmp.obj.Text) -> RuleInfo:
-    info.noun = bmp.obj.get_noun_from_type(type(info.noun))((-1, -1))
+    info.noun = bmp.obj.get_noun_from_type(type(info.noun))()
     return info
 
 def text_text_infix_noun(info: RuleInfo, placeholder: bmp.obj.Text) -> RuleInfo:
-    info.infix_info_list[0].infix_noun_info_list[0].infix_noun = bmp.obj.get_noun_from_type(type(info.infix_info_list[0].infix_noun_info_list[0].infix_noun))((-1, -1))
+    info.infix_info_list[0].infix_noun_info_list[0].infix_noun = bmp.obj.get_noun_from_type(type(info.infix_info_list[0].infix_noun_info_list[0].infix_noun))()
     return info
 
 def text_text_prop(info: RuleInfo, placeholder: bmp.obj.Text) -> RuleInfo:
-    info.oper_list[0].prop_list[0].prop = bmp.obj.get_noun_from_type(type(info.oper_list[0].prop_list[0].prop))((-1, -1))
+    info.oper_list[0].prop_list[0].prop = bmp.obj.get_noun_from_type(type(info.oper_list[0].prop_list[0].prop))()
     return info
 
 how_to_match_rule: dict[str, list[tuple[
@@ -175,7 +175,7 @@ how_to_match_rule: dict[str, list[tuple[
 def get_info_from_rule(rule: Rule, stage: str = "before prefix") -> Optional[RuleInfo]:
     for match_obj, unmatch_obj, next_stage, func in how_to_match_rule[stage]:
         if len(rule) == 0 and next_stage == "new property":
-            return RuleInfo([], 0, bmp.obj.Noun((-1, -1)), [], [OperInfo(bmp.obj.Operator((-1, -1)), [])])
+            return RuleInfo([], 0, bmp.obj.Noun(), [], [OperInfo(bmp.obj.Operator(), [])])
         if isinstance(rule[0], tuple(match_obj)) and not isinstance(rule[0], tuple(unmatch_obj)):
             new_info = get_info_from_rule(rule[1:], next_stage)
             if new_info is not None:
@@ -201,42 +201,42 @@ def handle_text_text_(rule: Rule) -> Rule:
 
 default_rule_list: list[Rule] = [
     [
-        bmp.obj.TextText((-1, -1)),
-        bmp.obj.TextIs((-1, -1)),
-        bmp.obj.TextPush((-1, -1)),
+        bmp.obj.TextText(),
+        bmp.obj.TextIs(),
+        bmp.obj.TextPush(),
     ],
     [
-        bmp.obj.TextCursor((-1, -1)),
-        bmp.obj.TextIs((-1, -1)),
-        bmp.obj.TextSelect((-1, -1)),
+        bmp.obj.TextCursor(),
+        bmp.obj.TextIs(),
+        bmp.obj.TextSelect(),
     ],
     [
-        bmp.obj.TextNot((-1, -1)),
-        bmp.obj.TextMeta((-1, -1)),
-        bmp.obj.TextLevel((-1, -1)),
-        bmp.obj.TextIs((-1, -1)),
-        bmp.obj.TextStop((-1, -1)),
+        bmp.obj.TextNot(),
+        bmp.obj.TextMeta(),
+        bmp.obj.TextLevel(),
+        bmp.obj.TextIs(),
+        bmp.obj.TextStop(),
     ],
     [
-        bmp.obj.TextNot((-1, -1)),
-        bmp.obj.TextMeta((-1, -1)),
-        bmp.obj.TextSpace((-1, -1)),
-        bmp.obj.TextIs((-1, -1)),
-        bmp.obj.TextPush((-1, -1)),
+        bmp.obj.TextNot(),
+        bmp.obj.TextMeta(),
+        bmp.obj.TextSpace(),
+        bmp.obj.TextIs(),
+        bmp.obj.TextPush(),
     ],
     [
-        bmp.obj.TextNot((-1, -1)),
-        bmp.obj.TextMeta((-1, -1)),
-        bmp.obj.TextClone((-1, -1)),
-        bmp.obj.TextIs((-1, -1)),
-        bmp.obj.TextPush((-1, -1)),
+        bmp.obj.TextNot(),
+        bmp.obj.TextMeta(),
+        bmp.obj.TextClone(),
+        bmp.obj.TextIs(),
+        bmp.obj.TextPush(),
     ],
     [
-        bmp.obj.TextMeta((-1, -1)),
-        bmp.obj.TextClone((-1, -1)),
-        bmp.obj.TextIs((-1, -1)),
-        bmp.obj.TextNot((-1, -1)),
-        bmp.obj.TextLeave((-1, -1)),
+        bmp.obj.TextMeta(),
+        bmp.obj.TextClone(),
+        bmp.obj.TextIs(),
+        bmp.obj.TextNot(),
+        bmp.obj.TextLeave(),
     ],
 ]
 

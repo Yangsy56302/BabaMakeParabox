@@ -446,7 +446,7 @@ class Level(object):
             move_list = []
             finished = True
             for space in self.space_list:
-                you_objs = [o for o in space.object_list if o.move_number < o.properties.get(bmp.obj.TextYou)]
+                you_objs = [o for o in space.object_list if o.move_number < o.properties.count(bmp.obj.TextYou)]
                 if len(you_objs) != 0:
                     finished = False
                 for obj in you_objs:
@@ -498,32 +498,32 @@ class Level(object):
         for prop in bmp.obj.direct_mapping_properties:
             for space in self.space_list:
                 for obj in space.object_list:
-                    if obj.properties.get(prop) % 2 == 1:
+                    if obj.properties.count(prop) % 2 == 1:
                         if isinstance(obj, bmp.obj.SpaceObject):
                             obj.space_extra["dynamic_transform"] = bmp.loc.get_stacked_transform(obj.space_extra["dynamic_transform"], prop.ref_transform)
                         obj.set_direct_mapping(prop.ref_mapping)
-                if space.properties[bmp.obj.default_space_object_type].get(prop) % 2 == 1:
+                if space.properties[bmp.obj.default_space_object_type].count(prop) % 2 == 1:
                     space.dynamic_transform = bmp.loc.get_stacked_transform(space.dynamic_transform, prop.ref_transform)
-            if self.properties[bmp.obj.default_level_object_type].get(prop) % 2 == 1:
+            if self.properties[bmp.obj.default_level_object_type].count(prop) % 2 == 1:
                 pass # NotImplemented
     def turn(self) -> None:
         for space in self.space_list:
             for obj in space.object_list:
-                turn_count = (obj.properties.get(bmp.obj.TextTurn) - obj.properties.get(bmp.obj.TextDeturn)) % 4
+                turn_count = (obj.properties.count(bmp.obj.TextTurn) - obj.properties.count(bmp.obj.TextDeturn)) % 4
                 for _ in range(turn_count):
                     obj.orient = bmp.loc.turn_right(obj.orient)
                     if isinstance(obj, bmp.obj.SpaceObject):
                         obj.space_extra["static_transform"] = bmp.loc.get_stacked_transform(obj.space_extra["static_transform"], {"direct": "A", "flip": False})
-            turn_count = (space.properties[bmp.obj.default_space_object_type].get(bmp.obj.TextTurn) - space.properties[bmp.obj.default_space_object_type].get(bmp.obj.TextDeturn)) % 4
+            turn_count = (space.properties[bmp.obj.default_space_object_type].count(bmp.obj.TextTurn) - space.properties[bmp.obj.default_space_object_type].count(bmp.obj.TextDeturn)) % 4
             for _ in range(turn_count):
                 space.static_transform = bmp.loc.get_stacked_transform(space.static_transform, {"direct": "A", "flip": False})
-        if self.properties[bmp.obj.default_level_object_type].get(bmp.obj.TextFlip) % 2 == 1:
+        if self.properties[bmp.obj.default_level_object_type].count(bmp.obj.TextFlip) % 2 == 1:
             pass # NotImplemented
     def move(self) -> bool:
         self.reset_move_numbers()
         pushing_game = False
         for space in self.space_list:
-            global_move_count = space.properties[bmp.obj.default_space_object_type].get(bmp.obj.TextMove) + self.properties[bmp.obj.default_level_object_type].get(bmp.obj.TextMove)
+            global_move_count = space.properties[bmp.obj.default_space_object_type].count(bmp.obj.TextMove) + self.properties[bmp.obj.default_level_object_type].count(bmp.obj.TextMove)
             for _ in range(global_move_count):
                 move_list = []
                 for obj in [o for o in space.object_list if o.move_number < global_move_count]:
@@ -543,7 +543,7 @@ class Level(object):
             move_list = []
             finished = True
             for space in self.space_list:
-                move_objs = [o for o in space.object_list if o.move_number < o.properties.get(bmp.obj.TextMove)]
+                move_objs = [o for o in space.object_list if o.move_number < o.properties.count(bmp.obj.TextMove)]
                 if len(move_objs) != 0:
                     finished = False
                 for obj in move_objs:
@@ -565,7 +565,7 @@ class Level(object):
         self.reset_move_numbers()
         pushing_game = False
         for space in self.space_list:
-            global_shift_count = space.properties[bmp.obj.default_space_object_type].get(bmp.obj.TextShift) + self.properties[bmp.obj.default_level_object_type].get(bmp.obj.TextShift)
+            global_shift_count = space.properties[bmp.obj.default_space_object_type].count(bmp.obj.TextShift) + self.properties[bmp.obj.default_level_object_type].count(bmp.obj.TextShift)
             for _ in range(global_shift_count):
                 move_list = []
                 for obj in [o for o in space.object_list if o.move_number < global_shift_count]:
@@ -585,7 +585,7 @@ class Level(object):
             move_list = []
             finished = True
             for space in self.space_list:
-                shifter_objs = [o for o in space.object_list if o.move_number < o.properties.get(bmp.obj.TextShift)]
+                shifter_objs = [o for o in space.object_list if o.move_number < o.properties.count(bmp.obj.TextShift)]
                 for shifter_obj in shifter_objs:
                     shifted_objs = [o for o in space.get_objs_from_pos(shifter_obj.pos) if o != shifter_obj and bmp.obj.same_float_prop(o, shifter_obj)]
                     for obj in shifted_objs:
@@ -979,7 +979,7 @@ class Level(object):
             obj_surface: pygame.Surface = bmp.render.simple_object_to_surface(obj, wiggle=wiggle, debug=debug)
             if self.game_properties.enabled(bmp.obj.TextWord):
                 object_type = type(obj)
-                for _ in range(self.game_properties.get(bmp.obj.TextWord)):
+                for _ in range(self.game_properties.count(bmp.obj.TextWord)):
                     object_type = bmp.obj.get_noun_from_type(object_type)
                 obj_surface = bmp.render.simple_type_to_surface(object_type, wiggle=wiggle, debug=debug)
             obj_surface_pos: bmp.loc.Coord[int] = (obj.x * scaled_sprite_size, obj.y * scaled_sprite_size)

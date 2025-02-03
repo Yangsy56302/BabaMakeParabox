@@ -83,7 +83,7 @@ class Properties(object):
         ))
     def exist(self, prop: type["Text"]) -> bool:
         return len(self.__dict.get(prop, [])) != 0
-    def get(self, prop: type["Text"], *, not_tier: int = 0) -> int:
+    def count(self, prop: type["Text"], *, not_tier: int = 0) -> int:
         if len(self.__dict.get(prop, [])) == 0:
             return 0
         return self.calc_count(self.__dict[prop], not_tier)
@@ -169,7 +169,7 @@ class Object(object):
     }
     def __init__(
         self,
-        pos: bmp.loc.Coord[int],
+        pos: bmp.loc.Coord[int] = (-1, -1),
         direct: bmp.loc.Orient = bmp.loc.Orient.S,
         *,
         space_id: Optional[bmp.ref.SpaceID] = None,
