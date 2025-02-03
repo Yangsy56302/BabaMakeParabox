@@ -23,7 +23,7 @@ class InfixInfo():
 
 @dataclass(init=True, repr=True)
 class PropInfo():
-    prop_negated_tier: int
+    prop_negated: bool
     prop: bmp.obj.Noun | bmp.obj.Property
 
 @dataclass(init=True, repr=True)
@@ -34,7 +34,7 @@ class OperInfo():
 @dataclass(init=True, repr=True)
 class RuleInfo():
     prefix_info_list: list[PrefixInfo]
-    noun_negated_tier: int
+    noun_negated: bool
     noun: bmp.obj.Noun
     infix_info_list: list[InfixInfo]
     oper_list: list[OperInfo]
@@ -68,14 +68,14 @@ def set_oper(info: RuleInfo, oper_type: bmp.obj.Operator) -> RuleInfo:
     return info
 
 def set_prop(info: RuleInfo, prop_type: bmp.obj.Noun | bmp.obj.Property) -> RuleInfo:
-    info.oper_list[0].prop_list.insert(0, PropInfo(0, prop_type))
+    info.oper_list[0].prop_list.insert(0, PropInfo(False, prop_type))
     return info
 
 def negate_prefix(info: RuleInfo, placeholder: bmp.obj.Text) -> RuleInfo:
     if len(info.prefix_info_list) != 0:
         info.prefix_info_list[0].negated = not info.prefix_info_list[0].negated
     else:
-        info.noun_negated_tier += 1
+        info.noun_negated = not info.noun_negated
     return info
 
 def negate_infix(info: RuleInfo, placeholder: bmp.obj.Text) -> RuleInfo:
@@ -87,11 +87,11 @@ def negate_infix_noun(info: RuleInfo, placeholder: bmp.obj.Text) -> RuleInfo:
     return info
 
 def negate_noun(info: RuleInfo, placeholder: bmp.obj.Text) -> RuleInfo:
-    info.noun_negated_tier += 1
+    info.noun_negated = not info.noun_negated
     return info
 
 def negate_prop(info: RuleInfo, placeholder: bmp.obj.Text) -> RuleInfo:
-    info.oper_list[0].prop_list[0].prop_negated_tier += 1
+    info.oper_list[0].prop_list[0].prop_negated = not info.oper_list[0].prop_list[0].prop_negated
     return info
 
 def text_text_noun(info: RuleInfo, placeholder: bmp.obj.Text) -> RuleInfo:
@@ -175,7 +175,7 @@ how_to_match_rule: dict[str, list[tuple[
 def get_info_from_rule(rule: Rule, stage: str = "before prefix") -> Optional[RuleInfo]:
     for match_obj, unmatch_obj, next_stage, func in how_to_match_rule[stage]:
         if len(rule) == 0 and next_stage == "new property":
-            return RuleInfo([], 0, bmp.obj.Noun(), [], [OperInfo(bmp.obj.Operator(), [])])
+            return RuleInfo([], False, bmp.obj.Noun(), [], [OperInfo(bmp.obj.Operator(), [])])
         if isinstance(rule[0], tuple(match_obj)) and not isinstance(rule[0], tuple(unmatch_obj)):
             new_info = get_info_from_rule(rule[1:], next_stage)
             if new_info is not None:

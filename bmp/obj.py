@@ -39,7 +39,7 @@ default_level_extra: LevelObjectExtra = {"icon": {"name": "empty", "color": 0xFF
 @dataclass(init=True, repr=True)
 class PropertyInfo[T: "Text"]():
     obj: T
-    not_tier: int
+    negated: bool
 
 type PropertiesDict = dict[type["Text"], list[PropertyInfo]]
 
@@ -52,55 +52,34 @@ class Properties(object):
         string = f"properties {self.__dict}"
         return "<" + string + ">"
     @staticmethod
-    def calc_count(info_list: list[PropertyInfo], not_tier: int = 0) -> int:
+    def calc_count(info_list: list[PropertyInfo], negated: bool = False) -> int:
         if len(info_list) == 0:
             return 0
         if len(info_list) == 1:
-            return int(info_list[0].not_tier == not_tier)
-        not_tier_list = []
-        for info in info_list:
-            not_tier_list.append(info.not_tier)
-        not_tier_list.sort(reverse=True)
-        current_tier = not_tier_list[0]
-        current_count = 0
-        for n in not_tier_list:
-            if n < not_tier:
-                break
-            elif n == current_tier:
-                current_count += 1
-            elif current_tier - n == 1:
-                current_count = min(0, -current_count) + 1
-                current_tier = n
-            else:
-                current_count = 1
-                current_tier = n
-        return max(0, current_count) if current_tier == not_tier else 0
-    def update(self, prop: "Text", not_tier: int) -> None:
+            return int(info_list[0].negated == negated)
+        return sum([1 for i in info_list if i.negated == negated])
+    def update(self, prop: "Text", negated: bool = False) -> None:
         self.__dict.setdefault(type(prop), [])
         self.__dict[type(prop)].append(PropertyInfo(
             obj = prop,
-            not_tier = not_tier,
+            negated = negated,
         ))
     def exist(self, prop: type["Text"]) -> bool:
         return len(self.__dict.get(prop, [])) != 0
-    def count(self, prop: type["Text"], *, not_tier: int = 0) -> int:
-        if len(self.__dict.get(prop, [])) == 0:
+    def count(self, prop: type["Text"], *, negated: bool = False) -> int:
+        if self.__dict.get(prop) is None:
             return 0
-        return self.calc_count(self.__dict[prop], not_tier)
+        return self.calc_count(self.__dict[prop], negated)
     def clear(self) -> None:
         self.__dict.clear()
     def enabled(self, prop: type["Text"]) -> bool:
-        if self.__dict.get(prop) is None:
-            return False
-        return self.calc_count(self.__dict[prop], 0) > 0
+        return self.count(prop, negated=False) > 0
     def disabled(self, prop: type["Text"]) -> bool:
-        if self.__dict.get(prop) is None:
-            return False
-        return self.calc_count(self.__dict[prop], 1) > 0
+        return self.count(prop, negated=True) > 0
     def enabled_dict(self) -> dict[type["Text"], int]:
-        return {_k: _v for _k, _v in {k: self.calc_count(v, 0) for k, v in self.__dict.items()}.items() if _v != 0}
+        return {_k: _v for _k, _v in {k: self.calc_count(v, False) for k, v in self.__dict.items()}.items() if _v != 0}
     def disabled_dict(self) -> dict[type["Text"], int]:
-        return {_k: _v for _k, _v in {k: self.calc_count(v, 1) for k, v in self.__dict.items()}.items() if _v != 0}
+        return {_k: _v for _k, _v in {k: self.calc_count(v, True) for k, v in self.__dict.items()}.items() if _v != 0}
     def copy(self) -> "Properties":
         return Properties(self.__dict.copy())
 
