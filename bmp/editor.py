@@ -296,7 +296,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
         elif keys["N"]:
             if keys["LALT"] or keys["RALT"]:
                 bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.new")))
-                if not bmp.lang.input_no(bmp.lang.fformat("edit.level.new")):
+                if bmp.lang.input_no(bmp.lang.fformat("edit.level.new")):
                     history.append(copy.deepcopy(levelpack))
                     level_name = bmp.lang.input_str(bmp.lang.fformat("edit.level.new.name"))
                     level_id: bmp.ref.LevelID = bmp.ref.LevelID(level_name)
@@ -328,7 +328,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                     level_changed = True
                     del level_id, space_id
             else:
-                if bmp.lang.input_str(bmp.lang.fformat("edit.space.new")) not in bmp.lang.no:
+                if bmp.lang.input_no(bmp.lang.fformat("edit.space.new")):
                     history.append(copy.deepcopy(levelpack))
                     name = bmp.lang.input_str(bmp.lang.fformat("edit.space.new.name"))
                     width = bmp.lang.input_int(bmp.lang.fformat("edit.space.new.width"), default=bmp.opt.options["editor"]["default_space"]["width"])

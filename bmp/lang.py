@@ -72,7 +72,7 @@ def str_to_bool(_str: str, /, default: Optional[bool] = None) -> bool:
         return True
     elif _str in no:
         return False
-    elif default:
+    elif default is not None:
         return default
     else:
         raise ValueError(_str)

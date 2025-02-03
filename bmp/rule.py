@@ -172,7 +172,7 @@ how_to_match_rule: dict[str, list[tuple[
     ]
 }
 
-def get_info_from_rule(rule: Rule, stage: str = "before prefix") -> Optional[RuleInfo]:
+def get_info_from_rule(rule: Rule, stage: str = "before prefix") -> RuleInfo:
     for match_obj, unmatch_obj, next_stage, func in how_to_match_rule[stage]:
         if len(rule) == 0 and next_stage == "new property":
             return RuleInfo([], False, bmp.obj.Noun(), [], [OperInfo(bmp.obj.Operator(), [])])

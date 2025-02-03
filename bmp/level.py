@@ -131,7 +131,7 @@ class Level(object):
         for prefix_info in prefix_info_list:
             meet_prefix_condition = True
             if type(prefix_info.prefix) == bmp.obj.TextMeta:
-                meet_prefix_condition = is_meta
+                meet_prefix_condition = is_meta and obj.space_id == space.space_id
             elif type(prefix_info.prefix) == bmp.obj.TextOften:
                 meet_prefix_condition = random.choice((True, True, True, False))
             elif type(prefix_info.prefix) == bmp.obj.TextSeldom:
