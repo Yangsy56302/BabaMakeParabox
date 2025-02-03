@@ -70,10 +70,14 @@ class Levelpack(object):
         self.author: Optional[str] = author
         self.level_dict: dict[bmp.ref.LevelID, bmp.level.Level] = level_dict
         self.space_dict: dict[bmp.ref.SpaceID, bmp.space.Space] = space_dict
+        self.level_init_state_dict: dict[bmp.ref.LevelID, bmp.level.Level] = copy.deepcopy(self.level_dict)
+        if level_init_state_dict is not None:
+            self.level_init_state_dict.update(level_init_state_dict)
+        self.space_init_state_dict: dict[bmp.ref.SpaceID, bmp.space.Space] = copy.deepcopy(self.space_dict)
+        if space_init_state_dict is not None:
+            self.space_init_state_dict.update(space_init_state_dict)
         for level in self.level_dict.values():
             level.space_dict = space_dict
-        self.level_init_state_dict: dict[bmp.ref.LevelID, bmp.level.Level] = level_init_state_dict if level_init_state_dict is not None else copy.deepcopy(self.level_dict)
-        self.space_init_state_dict: dict[bmp.ref.SpaceID, bmp.space.Space] = space_init_state_dict if space_init_state_dict is not None else copy.deepcopy(self.space_dict)
         for level in self.level_init_state_dict.values():
             level.space_dict = space_dict
         self.current_level_id: bmp.ref.LevelID = current_level_id
@@ -116,19 +120,10 @@ class Levelpack(object):
         self.current_level_id = level.level_id
     def update_rules(self) -> None:
         self.current_level.game_properties = bmp.obj.Properties()
-        current_level_objs: list[bmp.obj.LevelObject] = []
-        for level in self.level_list:
-            for space in level.space_list:
-                current_level_objs.extend([
-                    o for o in space.get_levels()
-                    if o.level_id == self.current_level.level_id
-                ])
-        active_space_objs: list[bmp.obj.SpaceObject] = []
-        for space in self.current_level.space_list:
-            active_space_objs.extend(o for o in space.get_spaces())
         for level_object_type in bmp.obj.level_object_types:
             self.current_level.properties[level_object_type] = bmp.obj.Properties()
             self.current_level.special_operator_properties[level_object_type] = {o: bmp.obj.Properties() for o in bmp.obj.special_operators}
+        active_space_objs: list[bmp.obj.SpaceObject] = []
         for space in self.current_level.space_list:
             for object_type in bmp.obj.space_object_types:
                 space.properties[object_type] = bmp.obj.Properties()
@@ -136,6 +131,21 @@ class Levelpack(object):
             for obj in space.object_list:
                 obj.properties = bmp.obj.Properties()
                 obj.special_operator_properties = {o: bmp.obj.Properties() for o in bmp.obj.special_operators}
+            if space != self.current_level.current_space:
+                active_space_objs.extend(o for o in space.get_spaces())
+        for space_obj in active_space_objs:
+            space_obj.properties = bmp.obj.Properties()
+        current_level_objs: list[bmp.obj.LevelObject] = []
+        for level in self.level_list:
+            if level == self.current_level:
+                continue
+            for space in level.space_list:
+                current_level_objs.extend([
+                    o for o in space.get_levels()
+                    if o.level_id == self.current_level.level_id
+                ])
+        for level_obj in current_level_objs:
+            level_obj.properties = bmp.obj.Properties()
         for space in self.current_level.space_list:
             space.set_rule()
         new_prop_list: list[tuple[bmp.obj.Object, tuple[bmp.obj.Text, bool]]] = []
@@ -165,7 +175,7 @@ class Levelpack(object):
                                         self.current_level.game_properties.update(prop_obj, prop_negated)
                                 # meta level
                                 elif issubclass(object_type, bmp.obj.LevelObject) and not noun_negated:
-                                    level_prop_updated: bool = False
+                                    level_prop_update: bool = len(current_level_objs) == 0
                                     for level_obj in current_level_objs:
                                         if not isinstance(level_obj, object_type):
                                             continue
@@ -173,20 +183,20 @@ class Levelpack(object):
                                         meet_infix_conditions = self.current_level.meet_infix_conditions(space, level_obj, infix_info_list)
                                         if not (meet_prefix_conditions and meet_infix_conditions):
                                             continue
+                                        level_prop_update |= True
                                         if type(oper_obj) == bmp.obj.TextIs:
                                             level_obj.properties.update(prop_obj, prop_negated)
                                         else:
                                             level_obj.special_operator_properties[type(oper_obj)].update(prop_obj, prop_negated)
-                                        if not level_prop_updated:
-                                            if type(oper_obj) == bmp.obj.TextIs:
-                                                self.current_level.properties[object_type].update(prop_obj, prop_negated)
-                                            else:
-                                                self.current_level.special_operator_properties[object_type][type(oper_obj)].update(prop_obj, prop_negated)
-                                            level_prop_updated = True
-                                    del level_prop_updated
+                                    if level_prop_update:
+                                        if type(oper_obj) == bmp.obj.TextIs:
+                                            self.current_level.properties[object_type].update(prop_obj, prop_negated)
+                                        else:
+                                            self.current_level.special_operator_properties[object_type][type(oper_obj)].update(prop_obj, prop_negated)
+                                    del level_prop_update
                                 # meta space
                                 elif issubclass(object_type, bmp.obj.SpaceObject) and not noun_negated:
-                                    space_prop_updated: bool = False
+                                    space_prop_update: bool = len(active_space_objs) == 0
                                     for space_obj in active_space_objs:
                                         if not isinstance(space_obj, object_type):
                                             continue
@@ -194,17 +204,17 @@ class Levelpack(object):
                                         meet_infix_conditions = self.current_level.meet_infix_conditions(space, space_obj, infix_info_list)
                                         if not (meet_prefix_conditions and meet_infix_conditions):
                                             continue
+                                        space_prop_update |= True
                                         if type(oper_obj) == bmp.obj.TextIs:
                                             space_obj.properties.update(prop_obj, prop_negated)
                                         else:
                                             space_obj.special_operator_properties[type(oper_obj)].update(prop_obj, prop_negated)
-                                        if not space_prop_updated:
-                                            if type(oper_obj) == bmp.obj.TextIs:
-                                                space.properties[object_type].update(prop_obj, prop_negated)
-                                            else:
-                                                space.special_operator_properties[object_type][type(oper_obj)].update(prop_obj, prop_negated)
-                                            space_prop_updated = True
-                                    del space_prop_updated
+                                    if space_prop_update:
+                                        if type(oper_obj) == bmp.obj.TextIs:
+                                            space.properties[object_type].update(prop_obj, prop_negated)
+                                        else:
+                                            space.special_operator_properties[object_type][type(oper_obj)].update(prop_obj, prop_negated)
+                                    del space_prop_update
                 elif type(noun_obj) == bmp.obj.TextAll:
                     if noun_negated:
                         new_match_obj_list = [o for o in space.object_list if isinstance(o, bmp.obj.types_in_not_all)]
@@ -266,16 +276,16 @@ class Levelpack(object):
                                     obj.special_operator_properties[type(oper_obj)].update(prop_obj, prop_negated)
         for obj, (prop_obj, prop_negated) in new_prop_list:
             obj.properties.update(prop_obj, prop_negated)
-    def get_transform_noun(self, obj: bmp.obj.Object, negated: bool = False) -> list[bmp.obj.Noun]:
+    def get_transform_noun(self, old_obj: bmp.obj.Object, negated: bool = False) -> list[bmp.obj.Noun]:
         new_noun_list: list[bmp.obj.Noun] = []
         get_prop_dict_func = bmp.obj.Properties.disabled_dict if negated else bmp.obj.Properties.enabled_dict
-        for noun_type, noun_info_list in get_prop_dict_func(obj.properties).items():
+        for noun_type, noun_info_list in get_prop_dict_func(old_obj.properties).items():
             if not issubclass(noun_type, bmp.obj.Noun):
                 continue
             for noun_info in noun_info_list:
                 if isinstance(noun_info.obj, bmp.obj.Noun):
                     new_noun_list.append(noun_info.obj)
-        for text_type, text_info_list in get_prop_dict_func(obj.special_operator_properties[bmp.obj.TextWrite]).items():
+        for text_type, text_info_list in get_prop_dict_func(old_obj.special_operator_properties[bmp.obj.TextWrite]).items():
             for text_info in text_info_list:
                 new_noun_list.append(bmp.obj.get_noun_from_type(type(text_info.obj))())
         while any(map(lambda n: isinstance(n, bmp.obj.RangedNoun), new_noun_list)):
@@ -296,16 +306,6 @@ class Levelpack(object):
             for delete_noun in delete_noun_list:
                 new_noun_list.remove(delete_noun)
         return new_noun_list
-    def transform(self) -> bool:
-        level_transform_success: bool = False
-        for space in self.current_level.space_list:
-            for old_obj in space.object_list:
-                self.transform_object(old_obj, space, self.current_level)
-        for outer_level_id, outer_level in self.level_dict.items():
-            for space in outer_level.space_list:
-                for old_level_obj in [l for l in space.get_levels() if l.level_id == outer_level_id]:
-                    level_transform_success |= self.transform_object(old_level_obj, space, outer_level)
-        return level_transform_success
     def transform_object(self, old_obj: bmp.obj.Object, space: bmp.space.Space, level: bmp.level.Level) -> bool:
         new_noun_list: list[bmp.obj.Noun] = self.get_transform_noun(old_obj)
         not_new_noun_list: list[bmp.obj.Noun] = self.get_transform_noun(old_obj, negated=True)
@@ -366,6 +366,16 @@ class Levelpack(object):
         if transform_success:
             space.del_obj(old_obj)
         return transform_success
+    def transform(self) -> bool:
+        level_transform_success: bool = False
+        for space in self.current_level.space_list:
+            for old_obj in space.object_list:
+                self.transform_object(old_obj, space, self.current_level)
+        for outer_level_id, outer_level in self.level_dict.items():
+            for space in outer_level.space_list:
+                for old_level_obj in [l for l in space.get_levels() if l.level_id == self.current_level_id]:
+                    level_transform_success |= self.transform_object(old_level_obj, space, outer_level)
+        return level_transform_success
     def prepare(self) -> None:
         clear_counts: int = 0
         for sub_level in self.level_dict.values():

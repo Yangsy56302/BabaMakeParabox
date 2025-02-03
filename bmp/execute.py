@@ -25,11 +25,11 @@ def show_dir(path: str, filter_func: Optional[Callable[[str], bool]] = None, tab
     def default_filter_func(filename: str) -> bool:
         return True
     filter_func = filter_func if filter_func is not None else default_filter_func
-    print(f"{' ' * (tab * 2)}+ {os.path.basename(path)}")
+    bmp.lang.print(f"{' ' * (tab * 2)}+ {os.path.basename(path)}")
     path = os.path.abspath(path)
     for filelike in os.scandir(path):
         if filelike.is_file() and filter_func(os.path.basename(filelike.name)):
-            print(f"{' ' * (tab * 2)}  - {os.path.basename(filelike.name)}")
+            bmp.lang.print(f"{' ' * (tab * 2)}  - {os.path.basename(filelike.name)}")
         elif filelike.is_dir():
             show_dir(os.path.abspath(filelike.path), filter_func, tab + 1)
 
@@ -241,7 +241,7 @@ def pre_main() -> None:
     os.makedirs("levelpacks", exist_ok=True)
     if bmp.opt.options["lang"] not in bmp.lang.language_dict.keys():
         for lang in bmp.lang.language_dict.keys():
-            print(bmp.lang.language_dict[lang]["language.select"])
+            bmp.lang.print(bmp.lang.language_dict[lang]["language.select"])
         lang = bmp.lang.input(">>> ")
         bmp.lang.set_current_language(lang)
         bmp.opt.options["lang"] = lang
@@ -255,7 +255,7 @@ def main() -> int:
         "    This is free software, and you are welcome to redistribute it",
         "    under certain conditions; type `c' for details.",
     ])
-    print(gpl_output)
+    bmp.lang.print(gpl_output)
     gpl_choice: dict[str, str] = {
         "w": "\n".join([
             "    This program is distributed in the hope that it will be useful,",
@@ -295,12 +295,12 @@ def main() -> int:
                     if choice[k]():
                         continue
                 case k if k in gpl_choice.keys():
-                    print(gpl_choice[k])
+                    bmp.lang.print(gpl_choice[k])
                     continue
                 case _:
                     break
     except KeyboardInterrupt:
-        print()
+        bmp.lang.print()
         bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.warning")))
         bmp.lang.fprint("launch.keyboard_interrupt")
         bmp.lang.fprint("launch.keyboard_interrupt.insert")
@@ -311,7 +311,7 @@ def main() -> int:
         return 2
     except Exception:
         pygame.quit()
-        print()
+        bmp.lang.print()
         bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.exception")))
         bmp.lang.fprint("launch.exception")
         bmp.lang.fprint("launch.exception.report")
@@ -319,7 +319,7 @@ def main() -> int:
         traceback.print_exc()
         return 1
     else:
-        print()
+        bmp.lang.print()
         bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.game.name")))
         bmp.opt.save()
         bmp.lang.fprint("launch.exit")
