@@ -242,7 +242,7 @@ class Level(object):
         return rule_list, rule_info
     def destroy_obj(self, space: bmp.space.Space, obj: bmp.obj.Object) -> None:
         space.del_obj(obj)
-        for new_noun_type, new_noun_count in obj.special_operator_properties[bmp.obj.TextHas].enabled_dict().items(): # type: ignore
+        for new_noun_type, new_noun_count in obj.special_operator_properties[bmp.obj.TextHas].enabled_count().items(): # type: ignore
             new_noun_type: type[bmp.obj.Noun]
             if issubclass(new_noun_type, bmp.obj.RangedNoun):
                 continue
@@ -764,7 +764,7 @@ class Level(object):
     def make(self) -> None:
         for space in self.space_list:
             for obj in space.object_list:
-                for make_noun_type, make_noun_count in obj.special_operator_properties[bmp.obj.TextMake].enabled_dict().items(): # type: ignore
+                for make_noun_type, make_noun_count in obj.special_operator_properties[bmp.obj.TextMake].enabled_count().items(): # type: ignore
                     make_noun_type: type[bmp.obj.Noun]
                     if issubclass(make_noun_type, bmp.obj.RangedNoun):
                         continue

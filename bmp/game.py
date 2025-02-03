@@ -535,7 +535,7 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                 window.blit(pygame.transform.scale(space_surface, space_surface_size), space_surface_pos)
                 del smooth_value
             # game transform
-            game_transform_to = [t for t, n in levelpack.current_level.game_properties.enabled_dict().items() if issubclass(t, bmp.obj.Noun) and not n]
+            game_transform_to = [t for t, n in levelpack.current_level.game_properties.enabled_count().items() if issubclass(t, bmp.obj.Noun) and not n]
             if len(game_transform_to) != 0:
                 window.fill("#00000080", (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
             game_transform_to = [o.ref_type for o in game_transform_to if o is not None]

@@ -76,9 +76,17 @@ class Properties(object):
         return self.count(prop, negated=False) > 0
     def disabled(self, prop: type["Text"]) -> bool:
         return self.count(prop, negated=True) > 0
-    def enabled_dict(self) -> dict[type["Text"], int]:
+    def enabled_info[T: "Text"](self, prop: type[T]) -> list[PropertyInfo[T]]:
+        return [] if self.disabled(prop) else [i for i in self.__dict.get(prop, []) if not i.negated]
+    def disabled_info[T: "Text"](self, prop: type[T]) -> list[PropertyInfo[T]]:
+        return [i for i in self.__dict.get(prop, []) if i.negated]
+    def enabled_dict(self) -> dict[type["Text"], list[PropertyInfo["Text"]]]:
+        return {k: self.enabled_info(k) for k in self.__dict.keys()}
+    def disabled_dict(self) -> dict[type["Text"], list[PropertyInfo["Text"]]]:
+        return {k: self.disabled_info(k) for k in self.__dict.keys()}
+    def enabled_count(self) -> dict[type["Text"], int]:
         return {_k: _v for _k, _v in {k: self.calc_count(v, False) for k, v in self.__dict.items()}.items() if _v != 0}
-    def disabled_dict(self) -> dict[type["Text"], int]:
+    def disabled_count(self) -> dict[type["Text"], int]:
         return {_k: _v for _k, _v in {k: self.calc_count(v, True) for k, v in self.__dict.items()}.items() if _v != 0}
     def copy(self) -> "Properties":
         return Properties(self.__dict.copy())

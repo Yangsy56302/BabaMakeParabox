@@ -127,7 +127,7 @@ how_to_match_rule: dict[str, list[tuple[
     "before infix": [ # after noun, before infix type, new noun, and operator
         ([bmp.obj.TextNot], [], "before infix", negate_infix),
         ([bmp.obj.Infix], [], "in infix", set_infix),
-        ([bmp.obj.TextAnd], [], "before prefix", text_text_prop),
+        ([bmp.obj.TextAnd], [], "before prefix", text_text_noun),
         ([bmp.obj.Operator], [], "before property", set_oper),
     ],
     "in infix": [ # after infix type, before infix noun

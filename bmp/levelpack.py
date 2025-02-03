@@ -232,282 +232,105 @@ class Levelpack(object):
                                     obj.special_operator_properties[type(oper_obj)].update(prop_obj, prop_negated)
         for obj, (prop_obj, prop_negated) in new_prop_list:
             obj.properties.update(prop_obj, prop_negated)
-    def transform(self) -> None:
-        for space in self.current_level.space_list:
-            delete_object_list = []
-            for old_obj in space.object_list:
-                old_type = type(old_obj)
-                new_noun_list: list[type[bmp.obj.Noun]] = []
-                for noun_type, prop_count in old_obj.properties.enabled_dict().items():
-                    if issubclass(noun_type, bmp.obj.Noun):
-                        new_noun_list.extend([noun_type] * prop_count)
-                while any(map(lambda p: issubclass(p, bmp.obj.RangedNoun), new_noun_list)):
-                    delete_noun_list: list[type[bmp.obj.Noun]] = []
-                    for noun_type in new_noun_list:
-                        if not issubclass(noun_type, bmp.obj.RangedNoun):
-                            continue
-                        if issubclass(noun_type, bmp.obj.TextAll):
-                            new_noun_list.extend([bmp.obj.get_noun_from_type(o) for o in self.current_level.all_list] * prop_count)
-                        if issubclass(noun_type, bmp.obj.GroupNoun):
-                            for group_prop_type, group_prop_count in self.current_level.group_references[noun_type].enabled_dict().items():
-                                if issubclass(group_prop_type, bmp.obj.Noun):
-                                    new_noun_list.extend([group_prop_type] * group_prop_count)
-                        delete_noun_list.append(noun_type)
-                    for delete_noun in delete_noun_list:
-                        new_noun_list.remove(delete_noun)
-                not_new_noun_list: list[type[bmp.obj.Noun]] = []
-                for noun_type, prop_count in old_obj.properties.disabled_dict().items():
-                    if issubclass(noun_type, bmp.obj.Noun):
-                        not_new_noun_list.extend([noun_type] * prop_count)
-                while any(map(lambda p: issubclass(p, bmp.obj.RangedNoun), not_new_noun_list)):
-                    delete_noun_list: list[type[bmp.obj.Noun]] = []
-                    for noun_type in not_new_noun_list:
-                        if not issubclass(noun_type, bmp.obj.RangedNoun):
-                            continue
-                        if issubclass(noun_type, bmp.obj.TextAll):
-                            not_new_noun_list.extend([bmp.obj.get_noun_from_type(o) for o in self.current_level.all_list] * prop_count)
-                        if issubclass(noun_type, bmp.obj.GroupNoun):
-                            for group_prop_type, group_prop_count in self.current_level.group_references[noun_type].disabled_dict().items():
-                                if issubclass(group_prop_type, bmp.obj.Noun):
-                                    not_new_noun_list.extend([group_prop_type] * group_prop_count)
-                        delete_noun_list.append(noun_type)
-                    for delete_noun in delete_noun_list:
-                        not_new_noun_list.remove(delete_noun)
-                transform_success: bool = False
-                noun_is_noun: bool = False
-                noun_is_not_noun: bool = False
-                for new_noun in new_noun_list:
-                    if issubclass(new_noun, bmp.obj.SupportsReferenceType):
-                        if isinstance(old_obj, new_noun.ref_type):
-                            noun_is_noun = True
-                    elif issubclass(new_noun, bmp.obj.SupportsIsReferenceOf):
-                        if new_noun.isreferenceof(old_obj):
-                            noun_is_noun = True
-                for not_new_noun in not_new_noun_list:
-                    if issubclass(new_noun, bmp.obj.SupportsReferenceType):
-                        if isinstance(old_obj, not_new_noun.ref_type):
-                            noun_is_not_noun = True
-                    elif issubclass(new_noun, bmp.obj.SupportsIsReferenceOf):
-                        if new_noun.isreferenceof(old_obj):
-                            noun_is_not_noun = True
-                if noun_is_noun:
+    def get_transform_noun(self, obj: bmp.obj.Object, negated: bool = False) -> list[bmp.obj.Noun]:
+        new_noun_list: list[bmp.obj.Noun] = []
+        get_prop_dict_func = bmp.obj.Properties.disabled_dict if negated else bmp.obj.Properties.enabled_dict
+        for noun_type, noun_info_list in get_prop_dict_func(obj.properties).items():
+            if not issubclass(noun_type, bmp.obj.Noun):
+                continue
+            for noun_info in noun_info_list:
+                if isinstance(noun_info.obj, bmp.obj.Noun):
+                    new_noun_list.append(noun_info.obj)
+        for text_type, text_info_list in get_prop_dict_func(obj.special_operator_properties[bmp.obj.TextWrite]).items():
+            for text_info in text_info_list:
+                new_noun_list.append(bmp.obj.get_noun_from_type(type(text_info.obj))())
+        while any(map(lambda n: isinstance(n, bmp.obj.RangedNoun), new_noun_list)):
+            delete_noun_list: list[bmp.obj.Noun] = []
+            for noun_obj in new_noun_list:
+                if not isinstance(noun_obj, bmp.obj.RangedNoun):
                     continue
-                if noun_is_not_noun:
+                if isinstance(noun_obj, bmp.obj.TextAll):
+                    new_noun_list.extend([bmp.obj.get_noun_from_type(o)() for o in self.current_level.all_list])
+                if isinstance(noun_obj, bmp.obj.GroupNoun):
+                    for group_noun_type, group_noun_info_list in self.current_level.group_references[type(noun_obj)].enabled_dict().items():
+                        if not issubclass(group_noun_type, bmp.obj.Noun):
+                            continue
+                        for group_noun_info in group_noun_info_list:
+                            if isinstance(group_noun_info.obj, bmp.obj.Noun):
+                                new_noun_list.append(group_noun_info.obj)
+                delete_noun_list.append(noun_obj)
+            for delete_noun in delete_noun_list:
+                new_noun_list.remove(delete_noun)
+        return new_noun_list
+    def transform(self) -> bool:
+        level_transform_success: bool = False
+        for space in self.current_level.space_list:
+            for old_obj in space.object_list:
+                self.transform_object(old_obj, space, self.current_level)
+        for outer_level_id, outer_level in self.level_dict.items():
+            for space in outer_level.space_list:
+                for old_level_obj in [l for l in space.get_levels() if l.level_id == outer_level_id]:
+                    level_transform_success |= self.transform_object(old_level_obj, space, outer_level)
+        return level_transform_success
+    def transform_object(self, old_obj: bmp.obj.Object, space: bmp.space.Space, level: bmp.level.Level) -> bool:
+        new_noun_list: list[bmp.obj.Noun] = self.get_transform_noun(old_obj)
+        not_new_noun_list: list[bmp.obj.Noun] = self.get_transform_noun(old_obj, negated=True)
+        transform_success: bool = False
+        noun_is_noun: bool = False
+        noun_is_not_noun: bool = False
+        for new_noun in new_noun_list:
+            if isinstance(new_noun, bmp.obj.SupportsReferenceType):
+                if isinstance(old_obj, new_noun.ref_type):
+                    noun_is_noun = True
+            elif isinstance(new_noun, bmp.obj.SupportsIsReferenceOf):
+                if new_noun.isreferenceof(old_obj):
+                    noun_is_noun = True
+        for not_new_noun in not_new_noun_list:
+            if isinstance(not_new_noun, bmp.obj.SupportsReferenceType):
+                if isinstance(old_obj, not_new_noun.ref_type):
+                    noun_is_not_noun = True
+            elif isinstance(not_new_noun, bmp.obj.SupportsIsReferenceOf):
+                if not_new_noun.isreferenceof(old_obj):
+                    noun_is_not_noun = True
+        if noun_is_not_noun:
+            transform_success = True
+        if noun_is_noun:
+            return False
+        for new_noun in new_noun_list:
+            if isinstance(new_noun, bmp.obj.FixedNoun):
+                if isinstance(new_noun, bmp.obj.TextEmpty):
                     transform_success = True
-                for new_text_type, new_text_count in old_obj.special_operator_properties[bmp.obj.TextWrite].enabled_dict().items():
-                    for _ in range(new_text_count):
-                        new_obj = new_text_type(old_obj.pos, old_obj.orient, space_id=old_obj.space_id, level_id=old_obj.level_id)
-                        space.new_obj(new_obj)
-                    transform_success = True
-                for new_noun in new_noun_list:
-                    if issubclass(new_noun, bmp.obj.FixedNoun):
-                        if issubclass(new_noun, bmp.obj.TextEmpty):
-                            transform_success = True
-                        if issubclass(new_noun, bmp.obj.SpecificSpaceNoun):
-                            if new_noun.isreferenceof(old_obj) and old_obj.space_id is not None:
-                                old_obj.space_id += new_noun.delta_infinite_tier
-                        continue
-                    new_type = new_noun.ref_type
-                    if issubclass(new_type, bmp.obj.Game):
-                        space.new_obj(bmp.obj.Game(old_obj.pos, old_obj.orient, ref_type=old_type))
-                        transform_success = True
-                    elif issubclass(new_type, bmp.obj.LevelObject):
-                        if isinstance(old_obj, new_type):
-                            pass
-                        elif isinstance(old_obj, bmp.obj.LevelObject):
-                            space.new_obj(new_type(old_obj.pos, old_obj.orient, level_id=old_obj.level_id, level_extra=old_obj.level_extra))
-                            transform_success = True
-                        elif isinstance(old_obj, bmp.obj.SpaceObject):
-                            new_level_id: Optional[bmp.ref.LevelID] = None
-                            if old_obj.space_id is not None:
-                                new_level_id = old_obj.space_id.to_level_id()
-                                new_level = bmp.level.Level(
-                                    new_level_id, [old_obj.space_id], old_obj.space_id,
-                                    super_level_id = self.current_level.level_id,
-                                )
-                                self.set_level(new_level_id, new_level)
-                                self.set_level_init_state(new_level_id, new_level)
-                            level_extra: bmp.obj.LevelObjectExtra = {
-                                "icon": {
-                                    "name": bmp.obj.get_noun_from_type(bmp.obj.default_space_object_type).sprite_name,
-                                    "color": space.color if space.color is not None else bmp.obj.SpaceObject.get_color()
-                                }
-                            }
-                            new_obj = new_type(old_obj.pos, old_obj.orient, level_id=new_level_id, level_extra=level_extra)
-                            space.new_obj(new_obj)
-                            transform_success = True
-                        else:
-                            level_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": old_obj.sprite_name, "color": old_obj.get_color()}}
-                            space.new_obj(new_type(old_obj.pos, old_obj.orient, level_id=old_obj.level_id, level_extra=level_extra))
-                            transform_success = True
-                    elif issubclass(new_type, bmp.obj.SpaceObject):
-                        if isinstance(old_obj, new_type):
-                            pass
-                        elif isinstance(old_obj, bmp.obj.SpaceObject):
-                            space.new_obj(new_type(old_obj.pos, old_obj.orient, space_id=old_obj.space_id, space_extra=old_obj.space_extra))
-                            transform_success = True
-                        elif isinstance(old_obj, bmp.obj.LevelObject):
-                            if old_obj.level_id is not None:
-                                old_level = self.get_level(old_obj.level_id)
-                                if old_level is not None:
-                                    for new_space in old_level.space_list:
-                                        space.new_obj(new_type(old_obj.pos, old_obj.orient, space_id=new_space.space_id))
-                            transform_success = True
-                        else:
-                            space.new_obj(new_type(old_obj.pos, old_obj.orient, space_id=old_obj.space_id))
-                            transform_success = True
-                    elif issubclass(new_noun, bmp.obj.TextText):
-                        if not isinstance(old_obj, bmp.obj.Text):
-                            new_obj = bmp.obj.get_noun_from_type(old_type)(old_obj.pos, old_obj.orient, space_id=old_obj.space_id, level_id=old_obj.level_id)
-                            transform_success = True
-                            space.new_obj(new_obj)
-                    else:
-                        transform_success = True
-                        new_obj = new_type(old_obj.pos, old_obj.orient, space_id=old_obj.space_id, level_id=old_obj.level_id)
-                        space.new_obj(new_obj)
-                if transform_success:
-                    delete_object_list.append(old_obj)
-            for delete_obj in delete_object_list:
-                space.del_obj(delete_obj)
-    def space_transform(self) -> None:
-        old_obj_list: dict[type[bmp.obj.SpaceObject], list[tuple[bmp.ref.SpaceID, bmp.obj.SpaceObject]]]
-        new_noun_list: dict[type[bmp.obj.SpaceObject], list[type[bmp.obj.Noun]]]
-        for space_object_type in bmp.obj.space_object_types:
-            for active_space in self.current_level.space_list:
-                old_obj_list = {p: [] for p in bmp.obj.space_object_types}
-                new_noun_list = {p: [] for p in bmp.obj.space_object_types}
-                for other_space in self.current_level.space_list:
-                    for old_obj in other_space.get_spaces():
-                        if isinstance(old_obj, space_object_type) and active_space.space_id == old_obj.space_id:
-                            old_obj_list[type(old_obj)].append((other_space.space_id, old_obj))
-                for noun_type, prop_count in active_space.properties[space_object_type].enabled_dict().items():
-                    if issubclass(noun_type, bmp.obj.Noun):
-                        new_noun_list[space_object_type].extend([noun_type] * prop_count)
-                while any(map(lambda p: issubclass(p, bmp.obj.RangedNoun), new_noun_list)):
-                    delete_noun_list: list[type[bmp.obj.Noun]] = []
-                    for noun_type in new_noun_list:
-                        if not issubclass(noun_type, bmp.obj.RangedNoun):
-                            continue
-                        if issubclass(noun_type, bmp.obj.TextAll):
-                            new_noun_list[space_object_type].extend([bmp.obj.get_noun_from_type(o) for o in self.current_level.all_list] * prop_count)
-                        if issubclass(noun_type, bmp.obj.GroupNoun):
-                            for group_prop_type, group_prop_count in self.current_level.group_references[noun_type].enabled_dict().items():
-                                if issubclass(group_prop_type, bmp.obj.Noun):
-                                    new_noun_list[space_object_type].extend([group_prop_type] * group_prop_count)
-                        delete_noun_list.append(noun_type)
-                    for delete_noun in delete_noun_list:
-                        new_noun_list[space_object_type].remove(delete_noun)
-                for new_text_type, new_text_count in active_space.special_operator_properties[space_object_type][bmp.obj.TextWrite].enabled_dict().items():
-                    for _ in range(new_text_count):
-                        new_obj = new_text_type(old_obj.pos, old_obj.orient, space_id=old_obj.space_id, level_id=old_obj.level_id)
-                        active_space.new_obj(new_obj)
-                for old_space_id, old_obj in old_obj_list[space_object_type]:
-                    unchangeable = False
-                    old_space = self.current_level.get_exact_space(old_space_id)
-                    for new_noun in new_noun_list[space_object_type]:
-                        if issubclass(new_noun, bmp.obj.FixedNoun):
-                            if issubclass(new_noun, bmp.obj.TextEmpty):
-                                continue
-                            if issubclass(new_noun, bmp.obj.SpecificSpaceNoun):
-                                if new_noun.isreferenceof(old_obj) and old_obj.space_id is not None:
-                                    old_obj.space_id += new_noun.delta_infinite_tier
-                            continue
-                        new_type = new_noun.ref_type
-                        if issubclass(space_object_type, new_type):
-                            unchangeable = True
-                            break
-                        elif issubclass(new_type, bmp.obj.SpaceObject):
-                            new_obj = new_type(old_obj.pos, old_obj.orient, space_id=old_obj.space_id, space_extra=old_obj.space_extra)
-                        elif issubclass(new_type, bmp.obj.LevelObject):
-                            new_level_id: Optional[bmp.ref.LevelID] = None
-                            if old_obj.space_id is not None:
-                                new_level_id = old_obj.space_id.to_level_id()
-                                new_level = bmp.level.Level(
-                                    new_level_id, [old_obj.space_id], old_obj.space_id,
-                                    super_level_id = self.current_level.level_id,
-                                )
-                                self.set_level(new_level_id, new_level)
-                                self.set_level_init_state(new_level_id, new_level)
-                            level_extra: bmp.obj.LevelObjectExtra = {
-                                "icon": {
-                                    "name": bmp.obj.get_noun_from_type(bmp.obj.default_space_object_type).sprite_name,
-                                    "color": old_space.color if old_space.color is not None else bmp.obj.SpaceObject.get_color()
-                                }
-                            }
-                            new_obj = new_type(old_obj.pos, old_obj.orient, level_id=new_level_id, level_extra=level_extra)
-                        elif issubclass(new_type, bmp.obj.Game):
-                            new_obj = bmp.obj.Game(old_obj.pos, old_obj.orient, ref_type=space_object_type)
-                        elif issubclass(new_noun, bmp.obj.TextText):
-                            new_obj = bmp.obj.get_noun_from_type(space_object_type)(old_obj.pos, old_obj.orient, space_id=old_obj.space_id)
-                        else:
-                            new_obj = new_type(old_obj.pos, old_obj.orient, space_id=old_obj.space_id)
-                        old_space.new_obj(new_obj)
-                    if len(new_noun_list[space_object_type]) != 0 and not unchangeable:
-                        old_space.del_obj(old_obj)
-    def level_transform(self) -> bool:
-        old_obj_list: dict[type[bmp.obj.LevelObject], list[tuple[bmp.ref.LevelID, bmp.ref.SpaceID, bmp.obj.LevelObject]]]
-        new_noun_list: dict[type[bmp.obj.LevelObject], list[type[bmp.obj.Noun]]]
-        new_noun_list = {p: [] for p in bmp.obj.level_object_types}
-        transform_success = False
-        for level_object_type in bmp.obj.level_object_types:
-            old_obj_list = {p: [] for p in bmp.obj.level_object_types}
-            for level in self.level_list:
-                for other_space in level.space_list:
-                    for old_obj in other_space.get_levels():
-                        if isinstance(old_obj, level_object_type) and self.current_level.level_id == old_obj.level_id:
-                            old_obj_list[type(old_obj)].append((level.level_id, other_space.space_id, old_obj))
-            for noun_type, prop_count in self.current_level.properties[level_object_type].enabled_dict().items():
-                if issubclass(noun_type, bmp.obj.Noun):
-                    new_noun_list[level_object_type].extend([noun_type] * prop_count)
-            while any(map(lambda p: issubclass(p, bmp.obj.RangedNoun), new_noun_list)):
-                delete_noun_list: list[type[bmp.obj.Noun]] = []
-                for noun_type in new_noun_list:
-                    if not issubclass(noun_type, bmp.obj.RangedNoun):
-                        continue
-                    if issubclass(noun_type, bmp.obj.TextAll):
-                        new_noun_list[level_object_type].extend([bmp.obj.get_noun_from_type(o) for o in self.current_level.all_list] * prop_count)
-                    if issubclass(noun_type, bmp.obj.GroupNoun):
-                        for group_prop_type, group_prop_count in self.current_level.group_references[noun_type].enabled_dict().items():
-                            if issubclass(group_prop_type, bmp.obj.Noun):
-                                new_noun_list[level_object_type].extend([group_prop_type] * group_prop_count)
-                    delete_noun_list.append(noun_type)
-                for delete_noun in delete_noun_list:
-                    new_noun_list[level_object_type].remove(delete_noun)
-            for new_text_type, new_text_count in self.current_level.special_operator_properties[level_object_type][bmp.obj.TextWrite].enabled_dict().items():
-                for _ in range(new_text_count):
-                    new_obj = new_text_type(old_obj.pos, old_obj.orient, space_id=old_obj.space_id, level_id=old_obj.level_id)
-                    old_space.new_obj(new_obj)
-                transform_success |= True
-            for old_level_id, old_space_id, old_obj in old_obj_list[level_object_type]:
-                old_level = self.get_exact_level(old_level_id)
-                old_space = old_level.get_exact_space(old_space_id)
-                unchangeable = False
-                for new_noun in new_noun_list[level_object_type]:
-                    if issubclass(new_noun, bmp.obj.FixedNoun):
-                        if issubclass(new_noun, bmp.obj.TextEmpty):
-                            continue
-                        continue
-                    new_type = new_noun.ref_type
-                    if issubclass(level_object_type, new_type):
-                        unchangeable = True
-                        break
-                    elif issubclass(new_type, bmp.obj.LevelObject):
-                        new_obj = new_type(old_obj.pos, old_obj.orient, level_id=old_obj.level_id, level_extra=old_obj.level_extra)
-                    elif issubclass(new_type, bmp.obj.SpaceObject):
-                        for new_space in self.current_level.space_list:
-                            if old_level.get_space(new_space.space_id) is None:
-                                old_level.set_space(new_space)
-                        new_obj = new_type(old_obj.pos, old_obj.orient, space_id=self.current_level.current_space_id)
-                    elif issubclass(new_type, bmp.obj.Game):
-                        new_obj = bmp.obj.Game(old_obj.pos, old_obj.orient, ref_type=level_object_type)
-                    elif issubclass(new_noun, bmp.obj.TextText):
-                        new_obj = bmp.obj.get_noun_from_type(level_object_type)(old_obj.pos, old_obj.orient, level_id=self.current_level.level_id)
-                    else:
-                        new_obj = new_type(old_obj.pos, old_obj.orient, level_id=self.current_level.level_id)
-                    old_space.new_obj(new_obj)
-                if len(new_noun_list[level_object_type]) != 0 and not unchangeable:
-                    old_space.del_obj(old_obj)
-                    transform_success |= True
+                if isinstance(new_noun, bmp.obj.SpecificSpaceNoun):
+                    if new_noun.isreferenceof(old_obj) and old_obj.space_id is not None:
+                        old_obj.space_id += new_noun.delta_infinite_tier
+                continue
+            new_obj = old_obj.transform(new_noun.ref_type)
+            new_obj.reset_uuid()
+            if isinstance(old_obj, bmp.obj.SpaceObject) and isinstance(new_obj, bmp.obj.LevelObject):
+                if old_obj.space_id is not None and new_obj.level_id is not None:
+                    if new_obj.level_id not in self.level_dict.keys():
+                        new_obj_level = bmp.level.Level(
+                            new_obj.level_id, [old_obj.space_id], old_obj.space_id,
+                            super_level_id = level.level_id,
+                        )
+                        self.set_level(new_obj.level_id, new_obj_level)
+                        self.set_level_init_state(new_obj.level_id, new_obj_level)
+                space.new_obj(new_obj)
+                transform_success = True
+            elif isinstance(old_obj, bmp.obj.LevelObject) and isinstance(new_obj, bmp.obj.SpaceObject):
+                old_obj_level = self.get_level(old_obj.level_id)
+                if old_obj_level is not None:
+                    for old_obj_space in old_obj_level.space_list:
+                        new_obj_copy = copy.deepcopy(new_obj)
+                        new_obj_copy.reset_uuid()
+                        new_obj_copy.space_id = old_obj_space.space_id
+                        space.new_obj(new_obj_copy)
+                transform_success = True
+            else:
+                space.new_obj(new_obj)
+                transform_success = True
+        if transform_success:
+            space.del_obj(old_obj)
         return transform_success
     def prepare(self) -> None:
         clear_counts: int = 0
@@ -546,9 +369,7 @@ class Levelpack(object):
         # self.update_rules()
         game_push |= self.current_level.shift()
         self.update_rules()
-        self.transform()
-        self.space_transform()
-        transform = self.level_transform()
+        transform = self.transform()
         self.current_level.game()
         self.current_level.text_plus_and_text_minus()
         self.update_rules()
