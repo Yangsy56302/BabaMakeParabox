@@ -49,12 +49,12 @@ class Level(object):
         self.map_info: Optional[MapLevelExtraJson] = map_info
         # runtime properties
         self.space_dict: dict[bmp.ref.SpaceID, bmp.space.Space]
-        self.properties: dict[type[bmp.obj.LevelObject], bmp.obj.Properties] = {p: bmp.obj.Properties() for p in bmp.obj.level_object_types}
-        self.special_operator_properties: dict[type[bmp.obj.LevelObject], dict[type[bmp.obj.Operator], bmp.obj.Properties]] = {p: {o: bmp.obj.Properties() for o in bmp.obj.special_operators} for p in bmp.obj.level_object_types}
-        self.game_properties: bmp.obj.Properties = bmp.obj.Properties()
+        self.properties: dict[type[bmp.obj.LevelObject], bmp.obj.PropertyStorage] = {p: bmp.obj.PropertyStorage() for p in bmp.obj.level_object_types}
+        self.special_operator_properties: dict[type[bmp.obj.LevelObject], dict[type[bmp.obj.Operator], bmp.obj.PropertyStorage]] = {p: {o: bmp.obj.PropertyStorage() for o in bmp.obj.special_operators} for p in bmp.obj.level_object_types}
+        self.game_properties: bmp.obj.PropertyStorage = bmp.obj.PropertyStorage()
         self.created_levels: list["Level"] = []
         self.all_list: list[type[bmp.obj.Object]] = []
-        self.group_references: dict[type[bmp.obj.GroupNoun], bmp.obj.Properties] = {p: bmp.obj.Properties() for p in bmp.obj.group_noun_types}
+        self.group_references: dict[type[bmp.obj.GroupNoun], bmp.obj.PropertyStorage] = {p: bmp.obj.PropertyStorage() for p in bmp.obj.group_noun_types}
         self.sound_events: list[str] = []
     def __eq__(self, level: "Level") -> bool:
         return self.level_id == level.level_id
@@ -242,7 +242,7 @@ class Level(object):
         return rule_list, rule_info
     def destroy_obj(self, space: bmp.space.Space, obj: bmp.obj.Object) -> None:
         space.del_obj(obj)
-        for new_noun_type, new_noun_count in obj.special_operator_properties[bmp.obj.TextHas].enabled_count().items(): # type: ignore
+        for new_noun_type, new_noun_count in obj.operator_properties[bmp.obj.TextHas].enabled_count().items(): # type: ignore
             new_noun_type: type[bmp.obj.Noun]
             if issubclass(new_noun_type, bmp.obj.RangedNoun):
                 continue
@@ -764,7 +764,7 @@ class Level(object):
     def make(self) -> None:
         for space in self.space_list:
             for obj in space.object_list:
-                for make_noun_type, make_noun_count in obj.special_operator_properties[bmp.obj.TextMake].enabled_count().items(): # type: ignore
+                for make_noun_type, make_noun_count in obj.operator_properties[bmp.obj.TextMake].enabled_count().items(): # type: ignore
                     make_noun_type: type[bmp.obj.Noun]
                     if issubclass(make_noun_type, bmp.obj.RangedNoun):
                         continue
@@ -885,7 +885,7 @@ class Level(object):
             if len(delete_list) != 0 and "done" not in self.sound_events:
                 self.sound_events.append("done")
         for space in self.space_list:
-            for obj in [o for o in space.object_list if bmp.obj.TextAll.isreferenceof(o, all_list = self.all_list)]:
+            for obj in [o for o in space.object_list if bmp.obj.TextAll().isreferenceof(o, all_list = self.all_list)]:
                 if not obj.properties.enabled(bmp.obj.TextDone):
                     return False
         return len(delete_list) > 0

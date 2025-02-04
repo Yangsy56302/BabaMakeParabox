@@ -34,8 +34,8 @@ class Space(object):
         self.object_list: list[bmp.obj.Object] = object_list if object_list is not None else []
         self.object_pos_index: list[list[bmp.obj.Object]]
         self.refresh_index()
-        self.properties: dict[type[bmp.obj.SpaceObject], bmp.obj.Properties] = {p: bmp.obj.Properties() for p in bmp.obj.space_object_types}
-        self.special_operator_properties: dict[type[bmp.obj.SpaceObject], dict[type[bmp.obj.Operator], bmp.obj.Properties]] = {p: {o: bmp.obj.Properties() for o in bmp.obj.special_operators} for p in bmp.obj.space_object_types}
+        self.properties: dict[type[bmp.obj.SpaceObject], bmp.obj.PropertyStorage] = {p: bmp.obj.PropertyStorage() for p in bmp.obj.space_object_types}
+        self.special_operator_properties: dict[type[bmp.obj.SpaceObject], dict[type[bmp.obj.Operator], bmp.obj.PropertyStorage]] = {p: {o: bmp.obj.PropertyStorage() for o in bmp.obj.special_operators} for p in bmp.obj.space_object_types}
         self.rule_list: list[bmp.rule.Rule] = []
         self.rule_info: list[bmp.rule.RuleInfo] = []
         self.static_transform: bmp.loc.SpaceTransform = bmp.loc.default_space_transform.copy()

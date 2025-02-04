@@ -41,15 +41,15 @@ class PropertyInfo[T: "Text"]():
     obj: T
     negated: bool
 
-type PropertiesDict = dict[type["Text"], list[PropertyInfo]]
+type PropertyDict = dict[type["Text"], list[PropertyInfo]]
 
-class Properties(object):
-    def __init__(self, prop: Optional[PropertiesDict] = None) -> None:
-        self.__dict: PropertiesDict = prop if prop is not None else {}
+class PropertyStorage(object):
+    def __init__(self, prop: Optional[PropertyDict] = None) -> None:
+        self.__dict: PropertyDict = prop if prop is not None else {}
     def __bool__(self) -> bool:
         return len(self.__dict) != 0
     def get_info(self) -> str:
-        string = f"properties {self.__dict}"
+        string = f"property storage {self.__dict}"
         return "<" + string + ">"
     @staticmethod
     def calc_count(info_list: list[PropertyInfo], negated: bool = False) -> int:
@@ -88,8 +88,8 @@ class Properties(object):
         return {_k: _v for _k, _v in {k: self.calc_count(v, False) for k, v in self.__dict.items()}.items() if _v != 0}
     def disabled_count(self) -> dict[type["Text"], int]:
         return {_k: _v for _k, _v in {k: self.calc_count(v, True) for k, v in self.__dict.items()}.items() if _v != 0}
-    def copy(self) -> "Properties":
-        return Properties(self.__dict.copy())
+    def copy(self) -> "PropertyStorage":
+        return PropertyStorage(self.__dict.copy())
 
 class OldObjectState(object):
     def __init__(
@@ -98,14 +98,14 @@ class OldObjectState(object):
         uid: Optional[uuid.UUID] = None,
         pos: Optional[bmp.loc.Coord[int]] = None,
         orient: Optional[bmp.loc.Orient] = None,
-        prop: Optional[Properties] = None,
+        prop: Optional[PropertyStorage] = None,
         space: Optional[bmp.ref.SpaceID] = None,
         level: Optional[bmp.ref.LevelID] = None
     ) -> None:
         self.uid: Optional[uuid.UUID] = uid
         self.pos: Optional[bmp.loc.Coord[int]] = pos
         self.orient: Optional[bmp.loc.Orient] = orient
-        self.prop: Optional[Properties] = prop
+        self.prop: Optional[PropertyStorage] = prop
         self.space: Optional[bmp.ref.SpaceID] = space
         self.level: Optional[bmp.ref.LevelID] = level
 
@@ -169,8 +169,8 @@ class Object(object):
         self.old_state: OldObjectState = OldObjectState()
         self.space_id: Optional[bmp.ref.SpaceID] = space_id
         self.level_id: Optional[bmp.ref.LevelID] = level_id
-        self.properties: Properties = Properties()
-        self.special_operator_properties: dict[type["Operator"], Properties] = {o: Properties() for o in special_operators}
+        self.properties: PropertyStorage = PropertyStorage()
+        self.operator_properties: dict[type["Operator"], PropertyStorage] = {o: PropertyStorage() for o in special_operators}
         self.move_number: int = 0
         self.sprite_state: int = 0
     def __eq__(self, obj: "Object") -> bool:
@@ -391,6 +391,7 @@ class Text(Object):
 
 class Noun(Text):
     ref_type: type["Object"]
+    def isreferenceof(self, other: Object, **kwds) -> bool: ...
 
 class Prefix(Text):
     pass
@@ -405,7 +406,8 @@ class Property(Text):
     pass
 
 class GeneralNoun(Noun):
-    pass
+    def isreferenceof(self, other: Object, **kwds) -> bool:
+        return isinstance(other, type(self))
 
 class TextCursor(GeneralNoun):
     ref_type = Cursor
@@ -742,20 +744,17 @@ class Metatext(GeneralNoun):
 class SpecialNoun(Noun):
     ref_type: type[NotRealObject] = NotRealObject
     sprite_palette = (0, 3)
-    @classmethod
-    def isreferenceof(cls, other: Object, /, **kwds) -> bool:
+    def isreferenceof(self, other: Object, **kwds) -> bool:
         raise NotImplementedError()
 
 class FixedNoun(SpecialNoun):
-    @classmethod
-    def isreferenceof(cls, other: Object, /, **kwds) -> bool:
+    def isreferenceof(self, other: Object, **kwds) -> bool:
         return False
 
 class RangedNoun(SpecialNoun):
     ref_type: tuple[type[Noun], ...]
-    @classmethod
-    def isreferenceof(cls, other: Object, /, **kwds) -> bool:
-        return any(map(lambda n: isinstance(other, n) if not isinstance(n, SupportsIsReferenceOf) else n.isreferenceof(other), cls.ref_type))
+    def isreferenceof(self, other: Object, **kwds) -> bool:
+        return any(map(lambda n: n().isreferenceof(other), self.ref_type))
 
 class TextEmpty(SpecialNoun):
     json_name = "text_empty"
@@ -764,14 +763,12 @@ class TextEmpty(SpecialNoun):
 class TextAll(RangedNoun):
     json_name = "text_all"
     sprite_name = "text_all"
-    @classmethod
-    def isreferenceof(cls, other: Object, /, all_list, **kwds) -> bool:
-        return any(map(lambda n: isinstance(other, n) if not isinstance(n, SupportsIsReferenceOf) else n.isreferenceof(other), all_list))
+    def isreferenceof(self, other: Object, all_list: list[type[bmp.obj.Object]], **kwds) -> bool:
+        return any(map(lambda n: get_noun_from_type(n)().isreferenceof(other), all_list))
 
 class GroupNoun(RangedNoun):
-    @classmethod
-    def isreferenceof(cls, other: Object, /, **kwds) -> bool:
-        return other.properties.enabled(cls)
+    def isreferenceof(self, other: Object, **kwds) -> bool:
+        return other.properties.enabled(type(self))
 
 class TextGroup(GroupNoun):
     json_name = "text_group"
@@ -782,40 +779,38 @@ group_noun_types: tuple[type[GroupNoun], ...] = (TextGroup, )
 
 class SpecificSpaceNoun(FixedNoun):
     delta_infinite_tier: int
-    @classmethod
-    def isreferenceof(cls, other: Object, **kwds) -> TypeGuard[SpaceObject]:
-        if isinstance(other, SpaceObject):
-            return True
-        return False
+    def isreferenceof(self, other: Object, **kwds) -> TypeGuard[SpaceObject]:
+        return isinstance(other, SpaceObject)
 
 class TextInfinity(SpecificSpaceNoun):
     json_name = "text_infinity"
     sprite_name = "text_infinity"
     delta_infinite_tier = 1
-    @classmethod
-    def isreferenceof(cls, other: SpaceObject, **kwds) -> bool:
+    def isreferenceof(self, other: SpaceObject, **kwds) -> bool:
         if super().isreferenceof(other):
-            if other.space_id is not None:
-                if other.space_id.infinite_tier > 0:
-                    return True
+            if other.space_id is not None and other.space_id.infinite_tier > 0:
+                return True
         return False
 
 class TextEpsilon(SpecificSpaceNoun):
     json_name = "text_epsilon"
     sprite_name = "text_epsilon"
     delta_infinite_tier = -1
-    @classmethod
-    def isreferenceof(cls, other: SpaceObject, **kwds) -> bool:
+    def isreferenceof(self, other: SpaceObject, **kwds) -> bool:
         if super().isreferenceof(other):
-            if other.space_id is not None:
-                if other.space_id.infinite_tier < 0:
-                    return True
+            if other.space_id is not None and other.space_id.infinite_tier < 0:
+                return True
         return False
 
 class TextParabox(RangedNoun):
     ref_type = (TextInfinity, TextEpsilon)
     json_name = "text_parabox"
     sprite_name = "text_parabox"
+    def isreferenceof(self, other: Object, **kwds) -> TypeGuard[SpaceObject]:
+        if super().isreferenceof(other):
+            if other.space_id is not None and other.space_id.infinite_tier != 0:
+                return True
+        return False
 
 SupportsReferenceType = GeneralNoun | RangedNoun
 SupportsIsReferenceOf = FixedNoun | RangedNoun
