@@ -44,6 +44,7 @@ keybinds: dict[int, str] = {
     pygame.K_EQUALS: "=",
     pygame.K_SPACE: " ",
     pygame.K_F1: "F1",
+    pygame.K_F12: "F12",
 }
 keymods: dict[int, str] = {
     pygame.KMOD_LSHIFT: "LSHIFT",
@@ -218,7 +219,11 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                         space_changed = True
                         display_refresh = True
                 elif mouses[1] == 1:
-                    pass # maybe print informations of objects on cursor?
+                    object_list = levelpack.current_level.current_space.get_objs_from_pos(mouse_pos_in_space)
+                    if len(object_list) != 0:
+                        bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.object")))
+                        for obj in object_list:
+                            bmp.lang.print(obj.get_info() if bmp.opt.options["debug"] else repr(obj))
                 elif bool(mouses[3]) ^ bool(mouses[4]):
                     current_space_index = visible_space_list.index(levelpack.current_level.current_space) if levelpack.current_level.current_space in visible_space_list else 0
                     current_space_index += 1 if mouses[3] else -1
@@ -274,7 +279,7 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                     press_key_to_continue = False
                 del restart_failed
             elif keys["O"]:
-                bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.savepoint")))
+                bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.savepoint")))
                 savepoint_name = ""
                 if keys["LCTRL"] or keys["RCTRL"]:
                     savepoint_name = bmp.lang.input_str(bmp.lang.fformat("input.savepoint.name"))
@@ -304,7 +309,7 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                     else:
                         bmp.lang.fwarn("warn.savepoint.not_found", value=savepoint_name)
             elif keys["P"]:
-                bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.savepoint")))
+                bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.savepoint")))
                 savepoint_name = ""
                 if keys["LCTRL"] or keys["RCTRL"]:
                     savepoint_name = bmp.lang.input_str(bmp.lang.fformat("input.savepoint.name"))
@@ -318,18 +323,18 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                     savepoint_dict[savepoint_name] = (copy.deepcopy(levelpack), levelpack_info.copy())
                 bmp.lang.fprint("play.savepoint.saved", value=savepoint_name)
             elif keys["TAB"]:
-                bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.info")))
+                bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.info")))
                 bmp.lang.fprint("play.level.current.name", value=levelpack.current_level_id.name)
                 bmp.lang.fprint("play.space.current.name", value=levelpack.current_level.current_space_id.name)
                 bmp.lang.fprint("play.space.current.infinite_tier", value=levelpack.current_level.current_space_id.infinite_tier)
                 if len(levelpack.current_level.current_space.rule_list):
-                    bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.space.rule_list")))
+                    bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.space.rule_list")))
                     for rule in levelpack.current_level.current_space.rule_list:
                         str_list = []
                         for object_type in rule:
                             str_list.append(object_type.get_name())
                         bmp.lang.print(" ".join(str_list))
-                    bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.level.rule_list")))
+                    bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.level.rule_list")))
                 recursion_rule_list: list[bmp.rule.Rule] = levelpack.current_level.recursion_rules(levelpack.current_level.current_space)[0]
                 if len(recursion_rule_list):
                     for rule in recursion_rule_list:
@@ -338,14 +343,14 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                             str_list.append(object_type.get_name())
                         bmp.lang.print(" ".join(str_list))
                 if len(levelpack.rule_list):
-                    bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.levelpack.rule_list")))
+                    bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.levelpack.rule_list")))
                     for rule in levelpack.rule_list:
                         str_list = []
                         for object_type in rule:
                             str_list.append(object_type.get_name())
                         bmp.lang.print(" ".join(str_list))
                 if len(levelpack.collectibles) != 0:
-                    bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.collectibles")))
+                    bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.collectibles")))
                     collectible_counts: dict[type[bmp.obj.Object], int] = {}
                     for collectible in levelpack.collectibles:
                         collectible_counts.setdefault(collectible.object_type, 0)
@@ -568,6 +573,8 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
             for i in range(len(real_fps_string)):
                 window.blit(bmp.render.current_sprites.get(f"text_{real_fps_string[i]}", 0, wiggle), (i * bmp.render.sprite_size, 0))
             del real_fps_string
+        if keys["F12"]:
+            bmp.opt.options["debug"] = not bmp.opt.options["debug"]
         pygame.display.flip()
         milliseconds = clock.tick(bmp.opt.options["render"]["fps"])
     pygame.mixer.music.stop()

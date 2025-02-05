@@ -71,6 +71,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
         pygame.K_BACKSPACE: "BACKSPACE",
         pygame.K_TAB: "TAB",
         pygame.K_F1: "F1",
+        pygame.K_F12: "F12",
     }
     keymods = {
         pygame.KMOD_LSHIFT: "LSHIFT",
@@ -170,7 +171,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                             history.append(copy.deepcopy(levelpack))
                             if issubclass(current_object_type, bmp.obj.LevelObject):
                                 if keys["LCTRL"] or keys["RCTRL"]:
-                                    bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.new")))
+                                    bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.new")))
                                     name = bmp.lang.input_str(bmp.lang.fformat("edit.level.new.name"))
                                     level_id: bmp.ref.LevelID = bmp.ref.LevelID(name)
                                     icon_name = bmp.lang.input_str(bmp.lang.fformat("edit.level.new.icon.name"))
@@ -188,7 +189,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                             elif issubclass(current_object_type, bmp.obj.SpaceObject):
                                 space_id: bmp.ref.SpaceID = levelpack.current_level.current_space_id
                                 if keys["LCTRL"] or keys["RCTRL"]:
-                                    bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.new")))
+                                    bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.new")))
                                     name = bmp.lang.input_str(bmp.lang.fformat("edit.space.new.name"))
                                     infinite_tier = bmp.lang.input_int(bmp.lang.fformat("edit.space.new.infinite_tier"))
                                     space_id = bmp.ref.SpaceID(name, infinite_tier)
@@ -197,7 +198,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                 unlocked = False
                                 conditions: dict[type[bmp.obj.Object], int] = {}
                                 if keys["LCTRL"] or keys["RCTRL"]:
-                                    bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.new")))
+                                    bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.new")))
                                     unlocked = bmp.lang.input_yes(bmp.lang.fformat("edit.path.new.unlocked"))
                                     more_condition = bmp.lang.input_yes(bmp.lang.fformat("edit.path.new.condition"))
                                     while more_condition:
@@ -295,7 +296,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                         current_object_type = object_type_shortcuts[(i - 1) % 10]
         elif keys["N"]:
             if keys["LALT"] or keys["RALT"]:
-                bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.new")))
+                bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.new")))
                 if bmp.lang.input_no(bmp.lang.fformat("edit.level.new")):
                     history.append(copy.deepcopy(levelpack))
                     level_name = bmp.lang.input_str(bmp.lang.fformat("edit.level.new.name"))
@@ -345,7 +346,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                     del space_id
         # delete current space / level (alt)
         elif keys["M"]:
-            bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.delete")))
+            bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.delete")))
             if keys["LALT"] or keys["RALT"]:
                 if bmp.lang.input_yes(bmp.lang.fformat("edit.level.delete")):
                     levelpack.del_level(levelpack.current_level_id)
@@ -363,7 +364,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                     space_changed = True
         # add global rule; remove global rule (shift)
         elif keys["R"]:
-            bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.levelpack.rule_list")))
+            bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.levelpack.rule_list")))
             text_rule = bmp.lang.input_str(bmp.lang.fformat("edit.levelpack.new.rule")).upper().split()
             type_rule: bmp.rule.Rule = []
             valid_input = True
@@ -383,7 +384,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                     levelpack.rule_list.remove(type_rule)
                 else:
                     levelpack.rule_list.append(type_rule)
-            bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.levelpack.rule_list")))
+            bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.levelpack.rule_list")))
             for rule in levelpack.rule_list:
                 str_list: list[str] = []
                 for object_type in rule:
@@ -391,7 +392,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                 bmp.lang.print(" ".join(str_list))
         # edit id for current space / level (alt)
         elif keys["T"]:
-            bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.rename")))
+            bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.rename")))
             if keys["LALT"] or keys["RALT"]:
                 levelpack.current_level_id.name = bmp.lang.input_str(bmp.lang.fformat("edit.level.rename"))
             else:
@@ -428,9 +429,9 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                             for new_space in level.space_list:
                                 levelpack.current_level.set_space(new_space)
         elif keys["TAB"]:
-            bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.level")))
+            bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.level")))
             bmp.lang.fprint("edit.level.current.name", value=levelpack.current_level_id.name)
-            bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.space")))
+            bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.space")))
             bmp.lang.fprint("edit.space.current.name", value=levelpack.current_level.current_space_id.name)
             bmp.lang.fprint("edit.space.current.infinite_tier", value=levelpack.current_level.current_space_id.infinite_tier)
         if level_changed:
@@ -518,6 +519,8 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
             real_fps_string = str(int(real_fps))
             for i in range(len(real_fps_string)):
                 window.blit(bmp.render.current_sprites.get(f"text_{real_fps_string[i]}", 0, wiggle), (i * bmp.render.sprite_size, 0))
+        if keys["F12"]:
+            bmp.opt.options["debug"] = not bmp.opt.options["debug"]
         pygame.display.flip()
         milliseconds = clock.tick(bmp.opt.options["render"]["fps"])
     pygame.display.quit()

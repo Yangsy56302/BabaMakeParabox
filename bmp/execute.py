@@ -34,9 +34,9 @@ def show_dir(path: str, filter_func: Optional[Callable[[str], bool]] = None, tab
             show_dir(os.path.abspath(filelike.path), filter_func, tab + 1)
 
 def gameplay() -> bool:
-    bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.directory", dir="levelpacks")))
+    bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.directory", dir="levelpacks")))
     show_dir("levelpacks", lambda s: True if bmp.opt.options["debug"] else s.endswith(".json"))
-    bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.open.file")))
+    bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.open.file")))
     bmp.lang.fprint("launch.open.levelpack")
     input_filename = bmp.lang.input_str(bmp.lang.fformat("input.file.name"))
     input_filename += "" if bmp.opt.options["debug"] or input_filename.endswith(".json") else ".json"
@@ -49,7 +49,7 @@ def gameplay() -> bool:
         levelpack = bmp.levelpack.json_to_levelpack(levelpack_json)
     bmp.lang.fprint("play.start")
     levelpack = bmp.game.play(levelpack)
-    bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.save.file")))
+    bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.save.file")))
     bmp.lang.fprint("launch.save.levelpack")
     bmp.lang.fprint("launch.save.levelpack.empty.game")
     output_filename = bmp.lang.input_str(bmp.lang.fformat("input.file.name"))
@@ -61,9 +61,9 @@ def gameplay() -> bool:
     return True
 
 def editor() -> bool:
-    bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.directory", dir="levelpacks")))
+    bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.directory", dir="levelpacks")))
     show_dir("levelpacks", lambda s: True if bmp.opt.options["debug"] else s.endswith(".json"))
-    bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.open.file")))
+    bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.open.file")))
     bmp.lang.fprint("launch.open.levelpack")
     bmp.lang.fprint("launch.open.levelpack.empty.editor")
     input_filename = bmp.lang.input_str(bmp.lang.fformat("input.file.name"))
@@ -86,7 +86,7 @@ def editor() -> bool:
         level = bmp.level.Level(bmp.ref.LevelID("0level"), [space.space_id], space.space_id)
         levelpack = bmp.levelpack.Levelpack({level.level_id: level}, {space.space_id: space}, level.level_id)
     levelpack = bmp.editor.levelpack_editor(levelpack)
-    bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.save.file")))
+    bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.save.file")))
     bmp.lang.fprint("launch.save.levelpack")
     bmp.lang.fprint("launch.save.levelpack.empty.editor")
     output_filename = bmp.lang.input_str(bmp.lang.fformat("input.file.name"))
@@ -98,9 +98,9 @@ def editor() -> bool:
     return True
 
 def update_levelpack() -> bool:
-    bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.directory", dir="levelpacks")))
+    bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.directory", dir="levelpacks")))
     show_dir("levelpacks", lambda s: True if bmp.opt.options["debug"] else s.endswith(".json"))
-    bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.open.file")))
+    bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.open.file")))
     bmp.lang.fprint("launch.open.levelpack")
     input_filename = bmp.lang.input_str(bmp.lang.fformat("input.file.name"))
     input_filename += "" if bmp.opt.options["debug"] or input_filename.endswith(".json") else ".json"
@@ -111,7 +111,7 @@ def update_levelpack() -> bool:
         levelpack_json: bmp.levelpack.AnyLevelpackJson = json.load(file)
         bmp.lang.fprint("launch.open.levelpack.done", file=input_filename)
         levelpack_json = bmp.levelpack.update_json_format(levelpack_json, levelpack_json["ver"])
-    bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.save.file")))
+    bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.save.file")))
     bmp.lang.fprint("launch.save.levelpack")
     bmp.lang.fprint("launch.save.levelpack.empty.update")
     output_filename = bmp.lang.input_str(bmp.lang.fformat("input.file.name"))
@@ -124,9 +124,9 @@ def update_levelpack() -> bool:
     return True
 
 def set_levelpack_to_initial() -> bool:
-    bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.directory", dir="levelpacks")))
+    bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.directory", dir="levelpacks")))
     show_dir("levelpacks", lambda s: True if bmp.opt.options["debug"] else s.endswith(".json"))
-    bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.open.file")))
+    bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.open.file")))
     bmp.lang.fprint("launch.open.levelpack")
     input_filename = bmp.lang.input_str(bmp.lang.fformat("input.file.name"))
     input_filename += "" if bmp.opt.options["debug"] or input_filename.endswith(".json") else ".json"
@@ -138,7 +138,7 @@ def set_levelpack_to_initial() -> bool:
         bmp.lang.fprint("launch.open.levelpack.done", file=input_filename)
         levelpack_json.pop("level_init_states")
         levelpack_json.pop("space_init_states")
-    bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.save.file")))
+    bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.save.file")))
     bmp.lang.fprint("launch.save.levelpack")
     bmp.lang.fprint("launch.save.levelpack.empty.update")
     output_filename = bmp.lang.input_str(bmp.lang.fformat("input.file.name"))
@@ -151,7 +151,7 @@ def set_levelpack_to_initial() -> bool:
     return True
 
 def change_options() -> bool:
-    bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.change_options")))
+    bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.change_options")))
     while True:
         bmp.opt.options["debug"] = bmp.lang.input_no(bmp.lang.fformat("launch.change_options.debug"))
         bmp.lang.fprint(f"launch.change_options.performance")
@@ -196,9 +196,9 @@ def change_options() -> bool:
         bmp.opt.options["gameplay"]["repeat"].update({"delay": delay, "interval": interval})
         break
     while True:
-        bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.directory", dir="palettes")))
+        bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.directory", dir="palettes")))
         show_dir("palettes", lambda s: True if bmp.opt.options["debug"] else s.endswith(".png"))
-        bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.open.file")))
+        bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.open.file")))
         palette_filename = bmp.lang.input_str(bmp.lang.fformat("input.file.name"))
         if palette_filename == "":
             break
@@ -285,7 +285,7 @@ def main() -> int:
         if bmp.opt.options["debug"]:
             bmp.lang.fprint("launch.debug")
         while True:
-            bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.game.name")))
+            bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.game.name")))
             for k in choice.keys():
                 bmp.lang.fprint(f"launch.game_mode.{k}")
             bmp.lang.fprint(f"launch.game_mode._")
@@ -301,7 +301,7 @@ def main() -> int:
                     break
     except KeyboardInterrupt:
         bmp.lang.print()
-        bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.warning")))
+        bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.warning")))
         bmp.lang.fprint("launch.keyboard_interrupt")
         bmp.lang.fprint("launch.keyboard_interrupt.insert")
         bmp.opt.save()
@@ -312,7 +312,7 @@ def main() -> int:
     except Exception:
         pygame.quit()
         bmp.lang.print()
-        bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.exception")))
+        bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.exception")))
         bmp.lang.fprint("launch.exception")
         bmp.lang.fprint("launch.exception.report")
         bmp.lang.fprint("launch.exception.record")
@@ -320,7 +320,7 @@ def main() -> int:
         return 1
     else:
         bmp.lang.print()
-        bmp.lang.fprint(bmp.lang.seperator_line(bmp.lang.fformat("title.game.name")))
+        bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.game.name")))
         bmp.opt.save()
         bmp.lang.fprint("launch.exit")
         pygame.quit()
