@@ -835,13 +835,15 @@ class Level(object):
                 elif bmp.base.current_os == bmp.base.linux:
                     os.system(f"python ./submp.py {game_obj.ref_type.json_name} &")
     def win(self) -> bool:
+        if self.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextWin):
+            return True
         for space in self.space_list:
             you_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextYou)]
             win_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextWin)]
             for you_obj in you_objs:
                 if you_obj in win_objs:
                     return True
-                if space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextWin) or self.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextWin):
+                if space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextWin):
                     if not you_obj.properties.enabled(bmp.obj.TextFloat):
                         return True
                 for win_obj in win_objs:
@@ -850,13 +852,15 @@ class Level(object):
                             return True
         return False
     def end(self) -> bool:
+        if self.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextEnd):
+            return True
         for space in self.space_list:
             you_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextYou)]
             end_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextEnd)]
             for you_obj in you_objs:
                 if you_obj in end_objs:
                     return True
-                if space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextEnd) or self.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextEnd):
+                if space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextEnd):
                     if not you_obj.properties.enabled(bmp.obj.TextFloat):
                         return True
                 for end_obj in end_objs:
@@ -867,7 +871,9 @@ class Level(object):
     def done(self) -> bool:
         for space in self.space_list:
             delete_list = []
-            if space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextDone) or self.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextDone):
+            if self.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextDone):
+                delete_list.extend(space.object_list)
+            if space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextDone):
                 delete_list.extend(space.object_list)
             for obj in space.object_list:
                 if obj.properties.enabled(bmp.obj.TextDone):

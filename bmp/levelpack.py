@@ -174,50 +174,59 @@ class Levelpack(object):
                                 prop_obj = prop_info.prop
                                 prop_negated = prop_info.prop_negated
                                 # meta game
-                                if issubclass(object_type, bmp.obj.Game) and isinstance(oper_obj, bmp.obj.TextIs):
-                                    if len(infix_info_list) == 0 and len(prefix_info_list) == 0 and not noun_negated:
+                                if issubclass(noun_obj.ref_type, bmp.obj.Game) and isinstance(oper_obj, bmp.obj.TextIs):
+                                    if len(infix_info_list) == 0 and len(prefix_info_list) == 0:
                                         self.current_level.game_properties.update(prop_obj, prop_negated)
                                 # meta level
-                                elif issubclass(object_type, bmp.obj.LevelObject) and not noun_negated:
-                                    level_prop_update: bool = len(current_level_objs) == 0
+                                elif issubclass(noun_obj.ref_type, bmp.obj.LevelObject):
+                                    print("meta level")
+                                    level_prop_update: bool = False
                                     for level_obj in current_level_objs:
-                                        if not isinstance(level_obj, object_type):
+                                        if not isinstance(level_obj, noun_obj.ref_type):
                                             continue
                                         meet_prefix_conditions = self.current_level.meet_prefix_conditions(space, level_obj, prefix_info_list, True)
                                         meet_infix_conditions = self.current_level.meet_infix_conditions(space, level_obj, infix_info_list)
-                                        if not (meet_prefix_conditions and meet_infix_conditions):
+                                        if len(prefix_info_list) != 0 and not meet_prefix_conditions:
+                                            continue
+                                        if len(infix_info_list) != 0 and not meet_infix_conditions:
                                             continue
                                         level_prop_update |= True
                                         if type(oper_obj) == bmp.obj.TextIs:
                                             level_obj.properties.update(prop_obj, prop_negated)
                                         else:
                                             level_obj.operator_properties[type(oper_obj)].update(prop_obj, prop_negated)
+                                    if len(current_level_objs) == 0:
+                                        level_prop_update |= True
                                     if level_prop_update:
                                         if type(oper_obj) == bmp.obj.TextIs:
-                                            self.current_level.properties[object_type].update(prop_obj, prop_negated)
+                                            self.current_level.properties[noun_obj.ref_type].update(prop_obj, prop_negated)
                                         else:
-                                            self.current_level.special_operator_properties[object_type][type(oper_obj)].update(prop_obj, prop_negated)
+                                            self.current_level.special_operator_properties[noun_obj.ref_type][type(oper_obj)].update(prop_obj, prop_negated)
                                     del level_prop_update
                                 # meta space
-                                elif issubclass(object_type, bmp.obj.SpaceObject) and not noun_negated:
-                                    space_prop_update: bool = len(active_space_objs) == 0
+                                elif issubclass(noun_obj.ref_type, bmp.obj.SpaceObject):
+                                    space_prop_update: bool = False
                                     for space_obj in active_space_objs:
-                                        if not isinstance(space_obj, object_type):
+                                        if not isinstance(space_obj, noun_obj.ref_type):
                                             continue
                                         meet_prefix_conditions = self.current_level.meet_prefix_conditions(space, space_obj, prefix_info_list, True)
                                         meet_infix_conditions = self.current_level.meet_infix_conditions(space, space_obj, infix_info_list)
-                                        if not (meet_prefix_conditions and meet_infix_conditions):
+                                        if len(prefix_info_list) != 0 and not meet_prefix_conditions:
+                                            continue
+                                        if len(infix_info_list) != 0 and not meet_infix_conditions:
                                             continue
                                         space_prop_update |= True
                                         if type(oper_obj) == bmp.obj.TextIs:
                                             space_obj.properties.update(prop_obj, prop_negated)
                                         else:
                                             space_obj.operator_properties[type(oper_obj)].update(prop_obj, prop_negated)
+                                    if len(active_space_objs) == 0:
+                                        space_prop_update |= True
                                     if space_prop_update:
                                         if type(oper_obj) == bmp.obj.TextIs:
-                                            space.properties[object_type].update(prop_obj, prop_negated)
+                                            space.properties[noun_obj.ref_type].update(prop_obj, prop_negated)
                                         else:
-                                            space.special_operator_properties[object_type][type(oper_obj)].update(prop_obj, prop_negated)
+                                            space.special_operator_properties[noun_obj.ref_type][type(oper_obj)].update(prop_obj, prop_negated)
                                     del space_prop_update
                 else:
                     if noun_negated:
