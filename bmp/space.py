@@ -217,7 +217,7 @@ class Space(object):
                 text_obj.render_state = bmp.obj.TextRenderState.USED
     def set_sprite_states(self, round_num: int = 0) -> None:
         for obj in self.object_list:
-            if obj.sprite_category == "tiled":
+            if obj.sprite_category == bmp.obj.SpriteCategory.TILED:
                 connected = {
                     o: len(self.get_objs_from_pos_and_type(
                         bmp.loc.front_position(obj.pos, o), type(obj)

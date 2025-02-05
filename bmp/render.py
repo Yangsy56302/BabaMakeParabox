@@ -158,7 +158,8 @@ def simple_object_to_surface(obj: bmp.obj.Object, wiggle: int = 1, default_surfa
         if isinstance(obj, bmp.obj.Text):
             match obj.render_state:
                 case bmp.obj.TextRenderState.UNUSED:
-                    obj_surface = set_alpha(obj_surface, 0x80)
+                    if not debug:
+                        obj_surface = set_alpha(obj_surface, 0x80)
                 case bmp.obj.TextRenderState.USED:
                     pass
         elif isinstance(obj, bmp.obj.SpaceObject) and obj.space_id is not None and obj.space_id.infinite_tier != 0:
@@ -187,22 +188,25 @@ def simple_object_to_surface(obj: bmp.obj.Object, wiggle: int = 1, default_surfa
     return obj_surface
 
 def valid(__obj: bmp.obj.Object, /) -> bool:
-    return __obj.sprite_category != "none" or isinstance(__obj, (bmp.obj.SpaceObject, bmp.obj.LevelObject, bmp.obj.Metatext))
+    return __obj.sprite_category != bmp.obj.SpriteCategory.NONE or isinstance(__obj, (bmp.obj.SpaceObject, bmp.obj.LevelObject, bmp.obj.Metatext))
 
-order: list[Callable[..., bool]] = [
+order: list[Callable[[bmp.obj.Object], bool]] = [
     lambda o: isinstance(o, bmp.obj.Cursor),
+    lambda o: isinstance(o, bmp.obj.Operator) and o.render_state == bmp.obj.TextRenderState.USED,
+    lambda o: isinstance(o, bmp.obj.Noun) and o.render_state == bmp.obj.TextRenderState.USED,
+    lambda o: isinstance(o, bmp.obj.Property) and o.render_state == bmp.obj.TextRenderState.USED,
     lambda o: isinstance(o, bmp.obj.Operator),
     lambda o: isinstance(o, bmp.obj.Noun),
     lambda o: isinstance(o, bmp.obj.Property),
     lambda o: isinstance(o, bmp.obj.Text),
     lambda o: isinstance(o, bmp.obj.LevelObject),
     lambda o: isinstance(o, bmp.obj.SpaceObject),
-    lambda o: isinstance(o, bmp.obj.Object) and o.sprite_category == "character",
-    lambda o: isinstance(o, bmp.obj.Object) and o.sprite_category == "animated_directional",
-    lambda o: isinstance(o, bmp.obj.Object) and o.sprite_category == "directional",
-    lambda o: isinstance(o, bmp.obj.Object) and o.sprite_category == "animated",
-    lambda o: isinstance(o, bmp.obj.Object) and o.sprite_category == "static",
-    lambda o: isinstance(o, bmp.obj.Object) and o.sprite_category == "tiled",
+    lambda o: isinstance(o, bmp.obj.Object) and o.sprite_category == bmp.obj.SpriteCategory.CHARACTER,
+    lambda o: isinstance(o, bmp.obj.Object) and o.sprite_category == bmp.obj.SpriteCategory.ANIMATED_DIRECTIONAL,
+    lambda o: isinstance(o, bmp.obj.Object) and o.sprite_category == bmp.obj.SpriteCategory.DIRECTIONAL,
+    lambda o: isinstance(o, bmp.obj.Object) and o.sprite_category == bmp.obj.SpriteCategory.ANIMATED,
+    lambda o: isinstance(o, bmp.obj.Object) and o.sprite_category == bmp.obj.SpriteCategory.STATIC,
+    lambda o: isinstance(o, bmp.obj.Object) and o.sprite_category == bmp.obj.SpriteCategory.TILED,
     lambda o: isinstance(o, bmp.obj.Object),
-    lambda c: True
+    lambda o: True,
 ]

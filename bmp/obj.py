@@ -111,6 +111,15 @@ class OldObjectState(object):
 
 special_operators: tuple[type["Operator"], ...]
 
+class SpriteCategory(StrEnum):
+    NONE = "none"
+    STATIC = "static"
+    TILED = "tiled"
+    ANIMATED = "animated"
+    DIRECTIONAL = "directional"
+    ANIMATED_DIRECTIONAL = "animated_directional"
+    CHARACTER = "character"
+
 class ObjectJson41(TypedDict):
     type: str
     pos: bmp.loc.Coord[int]
@@ -128,27 +137,18 @@ class Object(object):
     json_name: str
     sprite_name: str
     sprite_palette: bmp.color.PaletteIndex
-    type SpriteCategory = Literal[
-        "none",
-        "static",
-        "tiled",
-        "animated",
-        "directional",
-        "animated_directional",
-        "character",
-    ]
-    sprite_category: SpriteCategory = "none"
+    sprite_category: SpriteCategory = SpriteCategory.NONE
     sprite_varients: dict[SpriteCategory, list[int]] = {
-        "static": [0x0],
-        "tiled": list(i for i in range(0x10)),
-        "animated": list(i for i in range(0x4)),
-        "directional": list(i * 0x8 for i in range(0x4)),
-        "animated_directional": 
+        SpriteCategory.STATIC: [0x0],
+        SpriteCategory.TILED: list(i for i in range(0x10)),
+        SpriteCategory.ANIMATED: list(i for i in range(0x4)),
+        SpriteCategory.DIRECTIONAL: list(i * 0x8 for i in range(0x4)),
+        SpriteCategory.ANIMATED_DIRECTIONAL: 
             list(i * 0x8 for i in range(0x4)) + \
             list(i * 0x8 + 0x1 for i in range(0x4)) + \
             list(i * 0x8 + 0x2 for i in range(0x4)) + \
             list(i * 0x8 + 0x3 for i in range(0x4)),
-        "character":
+        SpriteCategory.CHARACTER:
             list(i * 0x8 for i in range(0x4)) + \
             list(i * 0x8 + 0x1 for i in range(0x4)) + \
             list(i * 0x8 + 0x2 for i in range(0x4)) + \
@@ -245,24 +245,24 @@ Object.ref_type = NotRealObject
 class Cursor(Object):
     json_name = "cursor"
     sprite_name = "cursor"
-    sprite_category = "static"
+    sprite_category = SpriteCategory.STATIC
     sprite_palette: bmp.color.PaletteIndex = (4, 2)
 
 class Spore(Object):
     json_name = "spore"
     sprite_name = "spore"
-    sprite_category = "static"
+    sprite_category = SpriteCategory.STATIC
     sprite_palette: bmp.color.PaletteIndex = (0, 3)
 
 class Blossom(Object):
     json_name = "blossom"
     sprite_name = "blossom"
-    sprite_category = "static"
+    sprite_category = SpriteCategory.STATIC
     sprite_palette: bmp.color.PaletteIndex = (0, 3)
 
 class SpaceObject(Object):
     sprite_name = "space"
-    sprite_category = "static"
+    sprite_category = SpriteCategory.STATIC
     light_overlay: bmp.color.ColorHex = 0x000000
     dark_overlay: bmp.color.ColorHex = 0xFFFFFF
     def __init__(
@@ -298,7 +298,7 @@ space_object_types: list[type[SpaceObject]] = [Space, Clone]
 default_space_object_type: type[SpaceObject] = Space
 
 class LevelObject(Object):
-    sprite_category: Object.SpriteCategory = "static"
+    sprite_category: SpriteCategory = SpriteCategory.STATIC
     def __init__(
         self,
         pos: bmp.loc.Coord[int],
@@ -344,7 +344,7 @@ class Collectible(object):
 class Path(Object):
     json_name = "path"
     sprite_name = "line"
-    sprite_category: Object.SpriteCategory = "tiled"
+    sprite_category: SpriteCategory = SpriteCategory.TILED
     sprite_palette: bmp.color.PaletteIndex = (0, 2)
     def __init__(
         self,
@@ -383,7 +383,7 @@ class TextRenderState(StrEnum):
 
 class Text(Object):
     json_name = "text"
-    sprite_category = "static"
+    sprite_category = SpriteCategory.STATIC
     sprite_palette: bmp.color.PaletteIndex = (0, 3)
     def __init__(
         self,
@@ -1011,11 +1011,11 @@ class_to_noun: dict[type[Object], type[Noun]]
 
 class SpriteDefinition(TypedDict):
     name: NotRequired[str]
-    category: NotRequired[Object.SpriteCategory]
+    category: NotRequired[SpriteCategory]
     palette: NotRequired[bmp.color.PaletteIndex]
 
 default_sprite_definition: Final[SpriteDefinition] = {
-    "category": "static",
+    "category": SpriteCategory.STATIC,
     "palette": (0, 3)
 }
 
