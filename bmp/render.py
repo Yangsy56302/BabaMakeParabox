@@ -155,13 +155,13 @@ def simple_object_to_surface(obj: bmp.obj.Object, wiggle: int = 1, default_surfa
         obj_surface.blit(icon_surface, icon_surface_pos)
     else:
         obj_surface = simple_type_to_surface(type(obj), obj.sprite_state, wiggle, default_surface, debug)
-        if isinstance(obj, bmp.obj.Path):
-            if not obj.unlocked:
-                if debug:
+        if isinstance(obj, bmp.obj.Text):
+            match obj.render_state:
+                case bmp.obj.TextRenderState.UNUSED:
                     obj_surface = set_alpha(obj_surface, 0x80)
-                else:
-                    obj_surface.fill("#00000000")
-        if isinstance(obj, bmp.obj.SpaceObject) and obj.space_id is not None and obj.space_id.infinite_tier != 0:
+                case bmp.obj.TextRenderState.USED:
+                    pass
+        elif isinstance(obj, bmp.obj.SpaceObject) and obj.space_id is not None and obj.space_id.infinite_tier != 0:
             infinite_text_surface = current_sprites.get("text_infinity" if obj.space_id.infinite_tier > 0 else "text_epsilon", 0, wiggle, raw=True).copy()
             infinite_text_surface = pygame.transform.scale(infinite_text_surface, obj_surface.get_size())
             infinite_tier_surface = pygame.Surface(
@@ -178,6 +178,12 @@ def simple_object_to_surface(obj: bmp.obj.Object, wiggle: int = 1, default_surfa
                 (obj_surface.get_height() - infinite_tier_surface.get_height()) // 2,
             )
             obj_surface.blit(infinite_tier_surface, infinite_tier_surface_pos)
+        elif isinstance(obj, bmp.obj.Path):
+            if not obj.unlocked:
+                if debug:
+                    obj_surface = set_alpha(obj_surface, 0x80)
+                else:
+                    obj_surface.fill("#00000000")
     return obj_surface
 
 def valid(__obj: bmp.obj.Object, /) -> bool:

@@ -180,6 +180,8 @@ class Space(object):
                 new_info_list.append(bmp.rule.RuleInfo([], False, bmp.obj.Noun(), [], [bmp.rule.OperInfo(bmp.obj.Operator(), [])]))
         return new_rule_list, new_info_list
     def set_rule(self) -> None:
+        for text_obj in self.get_objs_from_type(bmp.obj.Text):
+            text_obj.render_state = bmp.obj.TextRenderState.UNUSED
         self.rule_list = []
         self.rule_info = []
         x_rule_dict: dict[int, list[bmp.rule.Rule]] = {}
@@ -210,6 +212,9 @@ class Space(object):
                         y_rule_dict[y].append(new_rule_list[rule_index])
                         self.rule_list.append(new_rule_list[rule_index])
                         self.rule_info.append(new_rule_info[rule_index])
+        for rule in self.rule_list:
+            for text_obj in rule:
+                text_obj.render_state = bmp.obj.TextRenderState.USED
     def set_sprite_states(self, round_num: int = 0) -> None:
         for obj in self.object_list:
             if obj.sprite_category == "tiled":

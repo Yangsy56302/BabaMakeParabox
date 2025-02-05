@@ -379,7 +379,7 @@ class Game(Object):
 class TextRenderState(StrEnum):
     UNUSED = "unused"
     USED = "used"
-    CROSSED = "crossed"
+    # CROSSED = "crossed"
 
 class Text(Object):
     json_name = "text"
@@ -422,7 +422,7 @@ class Property(Text):
 
 class GeneralNoun(Noun):
     def isreferenceof(self, other: Object, **kwds) -> bool:
-        return isinstance(other, type(self))
+        return isinstance(other, self.ref_type)
 
 class TextCursor(GeneralNoun):
     ref_type = Cursor
