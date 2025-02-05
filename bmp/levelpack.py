@@ -179,7 +179,6 @@ class Levelpack(object):
                                         self.current_level.game_properties.update(prop_obj, prop_negated)
                                 # meta level
                                 elif issubclass(noun_obj.ref_type, bmp.obj.LevelObject):
-                                    print("meta level")
                                     level_prop_update: bool = False
                                     for level_obj in current_level_objs:
                                         if not isinstance(level_obj, noun_obj.ref_type):

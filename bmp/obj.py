@@ -40,6 +40,7 @@ default_level_extra: LevelObjectExtra = {"icon": {"name": "empty", "color": 0xFF
 class PropertyInfo[T: "Text"]():
     obj: T
     negated: bool
+    effected: bool
 
 type PropertyDict = dict[type["Text"], list[PropertyInfo]]
 
@@ -63,6 +64,7 @@ class PropertyStorage(object):
         self.__dict[type(prop)].append(PropertyInfo(
             obj = prop,
             negated = negated,
+            effected = False,
         ))
     def exist(self, prop: type["Text"]) -> bool:
         return len(self.__dict.get(prop, [])) != 0
