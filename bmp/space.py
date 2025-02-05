@@ -92,16 +92,16 @@ class Space(object):
             return []
         return [o for o in self.pos_to_objs(pos) if isinstance(o, object_type)]
     # @auto_refresh
-    def get_objs_from_pos_and_special_noun(self, pos: bmp.loc.Coord[int], noun_type: type[bmp.obj.SupportsIsReferenceOf]) -> list[bmp.obj.Object]:
+    def get_objs_from_pos_and_noun(self, pos: bmp.loc.Coord[int], noun: bmp.obj.Noun) -> list[bmp.obj.Object]:
         if self.out_of_range(pos):
             return []
-        return [o for o in self.pos_to_objs(pos) if noun_type.isreferenceof(o)]
+        return [o for o in self.pos_to_objs(pos) if noun.isreferenceof(o)]
     # @auto_refresh
     def get_objs_from_type[T: bmp.obj.Object](self, object_type: type[T]) -> list[T]:
         return [o for o in self.object_list if isinstance(o, object_type)]
     # @auto_refresh
-    def get_objs_from_special_noun(self, object_type: type[bmp.obj.SupportsIsReferenceOf]) -> list[bmp.obj.Object]:
-        return [o for o in self.object_list if object_type.isreferenceof(o)]
+    def get_objs_from_noun(self, noun: bmp.obj.Noun) -> list[bmp.obj.Object]:
+        return [o for o in self.object_list if noun.isreferenceof(o)]
     # @auto_refresh
     def del_obj(self, obj: bmp.obj.Object) -> None:
         self.object_list.remove(obj)
@@ -127,8 +127,8 @@ class Space(object):
                 self.pos_to_objs(pos).remove(obj)
         return deleted
     # @auto_refresh
-    def del_objs_from_pos_and_special_noun(self, pos: bmp.loc.Coord[int], noun_type: type[bmp.obj.SupportsIsReferenceOf]) -> bool:
-        del_objects = filter(lambda o: noun_type.isreferenceof(o), self.pos_to_objs(pos))
+    def del_objs_from_pos_and_noun(self, pos: bmp.loc.Coord[int], noun: bmp.obj.Noun) -> bool:
+        del_objects = filter(lambda o: noun.isreferenceof(o), self.pos_to_objs(pos))
         deleted = False
         for obj in del_objects:
             deleted = True
@@ -177,7 +177,7 @@ class Space(object):
                     new_info_list.extend(func(i, matched_text) for i in info_list)
             if stage == "after property":
                 new_rule_list.append([])
-                new_info_list.append(bmp.rule.RuleInfo([], 0, bmp.obj.Noun(), [], [bmp.rule.OperInfo(bmp.obj.Operator(), [])]))
+                new_info_list.append(bmp.rule.RuleInfo([], False, bmp.obj.Noun(), [], [bmp.rule.OperInfo(bmp.obj.Operator(), [])]))
         return new_rule_list, new_info_list
     def set_rule(self) -> None:
         self.rule_list = []

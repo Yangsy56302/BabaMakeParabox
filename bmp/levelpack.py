@@ -157,12 +157,17 @@ class Levelpack(object):
                 noun_obj = rule_info.noun
                 infix_info_list = rule_info.infix_info_list
                 new_match_obj_list: list[bmp.obj.Object] = []
-                if isinstance(noun_obj, bmp.obj.GeneralNoun):
-                    object_type = noun_obj.ref_type
-                    if noun_negated:
-                        new_match_obj_list = [o for o in space.object_list if bmp.obj.TextAll().isreferenceof(o, all_list = self.current_level.all_list) and not isinstance(o, object_type)]
+                if isinstance(noun_obj, bmp.obj.Noun):
+                    if type(noun_obj) == bmp.obj.TextAll:
+                        if noun_negated:
+                            new_match_obj_list = [o for o in space.object_list if isinstance(o, bmp.obj.types_in_not_all)]
+                        else:
+                            new_match_obj_list = [o for o in space.object_list if noun_obj.isreferenceof(o, all_list = self.current_level.all_list)]
+                    elif noun_negated:
+                        new_match_obj_list = [o for o in space.object_list if bmp.obj.TextAll().isreferenceof(o, all_list = self.current_level.all_list) and not noun_obj.isreferenceof(o)]
                     else:
-                        new_match_obj_list = [o for o in space.get_objs_from_type(object_type)]
+                        new_match_obj_list = [o for o in space.get_objs_from_noun(noun_obj)]
+                        # meta object
                         for oper_info in rule_info.oper_list:
                             oper_obj = oper_info.oper
                             for prop_info in oper_info.prop_list:
@@ -214,16 +219,11 @@ class Levelpack(object):
                                         else:
                                             space.special_operator_properties[object_type][type(oper_obj)].update(prop_obj, prop_negated)
                                     del space_prop_update
-                elif type(noun_obj) == bmp.obj.TextAll:
-                    if noun_negated:
-                        new_match_obj_list = [o for o in space.object_list if isinstance(o, bmp.obj.types_in_not_all)]
-                    else:
-                        new_match_obj_list = [o for o in space.object_list if noun_obj.isreferenceof(o, all_list = self.current_level.all_list)]
-                elif isinstance(noun_obj, bmp.obj.SupportsIsReferenceOf):
+                else:
                     if noun_negated:
                         new_match_obj_list = [o for o in space.object_list if bmp.obj.TextAll().isreferenceof(o, all_list = self.current_level.all_list) and not noun_obj.isreferenceof(o)]
                     else:
-                        new_match_obj_list = [o for o in space.get_objs_from_special_noun(type(noun_obj))]
+                        new_match_obj_list = [o for o in space.get_objs_from_noun(noun_obj)]
                 for oper_info in rule_info.oper_list:
                     oper_obj = oper_info.oper
                     for prop_info in oper_info.prop_list:
@@ -254,11 +254,11 @@ class Levelpack(object):
                         new_match_obj_list = [o for o in space.object_list if isinstance(o, bmp.obj.types_in_not_all)]
                     else:
                         new_match_obj_list = [o for o in space.object_list if noun_obj.isreferenceof(o, all_list = self.current_level.all_list)]
-                elif isinstance(noun_obj, bmp.obj.SupportsIsReferenceOf):
+                else:
                     if noun_negated:
                         new_match_obj_list = [o for o in space.object_list if bmp.obj.TextAll().isreferenceof(o, all_list = self.current_level.all_list) and not noun_obj.isreferenceof(o)]
                     else:
-                        new_match_obj_list = [o for o in space.get_objs_from_special_noun(type(noun_obj))]
+                        new_match_obj_list = [o for o in space.get_objs_from_noun(noun_obj)]
                 for oper_info in rule_info.oper_list:
                     oper_obj = oper_info.oper
                     for prop_info in oper_info.prop_list:
@@ -312,19 +312,11 @@ class Levelpack(object):
         noun_is_noun: bool = False
         noun_is_not_noun: bool = False
         for new_noun in new_noun_list:
-            if isinstance(new_noun, bmp.obj.SupportsReferenceType):
-                if isinstance(old_obj, new_noun.ref_type):
-                    noun_is_noun = True
-            elif isinstance(new_noun, bmp.obj.SupportsIsReferenceOf):
-                if new_noun.isreferenceof(old_obj):
-                    noun_is_noun = True
+            if new_noun.isreferenceof(old_obj):
+                noun_is_noun = True
         for not_new_noun in not_new_noun_list:
-            if isinstance(not_new_noun, bmp.obj.SupportsReferenceType):
-                if isinstance(old_obj, not_new_noun.ref_type):
-                    noun_is_not_noun = True
-            elif isinstance(not_new_noun, bmp.obj.SupportsIsReferenceOf):
-                if not_new_noun.isreferenceof(old_obj):
-                    noun_is_not_noun = True
+            if not_new_noun.isreferenceof(old_obj):
+                noun_is_not_noun = True
         if noun_is_not_noun:
             transform_success = True
         if noun_is_noun:

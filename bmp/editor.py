@@ -184,7 +184,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                     icon_name = "text_level"
                                     icon_color = bmp.color.current_palette[bmp.obj.default_level_object_type.sprite_palette]
                                 level_extra: bmp.obj.LevelObjectExtra = {"icon": {"name": icon_name, "color": icon_color}}
-                                levelpack.current_level.current_space.new_obj(current_object_type(current_cursor_pos, current_orient, level_id=level_id, level_extra=level_extra))
+                                levelpack.current_level.current_space.new_obj(current_object_type(current_cursor_pos, current_orient, level_id=level_id, level_extra=level_extra)) # type: ignore
                             elif issubclass(current_object_type, bmp.obj.SpaceObject):
                                 space_id: bmp.ref.SpaceID = levelpack.current_level.current_space_id
                                 if keys["LCTRL"] or keys["RCTRL"]:
@@ -210,7 +210,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                         collects_count = bmp.lang.input_int(bmp.lang.fformat("input.number"))
                                         conditions[collects_type] = collects_count
                                         more_condition = bmp.lang.input_yes(bmp.lang.fformat("edit.path.new.condition"))
-                                levelpack.current_level.current_space.new_obj(current_object_type(current_cursor_pos, current_orient, unlocked=unlocked, conditions=conditions))
+                                levelpack.current_level.current_space.new_obj(current_object_type(current_cursor_pos, current_orient, unlocked=unlocked, conditions=conditions)) # type: ignore
                             else:
                                 levelpack.current_level.current_space.new_obj(current_object_type(current_cursor_pos, current_orient))
                 elif mouses[2] != 0:

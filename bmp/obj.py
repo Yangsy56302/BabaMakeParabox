@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, StrEnum
 from tqdm import tqdm, trange
 import json
 import os
@@ -376,10 +376,25 @@ class Game(Object):
         self.ref_type = ref_type
     json_name = "game"
 
+class TextRenderState(StrEnum):
+    UNUSED = "unused"
+    USED = "used"
+    CROSSED = "crossed"
+
 class Text(Object):
     json_name = "text"
     sprite_category = "static"
     sprite_palette: bmp.color.PaletteIndex = (0, 3)
+    def __init__(
+        self,
+        pos: tuple[int, int] = (-1, -1),
+        direct: bmp.loc.Orient = bmp.loc.Orient.S,
+        *,
+        space_id: Optional[bmp.ref.SpaceID] = None,
+        level_id: Optional[bmp.ref.LevelID] = None
+    ) -> None:
+        super().__init__(pos, direct, space_id=space_id, level_id=level_id)
+        self.render_state: TextRenderState = TextRenderState.UNUSED
     @classmethod
     def get_name(cls, *, language_name: str = bmp.lang.current_language_name) -> str:
         lang_key = f"object.name.{cls.json_name}"
@@ -763,7 +778,7 @@ class TextEmpty(SpecialNoun):
 class TextAll(RangedNoun):
     json_name = "text_all"
     sprite_name = "text_all"
-    def isreferenceof(self, other: Object, all_list: list[type[bmp.obj.Object]], **kwds) -> bool:
+    def isreferenceof(self, other: Object, all_list: list[type[Object]], **kwds) -> bool:
         return any(map(lambda n: get_noun_from_type(n)().isreferenceof(other), all_list))
 
 class GroupNoun(RangedNoun):
@@ -811,9 +826,6 @@ class TextParabox(RangedNoun):
             if other.space_id is not None and other.space_id.infinite_tier != 0:
                 return True
         return False
-
-SupportsReferenceType = GeneralNoun | RangedNoun
-SupportsIsReferenceOf = FixedNoun | RangedNoun
 
 def object_transform(self: Object, /, _type: type[Object]) -> Object:
     if isinstance(self, _type):
