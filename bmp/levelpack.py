@@ -386,8 +386,10 @@ class Levelpack(object):
                         pos = obj.pos,
                         orient = obj.orient,
                         prop = obj.properties,
-                        level = obj.level_id,
-                        space = obj.space_id,
+                        level = sub_level.level_id,
+                        space = space.space_id,
+                        old_surface_pos = obj.old_state.new_surface_pos,
+                        old_surface_size = obj.old_state.new_surface_size,
                     )
                     if isinstance(obj, bmp.obj.Path):
                         unlocked = True

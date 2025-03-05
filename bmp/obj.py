@@ -102,7 +102,11 @@ class OldObjectState(object):
         orient: Optional[bmp.loc.Orient] = None,
         prop: Optional[PropertyStorage] = None,
         space: Optional[bmp.ref.SpaceID] = None,
-        level: Optional[bmp.ref.LevelID] = None
+        level: Optional[bmp.ref.LevelID] = None,
+        old_surface_pos: Optional[bmp.loc.Coord[float]] = None,
+        old_surface_size: Optional[bmp.loc.Coord[float]] = None,
+        new_surface_pos: Optional[bmp.loc.Coord[float]] = None,
+        new_surface_size: Optional[bmp.loc.Coord[float]] = None,
     ) -> None:
         self.uid: Optional[uuid.UUID] = uid
         self.pos: Optional[bmp.loc.Coord[int]] = pos
@@ -110,6 +114,10 @@ class OldObjectState(object):
         self.prop: Optional[PropertyStorage] = prop
         self.space: Optional[bmp.ref.SpaceID] = space
         self.level: Optional[bmp.ref.LevelID] = level
+        self.old_surface_pos: Optional[bmp.loc.Coord[float]] = old_surface_pos
+        self.old_surface_size: Optional[bmp.loc.Coord[float]] = old_surface_size
+        self.new_surface_pos: Optional[bmp.loc.Coord[float]] = new_surface_pos
+        self.new_surface_size: Optional[bmp.loc.Coord[float]] = new_surface_size
 
 special_operators: tuple[type["Operator"], ...]
 

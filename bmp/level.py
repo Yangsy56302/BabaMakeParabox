@@ -966,8 +966,9 @@ class Level(object):
             return space_surface
         space_surface_size = (space.width * scaled_sprite_size, space.height * scaled_sprite_size)
         space_surface = pygame.Surface(space_surface_size, pygame.SRCALPHA)
+        # get objects
         object_list: list[bmp.obj.Object] = []
-        obj_surface_list: list[tuple[bmp.loc.Coord[int], bmp.loc.Coord[int], pygame.Surface, bmp.obj.Object]] = []
+        obj_surface_list: list[tuple[bmp.loc.Coord[float], bmp.loc.Coord[float], pygame.Surface, bmp.obj.Object]] = []
         object_list.extend([o for o in space.object_list if bmp.render.valid(o) and (space.space_id, o) not in object_list])
         for obj in object_list:
             if not bmp.render.valid(obj):
@@ -980,8 +981,8 @@ class Level(object):
                 for _ in range(self.game_properties.count(bmp.obj.TextWord)):
                     object_type = bmp.obj.get_noun_from_type(object_type)
                 obj_surface = bmp.render.simple_type_to_surface(object_type, wiggle=wiggle, debug=debug)
-            obj_surface_pos: bmp.loc.Coord[int] = (obj.x * scaled_sprite_size, obj.y * scaled_sprite_size)
-            obj_surface_size: bmp.loc.Coord[int] = (scaled_sprite_size, scaled_sprite_size)
+            obj_surface_pos: bmp.loc.Coord[float] = (float(obj.x), float(obj.y))
+            obj_surface_size: bmp.loc.Coord[float] = (1.0, 1.0)
             if isinstance(obj, bmp.obj.SpaceObject):
                 sub_space = self.get_space(obj.space_id)
                 if sub_space is not None:
@@ -997,17 +998,32 @@ class Level(object):
                     case "S": pass
                     case "A": obj_surface = pygame.transform.rotate(obj_surface, 270)
                     case "D": obj_surface = pygame.transform.rotate(obj_surface, 90)
-            # NotImplemented
-            # smooth interpolation has been temporarily removed
             obj_surface_list.append((obj_surface_pos, obj_surface_size, obj_surface, obj))
+        # blit objects
         obj_surface_list.sort(key=lambda o: [f(o[-1]) for f in bmp.render.order].index(True), reverse=True)
-        for pos, size, surface, obj in obj_surface_list:
-            space_surface.blit(pygame.transform.scale(surface, size), pos)
+        for obj_surface_pos, obj_surface_size, obj_surface, obj in obj_surface_list:
+            if obj.old_state.new_surface_pos is None:
+                obj.old_state.new_surface_pos = obj_surface_pos
+            if obj.old_state.new_surface_size is None:
+                obj.old_state.new_surface_size = obj_surface_size
+            if smooth is not None and obj.old_state.level == self.level_id and obj.old_state.space == space.space_id:
+                if obj.old_state.old_surface_pos is not None:
+                    obj_surface_pos = bmp.render.calc_smooth_coord(obj.old_state.old_surface_pos, smooth, obj_surface_pos)
+                if obj.old_state.old_surface_size is not None:
+                    obj_surface_size = bmp.render.calc_smooth_coord(obj.old_state.old_surface_size, smooth, obj_surface_size)
+            space_surface.blit(
+                pygame.transform.scale(
+                    obj_surface, (int(obj_surface_size[0] * scaled_sprite_size), int(obj_surface_size[1] * scaled_sprite_size))
+                ),
+                (int(obj_surface_pos[0] * scaled_sprite_size), int(obj_surface_pos[1] * scaled_sprite_size))
+            )
+        # cursor
         if cursor is not None:
             surface = bmp.render.current_sprites.get("cursor", 0, wiggle, raw=True).copy()
             pos = (cursor[0] * scaled_sprite_size - (surface.get_width() - bmp.render.sprite_size) * pixel_size // 2,
                    cursor[1] * scaled_sprite_size - (surface.get_height() - bmp.render.sprite_size) * pixel_size // 2)
             space_surface.blit(pygame.transform.scale(surface, (pixel_size * surface.get_width(), pixel_size * surface.get_height())), pos)
+        # background
         space_background = pygame.Surface(space_surface.get_size(), pygame.SRCALPHA)
         space_background.fill(pygame.Color(*bmp.color.hex_to_rgb(space.color if space.color is not None else bmp.color.current_palette[0, 4])))
         space_background.blit(space_surface, (0, 0))
@@ -1021,6 +1037,7 @@ class Level(object):
             infinite_tier_surface = bmp.render.set_alpha(infinite_tier_surface, 0x80 if depth > 0 else 0x40)
             infinite_tier_surface = pygame.transform.scale_by(infinite_tier_surface, space.height * pixel_size / abs(space.space_id.infinite_tier))
             space_surface.blit(infinite_tier_surface, ((space_surface.get_width() - infinite_tier_surface.get_width()) // 2, 0))
+        # transform
         transform = bmp.loc.get_stacked_transform(space.static_transform, space.dynamic_transform)
         if transform["flip"]:
             space_surface = pygame.transform.flip(space_surface, flip_x=True, flip_y=False)

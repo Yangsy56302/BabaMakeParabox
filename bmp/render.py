@@ -10,16 +10,26 @@ import bmp.obj
 
 import pygame
 
-def calc_smooth(frame: int) -> Optional[float]:
-    multiplier = bmp.opt.options["render"]["smooth"]
-    if multiplier is not None:
-        smooth_value = frame / bmp.opt.options["render"]["fps"] * multiplier
-        if smooth_value >= 0 and smooth_value <= 1:
-            return (1 - smooth_value) ** 4
-
 sprite_size = 24
 gui_scalar = 4
 smaller_gui_scalar = 1
+
+def calc_smooth_value(frame: int) -> Optional[float]:
+    multiplier = bmp.opt.options["render"]["smooth"]
+    if multiplier is None:
+        return None
+    not_smooth_value = frame / bmp.opt.options["render"]["fps"] * multiplier
+    if not_smooth_value < 0 or not_smooth_value > 1:
+        return None
+    smooth_value = (1 - not_smooth_value) ** 4
+    if smooth_value < 0.5 / sprite_size:
+        return 0.0
+    if 1 - smooth_value < 0.5 / sprite_size:
+        return 1.0
+    return smooth_value
+
+def calc_smooth_coord(old: bmp.loc.Coord[int | float], smooth: float, new: bmp.loc.Coord[int | float]) -> bmp.loc.Coord[float]:
+    return (old[0] * smooth + new[0] * (1 - smooth), old[1] * smooth + new[1] * (1 - smooth))
 
 def set_alpha(surface: pygame.Surface, alpha: int) -> pygame.Surface:
     if alpha == 0xFF:

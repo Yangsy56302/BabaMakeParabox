@@ -521,7 +521,7 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                     space_surface_pos = (0, (window.get_height() - space_surface_size[1]) // 2)
         if not levelpack.current_level.game_properties.enabled(bmp.obj.TextHide):
             if not levelpack.current_level.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextHide):
-                smooth_value = bmp.render.calc_smooth(frame_since_last_move)
+                smooth_value = bmp.render.calc_smooth_value(frame_since_last_move)
                 if levelpack.current_level.game_properties.enabled(bmp.obj.TextStop):
                     smooth_value = None
                 space_surface = levelpack.current_level.space_to_surface(
