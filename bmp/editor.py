@@ -28,7 +28,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
     current_cursor_pos: bmp.loc.Coord[int] = (0, 0)
     cursor_pos_changed: bool
     current_clipboard = []
-    window = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
+    window = pygame.display.set_mode((720, 720), pygame.RESIZABLE)
     pygame.display.set_caption(bmp.lang.fformat(
         "title.window.edit",
         ver=bmp.base.version,
@@ -457,38 +457,41 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
         space_surface_pos = (0, 0)
         space_surface = levelpack.current_level.space_to_surface(levelpack.current_level.current_space, wiggle, space_surface_size, cursor=current_cursor_pos, debug=True)
         window.blit(pygame.transform.scale(space_surface, space_surface_size), space_surface_pos)
-        gui_scaled_sprite_size = (bmp.render.sprite_size * bmp.render.gui_scale, bmp.render.sprite_size * bmp.render.gui_scale)
-        half_gui_scaled_sprite_size = (bmp.render.sprite_size * bmp.render.half_gui_scale, bmp.render.sprite_size * bmp.render.half_gui_scale)
         # current object type
         obj_surface = bmp.render.simple_type_to_surface(current_object_type, wiggle=wiggle, debug=True)
         if issubclass(current_object_type, bmp.obj.SpaceObject):
             space = levelpack.current_level.get_space(levelpack.current_level.current_space_id)
             if space is not None:
                 obj_surface = bmp.render.simple_type_to_surface(current_object_type, wiggle=wiggle, default_surface=space_surface, debug=True)
-        obj_surface = pygame.transform.scale(obj_surface, gui_scaled_sprite_size)
-        window.blit(obj_surface, (window.get_width() - bmp.render.sprite_size * bmp.render.gui_scale, 0))
-        # display name
+        obj_surface = pygame.transform.scale_by(obj_surface, bmp.render.gui_scalar)
+        window.blit(obj_surface, (window.get_width() - obj_surface.get_width(), 0))
+        # display camera info
         line_list: list[str] = [
-            current_object_type.get_name(language_name=bmp.lang.english).lower(),
-            "text" if issubclass(current_object_type, bmp.obj.Text) else "object",
-            bmp.lang.fformat("orient.name." + current_orient.name.lower(), language_name=bmp.lang.english).lower(),
+            "L " + str(levelpack.current_level.level_id).lower(),
+            "S " + str(levelpack.current_level.current_space.space_id).lower(),
+        ]
+        if levelpack.author is not None:
+            line_list.insert(0, levelpack.author.lower())
+        if levelpack.name is not None:
+            line_list.insert(0, levelpack.name.lower())
+        for line_index, line in enumerate(line_list):
+            line_surface = bmp.render.line_to_surface(line, wiggle=wiggle)
+            line_surface = pygame.transform.scale_by(line_surface, bmp.render.smaller_gui_scalar)
+            window.blit(line_surface, (0, line_index * line_surface.get_height()))
+        # display object info
+        line_list = [
+            current_object_type.get_name(language_name=bmp.lang.english).lower(), # display name
+            bmp.lang.fformat("orient.name." + current_orient.name.lower(), language_name=bmp.lang.english).lower(), # object orient
         ]
         if bmp.opt.options["debug"]:
-            line_list.append(current_object_type.json_name.lower())
+            line_list.append(current_object_type.json_name) # json name
         for line_index, line in enumerate(line_list):
-            for char_index, char in enumerate(line):
-                if char in string.ascii_lowercase:
-                    obj_surface = bmp.render.current_sprites.get("text_" + char, 0, wiggle, raw=True)
-                elif char == "_":
-                    obj_surface = bmp.render.current_sprites.get("text_underline", 0, wiggle, raw=True)
-                else:
-                    continue
-                obj_surface = pygame.transform.scale(obj_surface, half_gui_scaled_sprite_size)
-                obj_surface_pos = (
-                    window.get_width() + (char_index - len(line)) * bmp.render.sprite_size * bmp.render.half_gui_scale,
-                    (bmp.render.sprite_size * bmp.render.gui_scale) + (line_index * bmp.render.sprite_size * bmp.render.half_gui_scale)
-                )
-                window.blit(obj_surface, obj_surface_pos)
+            line_surface = bmp.render.line_to_surface(line, wiggle=wiggle)
+            line_surface = pygame.transform.scale_by(line_surface, bmp.render.smaller_gui_scalar)
+            window.blit(line_surface, (
+                window.get_width() - line_surface.get_width(),
+                obj_surface.get_height() + (line_index * line_surface.get_height())
+            ))
         # shortcuts
         for index, object_type in object_type_shortcuts.items():
             obj_surface = bmp.render.simple_type_to_surface(object_type, wiggle=wiggle, debug=True)
@@ -496,19 +499,19 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                 space = levelpack.current_level.get_space(levelpack.current_level.current_space_id)
                 if space is not None:
                     obj_surface = bmp.render.simple_type_to_surface(object_type, wiggle=wiggle, default_surface=space_surface, debug=True)
-            obj_surface = pygame.transform.scale(obj_surface, gui_scaled_sprite_size)
+            obj_surface = pygame.transform.scale_by(obj_surface, bmp.render.gui_scalar)
             obj_surface_pos = (
-                window.get_width() + (index % 5 * bmp.render.sprite_size * bmp.render.gui_scale) - (bmp.render.sprite_size * bmp.render.gui_scale * 5),
-                window.get_height() + (index // 5 * bmp.render.sprite_size * bmp.render.gui_scale) - (bmp.render.sprite_size * bmp.render.gui_scale * 2)
+                window.get_width() + (index % 5 * bmp.render.sprite_size * bmp.render.gui_scalar) - (bmp.render.sprite_size * bmp.render.gui_scalar * 5),
+                window.get_height() + (index // 5 * bmp.render.sprite_size * bmp.render.gui_scalar) - (bmp.render.sprite_size * bmp.render.gui_scalar * 2)
             )
             # slot number
             obj_surface.blit(
-                pygame.transform.scale(
+                pygame.transform.scale_by(
                     bmp.render.set_alpha(
-                        bmp.render.current_sprites.get("text_" + str((index + 1) % 10), 0, wiggle, raw=True), 0x80
-                    ), half_gui_scaled_sprite_size
+                        bmp.render.char_to_surface(str((index + 1) % 10), wiggle=wiggle), 0x80
+                    ), bmp.render.smaller_gui_scalar
                 ),
-                (bmp.render.sprite_size * (bmp.render.gui_scale - bmp.render.half_gui_scale), bmp.render.sprite_size * (bmp.render.gui_scale - bmp.render.half_gui_scale))
+                (bmp.render.sprite_size * (bmp.render.gui_scalar - bmp.render.smaller_gui_scalar), bmp.render.sprite_size * (bmp.render.gui_scalar - bmp.render.smaller_gui_scalar))
             )
             window.blit(obj_surface, obj_surface_pos)
         # fps
@@ -517,8 +520,10 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
             show_fps = not show_fps
         if show_fps:
             real_fps_string = str(int(real_fps))
-            for i in range(len(real_fps_string)):
-                window.blit(bmp.render.current_sprites.get(f"text_{real_fps_string[i]}", 0, wiggle), (i * bmp.render.sprite_size, 0))
+            real_fps_surface = bmp.render.line_to_surface(real_fps_string, wiggle=wiggle)
+            real_fps_surface = pygame.transform.scale_by(real_fps_surface, bmp.render.smaller_gui_scalar)
+            window.blit(real_fps_surface, (0, 0))
+            del real_fps_string, real_fps_surface
         if keys["F12"]:
             bmp.opt.options["debug"] = not bmp.opt.options["debug"]
         pygame.display.flip()

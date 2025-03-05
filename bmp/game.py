@@ -231,6 +231,7 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                     levelpack.current_level.current_space = visible_space_list[current_space_index]
                     space_changed = True
                     display_refresh = True
+                    del current_space_index
             elif keys["Z"]:
                 if len(history) >= 1:
                     levelpack = copy.deepcopy(history[-1][0])
@@ -570,9 +571,10 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
             show_fps = not show_fps
         if show_fps:
             real_fps_string = str(int(real_fps))
-            for i in range(len(real_fps_string)):
-                window.blit(bmp.render.current_sprites.get(f"text_{real_fps_string[i]}", 0, wiggle), (i * bmp.render.sprite_size, 0))
-            del real_fps_string
+            real_fps_surface = bmp.render.line_to_surface(real_fps_string, wiggle=wiggle)
+            real_fps_surface = pygame.transform.scale_by(real_fps_surface, bmp.render.smaller_gui_scalar)
+            window.blit(real_fps_surface, (0, 0))
+            del real_fps_string, real_fps_surface
         if keys["F12"]:
             bmp.opt.options["debug"] = not bmp.opt.options["debug"]
         pygame.display.flip()

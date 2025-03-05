@@ -47,7 +47,7 @@ class SpaceID(object):
     def __hash__(self) -> int:
         return hash((self.hash_name, self.name, self.infinite_tier))
     def __str__(self) -> str:
-        return (f'{self.name} (inf: {self.infinite_tier})') if self.infinite_tier != 0 else self.name
+        return self.name + ("∞" if self.infinite_tier > 0 else "ε") * abs(self.infinite_tier) 
     def get_info(self) -> str:
         return f'<space "{self.name}", inf: {self.infinite_tier}>'
     def __add__(self, other: int) -> "SpaceID":

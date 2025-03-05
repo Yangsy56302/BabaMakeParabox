@@ -140,7 +140,7 @@ class Object(object):
     sprite_name: str
     sprite_palette: bmp.color.PaletteIndex
     sprite_category: SpriteCategory = SpriteCategory.NONE
-    sprite_varients: dict[SpriteCategory, list[int]] = {
+    sprite_variants: dict[SpriteCategory, list[int]] = {
         SpriteCategory.STATIC: [0x0],
         SpriteCategory.TILED: list(i for i in range(0x10)),
         SpriteCategory.ANIMATED: list(i for i in range(0x4)),
