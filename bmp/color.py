@@ -4,7 +4,9 @@ import random
 import PIL.Image
 
 ColorHex = int
+ColorHexA = int
 ColorRGB = tuple[int, int, int]
+ColorRGBA = tuple[int, int, int, int]
 
 PaletteIndex = tuple[int, int]
 Palette = dict[PaletteIndex, ColorHex]
@@ -17,7 +19,7 @@ def get_palette(_path: str, /) -> Palette:
         for y in range(image.height):
             pixel = image.getpixel((x, y))
             if isinstance(pixel, tuple):
-                palette[x, y] = rgb_to_hex(*pixel[:3])
+                palette[x, y] = rgb_to_hex((pixel[0], pixel[1], pixel[2]))
     return palette
 
 current_palette: Palette = {}
@@ -25,14 +27,26 @@ def set_palette(_path: str, /) -> None:
     global current_palette
     current_palette.update(get_palette(_path))
 
-def rgb_to_hex(r: int, g: int, b: int) -> ColorHex:
-    return r * 0x10000 + g * 0x100 + b
+def rgb_to_hex(i: ColorRGB, /) -> ColorHex:
+    r, g, b = i
+    return r * 0x10000 + g * 0x100 + b * 0x1
 
-def hex_to_rgb(_color: ColorHex, /) -> ColorRGB:
-    r = _color // 0x10000 % 0x100
-    g = _color // 0x100 % 0x100
-    b = _color // 0x1 % 0x100
+def rgba_to_hexa(i: ColorRGBA, /) -> ColorHexA:
+    r, g, b, a = i
+    return r * 0x1000000 + g * 0x10000 + b * 0x100 + a * 0x1
+
+def hex_to_rgb(color: ColorHex, /) -> ColorRGB:
+    r = color // 0x10000 % 0x100
+    g = color // 0x100 % 0x100
+    b = color // 0x1 % 0x100
     return r, g, b
+
+def hexa_to_rgba(color: ColorHexA, /) -> ColorRGBA:
+    r = color // 0x1000000 % 0x100
+    g = color // 0x10000 % 0x100
+    b = color // 0x100 % 0x100
+    a = color // 0x1 % 0x100
+    return r, g, b, a
 
 def str_to_hex(_str: str, /) -> ColorHex:
     try:
@@ -51,7 +65,7 @@ def str_to_hex(_str: str, /) -> ColorHex:
             r = int(new_string[:2], base=16)
             g = int(new_string[2:4], base=16)
             b = int(new_string[4:], base=16)
-            color = rgb_to_hex(r, g, b)
+            color = rgb_to_hex((r, g, b))
         return color
     except ValueError:
         raise ValueError(_str)
@@ -99,15 +113,15 @@ def float_to_hue(f: float) -> ColorHex:
         r = 255
         g = 0
         b = 255 - 255 * ((f - 5 / 6) * 6)
-    return rgb_to_hex(int(r), int(g), int(b))
+    return rgb_to_hex((int(r), int(g), int(b)))
 
 def random_hue() -> ColorHex:
     return float_to_hue(random.random())
 
 def random_space_color() -> ColorHex:
     r, g, b = hex_to_rgb(random_hue())
-    return rgb_to_hex(r // 16, g // 16, b // 16)
+    return rgb_to_hex((r // 16, g // 16, b // 16))
 
 def to_background_color(color: ColorHex) -> ColorHex:
     r, g, b = hex_to_rgb(color)
-    return rgb_to_hex(r // 4, g // 4, b // 4)
+    return rgb_to_hex((r // 4, g // 4, b // 4))

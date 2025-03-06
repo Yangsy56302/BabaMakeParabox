@@ -11,6 +11,16 @@ class Orient(Enum):
     S = 0x8
     A = 0x4
     D = 0x1
+    def char(self) -> str:
+        match self:
+            case Orient.W:
+                return "^"
+            case Orient.S:
+                return "V"
+            case Orient.A:
+                return "<"
+            case Orient.D:
+                return ">"
 
 def front_position(coord: Coord[int], direct: Orient) -> Coord[int]:
     match direct:

@@ -182,6 +182,15 @@ class Level(object):
                     for infix_noun_info in infix_info.infix_noun_info_list:
                         if obj.old_state.prop.enabled(type(infix_noun_info.infix_noun)) == infix_noun_info.negated:
                             meet_infix_condition = False
+            elif infix_info.infix == bmp.obj.TextFacing: # temporary solution, noun not supported yet
+                for infix_noun_info in infix_info.infix_noun_info_list: # type: ignore
+                    if isinstance(infix_noun_info.infix_noun, bmp.obj.DirectFixProperty):
+                        if (obj.orient != infix_noun_info.infix_noun.ref_direct ) and not infix_noun_info.negated:
+                            meet_infix_condition = False
+                        elif (obj.orient == infix_noun_info.infix_noun.ref_direct ) and infix_noun_info.negated:
+                            meet_infix_condition = False
+                    elif not infix_noun_info.negated:
+                        meet_infix_condition = False
             elif infix_info.infix == bmp.obj.TextWithout:
                 meet_infix_condition = True
                 matched_objs: list[bmp.obj.Object] = [obj]

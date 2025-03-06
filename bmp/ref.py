@@ -16,7 +16,7 @@ class LevelID(object):
     def __str__(self) -> str:
         return self.name
     def get_info(self) -> str:
-        return f'<level "{self.name}">'
+        return self.__str__()
     def to_space_id(self) -> "SpaceID":
         index = self.name.find(seperator)
         if index != -1:
@@ -49,7 +49,7 @@ class SpaceID(object):
     def __str__(self) -> str:
         return self.name + ("∞" if self.infinite_tier > 0 else "ε") * abs(self.infinite_tier) 
     def get_info(self) -> str:
-        return f'<space "{self.name}", inf: {self.infinite_tier}>'
+        return self.__str__()
     def __add__(self, other: int) -> "SpaceID":
         if not isinstance(other, int):
             return NotImplemented

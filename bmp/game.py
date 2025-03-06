@@ -106,6 +106,7 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
     space_surface_size: bmp.loc.Coord[int] = window.get_size()
     space_surface_pos: bmp.loc.Coord[int] = (0, 0)
     bmp.color.set_palette(os.path.join(".", "palettes", bmp.opt.options["render"]["palette"]))
+    bmp.render.calc_gui_scalar(window.get_size())
     bmp.render.current_sprites.update()
     level_changed = False
     space_changed = False
@@ -146,6 +147,8 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                     mouse_scroll = (True, mouse_scroll[1])
                 if event.button == 5:
                     mouse_scroll = (mouse_scroll[0], True)
+            elif event.type in (pygame.WINDOWRESIZED, pygame.WINDOWSIZECHANGED):
+                bmp.render.calc_gui_scalar((event.x, event.y))
         keymod_info = pygame.key.get_mods()
         for n, key in keymods.items():
             if keymod_info & n:
@@ -527,32 +530,54 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                 space_surface = levelpack.current_level.space_to_surface(
                     levelpack.current_level.current_space, wiggle, space_surface_size, smooth=smooth_value, debug=bmp.opt.options["debug"]
                 )
+                del smooth_value
                 # monochrome when paused
                 if monochrome is not None:
                     monochrome_rgb = bmp.color.hex_to_rgb(monochrome)
-                    monochrome_new = bmp.color.rgb_to_hex(
+                    monochrome_new = bmp.color.rgb_to_hex((
                         int(monochrome_rgb[0] * 0.25),
                         int(monochrome_rgb[1] * 0.25),
                         int(monochrome_rgb[2] * 0.25),
-                    )
+                    ))
                     space_surface.fill(monochrome_new, special_flags=pygame.BLEND_RGBA_ADD)
                     del monochrome_rgb, monochrome_new
                 window.blit(pygame.transform.scale(space_surface, space_surface_size), space_surface_pos)
-                del smooth_value
+                # display camera info
+                line_list: list[str] = [
+                    "L " + str(levelpack.current_level.level_id).lower(),
+                    "S " + str(levelpack.current_level.current_space.space_id).lower(),
+                ]
+                for line_index, line in enumerate(line_list):
+                    line_surface = bmp.render.line_to_surface(line, wiggle=wiggle)
+                    line_surface = bmp.render.set_gui_background(line_surface)
+                    line_surface = pygame.transform.scale_by(line_surface, bmp.render.smaller_gui_scalar)
+                    window.blit(line_surface, (0, line_index * line_surface.get_height()))
+                # display object info
+                if bmp.opt.options["debug"]:
+                    line_list: list[str] = []
+                    for obj in levelpack.current_level.current_space.get_objs_from_pos(mouse_pos_in_space):
+                        line_list.extend(obj.get_info().split("\n"))
+                        line_list.append("")
+                    for line_index, line in enumerate(line_list):
+                        line_surface = bmp.render.line_to_surface(line, wiggle=wiggle)
+                        line_surface = bmp.render.set_gui_background(line_surface)
+                        line_surface = pygame.transform.scale_by(line_surface, bmp.render.smaller_gui_scalar)
+                        window.blit(line_surface, (window.get_width() - line_surface.get_width(), line_index * line_surface.get_height()))
             # game transform
             game_transform_to = [t for t, n in levelpack.current_level.game_properties.enabled_count().items() if issubclass(t, bmp.obj.Noun) and not n]
             if len(game_transform_to) != 0:
-                window.fill("#00000080", (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+                window.fill(pygame.Color(*bmp.color.hex_to_rgb(bmp.color.current_palette[0, 4]), 0x80), (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
             game_transform_to = [o.ref_type for o in game_transform_to if o is not None]
             for object_type in game_transform_to:
                 window.blit(pygame.transform.scale(bmp.render.current_sprites.get(object_type.sprite_name, 0, wiggle), window.get_size()), (0, 0))
             del game_transform_to
+            # game is select
             if levelpack.current_level.game_properties.enabled(bmp.obj.TextSelect):
                 select_surface = bmp.render.current_sprites.get(bmp.obj.Cursor.sprite_name, 0, wiggle, raw=True)
                 select_surface = bmp.render.set_surface_color_dark(select_surface, bmp.color.float_to_hue((frame / bmp.opt.options["render"]["fps"] / 6) % 1.0))
                 window.blit(pygame.transform.scale(select_surface, window.get_size()), (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
                 del select_surface
-            # offset
+            # window surface offset
             game_offset_speed[0] = bmp.base.absclampf(game_offset_speed[0], window.get_width() / bmp.opt.options["render"]["fps"] * 4)
             game_offset_speed[1] = bmp.base.absclampf(game_offset_speed[1], window.get_height() / bmp.opt.options["render"]["fps"] * 4)
             game_offset[0] += game_offset_speed[0]
@@ -572,6 +597,7 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
         if show_fps:
             real_fps_string = str(int(real_fps))
             real_fps_surface = bmp.render.line_to_surface(real_fps_string, wiggle=wiggle)
+            real_fps_surface = bmp.render.set_gui_background(real_fps_surface)
             real_fps_surface = pygame.transform.scale_by(real_fps_surface, bmp.render.smaller_gui_scalar)
             window.blit(real_fps_surface, (0, 0))
             del real_fps_string, real_fps_surface

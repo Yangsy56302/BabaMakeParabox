@@ -196,8 +196,12 @@ class Object(object):
             return bmp.lang.fformat(lang_key, language_name=bmp.lang.english)
         return bmp.lang.fformat(lang_key, language_name=language_name)
     def get_info(self) -> str:
-        string = f"object {self.json_name} at {self.pos} facing {self.orient}"
-        return "<" + string + ">"
+        info_str = f"{self.json_name.lower()}\n@{self.pos[0]}*{self.pos[0]}\n%{self.orient.char()}"
+        if self.space_id is not None:
+            info_str += f"\nS{str(self.space_id)}"
+        if self.level_id is not None:
+            info_str += f"\nL{str(self.level_id)}"
+        return info_str
     @property
     def x(self) -> int:
         return self.pos[0]
@@ -286,10 +290,6 @@ class SpaceObject(Object):
     ) -> None:
         super().__init__(pos, direct, space_id=space_id, level_id=level_id)
         self.space_extra: SpaceObjectExtra = space_extra.copy()
-    def get_info(self) -> str:
-        string = super().get_info()[1:-1]
-        string += f" stand for space {self.space_id!r}"
-        return "<" + string + ">"
     def transform(self: "SpaceObject", /, _type: type["Object"]) -> "Object": ...
     def to_json(self) -> ObjectJson:
         return {**super().to_json(), "space_extra": self.space_extra}
@@ -320,10 +320,6 @@ class LevelObject(Object):
     ) -> None:
         super().__init__(pos, direct, space_id=space_id, level_id=level_id)
         self.level_extra: LevelObjectExtra = level_extra
-    def get_info(self) -> str:
-        string = super().get_info()[1:-1]
-        string += f" stand for level {self.level_id!r}"
-        return "<" + string + ">"
     def transform(self: "LevelObject", /, _type: type["Object"]) -> "Object": ...
     def to_json(self) -> ObjectJson:
         return {**super().to_json(), "level_extra": self.level_extra}
@@ -534,6 +530,10 @@ class TextNextto(RangeInfix):
         (-1, 0), (+1, 0),
         (0, -1), (0, +1),
     ]
+
+class TextFacing(Infix):
+    json_name = "text_facing"
+    sprite_name = "text_facing"
 
 class TextWithout(Infix):
     json_name = "text_without"
@@ -989,7 +989,7 @@ special_noun_class_list: list[type[SpecialNoun]] = [
 ]
 other_text_class_list: list[type[Text]] = [
     TextText_, TextOften, TextSeldom, TextMeta,
-    TextOn, TextNear, TextNextto, TextWithout, TextFeeling,
+    TextOn, TextNear, TextNextto, TextFacing, TextWithout, TextFeeling,
     TextIs, TextHas, TextMake, TextWrite,
     TextNot, TextAnd
 ]
@@ -1151,7 +1151,7 @@ def same_float_prop(obj_1: Object, obj_2: Object):
 
 def get_noun_from_type(object_type: type[Object]) -> type[Noun]:
     global current_metatext_tier
-    global class_to_noun, object_class_list, name_to_class, builtin_noun_class_list, text_class_list
+    global class_to_noun, name_to_class, builtin_noun_class_list, text_class_list
     return_value: Optional[type[Noun]] = class_to_noun.get(object_type)
     if return_value is not None:
         return return_value
@@ -1182,7 +1182,7 @@ def update_json_format(json_object: AnyObjectJson, ver: str) -> ObjectJson:
 
 def json_to_object(json_object: ObjectJson) -> Object:
     global current_metatext_tier
-    global class_to_noun, object_class_list, name_to_class, builtin_noun_class_list, text_class_list
+    global class_to_noun, name_to_class, builtin_noun_class_list, text_class_list
     object_type = name_to_class.get(json_object["type"])
     space_id: Optional[bmp.ref.SpaceID] = None
     level_id: Optional[bmp.ref.LevelID] = None

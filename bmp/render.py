@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Final
 from tqdm import tqdm
 import os
 import string
@@ -10,9 +10,14 @@ import bmp.obj
 
 import pygame
 
-sprite_size = 24
-gui_scalar = 4
-smaller_gui_scalar = 1
+sprite_size: Final[int] = 24
+gui_scalar: int
+smaller_gui_scalar: int
+
+def calc_gui_scalar(surface_size: bmp.loc.Coord[int]) -> None:
+    global gui_scalar, smaller_gui_scalar
+    smaller_gui_scalar = max(min(surface_size) // sprite_size // 0x10, 1)
+    gui_scalar = smaller_gui_scalar * 2
 
 def calc_smooth_value(frame: int) -> Optional[float]:
     multiplier = bmp.opt.options["render"]["smooth"]
@@ -134,6 +139,12 @@ def char_to_sprite_name(char: str) -> str:
         "C": "text_clone",
         "L": "text_level",
         "G": "text_game",
+        "@": "text_on",
+        "%": "text_facing",
+        "^": "text_up",
+        "V": "text_down",
+        "<": "text_left",
+        ">": "text_right",
         "∞": "text_infinity",
         "ε": "text_epsilon",
         "Ø": "text_empty_set",
@@ -155,10 +166,20 @@ def char_to_surface(char: str, wiggle: int = 1) -> pygame.Surface:
 def line_to_surface(line: str, wiggle: int = 1) -> pygame.Surface:
     sprite_name_list: list[str] = [char_to_sprite_name(s) for s in line]
     surface = pygame.Surface((len(sprite_name_list) * sprite_size, sprite_size), pygame.SRCALPHA)
-    surface.fill("#00000080")
+    surface.fill("#00000000")
     for i, sprite_name in enumerate(sprite_name_list):
         surface.blit(current_sprites.get(sprite_name, 0, wiggle, raw=True), (i * sprite_size, 0))
     return surface
+
+def set_gui_background(surface: pygame.Surface, /, bgcolor: Optional[bmp.color.ColorHex] = None, bgalpha: Optional[int] = None) -> pygame.Surface:
+    if bgcolor is None:
+        bgcolor = bmp.color.current_palette[0, 4]
+    if bgalpha is None:
+        bgalpha = 0xC0
+    bgsurface = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+    bgsurface.fill(pygame.Color(*bmp.color.hex_to_rgb(bgcolor), bgalpha))
+    bgsurface.blit(surface, (0, 0))
+    return bgsurface
 
 def simple_type_to_surface(object_type: type[bmp.obj.Object], variant: int = 0, wiggle: int = 1, default_surface: Optional[pygame.Surface] = None, debug: bool = False) -> pygame.Surface:
     obj_surface = current_sprites.get("empty", 0, wiggle, raw=True).copy()
@@ -167,7 +188,7 @@ def simple_type_to_surface(object_type: type[bmp.obj.Object], variant: int = 0, 
             obj_surface = default_surface.copy()
         else:
             obj_surface = pygame.Surface((sprite_size, sprite_size), pygame.SRCALPHA)
-            obj_surface.fill("#00000080")
+            obj_surface.fill("#00000000")
         obj_surface = set_surface_color_light(obj_surface, object_type.light_overlay)
         obj_surface = set_surface_color_dark(obj_surface, object_type.dark_overlay)
         overlay_surface = current_sprites.get(bmp.obj.SpaceObject.sprite_name, 0, wiggle, raw=True).copy()
