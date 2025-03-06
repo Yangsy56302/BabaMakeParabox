@@ -49,9 +49,8 @@ class Level(object):
         self.map_info: Optional[MapLevelExtraJson] = map_info
         # runtime properties
         self.space_dict: dict[bmp.ref.SpaceID, bmp.space.Space]
-        self.properties: dict[type[bmp.obj.LevelObject], bmp.obj.PropertyStorage] = {p: bmp.obj.PropertyStorage() for p in bmp.obj.level_object_types}
-        self.special_operator_properties: dict[type[bmp.obj.LevelObject], dict[type[bmp.obj.Operator], bmp.obj.PropertyStorage]] = {p: {o: bmp.obj.PropertyStorage() for o in bmp.obj.special_operators} for p in bmp.obj.level_object_types}
-        self.game_properties: bmp.obj.PropertyStorage = bmp.obj.PropertyStorage()
+        self.properties: dict[type[bmp.obj.LevelObject], dict[type[bmp.obj.Operator], bmp.obj.PropertyStorage]] = {p: {o: bmp.obj.PropertyStorage() for o in bmp.obj.operators} for p in bmp.obj.level_object_types}
+        self.game_properties: dict[type[bmp.obj.Operator], bmp.obj.PropertyStorage] = {o: bmp.obj.PropertyStorage() for o in bmp.obj.operators}
         self.created_levels: list["Level"] = []
         self.all_list: list[type[bmp.obj.Object]] = []
         self.group_references: dict[type[bmp.obj.GroupNoun], bmp.obj.PropertyStorage] = {p: bmp.obj.PropertyStorage() for p in bmp.obj.group_noun_types}
@@ -126,106 +125,6 @@ class Level(object):
             old_space.del_obj(old_obj)
         if len(move_list) != 0 and "move" not in self.sound_events:
             self.sound_events.append("move")
-    def meet_prefix_conditions(self, space: bmp.space.Space, obj: bmp.obj.Object, prefix_info_list: list[bmp.rule.PrefixInfo], is_meta: bool = False) -> bool:
-        return_value = True
-        for prefix_info in prefix_info_list:
-            meet_prefix_condition = True
-            if type(prefix_info.prefix) == bmp.obj.TextMeta:
-                meet_prefix_condition = is_meta and obj.space_id == space.space_id
-            elif type(prefix_info.prefix) == bmp.obj.TextOften:
-                meet_prefix_condition = random.choice((True, True, True, False))
-            elif type(prefix_info.prefix) == bmp.obj.TextSeldom:
-                meet_prefix_condition = random.choice((True, False, False, False, False, False))
-            return_value = return_value and (meet_prefix_condition if not prefix_info.negated else not meet_prefix_condition)
-        return return_value
-    def meet_infix_conditions(self, space: bmp.space.Space, obj: bmp.obj.Object, infix_info_list: list[bmp.rule.InfixInfo]) -> bool:
-        for infix_info in infix_info_list:
-            meet_infix_condition = True
-            if isinstance(infix_info.infix, bmp.obj.RangeInfix):
-                matched_objs: list[bmp.obj.Object] = [obj]
-                find_range: list[bmp.loc.Coord[int]] = [
-                    p for p in map(
-                        lambda t: (obj.x + t[0], obj.y + t[1]), 
-                        infix_info.infix.find_range
-                    ) if not space.out_of_range(p)
-                ]
-                for infix_noun_info in infix_info.infix_noun_info_list:
-                    match_objs: list[bmp.obj.Object] = []
-                    match_negated: bool = infix_noun_info.negated
-                    match_noun: type[bmp.obj.Noun | bmp.obj.Property] = type(infix_noun_info.infix_noun)
-                    if issubclass(match_noun, bmp.obj.Property):
-                        continue # how did we get here?
-                    match_noun_list: list[type[bmp.obj.Noun]] = []
-                    if match_noun == bmp.obj.TextAll:
-                        if match_negated:
-                            match_noun_list = list(bmp.obj.nouns_in_not_all)
-                        else:
-                            match_noun_list = [bmp.obj.get_noun_from_type(o) for o in self.all_list if not issubclass(o, bmp.obj.types_not_in_all)]
-                    else:
-                        if match_negated:
-                            match_noun_list = [bmp.obj.get_noun_from_type(o) for o in self.all_list if (not issubclass(o, bmp.obj.types_not_in_all)) and not bmp.obj.TextAll().isreferenceof(o(), all_list=self.all_list)]
-                        else:
-                            match_noun_list = [match_noun]
-                    for new_match_noun in match_noun_list:
-                        for pos in find_range:
-                            match_objs.extend([o for o in space.get_objs_from_pos_and_noun(pos, new_match_noun()) if o not in matched_objs])
-                        if len(match_objs) == 0:
-                            meet_infix_condition = False
-                        else:
-                            matched_objs.append(match_objs[0])
-                    if not meet_infix_condition:
-                        break
-            elif infix_info.infix == bmp.obj.TextFeeling:
-                if obj.old_state.prop is None:
-                    meet_infix_condition = False
-                else:
-                    for infix_noun_info in infix_info.infix_noun_info_list:
-                        if obj.old_state.prop.enabled(type(infix_noun_info.infix_noun)) == infix_noun_info.negated:
-                            meet_infix_condition = False
-            elif infix_info.infix == bmp.obj.TextFacing: # temporary solution, noun not supported yet
-                for infix_noun_info in infix_info.infix_noun_info_list: # type: ignore
-                    if isinstance(infix_noun_info.infix_noun, bmp.obj.DirectFixProperty):
-                        if (obj.orient != infix_noun_info.infix_noun.ref_direct ) and not infix_noun_info.negated:
-                            meet_infix_condition = False
-                        elif (obj.orient == infix_noun_info.infix_noun.ref_direct ) and infix_noun_info.negated:
-                            meet_infix_condition = False
-                    elif not infix_noun_info.negated:
-                        meet_infix_condition = False
-            elif infix_info.infix == bmp.obj.TextWithout:
-                meet_infix_condition = True
-                matched_objs: list[bmp.obj.Object] = [obj]
-                match_type_count: dict[tuple[bool, type[bmp.obj.Noun]], int] = {}
-                for match_negated, match_noun in infix_info[2]: # type: ignore
-                    match_noun: type[bmp.obj.Noun | bmp.obj.Property]
-                    if issubclass(match_noun, bmp.obj.Property):
-                        continue # how did we get here?
-                    match_type_count.setdefault((match_negated, match_noun), 0)
-                    match_type_count[(match_negated, match_noun)] += 1
-                for (match_negated, match_noun), match_count in match_type_count.items():
-                    match_objs: list[bmp.obj.Object] = []
-                    match_noun: type[bmp.obj.Noun | bmp.obj.Property]
-                    match_noun_list: list[type[bmp.obj.Noun]] = []
-                    if match_noun == bmp.obj.TextAll:
-                        if match_negated:
-                            match_noun_list = list(bmp.obj.nouns_in_not_all)
-                        else:
-                            match_noun_list = [bmp.obj.get_noun_from_type(o) for o in self.all_list if not issubclass(o, bmp.obj.types_not_in_all)]
-                    else:
-                        if match_negated:
-                            match_noun_list = [bmp.obj.get_noun_from_type(o) for o in self.all_list if (not issubclass(o, bmp.obj.types_not_in_all)) and not bmp.obj.TextAll().isreferenceof(o(), all_list=self.all_list)]
-                        else:
-                            match_noun_list = [match_noun]
-                    for new_match_noun in match_noun_list:
-                        match_objs.extend([o for o in space.get_objs_from_noun(new_match_noun()) if o not in matched_objs])
-                        if len(match_objs) >= match_count:
-                            meet_infix_condition = False
-                        else:
-                            matched_objs.append(match_objs[0])
-                    if not meet_infix_condition:
-                        break
-            if meet_infix_condition == infix_info.negated:
-                return False
-        return True
     def recursion_rules(self, space: bmp.space.Space, passed: Optional[list[bmp.ref.SpaceID]] = None) -> tuple[list[bmp.rule.Rule], list[bmp.rule.RuleInfo]]:
         passed = passed if passed is not None else []
         if space.space_id in passed:
@@ -243,7 +142,7 @@ class Level(object):
         return rule_list, rule_info
     def destroy_obj(self, space: bmp.space.Space, obj: bmp.obj.Object) -> None:
         space.del_obj(obj)
-        for new_noun_type, new_noun_count in obj.operator_properties[bmp.obj.TextHas].enabled_count().items(): # type: ignore
+        for new_noun_type, new_noun_count in obj.properties[bmp.obj.TextHas].enabled_count().items(): # type: ignore
             new_noun_type: type[bmp.obj.Noun]
             if issubclass(new_noun_type, bmp.obj.RangedNoun):
                 continue
@@ -284,7 +183,7 @@ class Level(object):
         new_pos = bmp.loc.front_position(pos, direct)
         leave_space = False
         leave_list: list[MoveInfo] = []
-        if space.out_of_range(new_pos) and not obj.properties.disabled(bmp.obj.TextLeave):
+        if space.out_of_range(new_pos) and not obj.properties[bmp.obj.TextIs].disabled(bmp.obj.TextLeave):
             old_space_id = space.space_id
             old_space = self.get_space(old_space_id)
             if passed.count(space.space_id) > infinite_move_number:
@@ -293,7 +192,7 @@ class Level(object):
             if old_space is not None:
                 super_space_list = self.find_super_spaces(old_space_id)
                 for super_space, space_obj in super_space_list:
-                    if old_space.properties[type(space_obj)].disabled(bmp.obj.TextLeave):
+                    if old_space.properties[type(space_obj)][bmp.obj.TextIs].disabled(bmp.obj.TextLeave):
                         continue
                     transform = space.get_stacked_transform(space_obj.space_extra["static_transform"], space_obj.space_extra["dynamic_transform"])
                     new_direct = bmp.loc.swap_direction(direct) if transform["flip"] and direct in (bmp.loc.Orient.A, bmp.loc.Orient.D) else direct
@@ -309,7 +208,7 @@ class Level(object):
             else:
                 leave_space = True
                 leave_list.append((obj, []))
-        push_objects = [o for o in space.get_objs_from_pos(new_pos) if o.properties.enabled(bmp.obj.TextPush)]
+        push_objects = [o for o in space.get_objs_from_pos(new_pos) if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextPush)]
         unpushable_objects: list[bmp.obj.Object] = []
         push = False
         push_list: list[MoveInfo] = []
@@ -327,18 +226,18 @@ class Level(object):
         simple = False
         stop_objects: list[bmp.obj.Object] = []
         if not space.out_of_range(new_pos):
-            stop_objects = [o for o in space.get_objs_from_pos(new_pos) if o.properties.enabled(bmp.obj.TextStop) and not o.properties.enabled(bmp.obj.TextPush)]
+            stop_objects = [o for o in space.get_objs_from_pos(new_pos) if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextStop) and not o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextPush)]
             if len(stop_objects + unpushable_objects) != 0:
                 push = False
-                if obj.properties.enabled(bmp.obj.TextOpen):
+                if obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextOpen):
                     simple = True
                     for stop_object in stop_objects + unpushable_objects:
-                        if not stop_object.properties.enabled(bmp.obj.TextShut):
+                        if not stop_object.properties[bmp.obj.TextIs].enabled(bmp.obj.TextShut):
                             simple = False
-                elif obj.properties.enabled(bmp.obj.TextShut):
+                elif obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextShut):
                     simple = True
                     for stop_object in stop_objects + unpushable_objects:
-                        if not stop_object.properties.enabled(bmp.obj.TextOpen):
+                        if not stop_object.properties[bmp.obj.TextIs].enabled(bmp.obj.TextOpen):
                             simple = False
             else:
                 simple = True
@@ -347,10 +246,10 @@ class Level(object):
         if isinstance(obj, bmp.obj.SpaceObject) and (not space.out_of_range(new_pos)) and (not simple) and len(stop_objects) == 0:
             squeeze_space = self.get_space(obj.space_id)
             if squeeze_space is not None:
-                if not squeeze_space.properties[type(obj)].disabled(bmp.obj.TextEnter):
+                if not squeeze_space.properties[type(obj)][bmp.obj.TextIs].disabled(bmp.obj.TextEnter):
                     squeeze = True
                     for new_push_object in push_objects:
-                        if new_push_object.properties.disabled(bmp.obj.TextEnter):
+                        if new_push_object.properties[bmp.obj.TextIs].disabled(bmp.obj.TextEnter):
                             squeeze = False
                             break
                         transform = bmp.loc.inverse_transform(squeeze_space.get_stacked_transform(obj.space_extra["static_transform"], obj.space_extra["dynamic_transform"]))
@@ -365,7 +264,7 @@ class Level(object):
             else:
                 squeeze = True
                 for new_push_object in push_objects:
-                    if new_push_object.properties.disabled(bmp.obj.TextEnter):
+                    if new_push_object.properties[bmp.obj.TextIs].disabled(bmp.obj.TextEnter):
                         squeeze = False
                         break
                     squeeze_list.append((new_push_object, []))
@@ -373,14 +272,14 @@ class Level(object):
                 squeeze_list.append((obj, [(space.space_id, new_pos, direct)]))
         enter_space = False
         enter_list: list[MoveInfo] = []
-        if not space.out_of_range(new_pos) and not obj.properties.disabled(bmp.obj.TextEnter):
-            sub_space_obj_list = [o for o in space.get_spaces_from_pos(new_pos) if not o.properties.disabled(bmp.obj.TextEnter)]
+        if not space.out_of_range(new_pos) and not obj.properties[bmp.obj.TextIs].disabled(bmp.obj.TextEnter):
+            sub_space_obj_list = [o for o in space.get_spaces_from_pos(new_pos) if not o.properties[bmp.obj.TextIs].disabled(bmp.obj.TextEnter)]
             for sub_space_obj in sub_space_obj_list:
                 sub_space = self.get_space(sub_space_obj.space_id)
                 if sub_space is None:
                     enter_space = True
                     continue
-                if sub_space.properties[type(sub_space_obj)].disabled(bmp.obj.TextEnter):
+                if sub_space.properties[type(sub_space_obj)][bmp.obj.TextIs].disabled(bmp.obj.TextEnter):
                     continue
                 if passed.count(sub_space.space_id) > infinite_move_number:
                     epsilon_space_id = sub_space.space_id - 1
@@ -388,11 +287,11 @@ class Level(object):
                     if epsilon_space is None:
                         enter_space = True
                         continue
-                    if epsilon_space.properties[type(sub_space_obj)].disabled(bmp.obj.TextEnter):
+                    if epsilon_space.properties[type(sub_space_obj)][bmp.obj.TextIs].disabled(bmp.obj.TextEnter):
                         continue
                     epsilon_space_list = self.find_super_spaces(epsilon_space.space_id)
                     for _, epsilon_space_obj in epsilon_space_list:
-                        if epsilon_space_obj.properties.disabled(bmp.obj.TextEnter):
+                        if epsilon_space_obj.properties[bmp.obj.TextIs].disabled(bmp.obj.TextEnter):
                             continue
                         transform = bmp.loc.inverse_transform(epsilon_space.get_stacked_transform(epsilon_space_obj.space_extra["static_transform"], epsilon_space_obj.space_extra["dynamic_transform"]))
                         inversed_transform = bmp.loc.inverse_transform(transform)
@@ -447,7 +346,7 @@ class Level(object):
             move_list = []
             finished = True
             for space in self.space_list:
-                you_objs = [o for o in space.object_list if o.move_number < o.properties.count(bmp.obj.TextYou)]
+                you_objs = [o for o in space.object_list if o.move_number < o.properties[bmp.obj.TextIs].count(bmp.obj.TextYou)]
                 if len(you_objs) != 0:
                     finished = False
                 for obj in you_objs:
@@ -464,13 +363,13 @@ class Level(object):
         if direct is None:
             level_list: list[bmp.ref.LevelID] = []
             for space in self.space_list:
-                select_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextSelect)]
+                select_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextSelect)]
                 for select_obj in select_objs:
                     level_list.extend([o.level_id for o in space.object_list if o.pos == select_obj.pos and o.level_id is not None and o != select_obj])
             return level_list
         else:
             for space in self.space_list:
-                select_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextSelect)]
+                select_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextSelect)]
                 for select_obj in select_objs:
                     new_pos = bmp.loc.front_position(select_obj.pos, direct)
                     if not space.out_of_range(new_pos):
@@ -483,13 +382,13 @@ class Level(object):
         for prop in bmp.obj.direct_fix_properties:
             for space in self.space_list:
                 for obj in space.object_list:
-                    if obj.properties.enabled(prop):
+                    if obj.properties[bmp.obj.TextIs].enabled(prop):
                         if isinstance(obj, bmp.obj.SpaceObject):
                             obj.space_extra["static_transform"] = prop.ref_transform.copy()
                         obj.orient = prop.ref_direct
-                if space.properties[bmp.obj.default_space_object_type].enabled(prop):
+                if space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(prop):
                     space.static_transform = prop.ref_transform.copy()
-            if self.properties[bmp.obj.default_level_object_type].enabled(prop):
+            if self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(prop):
                 pass # NotImplemented
     def flip(self) -> None:
         for space in self.space_list:
@@ -499,36 +398,36 @@ class Level(object):
         for prop in bmp.obj.direct_mapping_properties:
             for space in self.space_list:
                 for obj in space.object_list:
-                    if obj.properties.count(prop) % 2 == 1:
+                    if obj.properties[bmp.obj.TextIs].count(prop) % 2 == 1:
                         if isinstance(obj, bmp.obj.SpaceObject):
                             obj.space_extra["dynamic_transform"] = bmp.loc.get_stacked_transform(obj.space_extra["dynamic_transform"], prop.ref_transform)
                         obj.set_direct_mapping(prop.ref_mapping)
-                if space.properties[bmp.obj.default_space_object_type].count(prop) % 2 == 1:
+                if space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].count(prop) % 2 == 1:
                     space.dynamic_transform = bmp.loc.get_stacked_transform(space.dynamic_transform, prop.ref_transform)
-            if self.properties[bmp.obj.default_level_object_type].count(prop) % 2 == 1:
+            if self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].count(prop) % 2 == 1:
                 pass # NotImplemented
     def turn(self) -> None:
         for space in self.space_list:
             for obj in space.object_list:
-                turn_count = (obj.properties.count(bmp.obj.TextTurn) - obj.properties.count(bmp.obj.TextDeturn)) % 4
+                turn_count = (obj.properties[bmp.obj.TextIs].count(bmp.obj.TextTurn) - obj.properties[bmp.obj.TextIs].count(bmp.obj.TextDeturn)) % 4
                 for _ in range(turn_count):
                     obj.orient = bmp.loc.turn_right(obj.orient)
                     if isinstance(obj, bmp.obj.SpaceObject):
                         obj.space_extra["static_transform"] = bmp.loc.get_stacked_transform(obj.space_extra["static_transform"], {"direct": "A", "flip": False})
-            turn_count = (space.properties[bmp.obj.default_space_object_type].count(bmp.obj.TextTurn) - space.properties[bmp.obj.default_space_object_type].count(bmp.obj.TextDeturn)) % 4
+            turn_count = (space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].count(bmp.obj.TextTurn) - space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].count(bmp.obj.TextDeturn)) % 4
             for _ in range(turn_count):
                 space.static_transform = bmp.loc.get_stacked_transform(space.static_transform, {"direct": "A", "flip": False})
-        if self.properties[bmp.obj.default_level_object_type].count(bmp.obj.TextFlip) % 2 == 1:
+        if self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].count(bmp.obj.TextFlip) % 2 == 1:
             pass # NotImplemented
     def move(self) -> bool:
         self.reset_move_numbers()
         pushing_game = False
         for space in self.space_list:
-            global_move_count = space.properties[bmp.obj.default_space_object_type].count(bmp.obj.TextMove) + self.properties[bmp.obj.default_level_object_type].count(bmp.obj.TextMove)
+            global_move_count = space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].count(bmp.obj.TextMove) + self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].count(bmp.obj.TextMove)
             for _ in range(global_move_count):
                 move_list = []
                 for obj in [o for o in space.object_list if o.move_number < global_move_count]:
-                    if not obj.properties.enabled(bmp.obj.TextFloat):
+                    if not obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
                         new_move_list = self.get_move_list(space, obj, bmp.loc.Orient.S)
                         if new_move_list is not None:
                             move_list.extend(new_move_list)
@@ -544,7 +443,7 @@ class Level(object):
             move_list = []
             finished = True
             for space in self.space_list:
-                move_objs = [o for o in space.object_list if o.move_number < o.properties.count(bmp.obj.TextMove)]
+                move_objs = [o for o in space.object_list if o.move_number < o.properties[bmp.obj.TextIs].count(bmp.obj.TextMove)]
                 if len(move_objs) != 0:
                     finished = False
                 for obj in move_objs:
@@ -566,11 +465,11 @@ class Level(object):
         self.reset_move_numbers()
         pushing_game = False
         for space in self.space_list:
-            global_shift_count = space.properties[bmp.obj.default_space_object_type].count(bmp.obj.TextShift) + self.properties[bmp.obj.default_level_object_type].count(bmp.obj.TextShift)
+            global_shift_count = space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].count(bmp.obj.TextShift) + self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].count(bmp.obj.TextShift)
             for _ in range(global_shift_count):
                 move_list = []
                 for obj in [o for o in space.object_list if o.move_number < global_shift_count]:
-                    if not obj.properties.enabled(bmp.obj.TextFloat):
+                    if not obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
                         new_move_list = self.get_move_list(space, obj, bmp.loc.Orient.S)
                         if new_move_list is not None:
                             move_list.extend(new_move_list)
@@ -586,7 +485,7 @@ class Level(object):
             move_list = []
             finished = True
             for space in self.space_list:
-                shifter_objs = [o for o in space.object_list if o.move_number < o.properties.count(bmp.obj.TextShift)]
+                shifter_objs = [o for o in space.object_list if o.move_number < o.properties[bmp.obj.TextIs].count(bmp.obj.TextShift)]
                 for shifter_obj in shifter_objs:
                     shifted_objs = [o for o in space.get_objs_from_pos(shifter_obj.pos) if o != shifter_obj and bmp.obj.same_float_prop(o, shifter_obj)]
                     for obj in shifted_objs:
@@ -600,16 +499,16 @@ class Level(object):
             self.move_objs_from_move_list(move_list)
         return pushing_game
     def tele(self) -> None:
-        if self.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextTele):
+        if self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextTele):
             pass
         for space in self.space_list:
-            if space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextTele):
+            if space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextTele):
                 pass
         tele_list: list[tuple[bmp.space.Space, bmp.obj.Object, bmp.space.Space, bmp.loc.Coord[int]]] = []
         object_list: list[tuple[bmp.space.Space, bmp.obj.Object]] = []
         for space in self.space_list:
             object_list.extend([(space, o) for o in space.object_list])
-        tele_objs = [t for t in object_list if t[1].properties.enabled(bmp.obj.TextTele)]
+        tele_objs = [t for t in object_list if t[1].properties[bmp.obj.TextIs].enabled(bmp.obj.TextTele)]
         tele_object_types: dict[type[bmp.obj.Object], list[tuple[bmp.space.Space, bmp.obj.Object]]] = {}
         for object_type in [n.ref_type for n in bmp.obj.noun_class_list]:
             for tele_obj in tele_objs:
@@ -637,11 +536,11 @@ class Level(object):
         success = False
         for space in self.space_list:
             delete_list = []
-            if space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextSink) or self.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextSink):
+            if space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextSink) or self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextSink):
                 for obj in space.object_list:
-                    if not obj.properties.enabled(bmp.obj.TextFloat):
+                    if not obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
                         delete_list.append(obj)
-            sink_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextSink)]
+            sink_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextSink)]
             for sink_obj in sink_objs:
                 for obj in space.get_objs_from_pos(sink_obj.pos):
                     if obj == sink_obj:
@@ -662,16 +561,16 @@ class Level(object):
         success = False
         for space in self.space_list:
             delete_list = []
-            melt_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextMelt)]
-            hot_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextHot)]
-            if len(hot_objs) != 0 and (space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextMelt) or self.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextMelt)):
+            melt_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextMelt)]
+            hot_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextHot)]
+            if len(hot_objs) != 0 and (space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextMelt) or self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextMelt)):
                 for melt_obj in melt_objs:
-                    if not melt_obj.properties.enabled(bmp.obj.TextFloat):
+                    if not melt_obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
                         delete_list.extend(space.object_list)
                 continue
-            if len(melt_objs) != 0 and (space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextHot) or self.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextHot)):
+            if len(melt_objs) != 0 and (space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextHot) or self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextHot)):
                 for melt_obj in melt_objs:
-                    if not melt_obj.properties.enabled(bmp.obj.TextFloat):
+                    if not melt_obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
                         delete_list.append(melt_obj)
                 continue
             for hot_obj in hot_objs:
@@ -690,13 +589,13 @@ class Level(object):
         success = False
         for space in self.space_list:
             delete_list = []
-            you_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextYou)]
-            defeat_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextDefeat)]
-            if len(defeat_objs) != 0 and (space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextYou) or self.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextYou)):
+            you_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextYou)]
+            defeat_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextDefeat)]
+            if len(defeat_objs) != 0 and (space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextYou) or self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextYou)):
                 delete_list.extend(space.object_list)
                 continue
             for you_obj in you_objs:
-                if space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextDefeat) or self.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextDefeat):
+                if space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextDefeat) or self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextDefeat):
                     if you_obj not in delete_list:
                         delete_list.append(you_obj)
                         continue
@@ -715,13 +614,13 @@ class Level(object):
         collected: dict[type[bmp.obj.Object], bool] = {}
         for space in self.space_list:
             delete_list = []
-            bonus_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextBonus)]
-            you_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextYou)]
-            if len(you_objs) != 0 and (space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextBonus) or self.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextBonus)):
+            bonus_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextBonus)]
+            you_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextYou)]
+            if len(you_objs) != 0 and (space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextBonus) or self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextBonus)):
                 delete_list.extend(space.object_list)
                 continue
             for bonus_obj in bonus_objs:
-                if space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextYou) or self.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextYou):
+                if space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextYou) or self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextYou):
                     if bonus_obj not in delete_list:
                         delete_list.append(bonus_obj)
                         continue
@@ -740,12 +639,12 @@ class Level(object):
         success = False
         for space in self.space_list:
             delete_list = []
-            shut_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextShut)]
-            open_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextOpen)]
-            if len(open_objs) != 0 and (space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextShut) or self.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextShut)):
+            shut_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextShut)]
+            open_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextOpen)]
+            if len(open_objs) != 0 and (space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextShut) or self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextShut)):
                 delete_list.extend(space.object_list)
                 continue
-            if len(shut_objs) != 0 and (space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextOpen) or self.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextOpen)):
+            if len(shut_objs) != 0 and (space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextOpen) or self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextOpen)):
                 delete_list.extend(space.object_list)
                 continue
             for open_obj in open_objs:
@@ -765,7 +664,7 @@ class Level(object):
     def make(self) -> None:
         for space in self.space_list:
             for obj in space.object_list:
-                for make_noun_type, make_noun_count in obj.operator_properties[bmp.obj.TextMake].enabled_count().items(): # type: ignore
+                for make_noun_type, make_noun_count in obj.properties[bmp.obj.TextMake].enabled_count().items(): # type: ignore
                     make_noun_type: type[bmp.obj.Noun]
                     if issubclass(make_noun_type, bmp.obj.RangedNoun):
                         continue
@@ -798,8 +697,8 @@ class Level(object):
     def text_plus_and_text_minus(self) -> None:
         for space in self.space_list:
             delete_list = []
-            text_plus_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextTextPlus)]
-            text_minus_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextTextMinus)]
+            text_plus_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextTextPlus)]
+            text_minus_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextTextMinus)]
             for text_plus_obj in text_plus_objs:
                 if text_plus_obj in text_minus_objs:
                     continue
@@ -844,16 +743,16 @@ class Level(object):
                 elif bmp.base.current_os == bmp.base.linux:
                     os.system(f"python ./submp.py {game_obj.ref_type.json_name} &")
     def win(self) -> bool:
-        if self.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextWin):
+        if self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextWin):
             return True
         for space in self.space_list:
-            you_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextYou)]
-            win_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextWin)]
+            you_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextYou)]
+            win_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextWin)]
             for you_obj in you_objs:
                 if you_obj in win_objs:
                     return True
-                if space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextWin):
-                    if not you_obj.properties.enabled(bmp.obj.TextFloat):
+                if space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextWin):
+                    if not you_obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
                         return True
                 for win_obj in win_objs:
                     if you_obj.pos == win_obj.pos:
@@ -861,16 +760,16 @@ class Level(object):
                             return True
         return False
     def end(self) -> bool:
-        if self.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextEnd):
+        if self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextEnd):
             return True
         for space in self.space_list:
-            you_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextYou)]
-            end_objs = [o for o in space.object_list if o.properties.enabled(bmp.obj.TextEnd)]
+            you_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextYou)]
+            end_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextEnd)]
             for you_obj in you_objs:
                 if you_obj in end_objs:
                     return True
-                if space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextEnd):
-                    if not you_obj.properties.enabled(bmp.obj.TextFloat):
+                if space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextEnd):
+                    if not you_obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
                         return True
                 for end_obj in end_objs:
                     if you_obj.pos == end_obj.pos:
@@ -880,12 +779,12 @@ class Level(object):
     def done(self) -> bool:
         for space in self.space_list:
             delete_list = []
-            if self.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextDone):
+            if self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextDone):
                 delete_list.extend(space.object_list)
-            if space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextDone):
+            if space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextDone):
                 delete_list.extend(space.object_list)
             for obj in space.object_list:
-                if obj.properties.enabled(bmp.obj.TextDone):
+                if obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextDone):
                     delete_list.append(obj)
             for obj in delete_list:
                 space.del_obj(obj)
@@ -893,13 +792,13 @@ class Level(object):
                 self.sound_events.append("done")
         for space in self.space_list:
             for obj in [o for o in space.object_list if bmp.obj.TextAll().isreferenceof(o, all_list = self.all_list)]:
-                if not obj.properties.enabled(bmp.obj.TextDone):
+                if not obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextDone):
                     return False
         return len(delete_list) > 0
     def have_you(self) -> bool:
         for space in self.space_list:
             for obj in space.object_list:
-                if obj.properties.enabled(bmp.obj.TextYou):
+                if obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextYou):
                     return True
         return False
     def recursion_get_object_surface_info(
@@ -968,7 +867,7 @@ class Level(object):
     def space_to_surface(self, space: bmp.space.Space, wiggle: int, size: bmp.loc.Coord[int], depth: int = 0, smooth: Optional[float] = None, cursor: Optional[bmp.loc.Coord[int]] = None, debug: bool = False) -> pygame.Surface:
         pixel_size = math.ceil(max(size[0] / space.width, size[1] / space.height) / bmp.render.sprite_size)
         scaled_sprite_size = pixel_size * bmp.render.sprite_size
-        if depth > bmp.opt.options["render"]["space_depth"] or space.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextHide):
+        if depth > bmp.opt.options["render"]["space_depth"] or space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextHide):
             space_surface = pygame.Surface((scaled_sprite_size, scaled_sprite_size), pygame.SRCALPHA)
             space_surface.fill(space.color if space.color is not None else bmp.color.current_palette[0, 4])
             space_surface = bmp.render.simple_object_to_surface(bmp.obj.SpaceObject((0, 0), space_id=space.space_id), default_surface=space_surface)
@@ -982,12 +881,12 @@ class Level(object):
         for obj in object_list:
             if not bmp.render.valid(obj):
                 continue
-            if obj.properties.enabled(bmp.obj.TextHide):
+            if obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextHide):
                 continue
             obj_surface: pygame.Surface = bmp.render.simple_object_to_surface(obj, wiggle=wiggle, debug=debug)
-            if self.game_properties.enabled(bmp.obj.TextWord):
+            if self.game_properties[bmp.obj.TextIs].enabled(bmp.obj.TextWord):
                 object_type = type(obj)
-                for _ in range(self.game_properties.count(bmp.obj.TextWord)):
+                for _ in range(self.game_properties[bmp.obj.TextIs].count(bmp.obj.TextWord)):
                     object_type = bmp.obj.get_noun_from_type(object_type)
                 obj_surface = bmp.render.simple_type_to_surface(object_type, wiggle=wiggle, debug=debug)
             obj_surface_pos: bmp.loc.Coord[float] = (float(obj.x), float(obj.y))

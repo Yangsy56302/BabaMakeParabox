@@ -34,8 +34,7 @@ class Space(object):
         self.object_list: list[bmp.obj.Object] = object_list if object_list is not None else []
         self.object_pos_index: list[list[bmp.obj.Object]]
         self.refresh_index()
-        self.properties: dict[type[bmp.obj.SpaceObject], bmp.obj.PropertyStorage] = {p: bmp.obj.PropertyStorage() for p in bmp.obj.space_object_types}
-        self.special_operator_properties: dict[type[bmp.obj.SpaceObject], dict[type[bmp.obj.Operator], bmp.obj.PropertyStorage]] = {p: {o: bmp.obj.PropertyStorage() for o in bmp.obj.special_operators} for p in bmp.obj.space_object_types}
+        self.properties: dict[type[bmp.obj.SpaceObject], dict[type[bmp.obj.Operator], bmp.obj.PropertyStorage]] = {p: {o: bmp.obj.PropertyStorage() for o in bmp.obj.operators} for p in bmp.obj.space_object_types}
         self.rule_list: list[bmp.rule.Rule] = []
         self.rule_info: list[bmp.rule.RuleInfo] = []
         self.static_transform: bmp.loc.SpaceTransform = bmp.loc.default_space_transform.copy()
@@ -92,15 +91,23 @@ class Space(object):
             return []
         return [o for o in self.pos_to_objs(pos) if isinstance(o, object_type)]
     # @auto_refresh
-    def get_objs_from_pos_and_noun(self, pos: bmp.loc.Coord[int], noun: bmp.obj.Noun) -> list[bmp.obj.Object]:
+    def get_objs_from_pos_and_noun(self, pos: bmp.loc.Coord[int], noun: bmp.obj.Noun, negated: bool = False) -> list[bmp.obj.Object]:
         if self.out_of_range(pos):
             return []
+        if negated:
+            return [o for o in self.pos_to_objs(pos) if (not isinstance(o, bmp.obj.types_not_in_all)) and (not noun.isreferenceof(o))]
         return [o for o in self.pos_to_objs(pos) if noun.isreferenceof(o)]
     # @auto_refresh
     def get_objs_from_type[T: bmp.obj.Object](self, object_type: type[T]) -> list[T]:
         return [o for o in self.object_list if isinstance(o, object_type)]
     # @auto_refresh
-    def get_objs_from_noun(self, noun: bmp.obj.Noun) -> list[bmp.obj.Object]:
+    def get_objs_from_noun(self, noun: bmp.obj.Noun, negated: bool = False) -> list[bmp.obj.Object]:
+        if isinstance(noun, bmp.obj.TextAll):
+            if negated:
+                return [o for o in self.object_list if isinstance(o, bmp.obj.types_in_not_all)]
+            return [o for o in self.object_list if not isinstance(o, bmp.obj.types_not_in_all)]
+        if negated:
+            return [o for o in self.object_list if (not isinstance(o, bmp.obj.types_not_in_all)) and (not noun.isreferenceof(o))]
         return [o for o in self.object_list if noun.isreferenceof(o)]
     # @auto_refresh
     def del_obj(self, obj: bmp.obj.Object) -> None:
@@ -157,7 +164,7 @@ class Space(object):
         if self.out_of_range(pos):
             return []
         return [o for o in self.pos_to_objs(pos) if isinstance(o, bmp.obj.LevelObject)]
-    def get_rule_from_pos_and_direct(self, pos: bmp.loc.Coord[int], direct: bmp.loc.Orient, stage: str = "before prefix") -> tuple[list[bmp.rule.Rule], list[bmp.rule.RuleInfo]]:
+    def __get_rule_from_pos_and_direct(self, pos: bmp.loc.Coord[int], direct: bmp.loc.Orient, stage: str = "before prefix") -> tuple[list[bmp.rule.Rule], list[bmp.rule.RuleInfo]]:
         new_rule_list: list[bmp.rule.Rule] = []
         new_info_list: list[bmp.rule.RuleInfo] = []
         for match_type, unmatch_type, next_stage, func in bmp.rule.how_to_match_rule[stage]:
@@ -165,19 +172,19 @@ class Space(object):
             text_list += [
                 o.transform(bmp.obj.get_noun_from_type(type(o)))
                 for o in self.get_objs_from_pos(pos)
-                if o.old_state.prop is not None and o.old_state.prop.enabled(bmp.obj.TextWord)
+                if o.old_state.prop is not None and o.old_state.prop[bmp.obj.TextIs].enabled(bmp.obj.TextWord)
             ] # type: ignore
             matched_list = [o for o in text_list if isinstance(o, tuple(match_type))]
             if len(unmatch_type) != 0:
                 matched_list = [o for o in matched_list if not isinstance(o, tuple(unmatch_type))]
             if len(matched_list) != 0:
-                rule_list, info_list = self.get_rule_from_pos_and_direct(bmp.loc.front_position(pos, direct), direct, next_stage)
+                rule_list, info_list = self.__get_rule_from_pos_and_direct(bmp.loc.front_position(pos, direct), direct, next_stage)
                 for matched_text in matched_list:
                     new_rule_list.extend([matched_text] + r for r in rule_list)
                     new_info_list.extend(func(i, matched_text) for i in info_list)
             if stage == "after property":
                 new_rule_list.append([])
-                new_info_list.append(bmp.rule.RuleInfo([], False, bmp.obj.Noun(), [], [bmp.rule.OperInfo(bmp.obj.Operator(), [])]))
+                new_info_list.append(bmp.rule.RuleInfo([], [], [], [bmp.rule.OperInfo(bmp.obj.Operator(), [])]))
         return new_rule_list, new_info_list
     def set_rule(self) -> None:
         for text_obj in self.get_objs_from_type(bmp.obj.Text):
@@ -189,7 +196,7 @@ class Space(object):
         for x in range(self.width):
             for y in range(self.height):
                 x_rule_dict.setdefault(x, [])
-                new_rule_list, new_rule_info = self.get_rule_from_pos_and_direct((x, y), bmp.loc.Orient.D)
+                new_rule_list, new_rule_info = self.__get_rule_from_pos_and_direct((x, y), bmp.loc.Orient.D)
                 for rule_index in range(len(new_rule_list)):
                     part_of_old_rule = False
                     for old_x, old_rule_list in x_rule_dict.items():
@@ -201,7 +208,7 @@ class Space(object):
                         self.rule_list.append(new_rule_list[rule_index])
                         self.rule_info.append(new_rule_info[rule_index])
                 y_rule_dict.setdefault(y, [])
-                new_rule_list, new_rule_info = self.get_rule_from_pos_and_direct((x, y), bmp.loc.Orient.S)
+                new_rule_list, new_rule_info = self.__get_rule_from_pos_and_direct((x, y), bmp.loc.Orient.S)
                 for rule_index in range(len(new_rule_list)):
                     part_of_old_rule = False
                     for old_y, old_rule_list in y_rule_dict.items():

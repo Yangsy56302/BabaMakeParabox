@@ -175,10 +175,10 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                     )
                     history.append(new_history)
                     levelpack_info = new_history[1]
-                    if levelpack.current_level.game_properties.enabled(bmp.obj.TextYou):
+                    if levelpack.current_level.game_properties[bmp.obj.TextIs].enabled(bmp.obj.TextYou):
                         game_offset[0] += dx * window.get_width() / levelpack.current_level.current_space.width
                         game_offset[1] += dy * window.get_height() / levelpack.current_level.current_space.height
-                    if levelpack.current_level.game_properties.enabled(bmp.obj.TextPush) and levelpack_info["game_push"]:
+                    if levelpack.current_level.game_properties[bmp.obj.TextIs].enabled(bmp.obj.TextPush) and levelpack_info["game_push"]:
                         game_offset[0] += dx * window.get_width() / levelpack.current_level.current_space.width
                         game_offset[1] += dy * window.get_height() / levelpack.current_level.current_space.height
                     display_refresh = True
@@ -194,18 +194,18 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
             if any(mouses) and not levelpack.current_level.current_space.out_of_range(mouse_pos_in_space):
                 visible_space_list: list[bmp.space.Space] = [
                     s for s in levelpack.current_level.space_list
-                    if not s.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextHide)
+                    if not s.properties[bmp.obj.default_space_object_type][bmp.obj.bmp.obj.TextIs].enabled(bmp.obj.TextHide)
                 ]
                 if mouses[0] == 1:
                     sub_space_objs: list[bmp.obj.SpaceObject] = [
                         o for o in levelpack.current_level.current_space.get_spaces_from_pos(mouse_pos_in_space)
-                        if not o.properties.enabled(bmp.obj.TextHide)
+                        if not o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextHide)
                     ]
                     sub_spaces = [levelpack.current_level.get_space(o.space_id) for o in sub_space_objs]
                     sub_spaces = [
                         s for s in sub_spaces
                         if s is not None
-                        and not s.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextHide)
+                        and not s.properties[bmp.obj.default_space_object_type][bmp.obj.bmp.obj.TextIs].enabled(bmp.obj.TextHide)
                     ]
                     if len(sub_spaces) != 0:
                         levelpack.current_level.current_space = random.choice(sub_spaces)
@@ -214,8 +214,8 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                 elif mouses[2] == 1:
                     super_spaces: list[bmp.space.Space] = [
                         s for s, o in levelpack.current_level.find_super_spaces(levelpack.current_level.current_space_id)
-                        if not o.properties.enabled(bmp.obj.TextHide)
-                        and not s.properties[bmp.obj.default_space_object_type].enabled(bmp.obj.TextHide)
+                        if not o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextHide)
+                        and not s.properties[bmp.obj.default_space_object_type][bmp.obj.bmp.obj.TextIs].enabled(bmp.obj.TextHide)
                     ]
                     if len(super_spaces) != 0:
                         levelpack.current_level.current_space = random.choice(super_spaces)
@@ -363,16 +363,16 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                         bmp.lang.fprint("play.levelpack.collectibles", key=object_type.get_name(), value=collect_count)
         if levelpack.current_level.game_properties:
             offset_used = False
-            if levelpack.current_level.game_properties.enabled(bmp.obj.TextStop):
+            if levelpack.current_level.game_properties[bmp.obj.TextIs].enabled(bmp.obj.TextStop):
                 wiggle = 1
-            if levelpack.current_level.game_properties.enabled(bmp.obj.TextShift):
+            if levelpack.current_level.game_properties[bmp.obj.TextIs].enabled(bmp.obj.TextShift):
                 game_offset[0] += window.get_width() / bmp.opt.options["render"]["fps"]
-            if levelpack.current_level.game_properties.enabled(bmp.obj.TextMove):
+            if levelpack.current_level.game_properties[bmp.obj.TextIs].enabled(bmp.obj.TextMove):
                 game_offset[1] += window.get_height() / (4 * bmp.opt.options["render"]["fps"])
-            if levelpack.current_level.game_properties.enabled(bmp.obj.TextSink):
+            if levelpack.current_level.game_properties[bmp.obj.TextIs].enabled(bmp.obj.TextSink):
                 game_offset_speed[1] += window.get_height() / (16 * bmp.opt.options["render"]["fps"])
                 offset_used = True
-            if levelpack.current_level.game_properties.enabled(bmp.obj.TextFloat):
+            if levelpack.current_level.game_properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
                 game_offset_speed[1] -= window.get_height() / (64 * bmp.opt.options["render"]["fps"])
                 offset_used = True
             if not offset_used:
@@ -381,30 +381,30 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
             del offset_used
         if levelpack_refresh:
             display_refresh = True
-            if levelpack.current_level.game_properties.enabled(bmp.obj.TextWin):
+            if levelpack.current_level.game_properties[bmp.obj.TextIs].enabled(bmp.obj.TextWin):
                 bmp.lang.fprint("play.win")
                 bmp.audio.play("win")
                 game_running = False
-            if levelpack.current_level.game_properties.enabled(bmp.obj.TextDefeat):
+            if levelpack.current_level.game_properties[bmp.obj.TextIs].enabled(bmp.obj.TextDefeat):
                 bmp.audio.play("defeat")
                 game_running = False
                 raise GameIsDefeatError()
-            if levelpack.current_level.game_properties.enabled(bmp.obj.TextBonus):
+            if levelpack.current_level.game_properties[bmp.obj.TextIs].enabled(bmp.obj.TextBonus):
                 bmp.audio.play("bonus")
                 bmp.lang.print("VVd4WmVGTnRXVEJOYWtaVFRqQmtWZz09")
-            if levelpack.current_level.game_properties.enabled(bmp.obj.TextEnd):
+            if levelpack.current_level.game_properties[bmp.obj.TextIs].enabled(bmp.obj.TextEnd):
                 bmp.lang.fprint("play.end")
                 bmp.audio.play("end")
                 bmp.opt.options["gameplay"]["game_is_end"] = True
                 bmp.opt.save()
                 game_running = False
-            if levelpack.current_level.game_properties.enabled(bmp.obj.TextDone):
+            if levelpack.current_level.game_properties[bmp.obj.TextIs].enabled(bmp.obj.TextDone):
                 bmp.audio.play("done")
                 bmp.opt.options["gameplay"]["game_is_done"] = True
                 bmp.opt.save()
                 game_running = False
                 raise GameIsDoneError()
-            if levelpack.current_level.game_properties.enabled(bmp.obj.TextOpen):
+            if levelpack.current_level.game_properties[bmp.obj.TextIs].enabled(bmp.obj.TextOpen):
                 if bmp.base.current_os == bmp.base.windows:
                     if os.path.exists("bmp.exe"):
                             os.system("start bmp.exe")
@@ -412,17 +412,17 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                         os.system("start python bmp.py")
                 elif bmp.base.current_os == bmp.base.linux:
                     os.system("python ./bmp.py &")
-            if levelpack.current_level.game_properties.enabled(bmp.obj.TextShut):
+            if levelpack.current_level.game_properties[bmp.obj.TextIs].enabled(bmp.obj.TextShut):
                 game_running = False
-            if levelpack.current_level.game_properties.enabled(bmp.obj.TextTele):
+            if levelpack.current_level.game_properties[bmp.obj.TextIs].enabled(bmp.obj.TextTele):
                 bmp.audio.play("tele")
                 game_offset = [float(random.randrange(window.get_width())), float(random.randrange(window.get_height()))]
-            if levelpack.current_level.game_properties.enabled(bmp.obj.TextHot) \
-                and levelpack.current_level.game_properties.enabled(bmp.obj.TextMelt):
+            if levelpack.current_level.game_properties[bmp.obj.TextIs].enabled(bmp.obj.TextHot) \
+                and levelpack.current_level.game_properties[bmp.obj.TextIs].enabled(bmp.obj.TextMelt):
                 bmp.audio.play("melt")
                 game_running = False
-            if levelpack.current_level.game_properties.enabled(bmp.obj.TextYou) \
-                and levelpack.current_level.game_properties.enabled(bmp.obj.TextDefeat):
+            if levelpack.current_level.game_properties[bmp.obj.TextIs].enabled(bmp.obj.TextYou) \
+                and levelpack.current_level.game_properties[bmp.obj.TextIs].enabled(bmp.obj.TextDefeat):
                 bmp.audio.play("defeat")
                 game_running = False
             for space in levelpack.current_level.space_list:
@@ -522,10 +522,10 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                 elif window.get_width() // levelpack.current_level.current_space.height < window.get_height() // levelpack.current_level.current_space.width:
                     space_surface_size = (window.get_width(), window.get_width() * levelpack.current_level.current_space.width // levelpack.current_level.current_space.height)
                     space_surface_pos = (0, (window.get_height() - space_surface_size[1]) // 2)
-        if not levelpack.current_level.game_properties.enabled(bmp.obj.TextHide):
-            if not levelpack.current_level.properties[bmp.obj.default_level_object_type].enabled(bmp.obj.TextHide):
+        if not levelpack.current_level.game_properties[bmp.obj.TextIs].enabled(bmp.obj.TextHide):
+            if not levelpack.current_level.properties[bmp.obj.default_level_object_type][bmp.obj.bmp.obj.TextIs].enabled(bmp.obj.TextHide):
                 smooth_value = bmp.render.calc_smooth_value(frame_since_last_move)
-                if levelpack.current_level.game_properties.enabled(bmp.obj.TextStop):
+                if levelpack.current_level.game_properties[bmp.obj.TextIs].enabled(bmp.obj.TextStop):
                     smooth_value = None
                 space_surface = levelpack.current_level.space_to_surface(
                     levelpack.current_level.current_space, wiggle, space_surface_size, smooth=smooth_value, debug=bmp.opt.options["debug"]
@@ -564,7 +564,7 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                         line_surface = pygame.transform.scale_by(line_surface, bmp.render.smaller_gui_scalar)
                         window.blit(line_surface, (window.get_width() - line_surface.get_width(), line_index * line_surface.get_height()))
             # game transform
-            game_transform_to = [t for t, n in levelpack.current_level.game_properties.enabled_count().items() if issubclass(t, bmp.obj.Noun) and not n]
+            game_transform_to = [t for t, n in levelpack.current_level.game_properties[bmp.obj.TextIs].enabled_count().items() if issubclass(t, bmp.obj.Noun) and not n]
             if len(game_transform_to) != 0:
                 window.fill(pygame.Color(*bmp.color.hex_to_rgb(bmp.color.current_palette[0, 4]), 0x80), (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
             game_transform_to = [o.ref_type for o in game_transform_to if o is not None]
@@ -572,7 +572,7 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                 window.blit(pygame.transform.scale(bmp.render.current_sprites.get(object_type.sprite_name, 0, wiggle), window.get_size()), (0, 0))
             del game_transform_to
             # game is select
-            if levelpack.current_level.game_properties.enabled(bmp.obj.TextSelect):
+            if levelpack.current_level.game_properties[bmp.obj.TextIs].enabled(bmp.obj.TextSelect):
                 select_surface = bmp.render.current_sprites.get(bmp.obj.Cursor.sprite_name, 0, wiggle, raw=True)
                 select_surface = bmp.render.set_surface_color_dark(select_surface, bmp.color.float_to_hue((frame / bmp.opt.options["render"]["fps"] / 6) % 1.0))
                 window.blit(pygame.transform.scale(select_surface, window.get_size()), (0, 0), special_flags=pygame.BLEND_RGBA_ADD)

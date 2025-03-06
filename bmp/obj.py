@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-from enum import Enum, StrEnum
+from enum import StrEnum
 from tqdm import tqdm, trange
 import json
 import os
-from typing import Any, Final, Literal, NotRequired, Optional, TypeGuard, TypedDict, Self
+from typing import Any, Final, NotRequired, Optional, TypeGuard, TypedDict, Self
 import math
 import uuid
 import bmp.base
@@ -59,7 +59,7 @@ class PropertyStorage(object):
         if len(info_list) == 1:
             return int(info_list[0].negated == negated)
         return sum([1 for i in info_list if i.negated == negated])
-    def update(self, prop: "Text", negated: bool = False) -> None:
+    def add(self, prop: "Text", negated: bool = False) -> None:
         self.__dict.setdefault(type(prop), [])
         self.__dict[type(prop)].append(PropertyInfo(
             obj = prop,
@@ -100,7 +100,7 @@ class OldObjectState(object):
         uid: Optional[uuid.UUID] = None,
         pos: Optional[bmp.loc.Coord[int]] = None,
         orient: Optional[bmp.loc.Orient] = None,
-        prop: Optional[PropertyStorage] = None,
+        prop: Optional[dict[type["Operator"], PropertyStorage]] = None,
         space: Optional[bmp.ref.SpaceID] = None,
         level: Optional[bmp.ref.LevelID] = None,
         old_surface_pos: Optional[bmp.loc.Coord[float]] = None,
@@ -111,7 +111,7 @@ class OldObjectState(object):
         self.uid: Optional[uuid.UUID] = uid
         self.pos: Optional[bmp.loc.Coord[int]] = pos
         self.orient: Optional[bmp.loc.Orient] = orient
-        self.prop: Optional[PropertyStorage] = prop
+        self.prop: Optional[dict[type["Operator"], PropertyStorage]] = prop
         self.space: Optional[bmp.ref.SpaceID] = space
         self.level: Optional[bmp.ref.LevelID] = level
         self.old_surface_pos: Optional[bmp.loc.Coord[float]] = old_surface_pos
@@ -119,7 +119,7 @@ class OldObjectState(object):
         self.new_surface_pos: Optional[bmp.loc.Coord[float]] = new_surface_pos
         self.new_surface_size: Optional[bmp.loc.Coord[float]] = new_surface_size
 
-special_operators: tuple[type["Operator"], ...]
+operators: tuple[type["Operator"], ...]
 
 class SpriteCategory(StrEnum):
     NONE = "none"
@@ -170,7 +170,7 @@ class Object(object):
         direct: bmp.loc.Orient = bmp.loc.Orient.S,
         *,
         space_id: Optional[bmp.ref.SpaceID] = None,
-        level_id: Optional[bmp.ref.LevelID] = None
+        level_id: Optional[bmp.ref.LevelID] = None,
     ) -> None:
         self.uid: uuid.UUID = uuid.uuid4()
         self.pos: bmp.loc.Coord[int] = pos
@@ -179,8 +179,7 @@ class Object(object):
         self.old_state: OldObjectState = OldObjectState()
         self.space_id: Optional[bmp.ref.SpaceID] = space_id
         self.level_id: Optional[bmp.ref.LevelID] = level_id
-        self.properties: PropertyStorage = PropertyStorage()
-        self.operator_properties: dict[type["Operator"], PropertyStorage] = {o: PropertyStorage() for o in special_operators}
+        self.properties: dict[type["Operator"], PropertyStorage] = {o: PropertyStorage() for o in operators}
         self.move_number: int = 0
         self.sprite_state: int = 0
     def __eq__(self, obj: "Object") -> bool:
@@ -290,7 +289,7 @@ class SpaceObject(Object):
     ) -> None:
         super().__init__(pos, direct, space_id=space_id, level_id=level_id)
         self.space_extra: SpaceObjectExtra = space_extra.copy()
-    def transform(self: "SpaceObject", /, _type: type["Object"]) -> "Object": ...
+    def transform(self: "SpaceObject", /, _type: type[Object]) -> Object: ...
     def to_json(self) -> ObjectJson:
         return {**super().to_json(), "space_extra": self.space_extra}
 
@@ -320,7 +319,7 @@ class LevelObject(Object):
     ) -> None:
         super().__init__(pos, direct, space_id=space_id, level_id=level_id)
         self.level_extra: LevelObjectExtra = level_extra
-    def transform(self: "LevelObject", /, _type: type["Object"]) -> "Object": ...
+    def transform(self: "LevelObject", /, _type: type[Object]) -> Object: ...
     def to_json(self) -> ObjectJson:
         return {**super().to_json(), "level_extra": self.level_extra}
 
@@ -397,7 +396,7 @@ class Text(Object):
         direct: bmp.loc.Orient = bmp.loc.Orient.S,
         *,
         space_id: Optional[bmp.ref.SpaceID] = None,
-        level_id: Optional[bmp.ref.LevelID] = None
+        level_id: Optional[bmp.ref.LevelID] = None,
     ) -> None:
         super().__init__(pos, direct, space_id=space_id, level_id=level_id)
         self.render_state: TextRenderState = TextRenderState.UNUSED
@@ -410,9 +409,11 @@ class Text(Object):
             return bmp.lang.fformat(lang_key, language_name=bmp.lang.english)
         return bmp.lang.fformat(lang_key, language_name=language_name)
 
-class Noun(Text):
-    ref_type: type["Object"]
-    def isreferenceof(self, other: Object, **kwds) -> bool: ...
+class Operator(Text):
+    pass
+
+class Property(Text):
+    pass
 
 class Prefix(Text):
     pass
@@ -420,13 +421,21 @@ class Prefix(Text):
 class Infix(Text):
     pass
 
-class Operator(Text):
-    pass
-
-class Property(Text):
-    pass
+class Noun(Property):
+    def __init__(
+        self,
+        pos: tuple[int, int] = (-1, -1),
+        direct: bmp.loc.Orient = bmp.loc.Orient.S,
+        *,
+        space_id: Optional[bmp.ref.SpaceID] = None,
+        level_id: Optional[bmp.ref.LevelID] = None,
+    ) -> None:
+        super().__init__(pos, direct, space_id=space_id, level_id=level_id)
+        self.references: set[Object] = set()
+    def isreferenceof(self, other: Object, **kwds) -> bool: ...
 
 class GeneralNoun(Noun):
+    ref_type: type[Object]
     def isreferenceof(self, other: Object, **kwds) -> bool:
         return isinstance(other, self.ref_type)
 
@@ -457,7 +466,7 @@ class TextText(GeneralNoun):
 class TextLevelObject(GeneralNoun):
     ref_type = LevelObject
 
-class TextLevel(GeneralNoun):
+class TextLevel(TextLevelObject):
     ref_type = Level
     json_name = "text_level"
     sprite_name = "text_level"
@@ -466,13 +475,13 @@ class TextLevel(GeneralNoun):
 class TextSpaceObject(GeneralNoun):
     ref_type = SpaceObject
 
-class TextSpace(GeneralNoun):
+class TextSpace(TextSpaceObject):
     ref_type = Space
     json_name = "text_space"
     sprite_name = "text_space"
     sprite_palette = ref_type.sprite_palette
 
-class TextClone(GeneralNoun):
+class TextClone(TextSpaceObject):
     ref_type = Clone
     json_name = "text_clone"
     sprite_name = "text_clone"
@@ -559,7 +568,7 @@ class TextWrite(Operator):
     json_name = "text_write"
     sprite_name = "text_write"
 
-special_operators: tuple[type[Operator], ...] = (TextHas, TextMake, TextWrite)
+operators: tuple[type[Operator], ...] = (TextIs, TextHas, TextMake, TextWrite)
 
 class TextNot(Text):
     json_name = "text_not"
@@ -767,7 +776,6 @@ class Metatext(GeneralNoun):
     meta_tier: int
 
 class SpecialNoun(Noun):
-    ref_type: type[NotRealObject] = NotRealObject
     sprite_palette = (0, 3)
     def isreferenceof(self, other: Object, **kwds) -> bool:
         raise NotImplementedError()
@@ -788,12 +796,12 @@ class TextEmpty(SpecialNoun):
 class TextAll(RangedNoun):
     json_name = "text_all"
     sprite_name = "text_all"
-    def isreferenceof(self, other: Object, all_list: list[type[Object]], **kwds) -> bool:
-        return any(map(lambda n: get_noun_from_type(n)().isreferenceof(other), all_list))
+    def isreferenceof(self, other: Object, **kwds) -> bool:
+        return not isinstance(other, types_not_in_all)
 
 class GroupNoun(RangedNoun):
     def isreferenceof(self, other: Object, **kwds) -> bool:
-        return other.properties.enabled(type(self))
+        return other.properties[TextIs].enabled(type(self))
 
 class TextGroup(GroupNoun):
     json_name = "text_group"
@@ -1147,7 +1155,7 @@ def reload_object_class_list() -> None:
 reload_object_class_list()
 
 def same_float_prop(obj_1: Object, obj_2: Object):
-    return not (obj_1.properties.enabled(TextFloat) ^ obj_2.properties.enabled(TextFloat))
+    return not (obj_1.properties[TextIs].enabled(TextFloat) ^ obj_2.properties[TextIs].enabled(TextFloat))
 
 def get_noun_from_type(object_type: type[Object]) -> type[Noun]:
     global current_metatext_tier

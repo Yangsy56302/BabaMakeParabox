@@ -1595,3 +1595,20 @@
 + **漏洞**
     + 修复了`levelpack.Levelpack.prepare`方法在设置物体上一回合所位于的关卡和空间时，错误地使用了物体本身包含的信息的漏洞。
     + 修复了在源代码内将`variant`拼成`varient`的多处错误。
+
+#### 4.11A
+该版本重构了为物体施加属性的逻辑。
+
++ **技术性**
+    + **`obj.Noun`**
+        + 现在是`obj.Property`的子类。
+    + **`rule.RuleInfo`**
+        + 更改了存储结构以修复部分漏洞。
+    + **`obj.Object`，`level.Level`，`space.Space`**
+        + `operator_properties`以及`special_operator_properties`均重命名为`properties`。
+            + 之前版本的`properties`在该版本对应于`properties[bmp.obj.TextIs]`。
+            + **`obj.special_operators`**：重命名为`operators`，并添加了`bmp.obj.TextIs`作为迭代对象的一部分，以适应上述更改。
+    + 重写了`levelpack.Levelpack.update_rules`，`level.Level.meet_prefix_conditions`和`level.Level.meet_infix_conditions`。
+        + 后两个函数现在是`levelpack.Levelpack`类的属性。
+    + **`obj.PropertyStorage.update`**
+        + 重命名为`add`。
