@@ -114,8 +114,8 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
     frame_since_last_move = 0
     wiggle = 1
     milliseconds = 1000 // bmp.opt.options["render"]["fps"]
-    real_fps = bmp.opt.options["render"]["fps"]
-    show_fps = False
+    gui_fps = bmp.opt.options["render"]["fps"]
+    show_info = False
     if bmp.opt.options["gameplay"]["bgm"]["enabled"] and bmp.base.current_os == bmp.base.windows:
         pygame.mixer.music.load(os.path.join("midi", bmp.opt.options["gameplay"]["bgm"]["name"]))
         pygame.mixer.music.play(-1)
@@ -286,8 +286,10 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                 bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.savepoint")))
                 savepoint_name = ""
                 if keys["LCTRL"] or keys["RCTRL"]:
+                    bmp.render.paused_screen(window)
                     savepoint_name = bmp.lang.input_str(bmp.lang.fformat("input.savepoint.name"))
                 if keys["LALT"] or keys["RALT"]:
+                    bmp.render.paused_screen(window)
                     savepoint_name += "" if bmp.opt.options["debug"] or savepoint_name.endswith(".json") else ".json"
                     if not os.path.isfile(os.path.join("levelpacks", savepoint_name)):
                         bmp.lang.fwarn("warn.savepoint.not_found", value=savepoint_name)
@@ -542,27 +544,36 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                     space_surface.fill(monochrome_new, special_flags=pygame.BLEND_RGBA_ADD)
                     del monochrome_rgb, monochrome_new
                 window.blit(pygame.transform.scale(space_surface, space_surface_size), space_surface_pos)
+            if keys["F1"]:
+                show_info = not show_info
+            if show_info:
                 # display camera info
                 line_list: list[str] = [
-                    "L " + str(levelpack.current_level.level_id).lower(),
-                    "S " + str(levelpack.current_level.current_space.space_id).lower(),
+                    bmp.lang.fformat("gui.detail.level_id.format", level_id = str(levelpack.current_level.level_id).lower()),
+                    bmp.lang.fformat("gui.detail.space_id.format", space_id = str(levelpack.current_level.current_space.space_id).lower()),
                 ]
+                if bmp.opt.options["debug"]:
+                    line_list.insert(0, bmp.lang.fformat("gui.detail.fps.format", fps = int(gui_fps)))
+                    if len(levelpack.current_level.current_space.rule_list):
+                        line_list.append(bmp.lang.fformat("gui.detail.rule.title"))
+                        for rule in levelpack.current_level.current_space.rule_list:
+                            line_list.append(bmp.lang.fformat("gui.detail.rule.format", rule = " ".join([o.get_name().lower() for o in rule])))
                 for line_index, line in enumerate(line_list):
                     line_surface = bmp.render.line_to_surface(line, wiggle=wiggle)
                     line_surface = bmp.render.set_gui_background(line_surface)
                     line_surface = pygame.transform.scale_by(line_surface, bmp.render.smaller_gui_scalar)
                     window.blit(line_surface, (0, line_index * line_surface.get_height()))
                 # display object info
+                line_list: list[str] = []
                 if bmp.opt.options["debug"]:
-                    line_list: list[str] = []
                     for obj in levelpack.current_level.current_space.get_objs_from_pos(mouse_pos_in_space):
                         line_list.extend(obj.to_gui_text().split("\n"))
                         line_list.append("")
-                    for line_index, line in enumerate(line_list):
-                        line_surface = bmp.render.line_to_surface(line, wiggle=wiggle)
-                        line_surface = bmp.render.set_gui_background(line_surface)
-                        line_surface = pygame.transform.scale_by(line_surface, bmp.render.smaller_gui_scalar)
-                        window.blit(line_surface, (window.get_width() - line_surface.get_width(), line_index * line_surface.get_height()))
+                for line_index, line in enumerate(line_list):
+                    line_surface = bmp.render.line_to_surface(line, wiggle=wiggle)
+                    line_surface = bmp.render.set_gui_background(line_surface)
+                    line_surface = pygame.transform.scale_by(line_surface, bmp.render.smaller_gui_scalar)
+                    window.blit(line_surface, (window.get_width() - line_surface.get_width(), line_index * line_surface.get_height()))
             # game transform
             game_transform_to = [t for t, n in levelpack.current_level.game_properties[bmp.obj.TextIs].enabled_count().items() if issubclass(t, bmp.obj.Noun) and not n]
             if len(game_transform_to) != 0:
@@ -590,21 +601,11 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                 window.blit(window_surface, [int(game_offset[0] - window.get_width()), int(game_offset[1])])
                 window.blit(window_surface, [int(game_offset[0]), int(game_offset[1] - window.get_height())])
                 window.blit(window_surface, [int(game_offset[0] - window.get_width()), int(game_offset[1] - window.get_height())])
-        # fps
-        real_fps = min(1000 / milliseconds, (real_fps * (bmp.opt.options["render"]["fps"] - 1) + 1000 / milliseconds) / bmp.opt.options["render"]["fps"])
-        if keys["F1"]:
-            show_fps = not show_fps
-        if show_fps:
-            real_fps_string = str(int(real_fps))
-            real_fps_surface = bmp.render.line_to_surface(real_fps_string, wiggle=wiggle)
-            real_fps_surface = bmp.render.set_gui_background(real_fps_surface)
-            real_fps_surface = pygame.transform.scale_by(real_fps_surface, bmp.render.smaller_gui_scalar)
-            window.blit(real_fps_surface, (0, 0))
-            del real_fps_string, real_fps_surface
         if keys["F12"]:
             bmp.opt.options["debug"] = not bmp.opt.options["debug"]
         pygame.display.flip()
         milliseconds = clock.tick(bmp.opt.options["render"]["fps"])
+        gui_fps = min(1000 / milliseconds, (gui_fps * (bmp.opt.options["render"]["fps"] - 1) + 1000 / milliseconds) / bmp.opt.options["render"]["fps"])
     pygame.mixer.music.stop()
     pygame.display.quit()
     return levelpack

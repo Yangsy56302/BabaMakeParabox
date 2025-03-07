@@ -206,7 +206,8 @@ class Object(object):
             return NotImplemented
         return self.uid == other.uid
     def __hash__(self) -> int:
-        return hash(self.uid)
+        try: return hash(self.uid)
+        except Exception: return hash(uuid.uuid4()) # i dont know why deepcopy will cause attrerror at here :(
     @classmethod
     def get_name(cls, *, language_name: str = bmp.lang.current_language_name) -> str:
         lang_key = f"object.name.{cls.json_name}"
@@ -216,11 +217,13 @@ class Object(object):
             return bmp.lang.fformat(lang_key, language_name=bmp.lang.english)
         return bmp.lang.fformat(lang_key, language_name=language_name)
     def to_gui_text(self) -> str:
-        info_str = f"{self.json_name.lower()}\n@{self.pos[0]}*{self.pos[0]}\n%{self.orient.char()}"
+        info_str = bmp.lang.fformat("gui.detail.object.name.format", name = self.json_name.lower())
+        info_str += "\n" + bmp.lang.fformat("gui.detail.object.pos.format", x = self.pos[0], y = self.pos[1])
+        info_str += "\n" + bmp.lang.fformat("gui.detail.object.orient.format", orient = self.orient.char())
         if self.space_id is not None:
-            info_str += f"\nS{str(self.space_id)}"
+            info_str += "\n" + bmp.lang.fformat("gui.detail.space_id.format", space_id = str(self.space_id))
         if self.level_id is not None:
-            info_str += f"\nL{str(self.level_id)}"
+            info_str += "\n" + bmp.lang.fformat("gui.detail.level_id.format", level_id = str(self.level_id))
         return info_str
     @property
     def x(self) -> int:

@@ -1605,7 +1605,7 @@
 
 + **技术性**
     + **`obj.Noun`**：现在是`obj.Property`的子类。
-    + **`rule.RuleInfo`**：更改了存储结构以修复部分漏洞。
+    + **`rule.RuleInfo`**：更改了存储结构，以修复部分漏洞。
     + **`obj.Object`，`level.Level`，`space.Space`**
         + `operator_properties`以及`special_operator_properties`均重命名为`properties`。
             + 之前版本的`properties`在该版本对应于`properties[bmp.obj.TextIs]`。
@@ -1617,11 +1617,15 @@
 #### _4.11B_
 该开发版本重写了物体属性实际起效时所执行的逻辑。
 
++ **外观**
+    + 添加了暂停屏幕，在程序等候终端输入时显示。
+    + 更改了部分全局信息显示。
+    + 程序读取其他语言中缺失的翻译字段时会尝试使用英文翻译字段了。
 + **技术性**
     + 重写了许多使属性词生效的类方法，这可能会修复一部分漏洞 *，并带来另一部分漏洞* 。
         + 移动物体：`YOU`、`MOVE`、`SHIFT`、`SELECT`
         + 摧毁物体：`SINK`、`DEFEAT`、`HOT`、`MELT`、`OPEN`、`SHUT`
-        + 其他：`BONUS`、方向属性词
+        + 其他：`TELE`、`BONUS`、方向属性词
     + **`obj.PropertyInfo`**
         + 现在包括`tried`和`worked`*（后者也就是之前版本中未使用的`effected`）*，用于存储该属性词是否尝试过产生作用，以及是否已经实际生效。
     + **`obj.Object.get_info`，`ref.SpaceID.get_info`，`ref.LevelID.get_info`**：重命名为`to_gui_text`。
@@ -1630,3 +1634,5 @@
 + **漏洞**
     + **编辑器**：修复了新建空间本体之后，程序并未在关卡内包括该空间，极易导致程序崩溃的严重漏洞。
     + **游戏**：修复了读取嵌套空间规则时，“外层空间”没有随循环更改，导致规则混乱的一个严重漏洞。
+    + **外观**：修复了物体信息不显示Y坐标，而是显示两次X坐标的漏洞。
+    + **外观**：修复了帧率会与其他提示信息重叠的漏洞。

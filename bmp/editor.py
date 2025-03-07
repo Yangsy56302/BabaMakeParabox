@@ -99,8 +99,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
     wiggle = 1
     editor_running = True
     milliseconds = 1000 // bmp.opt.options["render"]["fps"]
-    real_fps = bmp.opt.options["render"]["fps"]
-    show_fps = False
+    gui_fps = bmp.opt.options["render"]["fps"]
     while editor_running:
         frame += 1
         if frame % (bmp.opt.options["render"]["fps"] // 6) == 0:
@@ -174,6 +173,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                             history.append(copy.deepcopy(levelpack))
                             if issubclass(current_object_type, bmp.obj.LevelObject):
                                 if keys["LCTRL"] or keys["RCTRL"]:
+                                    bmp.render.paused_screen(window)
                                     bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.new")))
                                     name = bmp.lang.input_str(bmp.lang.fformat("edit.level.new.name"))
                                     level_id: bmp.ref.LevelID = bmp.ref.LevelID(name)
@@ -192,6 +192,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                             elif issubclass(current_object_type, bmp.obj.SpaceObject):
                                 space_id: bmp.ref.SpaceID = levelpack.current_level.current_space_id
                                 if keys["LCTRL"] or keys["RCTRL"]:
+                                    bmp.render.paused_screen(window)
                                     bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.new")))
                                     name = bmp.lang.input_str(bmp.lang.fformat("edit.space.new.name"))
                                     infinite_tier = bmp.lang.input_int(bmp.lang.fformat("edit.space.new.infinite_tier"))
@@ -201,6 +202,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                                 unlocked = False
                                 conditions: dict[type[bmp.obj.Object], int] = {}
                                 if keys["LCTRL"] or keys["RCTRL"]:
+                                    bmp.render.paused_screen(window)
                                     bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.new")))
                                     unlocked = bmp.lang.input_yes(bmp.lang.fformat("edit.path.new.unlocked"))
                                     more_condition = bmp.lang.input_yes(bmp.lang.fformat("edit.path.new.condition"))
@@ -298,6 +300,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                     else:
                         current_object_type = object_type_shortcuts[(i - 1) % 10]
         elif keys["N"]:
+            bmp.render.paused_screen(window)
             if keys["LALT"] or keys["RALT"]:
                 bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.new")))
                 if bmp.lang.input_no(bmp.lang.fformat("edit.level.new")):
@@ -369,6 +372,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                     space_changed = True
         # add global rule; remove global rule (shift)
         elif keys["R"]:
+            bmp.render.paused_screen(window)
             bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.levelpack.rule_list")))
             text_rule = bmp.lang.input_str(bmp.lang.fformat("edit.levelpack.new.rule")).upper().split()
             type_rule: bmp.rule.Rule = []
@@ -397,6 +401,7 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                 bmp.lang.print(" ".join(str_list))
         # edit id for current space / level (alt)
         elif keys["T"]:
+            bmp.render.paused_screen(window)
             bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.rename")))
             if keys["LALT"] or keys["RALT"]:
                 levelpack.current_level_id.name = bmp.lang.input_str(bmp.lang.fformat("edit.level.rename"))
@@ -479,13 +484,15 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
         window.blit(obj_surface, (window.get_width() - obj_surface.get_width(), 0))
         # display camera info
         line_list: list[str] = [
-            "L" + str(levelpack.current_level.level_id).lower(),
-            "S" + str(levelpack.current_level.current_space.space_id).lower(),
+            bmp.lang.fformat("gui.detail.level_id.format", level_id = str(levelpack.current_level.level_id).lower()),
+            bmp.lang.fformat("gui.detail.space_id.format", space_id = str(levelpack.current_level.current_space.space_id).lower()),
         ]
+        if bmp.opt.options["debug"]:
+            line_list.insert(0, bmp.lang.fformat("gui.detail.fps.format", fps = int(gui_fps)))
         if levelpack.author is not None:
-            line_list.insert(0, levelpack.author.lower())
+            line_list.insert(0, bmp.lang.fformat("gui.detail.levelpack.author.format", author = levelpack.author.lower()))
         if levelpack.name is not None:
-            line_list.insert(0, levelpack.name.lower())
+            line_list.insert(0, bmp.lang.fformat("gui.detail.levelpack.name.format", name = levelpack.name.lower()))
         for line_index, line in enumerate(line_list):
             line_surface = bmp.render.line_to_surface(line, wiggle=wiggle)
             line_surface = bmp.render.set_gui_background(line_surface)
@@ -493,9 +500,9 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
             window.blit(line_surface, (0, line_index * line_surface.get_height()))
         # display object info
         line_list = [
-            current_object_type.json_name.lower(), # json name
-            "@" + str(current_cursor_pos[0]) + "*" + str(current_cursor_pos[1]), # object pos
-            "%" + current_orient.char(), # object orient
+            bmp.lang.fformat("gui.detail.object.name.format", name = current_object_type.json_name.lower()),
+            bmp.lang.fformat("gui.detail.object.pos.format", x = current_cursor_pos[0], y = current_cursor_pos[1]),
+            bmp.lang.fformat("gui.detail.object.orient.format", orient = current_orient.char()),
         ]
         for line_index, line in enumerate(line_list):
             line_surface = bmp.render.line_to_surface(line, wiggle=wiggle)
@@ -536,20 +543,10 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                 )
             )
             window.blit(obj_surface, obj_surface_pos)
-        # fps
-        real_fps = min(1000 / milliseconds, (real_fps * (bmp.opt.options["render"]["fps"] - 1) + 1000 / milliseconds) / bmp.opt.options["render"]["fps"])
-        if keys["F1"]:
-            show_fps = not show_fps
-        if show_fps:
-            real_fps_string = str(int(real_fps))
-            real_fps_surface = bmp.render.line_to_surface(real_fps_string, wiggle=wiggle)
-            real_fps_surface = bmp.render.set_gui_background(real_fps_surface)
-            real_fps_surface = pygame.transform.scale_by(real_fps_surface, bmp.render.smaller_gui_scalar)
-            window.blit(real_fps_surface, (0, 0))
-            del real_fps_string, real_fps_surface
         if keys["F12"]:
             bmp.opt.options["debug"] = not bmp.opt.options["debug"]
         pygame.display.flip()
         milliseconds = clock.tick(bmp.opt.options["render"]["fps"])
+        gui_fps = min(1000 / milliseconds, (gui_fps * (bmp.opt.options["render"]["fps"] - 1) + 1000 / milliseconds) / bmp.opt.options["render"]["fps"])
     pygame.display.quit()
     return levelpack

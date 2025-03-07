@@ -16,21 +16,30 @@ class Language(dict[str, str]):
 
 language_dict: dict[str, Language] = {}
 
-for name in [n for n in os.listdir("lang") if n.endswith(".json")]:
-    with open(os.path.join("lang", name), "r", encoding="utf-8") as file:
-        language_dict[os.path.splitext(os.path.basename(name))[0]] = Language(json.load(file))
-
 chinese: str = "zh_CN"
 english: str = "en_US"
 current_language_name: str = bmp.opt.options["lang"] if bmp.opt.options["lang"] != "" else chinese
 
+for name in [n for n in os.listdir("lang") if n.endswith(".json")]:
+    with open(os.path.join("lang", name), "r", encoding="utf-8") as file:
+        language_dict[os.path.splitext(os.path.basename(name))[0]] = Language(json.load(file))
+if english in language_dict.keys():
+    for lang in language_dict.values():
+        temp_lang = language_dict[english].copy()
+        temp_lang.update(lang)
+        lang.clear()
+        lang.update(temp_lang)
+
 def set_current_language(name: str) -> None:
     global current_language_name
     current_language_name = name if name in list(language_dict.keys()) else chinese
-    yes.update()
 
 yes: set[str] = {"y", "Y", "yes", "Yes", "YES", "t", "T", "true", "True", "TRUE", "1", "是", "是的"}
 no: set[str] = {"n", "N", "no", "No", "NO", "f", "F", "false", "False", "FALSE", "0", "否", "不是"}
+
+print = print
+input = input
+warn = lambda *args, **kwds: print(*args, flush=True, **kwds)
 
 def fformat(message_id: str, /, *, language_name: str = current_language_name, **formats) -> str:
     return language_dict[language_name][message_id].format(**formats)
@@ -39,7 +48,7 @@ def fprint(message_id: str, /, *, language_name: str = current_language_name, **
     print(fformat(message_id, language_name=language_name, **formats))
 
 def fwarn(message_id: str, /, *, language_name: str = current_language_name, **formats) -> None:
-    print(fformat(message_id, language_name=language_name, **formats), flush=True)
+    warn(fformat(message_id, language_name=language_name, **formats))
 
 def finput(message_id: str, /, *, language_name: str = current_language_name, **formats) -> str:
     return input(fformat(message_id, language_name=language_name, **formats))
@@ -115,6 +124,3 @@ default_tqdm_args: dict[str, Any] = {
     "maxinterval": 1,
     "leave": False
 }
-
-print = print
-input = input

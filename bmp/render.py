@@ -181,6 +181,23 @@ def set_gui_background(surface: pygame.Surface, /, bgcolor: Optional[bmp.color.C
     bgsurface.blit(surface, (0, 0))
     return bgsurface
 
+def paused_screen(surface: pygame.Surface, text: Optional[str] = None) -> None:
+    temp_surface = pygame.transform.grayscale(surface)
+    temp_surface.fill(0x404040, special_flags = pygame.BLEND_RGBA_MULT)
+    if text is None:
+        text = bmp.lang.fformat("gui.paused")
+    text_surface = pygame.transform.scale_by(
+        set_gui_background(line_to_surface(text), bgcolor = 0x800040, bgalpha = 0xFF), gui_scalar
+    )
+    temp_surface.blit(
+        text_surface, (
+            (temp_surface.get_width() - text_surface.get_width()) / 2,
+            (temp_surface.get_height() - text_surface.get_height()) / 2
+        ), special_flags = pygame.BLEND_RGBA_ADD
+    )
+    surface.blit(temp_surface, (0, 0))
+    pygame.display.flip()
+
 def simple_type_to_surface(object_type: type[bmp.obj.Object], variant: int = 0, wiggle: int = 1, default_surface: Optional[pygame.Surface] = None, debug: bool = False) -> pygame.Surface:
     obj_surface = current_sprites.get("empty", 0, wiggle, raw=True).copy()
     if issubclass(object_type, bmp.obj.SpaceObject):
