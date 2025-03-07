@@ -801,26 +801,64 @@ class Level(object):
     def open_and_shut(self) -> None:
         success = False
         for space in self.space_list:
-            delete_list = []
-            shut_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextShut)]
-            open_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextOpen)]
-            if len(open_objs) != 0 and (space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextShut) or self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextShut)):
-                delete_list.extend(space.object_list)
-                continue
-            if len(shut_objs) != 0 and (space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextOpen) or self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextOpen)):
-                delete_list.extend(space.object_list)
-                continue
-            for open_obj in open_objs:
-                for shut_obj in shut_objs:
-                    if shut_obj.pos == open_obj.pos:
-                        if shut_obj not in delete_list and open_obj not in delete_list:
-                            delete_list.append(shut_obj)
-                            if shut_obj != open_obj:
-                                delete_list.append(open_obj)
-                            break
-            for obj in delete_list:
+            delete_set = set()
+            open_objs = [(o, i) for o in space.object_list if (i := o.properties[bmp.obj.TextIs].get_info(bmp.obj.TextOpen)) is not None]
+            shut_objs = [(o, i) for o in space.object_list if (i := o.properties[bmp.obj.TextIs].get_info(bmp.obj.TextShut)) is not None]
+            shut_prop_info = self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].get_info(bmp.obj.TextShut)
+            if shut_prop_info is not None:
+                shut_prop_info.tried = True
+                for open_obj, open_prop_info in open_objs:
+                    open_prop_info.tried = True
+                    if not open_obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
+                        delete_set.update(space.object_list)
+                        open_prop_info.worked = True
+                        shut_prop_info.worked = True
+                        break
+            shut_prop_info = space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].get_info(bmp.obj.TextShut)
+            if shut_prop_info is not None:
+                shut_prop_info.tried = True
+                for open_obj, open_prop_info in open_objs:
+                    open_prop_info.tried = True
+                    if not open_obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
+                        delete_set.update(space.object_list)
+                        open_prop_info.worked = True
+                        shut_prop_info.worked = True
+                        break
+            open_prop_info = self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].get_info(bmp.obj.TextOpen)
+            if open_prop_info is not None:
+                open_prop_info.tried = True
+                for shut_obj, shut_prop_info in shut_objs:
+                    shut_prop_info.tried = True
+                    if not shut_obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
+                        delete_set.update(space.object_list)
+                        open_prop_info.worked = True
+                        shut_prop_info.worked = True
+                        break
+            open_prop_info = space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].get_info(bmp.obj.TextOpen)
+            if open_prop_info is not None:
+                open_prop_info.tried = True
+                for shut_obj, shut_prop_info in shut_objs:
+                    shut_prop_info.tried = True
+                    if not shut_obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
+                        delete_set.update(space.object_list)
+                        open_prop_info.worked = True
+                        shut_prop_info.worked = True
+                        break
+            for open_obj, open_prop_info in open_objs:
+                open_prop_info.tried = True
+                for shut_obj, shut_prop_info in shut_objs:
+                    shut_prop_info.tried = True
+                    if open_obj.pos != shut_obj.pos:
+                        continue
+                    if not bmp.obj.same_float_prop(open_obj, shut_obj):
+                        continue
+                    delete_set.add(open_obj)
+                    delete_set.add(shut_obj)
+                    open_prop_info.worked = True
+                    shut_prop_info.worked = True
+            for obj in delete_set:
                 self.destroy_obj(space, obj)
-            if len(delete_list) != 0:
+            if len(delete_set):
                 success = True
         if success:
             self.sound_events.append("open")
