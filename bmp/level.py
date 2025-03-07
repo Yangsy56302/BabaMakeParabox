@@ -546,7 +546,7 @@ class Level(object):
             tele_object_types.setdefault(type(obj), [])
             tele_object_types[type(obj)].append(tele_obj_info)
         for tele_obj_infos in tele_object_types.values():
-            if len(tele_obj_infos) <= 1:
+            if len(tele_obj_infos) < 2:
                 continue
             for index, (space, tele_obj, prop_info) in enumerate(tele_obj_infos):
                 prop_info.tried = True
@@ -569,7 +569,7 @@ class Level(object):
             old_space.del_obj(obj)
             obj.pos = pos
             new_space.new_obj(obj)
-        if len(tele_list) != 0:
+        if len(tele_list):
             self.sound_events.append("tele")
     def sink(self) -> None:
         success = False
@@ -605,7 +605,7 @@ class Level(object):
                         prop_info.worked = True
             for obj in delete_set:
                 self.destroy_obj(space, obj)
-            if len(delete_set) != 0:
+            if len(delete_set):
                 success = True
         if success:
             self.sound_events.append("sink")
@@ -666,7 +666,7 @@ class Level(object):
                     melt_prop_info.worked = True
             for obj in delete_set:
                 self.destroy_obj(space, obj)
-            if len(delete_set) != 0:
+            if len(delete_set):
                 success = True
         if success:
             self.sound_events.append("melt")
@@ -727,31 +727,73 @@ class Level(object):
                     you_prop_info.worked = True
             for obj in delete_set:
                 self.destroy_obj(space, obj)
-            if len(delete_set) != 0:
+            if len(delete_set):
                 success = True
         if success:
             self.sound_events.append("defeat")
     def bonus(self) -> dict[type[bmp.obj.Object], bool]:
         collected: dict[type[bmp.obj.Object], bool] = {}
         for space in self.space_list:
-            delete_list = []
-            bonus_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextBonus)]
+            delete_set = set()
             you_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextYou)]
-            if len(you_objs) != 0 and (space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextBonus) or self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextBonus)):
-                delete_list.extend(space.object_list)
-                continue
-            for bonus_obj in bonus_objs:
+            prop_info = space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].get_info(bmp.obj.TextBonus)
+            if prop_info is not None:
+                prop_info.tried = True
+                for obj in you_objs:
+                    if not obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
+                        delete_set.update(space.object_list)
+                        collected[bmp.obj.default_space_object_type] = True
+                        prop_info.worked = True
+                        break
+            prop_info = self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].get_info(bmp.obj.TextBonus)
+            if prop_info is not None:
+                prop_info.tried = True
+                for obj in you_objs:
+                    if not obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
+                        delete_set.update(space.object_list)
+                        collected[bmp.obj.default_level_object_type] = True
+                        prop_info.worked = True
+                        break
+            for bonus_obj in space.object_list:
+                prop_info = bonus_obj.properties[bmp.obj.TextIs].get_info(bmp.obj.TextBonus)
+                if prop_info is None:
+                    continue
                 if space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextYou) or self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextYou):
-                    if bonus_obj not in delete_list:
-                        delete_list.append(bonus_obj)
+                    if bonus_obj not in delete_set:
+                        delete_set.add(bonus_obj)
+                        collected[type(bonus_obj)] = True
+                        prop_info.worked = True
                         continue
                 for you_obj in you_objs:
-                    if bonus_obj.pos == you_obj.pos:
-                        if bmp.obj.same_float_prop(you_obj, bonus_obj):
-                            if bonus_obj not in delete_list:
-                                delete_list.append(bonus_obj)
-                                collected[type(bonus_obj)] = True
-            for obj in delete_list:
+                    if bonus_obj.pos != you_obj.pos:
+                        continue
+                    if not bmp.obj.same_float_prop(you_obj, bonus_obj):
+                        continue
+                    delete_set.add(bonus_obj)
+                    collected[type(bonus_obj)] = True
+                    prop_info.worked = True
+                    break
+            if space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextYou) is not None:
+                for obj in space.object_list:
+                    prop_info = obj.properties[bmp.obj.TextIs].get_info(bmp.obj.TextBonus)
+                    if prop_info is None:
+                        continue
+                    prop_info.tried = True
+                    if not obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
+                        delete_set.add(obj)
+                        collected[type(obj)] = True
+                        prop_info.worked = True
+            if self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextYou) is not None:
+                for obj in space.object_list:
+                    prop_info = obj.properties[bmp.obj.TextIs].get_info(bmp.obj.TextBonus)
+                    if prop_info is None:
+                        continue
+                    prop_info.tried = True
+                    if not obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
+                        delete_set.add(obj)
+                        collected[type(obj)] = True
+                        prop_info.worked = True
+            for obj in delete_set:
                 self.destroy_obj(space, obj)
         if len(collected):
             self.sound_events.append("bonus")
