@@ -612,53 +612,122 @@ class Level(object):
     def hot_and_melt(self) -> None:
         success = False
         for space in self.space_list:
-            delete_list = []
-            melt_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextMelt)]
-            hot_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextHot)]
-            if len(hot_objs) != 0 and (space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextMelt) or self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextMelt)):
-                for melt_obj in melt_objs:
+            delete_set = set()
+            hot_objs = [(o, i) for o in space.object_list if (i := o.properties[bmp.obj.TextIs].get_info(bmp.obj.TextHot)) is not None]
+            melt_objs = [(o, i) for o in space.object_list if (i := o.properties[bmp.obj.TextIs].get_info(bmp.obj.TextMelt)) is not None]
+            melt_prop_info = self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].get_info(bmp.obj.TextMelt)
+            if melt_prop_info is not None:
+                melt_prop_info.tried = True
+                for hot_obj, hot_prop_info in hot_objs:
+                    hot_prop_info.tried = True
+                    if not hot_obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
+                        delete_set.update(space.object_list)
+                        hot_prop_info.worked = True
+                        melt_prop_info.worked = True
+                        break
+            melt_prop_info = space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].get_info(bmp.obj.TextMelt)
+            if melt_prop_info is not None:
+                melt_prop_info.tried = True
+                for hot_obj, hot_prop_info in hot_objs:
+                    hot_prop_info.tried = True
+                    if not hot_obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
+                        delete_set.update(space.object_list)
+                        hot_prop_info.worked = True
+                        melt_prop_info.worked = True
+                        break
+            hot_prop_info = self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].get_info(bmp.obj.TextHot)
+            if hot_prop_info is not None:
+                hot_prop_info.tried = True
+                for melt_obj, melt_prop_info in melt_objs:
+                    melt_prop_info.tried = True
                     if not melt_obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
-                        delete_list.extend(space.object_list)
-                continue
-            if len(melt_objs) != 0 and (space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextHot) or self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextHot)):
-                for melt_obj in melt_objs:
+                        delete_set.add(melt_obj)
+                        hot_prop_info.worked = True
+                        melt_prop_info.worked = True
+            hot_prop_info = space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].get_info(bmp.obj.TextHot)
+            if hot_prop_info is not None:
+                hot_prop_info.tried = True
+                for melt_obj, melt_prop_info in melt_objs:
+                    melt_prop_info.tried = True
                     if not melt_obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
-                        delete_list.append(melt_obj)
-                continue
-            for hot_obj in hot_objs:
-                for melt_obj in melt_objs:
-                    if hot_obj.pos == melt_obj.pos:
-                        if bmp.obj.same_float_prop(hot_obj, melt_obj):
-                            if melt_obj not in delete_list:
-                                delete_list.append(melt_obj)
-            for obj in delete_list:
+                        delete_set.add(melt_obj)
+                        hot_prop_info.worked = True
+                        melt_prop_info.worked = True
+            for hot_obj, hot_prop_info in hot_objs:
+                hot_prop_info.tried = True
+                for melt_obj, melt_prop_info in melt_objs:
+                    melt_prop_info.tried = True
+                    if hot_obj.pos != melt_obj.pos:
+                        continue
+                    if not bmp.obj.same_float_prop(hot_obj, melt_obj):
+                        continue
+                    delete_set.add(melt_obj)
+                    hot_prop_info.worked = True
+                    melt_prop_info.worked = True
+            for obj in delete_set:
                 self.destroy_obj(space, obj)
-            if len(delete_list) != 0:
+            if len(delete_set) != 0:
                 success = True
         if success:
             self.sound_events.append("melt")
     def defeat(self) -> None:
         success = False
         for space in self.space_list:
-            delete_list = []
-            you_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextYou)]
-            defeat_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextDefeat)]
-            if len(defeat_objs) != 0 and (space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextYou) or self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextYou)):
-                delete_list.extend(space.object_list)
-                continue
-            for you_obj in you_objs:
-                if space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextDefeat) or self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextDefeat):
-                    if you_obj not in delete_list:
-                        delete_list.append(you_obj)
+            delete_set = set()
+            defeat_objs = [(o, i) for o in space.object_list if (i := o.properties[bmp.obj.TextIs].get_info(bmp.obj.TextDefeat)) is not None]
+            you_objs = [(o, i) for o in space.object_list if (i := o.properties[bmp.obj.TextIs].get_info(bmp.obj.TextYou)) is not None]
+            you_prop_info = self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].get_info(bmp.obj.TextYou)
+            if you_prop_info is not None:
+                you_prop_info.tried = True
+                for defeat_obj, defeat_prop_info in defeat_objs:
+                    defeat_prop_info.tried = True
+                    if not defeat_obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
+                        delete_set.update(space.object_list)
+                        defeat_prop_info.worked = True
+                        you_prop_info.worked = True
+                        break
+            you_prop_info = space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].get_info(bmp.obj.TextYou)
+            if you_prop_info is not None:
+                you_prop_info.tried = True
+                for defeat_obj, defeat_prop_info in defeat_objs:
+                    defeat_prop_info.tried = True
+                    if not defeat_obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
+                        delete_set.update(space.object_list)
+                        defeat_prop_info.worked = True
+                        you_prop_info.worked = True
+                        break
+            defeat_prop_info = self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].get_info(bmp.obj.TextDefeat)
+            if defeat_prop_info is not None:
+                defeat_prop_info.tried = True
+                for you_obj, you_prop_info in you_objs:
+                    you_prop_info.tried = True
+                    if not you_obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
+                        delete_set.add(you_obj)
+                        defeat_prop_info.worked = True
+                        you_prop_info.worked = True
+            defeat_prop_info = space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].get_info(bmp.obj.TextDefeat)
+            if defeat_prop_info is not None:
+                defeat_prop_info.tried = True
+                for you_obj, you_prop_info in you_objs:
+                    you_prop_info.tried = True
+                    if not you_obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
+                        delete_set.add(you_obj)
+                        defeat_prop_info.worked = True
+                        you_prop_info.worked = True
+            for defeat_obj, defeat_prop_info in defeat_objs:
+                defeat_prop_info.tried = True
+                for you_obj, you_prop_info in you_objs:
+                    you_prop_info.tried = True
+                    if defeat_obj.pos != you_obj.pos:
                         continue
-                for defeat_obj in defeat_objs:
-                    if you_obj.pos == defeat_obj.pos:
-                        if bmp.obj.same_float_prop(defeat_obj, you_obj):
-                            if you_obj not in delete_list:
-                                delete_list.append(you_obj)
-            for obj in delete_list:
+                    if not bmp.obj.same_float_prop(defeat_obj, you_obj):
+                        continue
+                    delete_set.add(you_obj)
+                    defeat_prop_info.worked = True
+                    you_prop_info.worked = True
+            for obj in delete_set:
                 self.destroy_obj(space, obj)
-            if len(delete_list) != 0:
+            if len(delete_set) != 0:
                 success = True
         if success:
             self.sound_events.append("defeat")
