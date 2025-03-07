@@ -485,40 +485,36 @@ class Level(object):
             for space in self.space_list:
                 for obj in space.object_list:
                     prop_info = obj.properties[bmp.obj.TextIs].get_info(bmp.obj.TextShift, worked=False)
-                    if prop_info is None:
-                        continue
+                    if prop_info is not None:
+                        prop_info.tried = True
+                        for shift_obj in [o for o in space.get_objs_from_pos(obj.pos) if o != obj and bmp.obj.same_float_prop(o, obj)]:
+                            new_move_list = self.get_move_list(space, shift_obj, obj.orient)
+                            if new_move_list is not None:
+                                move_list.extend(new_move_list)
+                                prop_info.worked = True
+                            else:
+                                finished = False
+                prop_info = space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].get_info(bmp.obj.TextShift, worked=False)
+                if prop_info is not None:
                     prop_info.tried = True
-                    for shift_obj in [o for o in space.get_objs_from_pos(obj.pos) if o != obj and bmp.obj.same_float_prop(o, obj)]:
-                        new_move_list = self.get_move_list(space, shift_obj, obj.orient)
+                    for obj in [o for o in space.object_list if not o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat)]:
+                        new_move_list = self.get_move_list(space, obj, bmp.loc.Orient.S)
                         if new_move_list is not None:
                             move_list.extend(new_move_list)
                             prop_info.worked = True
                         else:
                             finished = False
-            for space in self.space_list:
-                prop_info = space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].get_info(bmp.obj.TextShift, worked=False)
-                if prop_info is None:
-                    continue
-                prop_info.tried = True
-                for obj in [o for o in space.object_list if not o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat)]:
-                    new_move_list = self.get_move_list(space, obj, bmp.loc.Orient.S)
-                    if new_move_list is not None:
-                        move_list.extend(new_move_list)
-                        prop_info.worked = True
-                    else:
-                        finished = False
             prop_info = self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].get_info(bmp.obj.TextShift, worked=False)
-            if prop_info is None:
-                continue
-            for space in self.space_list:
-                prop_info.tried = True
-                for obj in [o for o in space.object_list if not o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat)]:
-                    new_move_list = self.get_move_list(space, obj, bmp.loc.Orient.S)
-                    if new_move_list is not None:
-                        move_list.extend(new_move_list)
-                        prop_info.worked = True
-                    else:
-                        finished = False
+            if prop_info is not None:
+                for space in self.space_list:
+                    prop_info.tried = True
+                    for obj in [o for o in space.object_list if not o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat)]:
+                        new_move_list = self.get_move_list(space, obj, bmp.loc.Orient.S)
+                        if new_move_list is not None:
+                            move_list.extend(new_move_list)
+                            prop_info.worked = True
+                        else:
+                            finished = False
             self.move_objs_from_move_list(move_list)
             move_list.clear()
         return not finished
@@ -562,12 +558,13 @@ class Level(object):
                 for obj in space.get_objs_from_pos(tele_obj.pos):
                     if obj == tele_obj:
                         continue
-                    if bmp.obj.same_float_prop(obj, tele_obj):
-                        new_space, new_tele_obj, new_info = random.choice(filtered_tele_obj_infos)
-                        tele_list.append((space, obj, new_space, new_tele_obj.pos))
-                        prop_info.worked = True
-                        new_info.tried = True
-                        new_info.worked = True
+                    if not bmp.obj.same_float_prop(obj, tele_obj):
+                        continue
+                    new_space, new_tele_obj, new_info = random.choice(filtered_tele_obj_infos)
+                    tele_list.append((space, obj, new_space, new_tele_obj.pos))
+                    prop_info.worked = True
+                    new_info.tried = True
+                    new_info.worked = True
         for old_space, obj, new_space, pos in tele_list:
             old_space.del_obj(obj)
             obj.pos = pos
@@ -577,25 +574,38 @@ class Level(object):
     def sink(self) -> None:
         success = False
         for space in self.space_list:
-            delete_list = []
-            if space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextSink) or self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextSink):
-                for obj in space.object_list:
-                    if not obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
-                        delete_list.append(obj)
-            sink_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextSink)]
-            for sink_obj in sink_objs:
+            delete_set: set[bmp.obj.Object] = set()
+            for sink_obj in space.object_list:
+                prop_info = sink_obj.properties[bmp.obj.TextIs].get_info(bmp.obj.TextSink)
+                if prop_info is None:
+                    continue
+                prop_info.tried = True
                 for obj in space.get_objs_from_pos(sink_obj.pos):
                     if obj == sink_obj:
                         continue
                     if obj.pos == sink_obj.pos:
                         if bmp.obj.same_float_prop(obj, sink_obj):
-                            if obj not in delete_list and sink_obj not in delete_list:
-                                delete_list.append(obj)
-                                delete_list.append(sink_obj)
-                                break
-            for obj in delete_list:
+                            delete_set.add(obj)
+                            delete_set.add(sink_obj)
+                            prop_info.worked = True
+                            break
+            prop_info = space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].get_info(bmp.obj.TextSink)
+            if prop_info is not None:
+                prop_info.tried = True
+                for obj in space.object_list:
+                    if not obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
+                        delete_set.add(obj)
+                        prop_info.worked = True
+            prop_info = self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].get_info(bmp.obj.TextSink)
+            if prop_info is not None:
+                prop_info.tried = True
+                for obj in space.object_list:
+                    if not obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
+                        delete_set.add(obj)
+                        prop_info.worked = True
+            for obj in delete_set:
                 self.destroy_obj(space, obj)
-            if len(delete_list) != 0:
+            if len(delete_set) != 0:
                 success = True
         if success:
             self.sound_events.append("sink")
