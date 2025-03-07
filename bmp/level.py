@@ -28,7 +28,7 @@ class LevelJson41(TypedDict):
 
 type LevelJson = LevelJson41
 
-max_move_count: int = 120
+max_move_attempt: int = 42
 infinite_move_number: int = 6
 MoveInfo = tuple[bmp.obj.Object, list[tuple[bmp.ref.SpaceID, bmp.loc.Coord[int], bmp.loc.Orient]]]
 
@@ -67,9 +67,9 @@ class Level(object):
     @current_space.setter
     def current_space(self, space: bmp.space.Space) -> None:
         self.current_space_id = space.space_id
-    def set_space(self, space: bmp.space.Space, space_id: Optional[bmp.ref.SpaceID] = None) -> None:
-        _space_id: bmp.ref.SpaceID = space_id if space_id is not None else space.space_id
-        self.space_dict[_space_id] = space
+    def set_space(self, space: bmp.space.Space) -> None:
+        self.space_dict[space.space_id] = space
+        self.space_included.append(space.space_id)
     @property
     def space_list(self) -> list[bmp.space.Space]:
         return [s for s in self.space_dict.values() if s.space_id in self.space_included]
@@ -126,16 +126,18 @@ class Level(object):
         if len(move_list) != 0 and "move" not in self.sound_events:
             self.sound_events.append("move")
     def recursion_rules(self, space: bmp.space.Space, passed: Optional[list[bmp.ref.SpaceID]] = None) -> tuple[list[bmp.rule.Rule], list[bmp.rule.RuleInfo]]:
-        passed = passed if passed is not None else []
+        passed = passed.copy() if passed is not None else []
         if space.space_id in passed:
             return [], []
         passed.append(space.space_id)
-        rule_list = copy.deepcopy(space.rule_list)
-        rule_info = copy.deepcopy(space.rule_info)
+        rule_list = []
+        rule_info = []
         for super_space in self.space_list:
             for space_obj in super_space.get_spaces():
-                if space.space_id == space_obj.space_id:
+                if space.space_id == space_obj.space_id and super_space.space_id not in passed:
                     new_rule_list, new_rule_info = self.recursion_rules(super_space, passed)
+                    rule_list.extend(super_space.rule_list)
+                    rule_info.extend(super_space.rule_info)
                     rule_list.extend(new_rule_list)
                     rule_info.extend(new_rule_info)
                     passed.append(super_space.space_id)
@@ -334,62 +336,74 @@ class Level(object):
             return [(obj, [(space.space_id, new_pos, direct)])]
         else:
             return None
-    def you(self, direct: Optional[bmp.loc.Orient]) -> bool:
-        self.reset_move_numbers()
-        if direct is None:
+    def you(self, orient: Optional[bmp.loc.Orient]) -> bool:
+        if orient is None:
             return False
-        pushing_game = False
-        finished = False
-        for _ in range(max_move_count):
-            if finished:
-                return pushing_game
+        finished: bool
+        for _ in range(max_move_attempt):
             move_list = []
             finished = True
+            level_prop_info_list = self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].get_info_list(bmp.obj.TextYou, worked=False)
             for space in self.space_list:
-                you_objs = [o for o in space.object_list if o.move_number < o.properties[bmp.obj.TextIs].count(bmp.obj.TextYou)]
-                if len(you_objs) != 0:
-                    finished = False
-                for obj in you_objs:
-                    obj.orient = direct
+                space_prop_info_list = space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].get_info_list(bmp.obj.TextYou, worked=False)
+                for obj in space.object_list:
+                    prop_info = obj.properties[bmp.obj.TextIs].get_info(bmp.obj.TextYou, worked=False)
+                    if prop_info is None and len(space_prop_info_list) != 0:
+                        prop_info = space_prop_info_list[0]
+                    if prop_info is None and len(level_prop_info_list) != 0:
+                        prop_info = level_prop_info_list[0]
+                    if prop_info is None:
+                        continue
+                    prop_info.tried = True
+                    obj.orient = orient
                     new_move_list = self.get_move_list(space, obj, obj.orient)
                     if new_move_list is not None:
                         move_list.extend(new_move_list)
-                        obj.move_number += 1
+                        prop_info.worked = True
                     else:
-                        pushing_game = True
+                        finished = False
             self.move_objs_from_move_list(move_list)
-        return pushing_game
-    def select(self, direct: Optional[bmp.loc.Orient]) -> Optional[list[bmp.ref.LevelID]]:
-        if direct is None:
-            level_list: list[bmp.ref.LevelID] = []
-            for space in self.space_list:
-                select_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextSelect)]
-                for select_obj in select_objs:
-                    level_list.extend([o.level_id for o in space.object_list if o.pos == select_obj.pos and o.level_id is not None and o != select_obj])
-            return level_list
-        else:
-            for space in self.space_list:
-                select_objs = [o for o in space.object_list if o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextSelect)]
-                for select_obj in select_objs:
-                    new_pos = bmp.loc.front_position(select_obj.pos, direct)
+            move_list.clear()
+        return not finished
+    def select(self, orient: Optional[bmp.loc.Orient]) -> list[bmp.ref.LevelID]:
+        level_list: list[bmp.ref.LevelID] = []
+        for space in self.space_list:
+            for obj in space.object_list:
+                prop_info = obj.properties[bmp.obj.TextIs].get_info(bmp.obj.TextSelect, worked=False)
+                if prop_info is None:
+                    continue
+                if orient is not None:
+                    new_pos = bmp.loc.front_position(obj.pos, orient)
                     if not space.out_of_range(new_pos):
                         level_objs = space.get_levels_from_pos(new_pos)
                         path_objs = space.get_objs_from_pos_and_type(new_pos, bmp.obj.Path)
                         if any(map(lambda p: p.unlocked, path_objs)) or len(level_objs) != 0:
-                            space.set_obj_pos(select_obj, new_pos)
-        return None
+                            space.set_obj_pos(obj, new_pos)
+                else:
+                    level_list.extend([o.level_id for o in space.object_list if o.pos == obj.pos and o.level_id is not None and o != obj])
+        return level_list
     def direction(self) -> None:
         for prop in bmp.obj.direct_fix_properties:
             for space in self.space_list:
                 for obj in space.object_list:
-                    if obj.properties[bmp.obj.TextIs].enabled(prop):
-                        if isinstance(obj, bmp.obj.SpaceObject):
-                            obj.space_extra["static_transform"] = prop.ref_transform.copy()
-                        obj.orient = prop.ref_direct
-                if space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(prop):
-                    space.static_transform = prop.ref_transform.copy()
-            if self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(prop):
-                pass # NotImplemented
+                    prop_info = obj.properties[bmp.obj.TextIs].get_info(prop, worked=False)
+                    if prop_info is None:
+                        continue
+                    prop_info.tried = True
+                    if isinstance(obj, bmp.obj.SpaceObject):
+                        obj.space_extra["static_transform"] = prop.ref_transform.copy()
+                    obj.orient = prop.ref_direct
+                    prop_info.worked = True
+                prop_info = space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].get_info(prop, worked=False)
+                if prop_info is None:
+                    continue
+                prop_info.tried = True
+                space.static_transform = prop.ref_transform.copy()
+                prop_info.worked = True
+            prop_info = self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].get_info(prop, worked=False)
+            if prop_info is None:
+                continue
+            # NotImplemented
     def flip(self) -> None:
         for space in self.space_list:
             space.dynamic_transform = bmp.loc.default_space_transform.copy()
@@ -398,106 +412,116 @@ class Level(object):
         for prop in bmp.obj.direct_mapping_properties:
             for space in self.space_list:
                 for obj in space.object_list:
-                    if obj.properties[bmp.obj.TextIs].count(prop) % 2 == 1:
+                    for prop_info in obj.properties[bmp.obj.TextIs].get_info_list(prop, worked=False):
+                        prop_info.tried = True
                         if isinstance(obj, bmp.obj.SpaceObject):
                             obj.space_extra["dynamic_transform"] = bmp.loc.get_stacked_transform(obj.space_extra["dynamic_transform"], prop.ref_transform)
                         obj.set_direct_mapping(prop.ref_mapping)
-                if space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].count(prop) % 2 == 1:
+                        prop_info.worked = True
+                for prop_info in space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].get_info_list(prop, worked=False):
+                    prop_info.tried = True
                     space.dynamic_transform = bmp.loc.get_stacked_transform(space.dynamic_transform, prop.ref_transform)
-            if self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].count(prop) % 2 == 1:
+                    prop_info.worked = True
+            for prop_info in self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].get_info_list(prop, worked=False):
                 pass # NotImplemented
     def turn(self) -> None:
-        for space in self.space_list:
-            for obj in space.object_list:
-                turn_count = (obj.properties[bmp.obj.TextIs].count(bmp.obj.TextTurn) - obj.properties[bmp.obj.TextIs].count(bmp.obj.TextDeturn)) % 4
-                for _ in range(turn_count):
-                    obj.orient = bmp.loc.turn_right(obj.orient)
-                    if isinstance(obj, bmp.obj.SpaceObject):
-                        obj.space_extra["static_transform"] = bmp.loc.get_stacked_transform(obj.space_extra["static_transform"], {"direct": "A", "flip": False})
-            turn_count = (space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].count(bmp.obj.TextTurn) - space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].count(bmp.obj.TextDeturn)) % 4
-            for _ in range(turn_count):
-                space.static_transform = bmp.loc.get_stacked_transform(space.static_transform, {"direct": "A", "flip": False})
-        if self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].count(bmp.obj.TextFlip) % 2 == 1:
-            pass # NotImplemented
+        for prop in (bmp.obj.TextTurn, bmp.obj.TextDeturn):
+            for space in self.space_list:
+                for obj in space.object_list:
+                    for prop_info in obj.properties[bmp.obj.TextIs].get_info_list(prop, worked=False):
+                        prop_info.tried = True
+                        if isinstance(obj, bmp.obj.SpaceObject):
+                            obj.space_extra["static_transform"] = bmp.loc.get_stacked_transform(obj.space_extra["static_transform"], prop.ref_transform)
+                        obj.orient = bmp.loc.turn(obj.orient, prop.ref_direct)
+                        prop_info.worked = True
+                for prop_info in space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].get_info_list(prop, worked=False):
+                    prop_info.tried = True
+                    space.static_transform = bmp.loc.get_stacked_transform(space.static_transform, prop.ref_transform)
+                    prop_info.worked = True
+            for prop_info in self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].get_info_list(prop, worked=False):
+                pass # NotImplemented
     def move(self) -> bool:
-        self.reset_move_numbers()
-        pushing_game = False
-        for space in self.space_list:
-            global_move_count = space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].count(bmp.obj.TextMove) + self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].count(bmp.obj.TextMove)
-            for _ in range(global_move_count):
-                move_list = []
-                for obj in [o for o in space.object_list if o.move_number < global_move_count]:
-                    if not obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
-                        new_move_list = self.get_move_list(space, obj, bmp.loc.Orient.S)
-                        if new_move_list is not None:
-                            move_list.extend(new_move_list)
-                            obj.move_number += 1
-                        else:
-                            pushing_game = True
-                self.move_objs_from_move_list(move_list)
-        self.reset_move_numbers()
         finished = False
-        for _ in range(max_move_count):
+        for _ in range(max_move_attempt):
             if finished:
-                return pushing_game
+                break
             move_list = []
             finished = True
+            level_prop_info_list = self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].get_info_list(bmp.obj.TextMove, worked=False)
             for space in self.space_list:
-                move_objs = [o for o in space.object_list if o.move_number < o.properties[bmp.obj.TextIs].count(bmp.obj.TextMove)]
-                if len(move_objs) != 0:
-                    finished = False
-                for obj in move_objs:
+                space_prop_info_list = space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].get_info_list(bmp.obj.TextMove, worked=False)
+                for obj in space.object_list:
+                    prop_info = obj.properties[bmp.obj.TextIs].get_info(bmp.obj.TextMove, worked=False)
+                    if prop_info is None and len(space_prop_info_list) != 0:
+                        prop_info = space_prop_info_list[0]
+                    if prop_info is None and len(level_prop_info_list) != 0:
+                        prop_info = level_prop_info_list[0]
+                    if prop_info is None:
+                        continue
+                    prop_info.tried = True
                     new_move_list = self.get_move_list(space, obj, obj.orient)
                     if new_move_list is not None:
                         move_list = new_move_list
-                        obj.move_number += 1
-                    else:
-                        obj.orient = bmp.loc.swap_direction(obj.orient)
-                        new_move_list = self.get_move_list(space, obj, obj.orient)
-                        if new_move_list is not None:
-                            move_list = new_move_list
-                            obj.move_number += 1
-                        else:
-                            pushing_game = True
+                        prop_info.worked = True
+                        continue
+                    obj.orient = bmp.loc.swap_direction(obj.orient)
+                    new_move_list = self.get_move_list(space, obj, obj.orient)
+                    if new_move_list is not None:
+                        move_list = new_move_list
+                        prop_info.worked = True
+                        continue
+                    finished = False
             self.move_objs_from_move_list(move_list)
-        return pushing_game
+            move_list.clear()
+        return not finished
     def shift(self) -> bool:
-        self.reset_move_numbers()
-        pushing_game = False
-        for space in self.space_list:
-            global_shift_count = space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].count(bmp.obj.TextShift) + self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].count(bmp.obj.TextShift)
-            for _ in range(global_shift_count):
-                move_list = []
-                for obj in [o for o in space.object_list if o.move_number < global_shift_count]:
-                    if not obj.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat):
-                        new_move_list = self.get_move_list(space, obj, bmp.loc.Orient.S)
-                        if new_move_list is not None:
-                            move_list.extend(new_move_list)
-                            obj.move_number += 1
-                        else:
-                            pushing_game = True
-                self.move_objs_from_move_list(move_list)
-        self.reset_move_numbers()
         finished = False
-        for _ in range(max_move_count):
+        for _ in range(max_move_attempt):
             if finished:
-                return pushing_game
+                break
             move_list = []
             finished = True
+            # space shift is wrong
             for space in self.space_list:
-                shifter_objs = [o for o in space.object_list if o.move_number < o.properties[bmp.obj.TextIs].count(bmp.obj.TextShift)]
-                for shifter_obj in shifter_objs:
-                    shifted_objs = [o for o in space.get_objs_from_pos(shifter_obj.pos) if o != shifter_obj and bmp.obj.same_float_prop(o, shifter_obj)]
-                    for obj in shifted_objs:
-                        new_move_list = self.get_move_list(space, obj, shifter_obj.orient)
+                for obj in space.object_list:
+                    prop_info = obj.properties[bmp.obj.TextIs].get_info(bmp.obj.TextShift, worked=False)
+                    if prop_info is None:
+                        continue
+                    prop_info.tried = True
+                    for shift_obj in [o for o in space.get_objs_from_pos(obj.pos) if o != obj and bmp.obj.same_float_prop(o, obj)]:
+                        new_move_list = self.get_move_list(space, shift_obj, obj.orient)
                         if new_move_list is not None:
                             move_list.extend(new_move_list)
-                            obj.move_number += 1
-                            finished = False
+                            prop_info.worked = True
                         else:
-                            pushing_game = True
+                            finished = False
+            for space in self.space_list:
+                prop_info = space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].get_info(bmp.obj.TextShift, worked=False)
+                if prop_info is None:
+                    continue
+                prop_info.tried = True
+                for obj in [o for o in space.object_list if not o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat)]:
+                    new_move_list = self.get_move_list(space, obj, bmp.loc.Orient.S)
+                    if new_move_list is not None:
+                        move_list.extend(new_move_list)
+                        prop_info.worked = True
+                    else:
+                        finished = False
+            prop_info = self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].get_info(bmp.obj.TextShift, worked=False)
+            if prop_info is None:
+                continue
+            for space in self.space_list:
+                prop_info.tried = True
+                for obj in [o for o in space.object_list if not o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat)]:
+                    new_move_list = self.get_move_list(space, obj, bmp.loc.Orient.S)
+                    if new_move_list is not None:
+                        move_list.extend(new_move_list)
+                        prop_info.worked = True
+                    else:
+                        finished = False
             self.move_objs_from_move_list(move_list)
-        return pushing_game
+            move_list.clear()
+        return not finished
     def tele(self) -> None:
         if self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextTele):
             pass

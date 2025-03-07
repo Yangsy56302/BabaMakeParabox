@@ -322,13 +322,13 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                         spore_for_blossom = bmp.lang.input_int_optional(bmp.lang.fformat("edit.level.new.spore_for_blossom"))
                         if spore_for_blossom is not None:
                             map_info["spore_for_blossom"] = spore_for_blossom
-                    levelpack.level_dict[level_id] = bmp.level.Level(
+                    levelpack.set_level(bmp.level.Level(
                         level_id, [space_id], space_id,
                         super_level_id = super_level_id,
                         map_info = map_info,
-                    )
-                    levelpack.level_dict[level_id].space_dict = levelpack.space_dict
+                    ))
                     levelpack.current_level_id = level_id
+                    levelpack.level_dict[level_id].space_dict = levelpack.space_dict
                     level_changed = True
                     del level_id, space_id
             else:
@@ -343,7 +343,9 @@ def levelpack_editor(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelp
                         default = bmp.opt.options["editor"]["default_space"]["color"],
                     )
                     space_id = bmp.ref.SpaceID(name, infinite_tier)
-                    levelpack.current_level.space_dict[space_id] = bmp.space.Space(space_id, (width, height), space_color)
+                    levelpack.current_level.set_space(bmp.space.Space(
+                        space_id, (width, height), space_color
+                    ))
                     levelpack.current_level.current_space_id = space_id
                     space_changed = True
                     del space_id

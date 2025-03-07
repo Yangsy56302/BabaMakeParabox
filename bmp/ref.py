@@ -15,7 +15,7 @@ class LevelID(object):
         return hash((self.hash_name, self.name))
     def __str__(self) -> str:
         return self.name
-    def get_info(self) -> str:
+    def to_gui_text(self) -> str:
         return self.__str__()
     def to_space_id(self) -> "SpaceID":
         index = self.name.find(seperator)
@@ -48,7 +48,7 @@ class SpaceID(object):
         return hash((self.hash_name, self.name, self.infinite_tier))
     def __str__(self) -> str:
         return self.name + ("∞" if self.infinite_tier > 0 else "ε") * abs(self.infinite_tier) 
-    def get_info(self) -> str:
+    def to_gui_text(self) -> str:
         return self.__str__()
     def __add__(self, other: int) -> "SpaceID":
         if not isinstance(other, int):

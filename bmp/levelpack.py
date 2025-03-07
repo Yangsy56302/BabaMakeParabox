@@ -17,7 +17,7 @@ class ReturnInfo(TypedDict):
     done: bool
     transform: bool
     game_push: bool
-    select: Optional[list[bmp.ref.LevelID]]
+    select: list[bmp.ref.LevelID]
 
 default_levelpack_info: ReturnInfo = {
     "win": False,
@@ -25,7 +25,7 @@ default_levelpack_info: ReturnInfo = {
     "done": False,
     "transform": False,
     "game_push": False,
-    "select": None
+    "select": [],
 }
 
 class LevelpackJson41(TypedDict):
@@ -88,9 +88,9 @@ class Levelpack(object):
         return self.level_dict[level_id]
     def get_level(self, level_id: Optional[bmp.ref.LevelID]) -> Optional[bmp.level.Level]:
         return None if level_id is None else self.level_dict.get(level_id)
-    def set_level(self, level_id: bmp.ref.LevelID, level: bmp.level.Level) -> None:
+    def set_level(self, level: bmp.level.Level) -> None:
         level.space_dict = self.space_dict
-        self.level_dict[level_id] = level
+        self.level_dict[level.level_id] = level
     def set_level_init_state(self, level_id: bmp.ref.LevelID, level: bmp.level.Level) -> None:
         self.level_init_state_dict[level_id] = level
     def reset_level(self, level_id: bmp.ref.LevelID) -> None:
@@ -209,7 +209,6 @@ class Levelpack(object):
             space.set_rule()
         # update rules
         global_rule_info = [bmp.rule.get_info_from_rule(r) for r in self.rule_list]
-        outer_space_rule_info = self.current_level.recursion_rules(space)[1]
         for space in self.current_level.space_list:
             for rule_info in space.rule_info + global_rule_info:
                 for noun_info in rule_info.noun_info_list:
@@ -251,6 +250,7 @@ class Levelpack(object):
                                         meta_level = self.get_level(obj.level_id)
                                         if meta_level is not None:
                                             meta_level.properties[type(obj)][type(oper_info.oper)].add(prop_info.prop, prop_info.negated)
+            outer_space_rule_info = self.current_level.recursion_rules(space)[1]
             for rule_info in outer_space_rule_info:
                 for noun_info in rule_info.noun_info_list:
                     # clear noun references
@@ -336,7 +336,7 @@ class Levelpack(object):
                             new_obj.level_id, [old_obj.space_id], old_obj.space_id,
                             super_level_id = level.level_id,
                         )
-                        self.set_level(new_obj.level_id, new_obj_level)
+                        self.set_level(new_obj_level)
                         self.set_level_init_state(new_obj.level_id, new_obj_level)
                 space.new_obj(new_obj)
                 transform_success = True
@@ -393,10 +393,10 @@ class Levelpack(object):
             if sub_level.map_info is not None:
                 if clear_counts >= sub_level.map_info.get("spore_for_blossom", float("inf")):
                     self.collectibles.add(bmp.obj.Collectible(bmp.obj.Blossom, sub_level.level_id))
-    def tick(self, op: Optional[bmp.loc.Orient]) -> ReturnInfo:
-        self.prepare()
         self.current_level.sound_events = []
         self.current_level.created_levels = []
+    def tick(self, op: Optional[bmp.loc.Orient]) -> ReturnInfo:
+        self.prepare()
         self.update_rules()
         game_push = False
         game_push |= self.current_level.you(op)
@@ -411,10 +411,7 @@ class Levelpack(object):
         self.update_rules()
         self.current_level.tele()
         select = self.current_level.select(op)
-        if select is not None:
-            select = [l for l in select if l in self.level_dict.keys()]
-            if len(select) == 0:
-                select = None
+        select = [l for l in select if l in self.level_dict.keys()]
         self.update_rules()
         self.current_level.direction()
         self.current_level.flip()
@@ -429,7 +426,7 @@ class Levelpack(object):
         self.current_level.make()
         self.update_rules()
         for new_level in self.current_level.created_levels:
-            self.set_level(new_level.level_id, new_level)
+            self.set_level(new_level)
         self.current_level.refresh_all_list()
         bonus = self.current_level.bonus()
         end = self.current_level.end()

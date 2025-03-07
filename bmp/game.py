@@ -226,7 +226,7 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                     if len(object_list) != 0:
                         bmp.lang.print(bmp.lang.seperator_line(bmp.lang.fformat("title.object")))
                         for obj in object_list:
-                            bmp.lang.print(obj.get_info() if bmp.opt.options["debug"] else repr(obj))
+                            bmp.lang.print(obj.to_gui_text() if bmp.opt.options["debug"] else repr(obj))
                 elif bool(mouses[3]) ^ bool(mouses[4]):
                     current_space_index = visible_space_list.index(levelpack.current_level.current_space) if levelpack.current_level.current_space in visible_space_list else 0
                     current_space_index += 1 if mouses[3] else -1
@@ -258,7 +258,7 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                 restart_failed = True
                 if not (keys["LCTRL"] or keys["RCTRL"]):
                     for index, (old_levelpack, old_levelpack_info) in reversed(list(enumerate(history))):
-                        if index == 0 or history[index - 1][1]["select"] is not None:
+                        if index == 0 or len(history[index - 1][1]["select"]) != 0:
                             bmp.lang.fprint("play.level.restart")
                             bmp.audio.play("restart")
                             levelpack = copy.deepcopy(old_levelpack)
@@ -455,7 +455,7 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                     bmp.audio.play("restart")
                     bmp.lang.fprint("play.level.transform")
                     monochrome = bmp.obj.TextLevel.get_color()
-                elif levelpack_info["select"] is not None:
+                elif len(levelpack_info["select"]) != 0:
                     bmp.audio.play("level")
                     bmp.lang.fprint("play.level.enter")
                     monochrome = bmp.obj.TextSelect.get_color()
@@ -478,7 +478,7 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                 elif levelpack_info["transform"]:
                     if levelpack.current_level.super_level_id is not None and levelpack.current_level.super_level_id in levelpack.level_dict.keys():
                         levelpack.current_level_id = levelpack.current_level.super_level_id
-                elif select is not None:
+                elif len(select) != 0:
                     selected_level_id: bmp.ref.LevelID = random.choice(select)
                     if selected_level_id in levelpack.level_dict.keys():
                         levelpack.current_level_id = selected_level_id
@@ -556,7 +556,7 @@ def play(levelpack: bmp.levelpack.Levelpack) -> bmp.levelpack.Levelpack:
                 if bmp.opt.options["debug"]:
                     line_list: list[str] = []
                     for obj in levelpack.current_level.current_space.get_objs_from_pos(mouse_pos_in_space):
-                        line_list.extend(obj.get_info().split("\n"))
+                        line_list.extend(obj.to_gui_text().split("\n"))
                         line_list.append("")
                     for line_index, line in enumerate(line_list):
                         line_surface = bmp.render.line_to_surface(line, wiggle=wiggle)

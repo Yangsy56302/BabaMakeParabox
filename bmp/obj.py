@@ -40,7 +40,8 @@ default_level_extra: LevelObjectExtra = {"icon": {"name": "empty", "color": 0xFF
 class PropertyInfo[T: "Text"]():
     obj: T
     negated: bool
-    effected: bool
+    tried: bool
+    worked: bool
 
 type PropertyDict = dict[type["Text"], list[PropertyInfo]]
 
@@ -49,9 +50,6 @@ class PropertyStorage(object):
         self.__dict: PropertyDict = prop if prop is not None else {}
     def __bool__(self) -> bool:
         return len(self.__dict) != 0
-    def get_info(self) -> str:
-        string = f"property storage {self.__dict}"
-        return "<" + string + ">"
     @staticmethod
     def calc_count(info_list: list[PropertyInfo], negated: bool = False) -> int:
         if len(info_list) == 0:
@@ -64,7 +62,8 @@ class PropertyStorage(object):
         self.__dict[type(prop)].append(PropertyInfo(
             obj = prop,
             negated = negated,
-            effected = False,
+            tried = False,
+            worked = False,
         ))
     def exist(self, prop: type["Text"]) -> bool:
         return len(self.__dict.get(prop, [])) != 0
@@ -74,6 +73,26 @@ class PropertyStorage(object):
         return self.calc_count(self.__dict[prop], negated)
     def clear(self) -> None:
         self.__dict.clear()
+    def get_info[T: "Text"](self, prop: type[T], negated: Optional[bool] = False, tried: Optional[bool] = None, worked: Optional[bool] = None) -> Optional[PropertyInfo[T]]:
+        prop_list: Optional[list[PropertyInfo[T]]] = self.__dict.get(prop)
+        if prop_list is None:
+            return None
+        filtered_prop_list: list[PropertyInfo[T]] = [
+            p for p in prop_list
+            if (negated is None or negated == p.negated)
+            and (tried is None or tried == p.tried)
+            and (worked is None or worked == p.worked)
+        ]
+        if len(filtered_prop_list) == 0:
+            return None
+        return filtered_prop_list[0]
+    def get_info_list[T: "Text"](self, prop: type[T], negated: Optional[bool] = False, tried: Optional[bool] = None, worked: Optional[bool] = None) -> list[PropertyInfo[T]]:
+        return [
+            p for p in self.__dict.get(prop, [])
+            if (negated is None or negated == p.negated)
+            and (tried is None or tried == p.tried)
+            and (worked is None or worked == p.worked)
+        ]
     def enabled(self, prop: type["Text"]) -> bool:
         return self.count(prop, negated=False) > 0
     def disabled(self, prop: type["Text"]) -> bool:
@@ -182,8 +201,10 @@ class Object(object):
         self.properties: dict[type["Operator"], PropertyStorage] = {o: PropertyStorage() for o in operators}
         self.move_number: int = 0
         self.sprite_state: int = 0
-    def __eq__(self, obj: "Object") -> bool:
-        return self.uid == obj.uid
+    def __eq__(self, other: "Object") -> bool:
+        if not isinstance(other, Object):
+            return NotImplemented
+        return self.uid == other.uid
     def __hash__(self) -> int:
         return hash(self.uid)
     @classmethod
@@ -194,7 +215,7 @@ class Object(object):
                 return bmp.base.snake_to_camel(cls.json_name, is_big=True)
             return bmp.lang.fformat(lang_key, language_name=bmp.lang.english)
         return bmp.lang.fformat(lang_key, language_name=language_name)
-    def get_info(self) -> str:
+    def to_gui_text(self) -> str:
         info_str = f"{self.json_name.lower()}\n@{self.pos[0]}*{self.pos[0]}\n%{self.orient.char()}"
         if self.space_id is not None:
             info_str += f"\nS{str(self.space_id)}"
@@ -234,7 +255,7 @@ class Object(object):
             case "animated_directional":
                 self.sprite_state = int(math.log2(int(self.orient.value))) * 0x8 | round_num % 0x4
             case "character":
-                if self.move_number > 0:
+                if self.old_state.pos is not None and self.pos != self.old_state.pos:
                     sprite_state_without_orient = (self.sprite_state & 0x3) + 1 if (self.sprite_state & 0x3) != 0x3 else 0x0
                     self.sprite_state = int(math.log2(int(self.orient.value))) * 0x8 | sprite_state_without_orient
                 else:
@@ -339,8 +360,10 @@ class Collectible(object):
     def __init__(self, object_type: type[Object], source: bmp.ref.LevelID) -> None:
         self.object_type: type[Object] = object_type
         self.source: bmp.ref.LevelID = source
-    def __eq__(self, collectible: "Collectible") -> bool:
-        return type(self) == type(collectible) and self.object_type is collectible.object_type and self.source == collectible.source
+    def __eq__(self, other: "Collectible") -> bool:
+        if not isinstance(other, Collectible):
+            return NotImplemented
+        return type(self) == type(other) and self.object_type is other.object_type and self.source == other.source
     def __hash__(self) -> int:
         return hash((self.object_type.json_name, self.source))
     def to_json(self) -> CollectibleJson:
@@ -1155,7 +1178,7 @@ def reload_object_class_list() -> None:
 reload_object_class_list()
 
 def same_float_prop(obj_1: Object, obj_2: Object):
-    return not (obj_1.properties[TextIs].enabled(TextFloat) ^ obj_2.properties[TextIs].enabled(TextFloat))
+    return obj_1.properties[TextIs].enabled(TextFloat) == obj_2.properties[TextIs].enabled(TextFloat)
 
 def get_noun_from_type(object_type: type[Object]) -> type[Noun]:
     global current_metatext_tier
