@@ -523,33 +523,51 @@ class Level(object):
             move_list.clear()
         return not finished
     def tele(self) -> None:
-        if self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextTele):
-            pass
-        for space in self.space_list:
-            if space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].enabled(bmp.obj.TextTele):
-                pass
         tele_list: list[tuple[bmp.space.Space, bmp.obj.Object, bmp.space.Space, bmp.loc.Coord[int]]] = []
-        object_list: list[tuple[bmp.space.Space, bmp.obj.Object]] = []
+        prop_info = self.properties[bmp.obj.default_level_object_type][bmp.obj.TextIs].get_info(bmp.obj.TextTele, worked=False)
+        if prop_info is not None:
+            prop_info.tried = True
+            for old_space in self.space_list:
+                for obj in [o for o in old_space.object_list if not o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat)]:
+                    tele_list.append((old_space, obj, new_space := random.choice(self.space_list), new_space.random_pos()))
+                    prop_info.worked = True
         for space in self.space_list:
-            object_list.extend([(space, o) for o in space.object_list])
-        tele_objs = [t for t in object_list if t[1].properties[bmp.obj.TextIs].enabled(bmp.obj.TextTele)]
-        tele_object_types: dict[type[bmp.obj.Object], list[tuple[bmp.space.Space, bmp.obj.Object]]] = {}
-        for object_type in [n.ref_type for n in bmp.obj.noun_class_list]:
-            for tele_obj in tele_objs:
-                if isinstance(tele_obj[1], object_type):
-                    tele_object_types[object_type] = tele_object_types.get(object_type, []) + [tele_obj]
-        for new_tele_objs in tele_object_types.values():
-            if len(new_tele_objs) <= 1:
+            prop_info = space.properties[bmp.obj.default_space_object_type][bmp.obj.TextIs].get_info(bmp.obj.TextTele, worked=False)
+            if prop_info is not None:
+                prop_info.tried = True
+                for obj in [o for o in space.object_list if not o.properties[bmp.obj.TextIs].enabled(bmp.obj.TextFloat)]:
+                    tele_list.append((space, obj, space, (random.randrange(0, space.width), random.randrange(0, space.height))))
+                    prop_info.worked = True
+        tele_obj_infos_raw: list[tuple[bmp.space.Space, bmp.obj.Object, bmp.obj.PropertyInfo]] = []
+        for space in self.space_list:
+            for obj in space.object_list:
+                prop_info = obj.properties[bmp.obj.TextIs].get_info(bmp.obj.TextTele)
+                if prop_info is not None:
+                    tele_obj_infos_raw.append((space, obj, prop_info))
+        tele_object_types: dict[type[bmp.obj.Object], list[tuple[bmp.space.Space, bmp.obj.Object, bmp.obj.PropertyInfo]]] = {}
+        for tele_obj_info in tele_obj_infos_raw:
+            _, obj, _ = tele_obj_info
+            tele_object_types.setdefault(type(obj), [])
+            tele_object_types[type(obj)].append(tele_obj_info)
+        for tele_obj_infos in tele_object_types.values():
+            if len(tele_obj_infos) <= 1:
                 continue
-            for tele_space, tele_obj in new_tele_objs:
-                other_tele_objs = new_tele_objs[:]
-                other_tele_objs.remove((tele_space, tele_obj))
-                for obj in tele_space.get_objs_from_pos(tele_obj.pos):
+            for index, (space, tele_obj, prop_info) in enumerate(tele_obj_infos):
+                prop_info.tried = True
+                filtered_tele_obj_infos = tele_obj_infos.copy()
+                filtered_tele_obj_infos.pop(index)
+                filtered_tele_obj_infos = [(s, o, i) for s, o, i in filtered_tele_obj_infos if s == space]
+                if len(filtered_tele_obj_infos) == 0:
+                    continue
+                for obj in space.get_objs_from_pos(tele_obj.pos):
                     if obj == tele_obj:
                         continue
                     if bmp.obj.same_float_prop(obj, tele_obj):
-                        other_tele_space, other_tele_obj = random.choice(other_tele_objs)
-                        tele_list.append((tele_space, obj, other_tele_space, other_tele_obj.pos))
+                        new_space, new_tele_obj, new_info = random.choice(filtered_tele_obj_infos)
+                        tele_list.append((space, obj, new_space, new_tele_obj.pos))
+                        prop_info.worked = True
+                        new_info.tried = True
+                        new_info.worked = True
         for old_space, obj, new_space, pos in tele_list:
             old_space.del_obj(obj)
             obj.pos = pos

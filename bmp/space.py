@@ -1,3 +1,4 @@
+import random
 from typing import Never, NotRequired, Optional, TypeGuard, TypedDict
 from tqdm import tqdm
 
@@ -164,6 +165,8 @@ class Space(object):
         if self.out_of_range(pos):
             return []
         return [o for o in self.pos_to_objs(pos) if isinstance(o, bmp.obj.LevelObject)]
+    def random_pos(self) -> bmp.loc.Coord[int]:
+        return (random.randrange(0, self.width), random.randrange(0, self.height))
     def __get_rule_from_pos_and_direct(self, pos: bmp.loc.Coord[int], direct: bmp.loc.Orient, stage: str = "before prefix") -> tuple[list[bmp.rule.Rule], list[bmp.rule.RuleInfo]]:
         new_rule_list: list[bmp.rule.Rule] = []
         new_info_list: list[bmp.rule.RuleInfo] = []
