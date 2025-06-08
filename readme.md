@@ -4,8 +4,12 @@
 
 **Baba Make Parabox**（简称 **BMP**）是**Yangsy56302**以推箱子游戏[**Baba Is You**（by Arvi Hempuli）](https://hempuli.com/baba/)的机制为基础进行二次创作，缝合了另一个推箱子游戏[**Patrick's Parabox**（by Patrick Traynor）](https://www.patricksparabox.com/)的主要机制而做出的推箱子游戏，目前处于开发阶段。
 
-**本游戏的源代码使用[MIT许可证](https://opensource.org/license/MIT/)。**
-_……大概吧。_
+**注意：除了可能导致游戏崩溃或关卡包数据损坏的严重漏洞修复以外，本游戏将不再更新。**  
+**注意：除了可能导致游戏崩溃或关卡包数据损坏的严重漏洞修复以外，本游戏将不再更新。**  
+**注意：除了可能导致游戏崩溃或关卡包数据损坏的严重漏洞修复以外，本游戏将不再更新。**  
+~~重要的事情说三遍。即使Baba Make Parabox真的有后续，那也肯定不会在这里的。~~
+
+**本游戏的源代码使用[GNU 通用公共许可证第三版](https://www.gnu.org/licenses/gpl-3.0.html)作为开源协议。**
 
 **游戏使用[Pygame](https://www.pygame.org/news/)作为游戏引擎，而Pygame使用[GNU宽通用公共许可证 2.1版](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html)。**
 因此，本人不提供Pygame的源代码，而是提供使用未经修改的Pygame版本经[PyInstaller](https://pyinstaller.org/en/stable/index.html)打包后形成的游戏程序。
@@ -74,7 +78,7 @@ _……大概吧。_
 
 ## 游戏内容
 
-由于游戏目前仍然处于开发阶段，Baba Make Parabox 暂时没有官方的可玩关卡包。
+由于游戏处于开发阶段，Baba Make Parabox 暂时没有官方的可玩关卡包。
 
 ### 控制
 
@@ -220,7 +224,7 @@ _……大概吧。_
 
 ## 杂项
 
-### 计划实现
+### 原本计划实现
 
 + **短期**
     + `GROUP`的逻辑。
